@@ -370,7 +370,8 @@ test('modo jugador: las versiones anteriores del juego la abren sin guardar enci
   await newPlayerCareer(a.page); await simDaysJug(a.page, 20);
   const before = await a.page.evaluate(async () => { await saveNow(); return Store.get('save'); });
   await a.page.close();
-  const last = compat[compat.length - 1].commit;
+  // la última versión publicada que todavía no conocía el modo jugador
+  const last = compat.filter(v => v.guardado < 5).pop().commit;
   const old = await openGame(ctx, srv.url + `v/${last}.html`);
   const r = await old.page.evaluate(async () => { await ACT.mcont(); await new Promise(r => setTimeout(r, 300)); const ok = await saveNow(); return { ro: APP.ro, ok }; });
   assert(r.ro === 'newer' && !r.ok, 'una versión anterior guardó encima de la partida de jugador');

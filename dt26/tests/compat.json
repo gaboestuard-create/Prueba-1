@@ -1,13 +1,20 @@
 {
-  "_nota": "Versiones publicadas del juego. Las partidas guardadas por cada una deben seguir abriéndose en la versión actual. Al publicar una versión nueva, añade aquí su commit.",
+  "_nota": "Versiones publicadas del juego. Las partidas guardadas por cada una deben seguir abriéndose en la versión actual. Al publicar una versión nueva, añade aquí su commit y su VERSION de guardado.",
   "versiones": [
     {
       "commit": "a37429e",
+      "guardado": 4,
       "descripcion": "Versión base publicada antes de las protecciones de guardado"
     },
     {
       "commit": "fb8c2a9",
+      "guardado": 4,
       "descripcion": "Versión 12 del artefacto: protección de partidas"
+    },
+    {
+      "commit": "3242211",
+      "guardado": 5,
+      "descripcion": "Versión 13 del artefacto: modo carrera de jugador"
     }
   ]
 }
