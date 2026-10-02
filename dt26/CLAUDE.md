@@ -19,6 +19,20 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
 - Solo una pestaña guarda a la vez (sección "una sola pestaña guarda a la vez"). Cualquier acción que
   sustituya la partida debe llamar antes a `tabTakeover()`.
 
+## Modo carrera de jugador
+
+`W.mode==='jug'`: el usuario es un futbolista (`W.me`, datos de carrera en `W.pc`). Todo vive en la sección
+"modo carrera de jugador" (busca `jugTick`, `jugDay`, `jugSeasonEnd`).
+
+- El club del jugador lo dirige la IA. Mientras el mundo avanza, `jugTick`/`dayW` ponen `W.userClub=-1` y al
+  terminar lo devuelven al club del jugador (o al último si está libre). Para avanzar días usa siempre `dayW(W)`,
+  no `processDay(W)` directamente.
+- Nadie puede mover al jugador sin su firma: `transfer`, `loanMove`, `release` y `retire` lo impiden salvo dentro
+  de `jugMove(...)`. Si añades lógica de mercado que elige jugadores, filtra con `isMe(w,p)`.
+- Las acciones de técnico están bloqueadas con una lista blanca (`JUG_OK`) y las vistas con `JUGV`. Si añades una
+  acción o vista que también sirva en modo jugador, añádela ahí.
+- Las funciones que suponen que hay un club del usuario deben aguantar `w.userClub===-1` (usa `focusClub(w)`).
+
 ## Pruebas
 
 ```
@@ -30,7 +44,8 @@ npm test -- nube    # solo las que contienen "nube" en el nombre
 
 Las pruebas abren el juego en Chromium sin pantalla y comprueban: varias temporadas seguidas,
 guardar y reabrir, copias de seguridad, recuperación de partidas dañadas, varias pestañas, la nube
-y la compatibilidad con las partidas de cada versión publicada.
+y la compatibilidad con las partidas de cada versión publicada. También varias temporadas del modo jugador,
+un partido en 3D, ofertas, renovaciones y la retirada.
 
 Antes de publicar una versión nueva:
 1. `npm test` en verde.

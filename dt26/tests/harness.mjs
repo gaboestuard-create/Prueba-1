@@ -104,3 +104,30 @@ export async function simSeason(page) {
 export function realErrors(errors, allow = []) {
   return errors.filter(e => !allow.some(a => e.includes(a)));
 }
+
+// crea una carrera de jugador (modo jugador) en la liga indicada, con el club de reputación media
+export async function newPlayerCareer(page, { lg = 0, pos = 'ST', tal = 1, fn = 'Prueba', ln = 'Jugador', top = false } = {}) {
+  await page.evaluate(async ({ lg, pos, tal, fn, ln, top }) => {
+    menuNew('jug');
+    await new Promise(r => { const t = setInterval(() => { if (!APP.gen && APP.pick.step === 1) { clearInterval(t); r(); } }, 50); });
+    const L = W.leagues[lg], cs = L.clubs.slice().sort((a, b) => W.clubs[b].rep - W.clubs[a].rep);
+    Object.assign(APP.pick, { lg: L.id, club: top ? cs[0] : cs[Math.floor(cs.length / 2)], pos, tal, fn, ln, step: 2 });
+    await menuStartJug();
+  }, { lg, pos, tal, fn, ln, top });
+  await page.waitForFunction(() => APP.mode === 'game' && W.mode === 'jug' && W.userClub >= 0);
+}
+
+// simula días en modo jugador: los partidos del jugador se resuelven como "resultado rápido"; acepta ofertas si se pide
+export async function simDaysJug(page, n, { accept = false } = {}) {
+  return page.evaluate(({ n, accept }) => {
+    const out = { moves: 0, played: 0 };
+    for (let i = 0; i < n; i++) {
+      if (W.pc.done) break;
+      jugFixture(W); dayW(W);
+      if (W.stop) W.stop = null;
+      if (accept) for (const m of W.inbox) if (m.act && !m.act.done && (m.act.t === 'poff' || m.act.t === 'pren') && W.day <= m.act.exp) {
+        const c0 = W.players[W.me].club; jugMact(m, 'acc'); if (W.players[W.me].club !== c0) out.moves++; }
+    }
+    out.season = W.season; out.day = W.day; return out;
+  }, { n, accept });
+}

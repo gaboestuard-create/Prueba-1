@@ -2,7 +2,7 @@
 // Cada prueba abre el juego en un navegador real sin pantalla, con datos guardados limpios.
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, serve, launch, openGame, newCareer, continueCareer, simDays, simSeason, realErrors, waitMenuReady } from './harness.mjs';
+import { ROOT, serve, launch, openGame, newCareer, continueCareer, simDays, simSeason, realErrors, waitMenuReady, newPlayerCareer, simDaysJug } from './harness.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
@@ -245,6 +245,139 @@ test('una partida de una versión más nueva se abre sin guardar encima', async 
   const b = await openGame(ctx, srv.url);
   const r = await b.page.evaluate(async () => { const before = await Store.get('save'); await ACT.mcont(); const ok = await saveNow(); return { ro: APP.ro, ok, same: before === await Store.get('save') }; });
   assert(r.ro === 'newer' && !r.ok && r.same, 'se guardó encima de una partida de una versión más nueva');
+  await ctx.close();
+});
+
+
+/* ---------- 6. modo carrera de jugador ---------- */
+async function simSeasonJug(page, opt) {
+  const s0 = await page.evaluate(() => W.season);
+  for (let k = 0; k < 40; k++) { const r = await simDaysJug(page, 15, opt); if (r.season > s0) return r; }
+  throw new Error('la temporada del modo jugador no terminó');
+}
+
+test('modo jugador: se crea, todas sus pantallas se dibujan y las del técnico no se abren', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page);
+  const r = await page.evaluate(async () => {
+    const p = W.players[W.me], seen = {};
+    for (const v of ['home', 'world', 'inbox', 'cal', 'jme', 'jtrain', 'jcon', 'jclub', 'comp', 'sel', 'trophy', 'settings']) { go(v); seen[v] = UI.view; }
+    const dt = {}; for (const v of ['squad', 'tactics', 'market', 'club', 'staff', 'cantera', 'editor', 'mgr', 'locker']) { go(v); dt[v] = UI.view; }
+    moreSheet(); closeModal(); palOpen(); closeModal(); bakModal(); closeModal();
+    return { ok: await saveNow(), v: validateWorld(W), mode: W.mode, club: p.club, uc: W.userClub, age: p.age, seen, dt, mgrOk: W.clubs[p.club].mg >= 0 };
+  });
+  assert(r.ok && r.v.ok, 'la partida de jugador no se guardó: ' + r.v.fatal);
+  assert(r.mode === 'jug' && r.club === r.uc && r.age === 17, 'datos de inicio incorrectos: ' + JSON.stringify(r));
+  assert(r.mgrOk, 'el club del jugador se quedó sin entrenador');
+  for (const [v, got] of Object.entries(r.seen)) assert(got === v || (v === 'jclub' && got === 'jclub'), `la vista ${v} no se abrió (${got})`);
+  for (const [v, got] of Object.entries(r.dt)) assert(['home', 'jclub'].includes(got), `la vista de técnico ${v} se abrió en modo jugador`);
+  // una acción de técnico pulsada en pantalla no hace nada
+  const before = await page.evaluate(() => { const c = W.clubs[W.userClub]; const b = document.createElement('button'); b.dataset.a = 'autopick'; document.body.appendChild(b); const xi = JSON.stringify(c.xi); b.click(); b.remove(); return xi === JSON.stringify(c.xi); });
+  assert(before, 'una acción de técnico funcionó en modo jugador');
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: tres temporadas sin errores y nadie lo mueve sin su firma', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { tal: 2 });
+  await page.evaluate(() => { window.__moves = []; const p = W.players[W.me]; let c = p.club;
+    window.__watch = setInterval(() => {}, 1e6); window.__chk = () => { if (p.club !== c) { window.__moves.push([W.season, W.day, c, p.club, !!p.loan]); c = p.club; } }; });
+  for (let i = 0; i < 3; i++) {
+    // día a día comprobando que el club solo cambia por fin de contrato (queda libre)
+    const s0 = await page.evaluate(() => W.season);
+    for (let k = 0; k < 60; k++) {
+      const r = await page.evaluate(() => { for (let d = 0; d < 8; d++) { jugFixture(W); dayW(W); window.__chk(); if (W.stop) W.stop = null; if (W.userClub < 0) return { bad: 'userClub' }; } return { s: W.season }; });
+      assert(!r.bad, 'W.userClub quedó en -1 fuera del avance del mundo');
+      if (r.s > s0) break;
+    }
+    const r = await page.evaluate(async () => ({ ok: await saveNow(), v: validateWorld(W), p: W.players[W.me], pc: W.pc, s: W.season }));
+    assert(r.ok && r.v.ok, `temporada ${r.s}: no se guardó o no es válida: ${r.v.fatal}`);
+    assert(!r.p.ret && !r.pc.done, 'el jugador se retiró solo');
+    assert(r.pc.hist.length === i + 1, 'falta el balance de la temporada en la trayectoria');
+    if (r.v.warn.length) console.log(`      aviso temporada ${r.s}: ${r.v.warn.join(', ')}`);
+  }
+  const mv = await page.evaluate(() => window.__moves);
+  for (const [s, d, from, to] of mv) assert(to === -1, `el jugador pasó de ${from} a ${to} sin firmar (temporada ${s}, día ${d})`);
+  const info = await page.evaluate(() => { const p = W.players[W.me]; return { ap: W.pc.hist.reduce((a, h) => a + h.ap, 0), ovr: p.ovr, ovr0: W.pc.hist[0] && W.pc.hist[0].ovr, mail: W.inbox.filter(m => /^Balance de la temporada/.test(m.subj)).length }; });
+  assert(info.mail >= 1, 'no llegó el balance de la temporada');
+  console.log(`      ${info.ap} partidos en 3 temporadas, media ${info.ovr}`);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: aceptar ofertas y renovaciones, guardar y reabrir', async () => {
+  const ctx = await fresh(); const a = await openGame(ctx, srv.url);
+  await newPlayerCareer(a.page, { tal: 2 });
+  let moves = 0; for (let i = 0; i < 2; i++) moves += (await simSeasonJug(a.page, { accept: true })).moves;
+  const before = await a.page.evaluate(async () => { await saveNow(); const p = W.players[W.me]; return { me: W.me, club: p.club, uc: W.userClub, ovr: p.ovr, ce: p.ce, s: W.season, d: W.day, hist: W.pc.hist.length, inClub: p.club < 0 || W.clubs[p.club].pids.includes(p.id) }; });
+  assert(before.inClub, 'el jugador no figura en la plantilla de su club');
+  await a.page.close();
+  const b = await openGame(ctx, srv.url);
+  const label = await b.page.evaluate(() => document.querySelector('[data-a="mcont"]').textContent);
+  assert(label.includes('Prueba Jugador'), 'el menú no muestra la carrera del jugador: ' + label);
+  await continueCareer(b.page);
+  const after = await b.page.evaluate(() => { const p = W.players[W.me]; return { me: W.me, club: p.club, uc: W.userClub, ovr: p.ovr, ce: p.ce, s: W.season, d: W.day, hist: W.pc.hist.length, inClub: p.club < 0 || W.clubs[p.club].pids.includes(p.id) }; });
+  assert(JSON.stringify(before) === JSON.stringify(after), `cambió al reabrir:\n ${JSON.stringify(before)}\n ${JSON.stringify(after)}`);
+  console.log(`      ${moves} fichaje(s) aceptado(s); contrato hasta ${after.ce}`);
+  assert(realErrors(b.errors).length === 0 && realErrors(a.errors).length === 0, 'errores: ' + realErrors(a.errors.concat(b.errors)).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: partido en 3D de principio a fin', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { tal: 2, top: false });
+  // hasta el primer partido en el que esté convocado
+  const fid = await page.evaluate(() => { for (let i = 0; i < 200; i++) { const f = jugFixture(W); if (f) return f.id; dayW(W); if (W.stop) W.stop = null; } return null; });
+  assert(fid != null, 'el jugador no fue convocado en 200 días');
+  await page.evaluate(() => advance('next'));
+  await page.waitForSelector('[data-a="play3d"]');
+  await page.click('[data-a="play3d"]');
+  await page.waitForFunction(() => APP.mode === 'match' && MX.on);
+  const r = await page.evaluate(async (fid) => {
+    mxCmd('kick'); await new Promise(r => setTimeout(r, 1500));
+    const tac0 = JSON.stringify(MX.M.s[MX.us].tac); mxCmd('tac_m_2'); mxCmd('tac');
+    const blocked = MX.panel !== 'tac' && tac0 === JSON.stringify(MX.M.s[MX.us].tac);
+    const userSide = MX.M.s[0].user || MX.M.s[1].user;
+    mxCmd('skip'); await new Promise(r => setTimeout(r, 300)); mxCmd('fin'); await new Promise(r => setTimeout(r, 300));
+    return { blocked, userSide, mode: APP.mode, played: !!W.fx[fid].r, uc: W.userClub, same: W.players[W.me].club === W.userClub, ok: validateWorld(W).ok };
+  }, fid);
+  assert(r.blocked, 'en modo jugador se pudo cambiar la táctica durante el partido');
+  assert(!r.userSide, 'el partido se jugó como si el usuario fuera el técnico');
+  assert(r.mode === 'game' && r.played && r.same && r.ok, 'el partido no terminó bien: ' + JSON.stringify(r));
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: la retirada termina la carrera y la guarda en el salón de la fama', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page);
+  await page.evaluate(() => { W.players[W.me].age = 40; });
+  await simSeasonJug(page);
+  const r = await page.evaluate(async () => { await new Promise(r => setTimeout(r, 300)); const d0 = W.day; await advance('next'); go('home');
+    return { done: !!W.pc.done, ret: W.players[W.me].ret, uc: W.userClub, moved: W.day !== d0, hof: (await Store.get('hofp')) || [], ok: await saveNow(), html: document.querySelector('#main').textContent }; });
+  assert(r.done && r.ret, 'el jugador de 41 años no se retiró');
+  assert(!r.moved, 'después de la retirada el calendario siguió avanzando');
+  assert(r.uc >= 0 && r.ok, 'la partida del jugador retirado no se pudo guardar');
+  assert(r.hof.length === 1 && r.hof[0].n === 'Prueba Jugador', 'no se guardó en el salón de la fama');
+  assert(/Fin de una carrera/.test(r.html), 'no se muestra el epílogo');
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: las versiones anteriores del juego la abren sin guardar encima', async () => {
+  const ctx = await fresh(); const a = await openGame(ctx, srv.url);
+  await newPlayerCareer(a.page); await simDaysJug(a.page, 20);
+  const before = await a.page.evaluate(async () => { await saveNow(); return Store.get('save'); });
+  await a.page.close();
+  const last = compat[compat.length - 1].commit;
+  const old = await openGame(ctx, srv.url + `v/${last}.html`);
+  const r = await old.page.evaluate(async () => { await ACT.mcont(); await new Promise(r => setTimeout(r, 300)); const ok = await saveNow(); return { ro: APP.ro, ok }; });
+  assert(r.ro === 'newer' && !r.ok, 'una versión anterior guardó encima de la partida de jugador');
+  await old.page.close();
+  const c = await openGame(ctx, srv.url);
+  const same = await c.page.evaluate(async (b) => (await Store.get('save')) === b, before);
+  assert(same, 'la partida de jugador cambió al abrirla con una versión anterior');
   await ctx.close();
 });
 
