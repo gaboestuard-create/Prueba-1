@@ -1,0 +1,12 @@
+{
+  "name": "dt26",
+  "private": true,
+  "description": "DT26 · Director Técnico: pruebas automáticas del juego",
+  "scripts": {
+    "test": "node tests/run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "three": "0.128.0"
+  }
+}

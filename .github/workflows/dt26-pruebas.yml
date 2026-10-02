@@ -1,0 +1,23 @@
+name: DT26 · pruebas
+on:
+  push:
+    paths: ['dt26/**', '.github/workflows/dt26-pruebas.yml']
+  pull_request:
+    paths: ['dt26/**', '.github/workflows/dt26-pruebas.yml']
+  workflow_dispatch:
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dt26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # las pruebas de compatibilidad leen versiones anteriores del juego desde git
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test

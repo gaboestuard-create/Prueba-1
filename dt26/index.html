@@ -2017,11 +2017,14 @@ function setExpectation(w){
 const Store={
   db:null,
   open(){ return new Promise(res=>{ try{ const r=indexedDB.open('dt26',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>{Store.db=r.result;res(true);}; r.onerror=()=>res(false); }catch(e){res(false);} }); },
-  async set(k,v){ try{ if(!Store.db) await Store.open(); if(Store.db){ const ok=await new Promise(res=>{ try{ const tx=Store.db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); tx.onabort=()=>res(false);}catch(e){res(false);} }); if(ok) return true; } }catch(e){}
+  // idb: solo IndexedDB (las copias de seguridad no caben en localStorage). Si IndexedDB guarda bien, se borra la copia vieja de localStorage para que nunca se lea una versión anterior.
+  async set(k,v,idb){ try{ if(!Store.db) await Store.open(); if(Store.db){ const ok=await new Promise(res=>{ try{ const tx=Store.db.transaction('kv','readwrite'); tx.objectStore('kv').put(v,k); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); tx.onabort=()=>res(false);}catch(e){res(false);} }); if(ok){ if(!idb) try{ if(localStorage.getItem('dt26_'+k)!=null) localStorage.removeItem('dt26_'+k); }catch(e){} return true; } } }catch(e){}
+    if(idb) return false;
     try{ localStorage.setItem('dt26_'+k,JSON.stringify(v)); return true; }catch(e){ return false; } },
-  async get(k){ try{ if(!Store.db) await Store.open(); if(Store.db){ const v=await new Promise(res=>{ try{ const r=Store.db.transaction('kv').objectStore('kv').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>res(undefined);}catch(e){res(undefined);} }); if(v!==undefined) return v; } }catch(e){}
+  async get(k,idb){ try{ if(!Store.db) await Store.open(); if(Store.db){ const v=await new Promise(res=>{ try{ const r=Store.db.transaction('kv').objectStore('kv').get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>res(undefined);}catch(e){res(undefined);} }); if(v!==undefined) return v; } }catch(e){}
+    if(idb) return undefined;
     try{ const s=localStorage.getItem('dt26_'+k); return s?JSON.parse(s):undefined; }catch(e){ return undefined; } },
-  async del(k){ try{ if(!Store.db) await Store.open(); if(Store.db) Store.db.transaction('kv','readwrite').objectStore('kv').delete(k); }catch(e){} try{ localStorage.removeItem('dt26_'+k); }catch(e){} }
+  async del(k){ try{ if(!Store.db) await Store.open(); if(Store.db) await new Promise(res=>{ try{ const tx=Store.db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete=tx.onerror=tx.onabort=()=>res(); }catch(e){ res(); } }); }catch(e){} try{ localStorage.removeItem('dt26_'+k); }catch(e){} }
 };
 async function packWorld(w){
   const json=JSON.stringify(w);
@@ -2033,6 +2036,138 @@ async function unpackWorld(str){
   const bin=atob(str.slice(3)); const buf=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
   const ds=new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip')); return JSON.parse(await new Response(ds).text());
 }
+
+/* ---------- protección de la partida: validación, copias de seguridad y recuperación ----------
+   La partida vive en 'save' con el formato de siempre, para que cualquier versión del juego la pueda leer.
+   Al lado se guardan 'save_meta' (cuándo y qué se guardó) y copias en IndexedDB, listadas en 'bak_index':
+   auto (cada semana de juego), season (al empezar cada temporada), replace (antes de sustituir o borrar la partida),
+   shrink (antes de un guardado que encoge de golpe), premig (antes de adaptar una partida antigua) y bad (una partida que no se pudo abrir). */
+const BAK_KEEP={auto:3,season:3,replace:3,shrink:2,premig:2,bad:2};
+const BAK_NAME={auto:'Automática',season:'Inicio de temporada',replace:'Antes de sustituirla',shrink:'Antes de un guardado sospechoso',premig:'Antes de actualizar el juego',bad:'No se pudo abrir'};
+const SAVE={t:0,fail:0,err:'',warnT:0};
+function strHash(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
+function worldMeta(w,s){ const c=w&&w.userClub>=0?w.clubs[w.userClub]:null; return {t:Date.now(),cr:(w&&w.created)||0,v:(w&&w.v)||VERSION,len:s.length,h:strHash(s),season:w?w.season:0,day:w?w.day:0,date:w?fDate(w,w.day,1):'',club:c?c.name:'',mgr:w&&w.mgr?w.mgr.name||'':''}; }
+// revisa que la partida tenga sentido antes de escribirla encima de la anterior; fatal = no se guarda
+function validateWorld(w){
+  const fatal=[], warn=[], int=Number.isInteger, num=v=>typeof v==='number'&&isFinite(v);
+  if(!w||typeof w!=='object') return {ok:false,fatal:['no es una partida'],warn};
+  for(const k of ['leagues','clubs','players','fx','inbox','news']) if(!Array.isArray(w[k])) fatal.push('falta '+k);
+  if(fatal.length) return {ok:false,fatal,warn};
+  if(!w.clubs.length||!w.players.length||!w.leagues.length) fatal.push('mundo vacío');
+  if(!int(w.season)||w.season<1900||w.season>3000) fatal.push('temporada imposible');
+  if(!int(w.day)||w.day<0||w.day>400) fatal.push('día imposible');
+  if(!int(w.userClub)||w.userClub<-1||w.userClub>=w.clubs.length) fatal.push('club del usuario imposible');
+  if(w.userClub>=0&&(!w.mgr||typeof w.mgr!=='object')) fatal.push('falta el mánager');
+  let badP=0, badC=0, badRef=0, nan=0, mism=0;
+  w.players.forEach((p,i)=>{ if(!p||p.id!==i||!Array.isArray(p.a)||p.a.length!==NA||!p.st) badP++; else if(!num(p.ovr)||!num(p.age)) nan++; });
+  w.clubs.forEach((c,i)=>{ if(!c||c.id!==i||!Array.isArray(c.pids)||!c.fin||!w.leagues[c.lg]){ badC++; return; } if(!num(c.fin.bal)||!num(c.fin.tb)) nan++;
+    for(const id of c.pids){ const p=w.players[id]; if(!p) badRef++; else if(p.club!==c.id) mism++; } });
+  for(const L of w.leagues) if(!L||!Array.isArray(L.clubs)||L.clubs.some(id=>!w.clubs[id])) badC++;
+  if(badP) fatal.push(badP+' jugadores dañados'); if(badC) fatal.push(badC+' clubes o ligas dañados'); if(badRef) fatal.push(badRef+' fichas de jugador perdidas');
+  if(nan) warn.push(nan+' valores numéricos no válidos'); if(mism) warn.push(mism+' jugadores con club incoherente');
+  return {ok:!fatal.length,fatal,warn}; }
+// cambios de formato: si cambia la estructura de la partida, se sube VERSION y aquí se añade la conversión (MIGR[5]=w=>{…})
+const MIGR={};
+function migrateWorld(w){ const v0=w.v||1; for(let v=v0+1;v<=VERSION;v++) if(MIGR[v]) MIGR[v](w); if(v0<VERSION) w.v=VERSION; return w; }
+async function tryWorld(s){
+  if(typeof s!=='string'||s.length<10) return {why:'vacía'};
+  let w; try{ w=await unpackWorld(s); }catch(e){ return {why:'el archivo está dañado y no se puede leer'}; }
+  const v=validateWorld(w); if(!v.ok) return {why:'datos dañados ('+v.fatal[0]+')'};
+  if(!(w.userClub>=0)) return {why:'no hay partida en curso'};
+  return {w}; }
+// las copias se escriben de una en una para que el índice nunca se pise
+let _bakQ=Promise.resolve();
+function bakSerial(fn){ const p=_bakQ.then(fn,fn); _bakQ=p.catch(()=>{}); return p; }
+async function bakList(){ const L=await Store.get('bak_index',true); return Array.isArray(L)?L:[]; }
+function bakPut(kind,s,meta,label){ return bakSerial(async()=>{
+  if(typeof s!=='string'||s.length<10) return false;
+  const k='bak_'+kind+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  if(!await Store.set(k,s,true)) return false;
+  const L=await bakList(); L.push(Object.assign({},meta||{},{k,kind,t:Date.now(),st:(meta&&meta.t)||0,label:label||''}));
+  const drop=[]; for(const kd in BAK_KEEP) drop.push(...L.filter(b=>b.kind===kd).sort((a,b)=>b.t-a.t).slice(BAK_KEEP[kd]));
+  if(!await Store.set('bak_index',L.filter(b=>!drop.includes(b)),true)) return false;
+  for(const b of drop) await Store.del(b.k);
+  return true; }); }
+// copia lo que hay guardado ahora mismo, tal cual, antes de sustituirlo
+async function bakCurrent(kind,label){ const s=await Store.get('save'); if(typeof s!=='string'||s.length<10) return false; return bakPut(kind,s,await Store.get('save_meta')||{},label); }
+async function bakAuto(s,meta){
+  const L=await bakList();
+  if(!L.some(b=>b.kind==='season'&&b.season===meta.season&&b.cr===meta.cr)) await bakPut('season',s,meta);
+  const last=L.filter(b=>b.kind==='auto').sort((a,b)=>b.t-a.t)[0];
+  if(!last||last.season!==meta.season||meta.day-last.day>=7) await bakPut('auto',s,meta); }
+function saveFail(msg){ SAVE.fail++; SAVE.err=msg||'No se pudo escribir en este dispositivo.';
+  if(Date.now()-SAVE.warnT>180000){ SAVE.warnT=Date.now(); toast('No se pudo guardar la partida. Descarga una copia desde Ajustes','bad'); } }
+// abre la partida del dispositivo; si está dañada, la aparta y recupera la copia más reciente que funcione
+async function loadLocal(){
+  let s=null, meta=null; try{ s=await Store.get('save'); meta=await Store.get('save_meta'); }catch(e){}
+  // sin partida ni rastro de ella: primera vez o partida borrada a propósito
+  if((typeof s!=='string'||s.length<10)&&!meta) return {w:null};
+  const r=await tryWorld(s); if(r.w) return {w:r.w,s,meta};
+  if(typeof s!=='string'||s.length<10){ s=typeof s==='string'?s+' ':'vacía'; r.why='el guardado está vacío'; }
+  console.warn('partida guardada no válida:',r.why);
+  if(await bakPut('bad',s,meta||{},r.why)){ await Store.del('save'); await Store.del('save_meta'); }
+  // primero las copias de esta misma partida (cr = cuándo se creó), de la más reciente a la más antigua; después las demás
+  const same=b=>meta&&meta.cr&&b.cr===meta.cr?1:0;
+  for(const b of (await bakList()).filter(b=>b.kind!=='bad').sort((a,b)=>same(b)-same(a)||b.t-a.t)){
+    const bs=await Store.get(b.k,true), r2=await tryWorld(bs); if(!r2.w) continue;
+    const nm=Object.assign({},b,{t:Date.now()}); await Store.set('save',bs); await Store.set('save_meta',nm);
+    return {w:r2.w,s:bs,meta:nm,rec:b,why:r.why}; }
+  return {w:null,lost:r.why}; }
+function bakWhen(b){ return new Date(b.t).toLocaleString('es-MX',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+async function bakModal(){
+  const L=(await bakList()).sort((a,b)=>b.t-a.t);
+  modal(`<header><h3>Copias de seguridad</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
+  <p class="muted" style="margin-top:0">El juego guarda copias solo en este dispositivo: cada semana de juego, al empezar cada temporada y antes de sustituir o borrar tu partida. Al restaurar una copia, tu partida actual también se guarda como copia.</p>
+  <div class="col" style="gap:8px">${L.map(b=>`<div class="card" style="padding:10px 12px"><div class="row wrap" style="gap:10px"><div style="flex:1;min-width:190px"><b>${esc(b.club||'Partida')}</b> <span class="chip ${b.kind==='bad'?'bad':''}">${BAK_NAME[b.kind]||b.kind}</span><div class="muted" style="font-size:13px">${b.date?esc(b.date)+' · ':''}copia del ${bakWhen(b)}${b.label?' · '+esc(b.label):''}</div></div>${b.kind==='bad'?'':`<button class="btn sm pri" data-a="bakrestore" data-k="${b.k}">Restaurar</button>`}<button class="btn sm" data-a="bakdl" data-k="${b.k}">Descargar</button></div></div>`).join('')||'<p class="muted" style="margin:0">Todavía no hay copias. Se crearán solas mientras juegas.</p>'}</div>
+  <p class="snote">Las copias viven en este navegador: si borras sus datos o cambias de dispositivo, desaparecen. Descarga una de vez en cuando y guárdala donde quieras; se recupera con Importar.</p>`,true); }
+async function bakRestoreAsk(k){ const b=(await bakList()).find(x=>x.k===k); if(!b) return;
+  modal(`<header><h3>Restaurar copia</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Vas a volver a <b>${esc(b.club||'la partida')}</b>${b.date?', '+esc(b.date):''} (copia del ${bakWhen(b)}).</p><p class="muted">Tu partida actual no se pierde: se guarda como copia antes de restaurar.</p><div class="row"><button class="btn pri" data-a="bakrestorego" data-k="${k}">Restaurar</button><button class="btn" data-a="bakopen">Volver</button></div>`); }
+async function bakRestoreGo(k){ closeModal(); const s=await Store.get(k,true), r=await tryWorld(s);
+  if(!r.w){ toast('Esa copia no se puede abrir: '+r.why,'bad'); return; }
+  await adoptWorld(r.w,'Antes de restaurar una copia'); APP.notice=null; toast('Copia restaurada','good'); }
+async function bakDownload(k){ const b=(await bakList()).find(x=>x.k===k), s=await Store.get(k,true); if(!b||typeof s!=='string'){ toast('No se encontró la copia','bad'); return; }
+  const name=`dt26-copia-${(b.club||'partida').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-')}-${new Date(b.t).toISOString().slice(0,10)}.txt`;
+  if(CAP.downloads){ try{ await CAP.downloads.save({filename:name,data:new Blob([s],{type:'text/plain'})}); toast('Copia descargada','good'); return; }catch(e){ if(e&&e.code==='declined') return; } }
+  try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([s],{type:'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); toast('Copia descargada','good'); }
+  catch(e){ APP.exp=s; modal(`<header><h3>Copia de seguridad</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Copia este texto y guárdalo. Para recuperarlo usa Importar y después Pegar partida.</p><div class="row"><button class="btn pri" data-a="copyexp">Copiar todo (${Math.round(s.length/1024)} KB)</button></div>`); } }
+function saveAgo(){ if(!SAVE.t) return 'todavía no hay ningún guardado'; const m=Math.round((Date.now()-SAVE.t)/60000); return m<1?'hace un momento':m===1?'hace 1 minuto':m<60?`hace ${m} minutos`:'hace más de una hora'; }
+
+/* ---------- una sola pestaña guarda a la vez ----------
+   Si el juego se abre en otra pestaña o ventana, la anterior guarda lo último, deja de guardar y avisa. Así nunca se pisan. */
+const TAB={id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),bc:null,peers:new Set(),wait:null};
+try{ TAB.bc=new BroadcastChannel('dt26'); TAB.bc.onmessage=e=>{ tabMsg(e.data||{}).catch(err=>console.warn('pestañas',err)); }; TAB.bc.postMessage({t:'hello',id:TAB.id}); }catch(e){ TAB.bc=null; }
+window.addEventListener('pagehide',()=>{ try{ TAB.bc&&TAB.bc.postMessage({t:'bye',id:TAB.id}); }catch(e){} });
+async function tabMsg(m){
+  if(!m.id||m.id===TAB.id) return;
+  if(m.t==='hello'){ TAB.peers.add(m.id); try{ TAB.bc.postMessage({t:'here',id:TAB.id}); }catch(e){} return; }
+  if(m.t==='here'){ TAB.peers.add(m.id); return; }
+  if(m.t==='bye'){ TAB.peers.delete(m.id); return; }
+  if(m.t==='released'){ if(m.to===TAB.id&&TAB.wait) TAB.wait(m.id); return; }
+  if(m.t!=='claim') return;
+  TAB.peers.add(m.id);
+  if(!APP.ro){ if(APP.mode==='game'||APP.mode==='match') await saveNow(); APP.ro='tab'; tabLostUI(); }
+  try{ TAB.bc.postMessage({t:'released',id:TAB.id,to:m.id}); }catch(e){} }
+// antes de jugar, esta pestaña pide el turno: las demás guardan y se apartan
+async function tabTakeover(){
+  if(APP.ro==='tab') APP.ro=null;
+  if(!TAB.bc) return;
+  const left=new Set(TAB.peers);
+  await new Promise(res=>{ const done=()=>{ TAB.wait=null; res(); };
+    const t=setTimeout(()=>{ for(const id of left) TAB.peers.delete(id); done(); },1500);
+    TAB.wait=id=>{ left.delete(id); if(!left.size){ clearTimeout(t); done(); } };
+    try{ TAB.bc.postMessage({t:'claim',id:TAB.id}); }catch(e){ clearTimeout(t); done(); }
+    if(!left.size){ clearTimeout(t); done(); } }); }
+function tabLostUI(){
+  APP.notice={title:'Partida abierta en otra pestaña',body:'Abriste DT26 en otra pestaña o ventana. Esta deja de guardar para no pisar tu progreso. Pulsa Continuar partida para traer aquí lo último que guardaste.'};
+  if(APP.mode==='menu'){ renderMenu(); return; }
+  if(APP.mode!=='game'&&APP.mode!=='match'&&APP.mode!=='full') return;
+  if(MX.on&&MX.state==='play'&&!MX.paused){ MX.paused=true; hudBtns(); }
+  modal(`<header><h3>Partida abierta en otra pestaña</h3></header><p style="margin-top:0">Abriste DT26 en otra pestaña o ventana. Para no pisar tu progreso, esta pestaña ya no guarda cambios.</p><div class="row wrap"><button class="btn pri" data-a="tabhere">Seguir jugando aquí</button></div><p class="snote">Seguir aquí vuelve a cargar tu último guardado en esta pestaña, y la otra dejará de guardar.</p>`); }
+// si otra pestaña guardó después que esta, se trae su progreso antes de seguir
+async function reloadIfNewer(){
+  const meta=await Store.get('save_meta'); if(!meta||!meta.t||meta.t<=(APP.savedT||0)+500) return false;
+  const r=await tryWorld(await Store.get('save')); if(!r.w) return false;
+  migrateWorld(r.w); APP.game=fixWorld(r.w); APP.savedT=SAVE.t=meta.t; return true; }
 
 /* =========================================================
    Interfaz de gestión
@@ -2442,8 +2577,10 @@ VIEWS.settings=()=>{
   const s=W.settings, th=(()=>{try{return localStorage.getItem('dt26_theme')||'auto'}catch(e){return 'auto'}})();
   return `<div class="head"><h2>Guardar y ajustes</h2></div><div class="grid">
   <div class="card"><h3>Partida</h3><p class="muted" style="margin-top:0">El juego se guarda solo en este dispositivo cada vez que avanzas.${CAP.db?' También puedes subir una copia a tu cuenta para continuar en otro dispositivo.':''}</p>
+   <p style="margin:0 0 10px" class="${SAVE.fail||APP.ro?'bad':SAVE.t?'good':'muted'}">${APP.ro==='tab'?'Esta pestaña no guarda: la partida está abierta en otra.':APP.ro==='newer'?'No se guarda: la partida es de una versión más nueva del juego.':SAVE.fail?esc(SAVE.err):'Último guardado: '+saveAgo()+'.'}</p>
    <div class="row wrap"><button class="btn pri" data-a="save">Guardar ahora</button>${CAP.db?'<button class="btn" data-a="cloudsave">Guardar en la nube</button><button class="btn" data-a="cloudload">Cargar de la nube</button>':''}</div>
-   <div class="row wrap" style="margin-top:10px"><button class="btn" data-a="export">Exportar partida</button><button class="btn" data-a="import">Importar partida</button></div></div>
+   <div class="row wrap" style="margin-top:10px"><button class="btn" data-a="export">Exportar partida</button><button class="btn" data-a="import">Importar partida</button><button class="btn" data-a="bakopen">Copias de seguridad</button></div>
+   <p class="snote">Además del guardado, el juego crea copias de seguridad automáticas: cada semana de juego, al empezar cada temporada y antes de sustituir o borrar tu partida.</p></div>
   <div class="card"><h3>Apariencia</h3><div class="seg">${[['auto','Sistema'],['light','Claro'],['dark','Oscuro']].map(([k,l])=>`<button class="${th===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div></div>
   <div class="card"><h3>Partidos</h3><div class="instr"><span>Velocidad inicial</span><div class="seg">${[1,2,4].map(v=>`<button class="${s.speed===v?'on':''}" data-a="set" data-k="speed" data-v="${v}">${v}×</button>`).join('')}</div>
    <span>Narración</span><div class="seg">${[['full','Completo'],['hl','Destacados']].map(([k,l])=>`<button class="${s.mode===k?'on':''}" data-a="set" data-k="mode" data-v="${k}">${l}</button>`).join('')}</div>
@@ -4385,15 +4522,27 @@ function musStep(s,t){
 const APP={mode:'boot',game:null,base:null,pick:{step:0,name:'',lg:-1,club:-1},fs:false,gen:false};
 
 /* ---------- guardado local ---------- */
-let _svT=0,_svBusy=false,_svAgain=false;
+let _svT=0,_svP=null;
 function autosave(){ clearTimeout(_svT); _svT=setTimeout(saveNow,700); }
+// si ya hay un guardado en marcha, se espera a que termine y se guarda el estado más reciente (nunca se descarta un guardado)
 async function saveNow(){
   clearTimeout(_svT);
-  if(!W||W.userClub<0) return false;
-  if(_svBusy){ _svAgain=true; return false; }
-  _svBusy=true; let ok=false;
-  try{ ok=await Store.set('save',await packWorld(W)); }catch(e){ console.warn('save',e); ok=false; }
-  _svBusy=false; if(_svAgain){ _svAgain=false; autosave(); }
+  while(_svP){ try{ await _svP; }catch(e){} }
+  if(!W||W.userClub<0||APP.ro) return false;
+  _svP=saveRun(); try{ return await _svP; } finally{ _svP=null; }
+}
+async function saveRun(){
+  let ok=false;
+  try{
+    const chk=validateWorld(W);
+    if(!chk.ok){ console.error('partida no válida, no se guarda:',chk.fatal); saveFail('La partida tiene datos dañados ('+chk.fatal[0]+'). No se guardó para no estropear tu último guardado bueno.'); }
+    else { W.v=VERSION; const s=await packWorld(W), meta=worldMeta(W,s), prev=await Store.get('save_meta');
+      // si el guardado encoge de golpe, algo raro pasó: se conserva antes el anterior
+      if(prev&&prev.len>150000&&s.length<prev.len*.6) await bakCurrent('shrink','El guardado se redujo de golpe');
+      ok=await Store.set('save',s);
+      if(ok){ await Store.set('save_meta',meta); SAVE.t=meta.t; SAVE.fail=0; SAVE.err=''; APP.savedT=meta.t; try{ await bakAuto(s,meta); }catch(e){ console.warn('copia',e); } }
+      else saveFail(); }
+  }catch(e){ console.warn('save',e); ok=false; saveFail(); }
   return ok;
 }
 function fixWorld(w){
@@ -4488,7 +4637,8 @@ function seasonModal(){
   W.stop=null; const m=W.inbox.find(x=>/^Balance de la temporada/.test(x.subj)); if(m) m.read=true;
   modal(`<header><h3>Arranca la temporada ${seasonLabel(W)}</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
   ${m?`<p class="muted" style="margin-top:0">${esc(m.subj)}</p><div class="mailbody">${esc(m.body)}</div>`:''}
-  <div class="row" style="margin-top:14px"><button class="btn pri" data-a="close">A trabajar</button></div>`);
+  <p class="snote">Buen momento para descargar una copia de tu partida: si se borran los datos del navegador o cambias de dispositivo, es la forma de no perderla.</p>
+  <div class="row wrap" style="margin-top:14px"><button class="btn pri" data-a="close">A trabajar</button><button class="btn" data-a="export">Descargar copia</button></div>`);
   render(); autosave();
 }
 function boardCheck(){
@@ -4595,23 +4745,32 @@ function stadClose(){ GFX.release('full'); $('#hud').innerHTML=''; $('#stage').c
 
 /* ---------- nube, exportar e importar ---------- */
 const CLOUD_N=200000;
+// la nube alterna dos ranuras (a y b): la copia anterior sigue intacta hasta que la nueva está completa y comprobada
+const cloudChunk=(m,i)=>m.slot?'dt26'+m.slot+i:'dt26c'+i;
+async function cloudMeta(name){ try{ const sn=await CAP.db.doc('data/users/'+CAP.uid+'/'+name).get(); return sn.exists?sn.data():null; }catch(e){ return null; } }
+async function cloudFetch(m){ const base='data/users/'+CAP.uid+'/'; let s='';
+  for(let i=0;i<m.n;i++){ const sn=await CAP.db.doc(base+cloudChunk(m,i)).get(); if(!sn.exists) throw new Error('falta un fragmento'); s+=sn.data().s; }
+  if(s.length!==m.len) throw new Error('partida incompleta'); if(m.h&&strHash(s)!==m.h) throw new Error('la copia no coincide con lo que se subió'); return s; }
 async function cloudSave(){
   if(!CAP.db||!CAP.uid){ toast('La nube no está disponible aquí','bad'); return; }
+  const chk=validateWorld(W); if(!chk.ok){ toast('La partida tiene datos dañados; no se sube para no estropear la copia de la nube','bad'); return; }
   toast('Subiendo tu partida…');
   try{
-    const s=await packWorld(W), n=Math.ceil(s.length/CLOUD_N), base='data/users/'+CAP.uid+'/';
-    for(let i=0;i<n;i++) await CAP.db.doc(base+'dt26c'+i).set({s:s.slice(i*CLOUD_N,(i+1)*CLOUD_N)});
-    const c=W.clubs[W.userClub];
-    await CAP.db.doc(base+'dt26save').set({n,len:s.length,t:Date.now(),club:c.name,season:seasonLabel(W),date:fDate(W,W.day,1),v:VERSION});
+    const s=await packWorld(W), n=Math.ceil(s.length/CLOUD_N), base='data/users/'+CAP.uid+'/', old=await cloudMeta('dt26save'), slot=old&&old.slot==='a'?'b':'a';
+    for(let i=0;i<n;i++) await CAP.db.doc(base+'dt26'+slot+i).set({s:s.slice(i*CLOUD_N,(i+1)*CLOUD_N)});
+    const c=W.clubs[W.userClub], meta={n,len:s.length,h:strHash(s),slot,t:Date.now(),club:c.name,season:seasonLabel(W),date:fDate(W,W.day,1),v:VERSION};
+    if(await cloudFetch(meta)!==s) throw new Error('la copia subida no coincide');
+    if(old) await CAP.db.doc(base+'dt26prev').set(old);
+    await CAP.db.doc(base+'dt26save').set(meta);
     toast('Partida guardada en la nube','good');
-  }catch(e){ console.warn(e); toast('No se pudo guardar en la nube','bad'); }
+  }catch(e){ console.warn(e); toast('No se pudo guardar en la nube. La copia anterior sigue intacta','bad'); }
 }
 async function cloudLoad(){
   if(!CAP.db||!CAP.uid){ toast('La nube no está disponible aquí','bad'); return; }
   try{
     const snap=await CAP.db.doc('data/users/'+CAP.uid+'/dt26save').get();
     if(!snap.exists){ toast('No tienes partidas en la nube todavía'); return; }
-    const m=snap.data(); APP.cloudMeta=m;
+    const m=snap.data(); APP.cloudMeta=m; APP.cloudPrev=await cloudMeta('dt26prev');
     modal(`<header><h3>Cargar de la nube</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
     <p style="margin-top:0">Partida con <b>${esc(m.club)}</b>, temporada ${esc(m.season)}, ${esc(m.date)}. Guardada el ${new Date(m.t).toLocaleString('es-MX')}.</p>
     ${APP.game?'<p class="muted">Sustituirá la partida de este dispositivo.</p>':''}<div class="row"><button class="btn pri" data-a="cloudgo">Cargar</button><button class="btn" data-a="close">Cancelar</button></div>`);
@@ -4619,16 +4778,18 @@ async function cloudLoad(){
 }
 async function cloudLoadGo(){
   const m=APP.cloudMeta; if(!m||!CAP.db) return; closeModal(); toast('Descargando partida…');
-  try{
-    const base='data/users/'+CAP.uid+'/'; let s='';
-    for(let i=0;i<m.n;i++){ const sn=await CAP.db.doc(base+'dt26c'+i).get(); if(!sn.exists) throw new Error('falta un fragmento'); s+=sn.data().s; }
-    if(s.length!==m.len) throw new Error('partida incompleta');
-    await adoptWorld(await unpackWorld(s)); toast('Partida cargada desde la nube','good');
-  }catch(e){ console.warn(e); toast('No se pudo cargar: '+(e&&e.message||e),'bad'); }
+  let w=null, err=null;
+  for(const [mm,prev] of [[m,0],[APP.cloudPrev,1]]){ if(!mm) continue;
+    try{ const r=await tryWorld(await cloudFetch(mm)); if(!r.w) throw new Error(r.why); w=r.w; if(prev) toast('La última copia de la nube estaba incompleta: se cargó la anterior','bad'); break; }catch(e){ console.warn(e); err=err||e; } }
+  if(!w){ toast('No se pudo cargar: '+(err&&err.message||err),'bad'); return; }
+  try{ await adoptWorld(w,'Antes de cargar desde la nube'); toast('Partida cargada desde la nube','good'); }catch(e){ toast('No se pudo cargar: '+(e&&e.message||e),'bad'); }
 }
-async function adoptWorld(w){
+async function adoptWorld(w,why){
   if(!w||!Array.isArray(w.clubs)||!Array.isArray(w.players)||!Array.isArray(w.leagues)) throw new Error('el archivo no es una partida de DT26');
-  fixWorld(w); W=w; rnd=RNG(newSeed());
+  const chk=validateWorld(w); if(!chk.ok) throw new Error('la partida está dañada ('+chk.fatal[0]+')');
+  if((w.v||0)>VERSION) throw new Error('la guardó una versión más nueva del juego');
+  if(w.userClub>=0){ await tabTakeover(); await bakCurrent('replace',why||'Antes de importar otra partida'); }
+  migrateWorld(w); fixWorld(w); W=w; rnd=RNG(newSeed());
   if(w.userClub>=0){ APP.game=w; enterGame(); await saveNow(); if(W.stop) seasonModal(); }
   else { APP.base=w; menuEditor(); }
 }
@@ -4660,9 +4821,9 @@ function pasteJSON(){
 }
 async function pasteGo(){ const t=$('#pastetxt'); if(!t||!t.value.trim()) return; try{ const v=t.value; closeModal(); await loadText(v); }catch(e){ toast('El texto no es una partida válida','bad'); } }
 async function wipeGo(){
-  closeModal(); await Store.del('save'); APP.game=null;
+  closeModal(); await bakCurrent('replace','Antes de borrar la partida'); await Store.del('save'); await Store.del('save_meta'); APP.game=null; APP.savedT=0;
   if(W.userClub>=0) genWorld(newSeed());
-  toast('Partida local borrada'); showMenu();
+  toast('Partida borrada. Queda una copia en Copias de seguridad'); showMenu();
 }
 
 /* ---------- navegación general ---------- */
@@ -4727,15 +4888,16 @@ function renderMenu(){
     m.innerHTML=`<div class="mwrap wide"><div class="pick"><div class="row" style="margin-bottom:10px"><h3 style="flex:1">${esc(L.name)}</h3><button class="btn sm" data-a="mback">Cambiar de liga</button></div>
     <div class="pick2"><div class="clubgrid">${clubs.map(x=>`<button class="clubbtn ${x.id===P.club?'on':''}" data-a="mclub" data-id="${x.id}">${crestSVG(x,40)}<span>${esc(x.name)}</span>${starsHTML(x.rep+5)}</button>`).join('')}</div>${det}</div></div></div>`;
     return; }
-  const g=APP.game, mOn=!!(SND.on&&SND.music);
-  m.innerHTML=`<div class="mwrap"><div><div class="logo">DT<span>26</span></div><div class="tag">Director Técnico. Tu club, tu estadio, tus decisiones.</div></div>
+  const g=APP.game, mOn=!!(SND.on&&SND.music), N=APP.notice;
+  const note=N?`<div class="pick" style="padding:12px 14px;border-left:4px solid ${N.bad?'#ea5a51':'#f2b23a'}"><b style="font:700 19px 'Barlow Condensed',sans-serif">${esc(N.title)}</b><div style="font-size:14px;opacity:.86;margin-top:4px">${esc(N.body)}</div><div class="row wrap" style="gap:8px;margin-top:10px"><button class="btn sm" data-a="bakopen">Copias de seguridad</button>${APP.ro?'':'<button class="btn sm" data-a="noticeok">Entendido</button>'}</div></div>`:'';
+  m.innerHTML=`<div class="mwrap"><div><div class="logo">DT<span>26</span></div><div class="tag">Director Técnico. Tu club, tu estadio, tus decisiones.</div></div>${note}
   <div class="col" style="gap:10px">
    ${g?`<button class="mbtn pri" data-a="mcont"><span>Continuar partida<small>${esc(g.clubs[g.userClub].name)}, ${fDate(g,g.day,1)} ${seasonLabel(g)}</small></span>${icon('play')}</button>`:''}
    <button class="mbtn ${g?'':'pri'}" data-a="mnew"><span>Nueva partida<small>11 ligas con segundas divisiones, 9 competiciones de clubes, 7 torneos de selecciones y un mundo que no se detiene</small></span>${g?'':icon('play')}</button>
    <button class="mbtn" data-a="medit"><span>Editor de base de datos<small>Jugadores, caras, escudos, estadios y ligas</small></span></button>
    ${CAP.db?`<button class="mbtn" data-a="mcloud"><span>Cargar de la nube<small>Sigue tu partida en otro dispositivo</small></span></button>`:''}
   </div>
-  <div class="row wrap" style="gap:8px"><button class="btn sm" data-a="import">Importar archivo</button><button class="btn sm" data-a="pastejson">Pegar partida</button><button class="btn sm msnd" data-a="msnd" aria-pressed="${mOn?'true':'false'}">${icon(mOn?'snd':'mute')}${mOn?'Música: sí':'Música: no'}</button><div class="seg">${[['auto','Sistema'],['light','Claro'],['dark','Oscuro']].map(([k,l])=>`<button class="${th===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div></div>
+  <div class="row wrap" style="gap:8px"><button class="btn sm" data-a="import">Importar archivo</button><button class="btn sm" data-a="pastejson">Pegar partida</button><button class="btn sm" data-a="bakopen">Copias de seguridad</button><button class="btn sm msnd" data-a="msnd" aria-pressed="${mOn?'true':'false'}">${icon(mOn?'snd':'mute')}${mOn?'Música: sí':'Música: no'}</button><div class="seg">${[['auto','Sistema'],['light','Claro'],['dark','Oscuro']].map(([k,l])=>`<button class="${th===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div></div>
   <div class="mfoot">${W.settings&&W.settings.real?'Jugadores y ligas ficticios; los clubes grandes llevan su nombre real.':'Ligas, clubes y jugadores ficticios.'} La partida se guarda en este dispositivo${CAP.db?' y, si quieres, en tu cuenta':''}.</div></div>`;
 }
 function menuNew(){
@@ -4745,8 +4907,11 @@ function menuNew(){
   APP.gen=true; renderMenu();
   setTimeout(()=>{ try{ genWorld(newSeed()); }finally{ APP.gen=false; } start(); },40);
 }
-function menuStart(){
-  const P=APP.pick, c=W.clubs[P.club]; if(!c) return;
+async function menuStart(){
+  const P=APP.pick, c=W.clubs[P.club]; if(!c||APP.starting) return;
+  // la partida anterior no se pierde: queda como copia de seguridad antes de empezar otra
+  APP.starting=true; try{ await tabTakeover(); await bakCurrent('replace','Antes de empezar una partida nueva'); }finally{ APP.starting=false; }
+  APP.notice=null;
   W.userClub=c.id; W.mgr.name=(P.name||'').trim().slice(0,28)||'Mánager'; W.mgr.nat=P.nat||W.leagues[c.lg].nat;
   if(c.mg>=0&&W.mgrs&&W.mgrs[c.mg]){ W.mgrs[c.mg].club=-1; } c.mg=-1;
   Object.assign(W.mgr,{rep:clamp(Math.round(c.rep*.7+12),30,75),face:genFace(W.mgr.nat,44),stints:[],ach:{},troph:[],aw:[],sacks:0,run:{u:0,w:0},cs:{}});
@@ -4803,7 +4968,10 @@ const ACT={
   roof:()=>stadRoof(),
   edst:(el)=>{ UI.edit.tab='est'; UI.edit.cid=+el.dataset.id; go('editor'); },
   budget:()=>{ const c=W.clubs[W.userClub]; if(c.fin.bal<=0){ toast('No hay saldo positivo que traspasar','bad'); return; } const v=roundMoney(c.fin.bal*.2); c.fin.tb+=v; toast(`${money(v)} añadidos al presupuesto de fichajes`,'good'); render(); autosave(); },
-  save:async()=>{ const ok=await saveNow(); toast(ok?'Partida guardada en este dispositivo':'No se pudo guardar',ok?'good':'bad'); },
+  save:async()=>{ const ok=await saveNow(); toast(ok?'Partida guardada en este dispositivo':APP.ro?'Esta pestaña no guarda':'No se pudo guardar',ok?'good':'bad'); if(UI.view==='settings') render(); },
+  bakopen:()=>bakModal(), bakrestore:(el)=>bakRestoreAsk(el.dataset.k), bakrestorego:(el)=>bakRestoreGo(el.dataset.k), bakdl:(el)=>bakDownload(el.dataset.k),
+  noticeok:()=>{ APP.notice=null; renderMenu(); },
+  tabhere:()=>{ closeModal(); location.reload(); },
   cloudsave:()=>cloudSave(),
   cloudload:()=>cloudLoad(),
   cloudgo:()=>cloudLoadGo(),
@@ -4814,7 +4982,7 @@ const ACT={
   pastego:()=>pasteGo(),
   theme:(el)=>{ setTheme(el.dataset.v); refresh(); },
   set:(el)=>{ const k=el.dataset.k; let v=el.dataset.v; if(['speed','audio','rep'].includes(k)) v=+v; W.settings[k]=v; if(k==='gfx') GFX.setQuality(v); render(); autosave(); },
-  wipe:()=>modal(`<header><h3>Borrar partida local</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Se borrará la partida guardada en este dispositivo. ${CAP.db?'La copia de la nube, si existe, no se toca.':'No se puede deshacer.'}</p><div class="row"><button class="btn dan" data-a="wipego">Borrar</button><button class="btn" data-a="close">Cancelar</button></div>`),
+  wipe:()=>modal(`<header><h3>Borrar partida local</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Se borrará la partida guardada en este dispositivo. Antes se guarda una copia de seguridad, por si te arrepientes.${CAP.db?' La copia de la nube, si existe, no se toca.':''}</p><div class="row"><button class="btn dan" data-a="wipego">Borrar</button><button class="btn" data-a="close">Cancelar</button></div>`),
   wipego:()=>wipeGo(),
   more:()=>moreSheet(),
   exit:()=>exitToMenu(),
@@ -4846,7 +5014,7 @@ const ACT={
   msnd:()=>{ if(!SND.on){ SND.on=1; SND.music=1; } else SND.music=SND.music?0:1; if(W) W.settings.audio=SND.on; sndSave(); sndApply(); renderMenu(); },
   mx:(el)=>mxCmd(el.dataset.v),
   mhome:()=>{ APP.pick.step=0; renderMenu(); },
-  mcont:()=>{ if(!APP.game) return; W=APP.game; enterGame(); if(W.jobless) jobOffersModal('Sin club','Sigues buscando banquillo. Elige tu próximo reto.'); else if(W.stop) seasonModal(); },
+  mcont:async()=>{ if(!APP.game) return; await tabTakeover(); if(await reloadIfNewer()) toast('Cargado tu progreso más reciente','good'); if(APP.ro==='newer'){ toast('Esta partida es de una versión más nueva: se abre sin guardar','bad'); } APP.notice=APP.ro?APP.notice:null; W=APP.game; enterGame(); if(W.jobless) jobOffersModal('Sin club','Sigues buscando banquillo. Elige tu próximo reto.'); else if(W.stop) seasonModal(); },
   mnew:()=>menuNew(),
   mlg:(el)=>{ APP.pick.lg=+el.dataset.id; APP.pick.club=-1; APP.pick.step=2; renderMenu(); },
   mclub:(el)=>{ APP.pick.club=+el.dataset.id; renderMenu(); },
@@ -7266,9 +7434,15 @@ async function wireCaps(){
 /* ---------- arranque ---------- */
 async function boot(){
   try{ const t=localStorage.getItem('dt26_theme'); if(t) setTheme(t); }catch(e){}
-  let g=null;
-  try{ const s=await Store.get('save'); if(typeof s==='string'&&s.length>10) g=await unpackWorld(s); }catch(e){ console.warn('save',e); g=null; }
-  if(g&&Array.isArray(g.clubs)&&Array.isArray(g.players)&&g.userClub>=0){ W=fixWorld(g); APP.game=g; rnd=RNG(newSeed()); }
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){} // pide al navegador que no borre los datos del juego por falta de espacio
+  let g=null, L={w:null};
+  try{ L=await loadLocal(); }catch(e){ console.warn('save',e); }
+  if(L.rec) APP.notice={bad:1,title:'Tu partida guardada estaba dañada',body:`No se pudo abrir (${L.why}), así que recuperamos la copia de seguridad del ${bakWhen(L.rec)}${L.rec.date?' ('+L.rec.date+')':''}. La partida dañada se conserva en Copias de seguridad.`};
+  else if(L.lost) APP.notice={bad:1,title:'No se pudo abrir tu partida guardada',body:`El archivo está dañado (${L.lost}). Se conserva en Copias de seguridad por si se puede recuperar; mientras tanto puedes importar una copia descargada.`};
+  if(L.w){ g=L.w;
+    if((g.v||0)>VERSION){ APP.ro='newer'; APP.notice={bad:1,title:'Partida de una versión más nueva',body:'Esta partida se guardó con una versión más reciente de DT26. Puedes jugarla, pero esta versión no la guardará para no estropearla. Recarga la página para usar la versión nueva.'}; }
+    else if((g.v||0)<VERSION) await bakPut('premig',L.s,L.meta||{});
+    migrateWorld(g); W=fixWorld(g); APP.game=g; APP.savedT=SAVE.t=(L.meta&&L.meta.t)||0; rnd=RNG(newSeed()); }
   else genWorld(newSeed());
   if(W.settings&&W.settings.gfx) GFX.setQuality(W.settings.gfx);
   try{ if(!localStorage.getItem('dt26_snd')&&W.settings&&W.settings.audio===0){ SND.on=0; sndSave(); } }catch(e){}
