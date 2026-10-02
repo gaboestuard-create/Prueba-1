@@ -1,6 +1,13 @@
 {
   "_nota": "Versiones publicadas del juego. Las partidas guardadas por cada una deben seguir abriéndose en la versión actual. Al publicar una versión nueva, añade aquí su commit.",
   "versiones": [
-    { "commit": "a37429e", "descripcion": "Versión base publicada antes de las protecciones de guardado" }
+    {
+      "commit": "a37429e",
+      "descripcion": "Versión base publicada antes de las protecciones de guardado"
+    },
+    {
+      "commit": "fb8c2a9",
+      "descripcion": "Versión 12 del artefacto: protección de partidas"
+    }
   ]
 }
