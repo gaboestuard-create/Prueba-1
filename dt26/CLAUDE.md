@@ -38,6 +38,8 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
   Vitrina del jugador: `jugVitCheck` guarda cada título, premio y logro con su texto en `W.pc.vit`.
 - Selección del jugador: `jugNatCall` (al sortear torneos), `jugIntl` (parones de octubre, noviembre y marzo) y
   `jugNatMatch` (cada partido). `natSquad` ordena por `jugNtOvr`: la confianza del seleccionador pesa en su caso.
+- Capitanía: el club del jugador tiene capitán fijo en `c.tac.spk.cap` (`jugCapCheck`, al empezar la temporada y
+  el 1 de enero). El editor funciona en el modo jugador; mover al propio jugador pasa por `jugEdMove`.
 
 ## Pruebas
 

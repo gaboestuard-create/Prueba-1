@@ -261,8 +261,8 @@ test('modo jugador: se crea, todas sus pantallas se dibujan y las del técnico n
   await newPlayerCareer(page);
   const r = await page.evaluate(async () => {
     const p = W.players[W.me], seen = {};
-    for (const v of ['home', 'world', 'inbox', 'cal', 'jme', 'jtrain', 'jcon', 'jclub', 'comp', 'sel', 'trophy', 'settings']) { go(v); seen[v] = UI.view; }
-    const dt = {}; for (const v of ['squad', 'tactics', 'market', 'club', 'staff', 'cantera', 'editor', 'mgr', 'locker']) { go(v); dt[v] = UI.view; }
+    for (const v of ['home', 'world', 'inbox', 'cal', 'jme', 'jtrain', 'jcon', 'jclub', 'comp', 'sel', 'trophy', 'settings', 'editor']) { go(v); seen[v] = UI.view; }
+    const dt = {}; for (const v of ['squad', 'tactics', 'market', 'club', 'staff', 'cantera', 'mgr', 'locker']) { go(v); dt[v] = UI.view; }
     moreSheet(); closeModal(); palOpen(); closeModal(); bakModal(); closeModal();
     return { ok: await saveNow(), v: validateWorld(W), mode: W.mode, club: p.club, uc: W.userClub, age: p.age, seen, dt, mgrOk: W.clubs[p.club].mg >= 0 };
   });
@@ -480,6 +480,45 @@ test('modo jugador: selección nacional (parones, convocatorias y pantalla)', as
   const r3 = await page.evaluate(() => { for (let i = 0; i < 40; i++) { jugFixture(W); dayW(W); if (W.stop) W.stop = null; } return { n: (W.pc.nml || []).filter(e => e.s === W.season).length, T: (W.tours || []).some(T => T.teams.includes('ESP')) }; });
   if (r3.T && r2.inSq) assert(r3.n >= 1, 'no jugó ningún partido del torneo');
   console.log(`      parón: ${r1.ap} partido(s); torneo este verano: ${r2.T ? 'sí, ' + r3.n + ' partido(s)' : 'no le toca a España'}`);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('modo jugador: capitanía del club y de la selección, y editor interno', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { tal: 2 });
+  const r = await page.evaluate(() => {
+    const p = W.players[W.me], c = W.clubs[p.club], out = {};
+    // un líder veterano con la confianza del técnico se gana el brazalete
+    p.a[A.lea] = 20; p.age = 29; W.pc.trust = 90; W.pc.hist = [1, 2, 3, 4].map(k => ({ s: W.season - k, c: c.id, ap: 30, g: 5, as: 3, rt: 7, ovr: p.ovr }));
+    jugCapCheck(W); out.cap = jugIsCap(W); out.mail = W.inbox.some(m => /nuevo capitán/.test(m.subj));
+    p.inj = 0; p.sus = 0; if (!c.xi.includes(p.id)) { c.subs = c.subs.filter(x => x !== p.id); c.xi[10] = p.id; }
+    const M = newMatch(W, c, W.clubs.find(x => !x.national && x.id !== c.id), { user: null }); out.engineCap = M.s[0].cap === p.id;
+    // decisiones que solo recibe el capitán
+    const e = JUG_EV.capbonus.gen(W, p); out.ev = !!e; if (e) JUG_EV.capbonus.res(W, p, { t: 'pev', e: 'capbonus', ...e }, 0);
+    // si el técnico deja de confiar, pierde el brazalete
+    W.pc.trust = 10; jugCapCheck(W); out.lost = !jugIsCap(W);
+    // selección: el más veterano de la lista es el capitán
+    p.nt = { ap: 99, g: 10 }; const sq = natSquad(W, p.nat).map(q => q.id); if (!sq.includes(p.id)) sq.push(p.id); jugNatCap(W, sq); out.capN = !!(W.pc.capN && W.pc.capN.nat === p.nat);
+    // editor: se abre, cambia atributos y mueve al jugador como un fichaje firmado
+    go('editor'); out.ed = UI.view; UI.edit.tab = 'jug'; UI.edit.pid = p.id; render();
+    const inp = document.querySelector('[data-in="epa"][data-k="' + A.fin + '"]'); inp.value = 20; inp.dispatchEvent(new Event('input', { bubbles: true })); out.fin = p.a[A.fin];
+    const to = W.clubs.find(x => !x.national && x.id !== p.club && x.lg === c.lg); const sel = document.querySelector('[data-in="epclub"]'); sel.value = String(to.id); sel.dispatchEvent(new Event('change', { bubbles: true }));
+    out.moved = p.club === to.id && W.userClub === to.id && W.pc.lc === to.id && to.pids.includes(p.id) && !c.pids.includes(p.id);
+    UI.edit.tab = 'herr'; render(); out.noEvt = !document.querySelector('[data-a="evforce"]');
+    go('jlife'); out.capCard = /Capitanía/.test(document.querySelector('#main').textContent);
+    out.ok = validateWorld(W).ok; return out;
+  });
+  assert(r.cap && r.mail, 'no se ganó la capitanía: ' + JSON.stringify(r));
+  assert(r.engineCap, 'el motor del partido no usa al jugador como capitán');
+  assert(r.ev, 'el capitán no recibe sus decisiones');
+  assert(r.lost, 'no perdió el brazalete sin la confianza del técnico');
+  assert(r.capN, 'no fue capitán de la selección siendo el más veterano');
+  assert(r.ed === 'editor' && r.fin === 20, 'el editor no funciona en modo jugador');
+  assert(r.moved, 'mover al jugador desde el editor no actualizó su club');
+  assert(r.noEvt && r.capCard && r.ok, 'faltan detalles: ' + JSON.stringify(r));
+  await simDaysJug(page, 30);
+  assert(await page.evaluate(() => validateWorld(W).ok && W.players[W.me].club === W.userClub), 'la partida quedó mal tras usar el editor');
   assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
   await ctx.close();
 });
