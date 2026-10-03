@@ -20,6 +20,11 @@
       "commit": "439e1ee",
       "guardado": 5,
       "descripcion": "Versión 14 del artefacto: modo jugador, segunda fase"
+    },
+    {
+      "commit": "a99891e",
+      "guardado": 5,
+      "descripcion": "Versión 15 del artefacto: vida fuera del campo en el modo jugador"
     }
   ]
 }
