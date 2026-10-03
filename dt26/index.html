@@ -522,6 +522,59 @@ table.t{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap;
 .bx div.w{font-weight:700}
 .ccbar{height:4px;border-radius:3px;margin:-4px 0 12px}
 .shouts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+/* ---------- diseño compacto (teléfono en horizontal, o cuando se elige en Ajustes) ----------
+   El menú lateral se reduce a una columna de grupos; cada grupo abre su panel sin cambiar de pantalla. */
+.rg{display:none}
+#shell{position:relative}
+.cmp #nav{display:flex!important;width:64px;padding:6px 5px;gap:4px;overflow-y:auto;overflow-x:hidden;padding-left:calc(env(safe-area-inset-left,0px) + 5px);box-sizing:content-box}
+.cmp #nav>.ng,.cmp #nav>.nv,.cmp #nav>.sep{display:none}
+.cmp #bnav{display:none!important}
+.cmp .rg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:64px;min-height:54px;padding:6px 2px;border:0;border-radius:11px;background:none;color:var(--muted);font:700 11.5px 'Barlow Condensed',sans-serif;letter-spacing:.02em;cursor:pointer;position:relative;flex:none}
+.cmp .rg svg{width:21px;height:21px}
+.cmp .rg.on{background:var(--panel2);color:var(--text);box-shadow:inset 3px 0 0 var(--club)}
+.cmp .rg.open{background:var(--acc);color:var(--accText);box-shadow:none}
+.cmp .rg .badge{position:absolute;top:2px;right:6px;min-width:17px;height:17px;font-size:10.5px;padding:0 4px}
+#fly{display:none}
+.cmp #fly.on{display:block;position:absolute;inset:0;z-index:30}
+#fly .flybg{position:absolute;inset:0;background:rgba(10,16,12,.35);border:0;padding:0;cursor:default}
+#fly .flyp{position:absolute;top:6px;bottom:6px;left:calc(env(safe-area-inset-left,0px) + 76px);width:min(520px,calc(100% - 96px));background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.28);padding:10px;overflow:auto;animation:flyin .14s ease-out}
+@keyframes flyin{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+#fly h4{margin:0 0 8px 4px;font:800 17px 'Barlow Condensed',sans-serif;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+#fly .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+#fly .fi{display:flex;align-items:center;gap:9px;text-align:left;padding:9px 10px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;min-height:48px;position:relative}
+#fly .fi svg{width:20px;height:20px;flex:none;color:var(--muted)}
+#fly .fi b{display:block;font:700 15.5px 'Barlow Condensed',sans-serif;line-height:1.1}
+#fly .fi small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;margin-top:1px}
+#fly .fi.on{border-color:var(--club);box-shadow:inset 3px 0 0 var(--club)}
+#fly .fi .badge{margin-left:auto}
+#fly .ff{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+/* cabecera baja */
+.cmp #top{min-height:42px;padding:3px 10px;gap:7px;padding-left:calc(env(safe-area-inset-left,0px) + 10px);padding-right:calc(env(safe-area-inset-right,0px) + 10px)}
+.cmp #top .crest{width:24px!important;height:29px!important}
+.cmp #top .club b{font-size:16px}.cmp #top .club small{font-size:11px}
+.cmp #top .money{display:block;font-size:14.5px}.cmp #top .money small{font-size:10.5px}
+.cmp .tbb{height:34px;min-width:34px;padding:0 8px;font-size:14px}.cmp .tbb .tl,.cmp .tbb kbd{display:none}
+.cmp .go{padding:6px 13px;font-size:16px;border-radius:10px}
+/* contenido más denso */
+.cmp #main{padding:8px 12px 16px;padding-right:calc(env(safe-area-inset-right,0px) + 12px)}
+.cmp h2{font-size:21px}.cmp h3{font-size:16px}.cmp h4{font-size:14.5px}
+.cmp .head{margin-bottom:8px;gap:8px}
+.cmp .card{padding:9px 11px;border-radius:12px}
+.cmp .grid{gap:9px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}.cmp .g2{gap:9px}
+.cmp table.t{font-size:13px}.cmp .t td{padding:3px 7px}.cmp .t th{padding:5px 7px;font-size:12.5px}
+.cmp .t .av,.cmp .av{width:26px;height:26px}
+.cmp .btn{padding:6px 11px;font-size:14.5px}
+.cmp .seg button{padding:5px 10px}
+.cmp .chip{font-size:12px;padding:1px 8px}
+.cmp .face-big{width:96px;height:96px}
+@media (min-width:700px){.cmp .g2{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}}
+.cmp #main{font-size:13.5px;line-height:1.38}.cmp .head p,.cmp .head .muted{font-size:13.5px;margin:0}
+.cmp .stars{font-size:11.5px;letter-spacing:0}
+.cmp .seg{flex-wrap:nowrap!important;overflow-x:auto;max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cmp .seg::-webkit-scrollbar{display:none}.cmp .seg button,.cmp .seg>.seg{flex:none}.cmp .seg button{font-size:14px;white-space:nowrap}
+.cmp .t td{padding:2px 7px}.cmp .pos{font-size:11.5px;padding:0 5px}
+.cmp .tiles{gap:6px}.cmp .tile{padding:8px 10px}
+.cmp input,.cmp select{font-size:14px}
 </style>
 </head>
 <body>
@@ -530,7 +583,7 @@ table.t{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap;
   <section id="menu" class="hidden"></section>
   <section id="game" class="hidden">
     <header id="top"></header>
-    <div id="shell"><nav id="nav" aria-label="Secciones"></nav><main id="main" tabindex="-1"></main></div>
+    <div id="shell"><nav id="nav" aria-label="Secciones"></nav><main id="main" tabindex="-1"></main><div id="fly"></div></div>
     <nav id="bnav" aria-label="Secciones"></nav>
   </section>
   <div id="modal" class="hidden" role="dialog" aria-modal="true"></div>
@@ -1064,7 +1117,12 @@ function rpTune(p,ovr){ const L=PWL[p.pos].l;
     const [i]=L[ri(0,L.length-1)]; const v=p.a[i]+s; if(v<1||v>20) continue; p.a[i]=v; }
   upd(p); }
 // Convierte jugadores generados en los reales de cada club. Nunca toca a tu jugador ni a los canteranos.
+// las estrellas son los reales: los inventados que pasan de 80 se acercan a 80 (94 → 84). Una sola vez por partida; tu club no se toca.
+function rpCap(w){ if(w.rpCap) return; w.rpCap=1;
+  for(const p of w.players){ if(p.rk||p.ret||p.yth||p.club<0||p.club===w.userClub||p.id===w.me||p.ovr<=80) continue;
+    const pa=p.pa; rpTune(p,Math.round(80+(p.ovr-80)*.3)); p.pa=Math.max(p.ovr,Math.min(pa,p.ovr+(p.age<=23?6:0))); p.val=calcValue(p); } }
 function applyRealPlayers(w){
+  rpCap(w);
   const have=new Set(w.players.filter(p=>p.rk).map(p=>p.rk)); let n=0;
   for(const c of w.clubs){
     const rows=RPLAY[c.name]; if(!rows) continue;
@@ -2602,9 +2660,14 @@ function modal(html,wide){ const m=$('#modal'); m.innerHTML=`<div class="mbox ${
 function closeModal(){ $('#modal').classList.add('hidden'); $('#modal').innerHTML=''; }
 // actualiza el contenido de un modal ya abierto sin repetir la animación de entrada ni perder el scroll
 function modalSet(html,wide){ const m=$('#modal'), box=m.querySelector('.mbox'); if(box&&!m.classList.contains('hidden')){ box.classList.toggle('wide',!!wide); box.style.animation='none'; box.innerHTML=html; } else modal(html,wide); }
+// diseño compacto: 'auto' lo activa en teléfonos en horizontal; 'on' siempre; 'off' nunca
+const CMPQ=(()=>{ try{ return matchMedia('(max-height:520px) and (orientation:landscape)'); }catch(e){ return null; } })();
+function cmpPref(){ try{ return localStorage.getItem('dt26_cmp')||'auto'; }catch(e){ return 'auto'; } }
+function cmpApply(){ const p=cmpPref(), on=p==='on'||(p==='auto'&&!!(CMPQ&&CMPQ.matches)); const r=document.documentElement; if(r.classList.contains('cmp')!==on){ r.classList.toggle('cmp',on); if(!on&&UI.fly){ UI.fly=null; renderFly(); } } return on; }
+try{ CMPQ&&CMPQ.addEventListener&&CMPQ.addEventListener('change',cmpApply); }catch(e){}
 function setTheme(t){ const r=document.documentElement; if(t==='light'||t==='dark') r.setAttribute('data-theme',t); else r.removeAttribute('data-theme'); try{localStorage.setItem('dt26_theme',t);}catch(e){} }
 
-function go(v,o){ if(v==='fixtures') v='cal'; if(isJug(W)){ if(v==='club'||v==='squad'||v==='tactics') v='jclub'; else if(!JUGV.has(v)) v='home'; } if(v==='world') W.nseen=W.newsId||0; if(o) Object.assign(UI,o); UI.view=v; render(); const mn=$('#main'); if(mn) mn.scrollTop=0; }
+function go(v,o){ UI.fly=null; if(v==='fixtures') v='cal'; if(isJug(W)){ if(v==='club'||v==='squad'||v==='tactics') v='jclub'; else if(!JUGV.has(v)) v='home'; } if(v==='world') W.nseen=W.newsId||0; if(o) Object.assign(UI,o); UI.view=v; render(); const mn=$('#main'); if(mn) mn.scrollTop=0; }
 function render(){
   if(!W||APP.mode!=='game') return;
   imgSync();
@@ -2637,10 +2700,19 @@ function navBadge(v){
   return '';
 }
 function navOn(v){ return UI.view===v||(isJug(W)&&((v==='jme'&&UI.view==='player'&&UI.pid===W.me)||(v==='jclub'&&UI.view==='team'&&UI.cid===jugClub(W))))||(UI.view==='story'&&(UI.stBack===v||(!UI.stBack&&v==='world')))||(v==='squad'&&UI.view==='player'&&W.players[UI.pid]?.club===W.userClub)||(v==='comp'&&UI.view==='team')||(v==='cal'&&UI.view==='fixtures'); }
+const RAIL={Oficina:['Oficina','home'],Equipo:['Equipo','squad'],'Competición':['Torneos','comp'],Club:['Club','club'],Herramientas:['Más','settings'],'Mi carrera':['Carrera','mgr'],'Fútbol':['Fútbol','comp']};
+function railBadge(items){ let n=0; for(const [v] of items){ if(v==='inbox') n+=W.inbox.filter(m=>!m.read).length; if(v==='home') n+=pendingActs().length; } return n; }
+function renderFly(){ const el=$('#fly'); if(!el) return; const G=navGroups().find(([g])=>g===UI.fly);
+  if(!G){ el.className=''; el.innerHTML=''; return; }
+  const ok=v=>v!=='ai'||CAP.sample;
+  el.className='on'; el.innerHTML=`<button class="flybg" data-a="fly" data-g="" aria-label="Cerrar menú"></button><div class="flyp" role="menu"><h4>${G[0]}</h4><div class="fg">${G[1].filter(([v])=>ok(v)).map(([v,l,ic])=>`<button class="fi ${navOn(v)?'on':''}" data-a="go" data-v="${v}" role="menuitem">${icon(ic)}<span><b>${l}</b><small>${NAVDESC[v]||''}</small></span>${navBadge(v)}</button>`).join('')}</div>
+   <div class="ff"><button class="btn" data-a="pal">${icon('search').replace('<svg','<svg width="16" height="16"')} Buscar</button>${G[0]==='Herramientas'?`<button class="btn" data-a="exit">${icon('exit').replace('<svg','<svg width="16" height="16"')} Menú principal</button>`:''}</div></div>`; }
 function renderNav(){
   const ok=v=>v!=='ai'||CAP.sample;
-  $('#nav').innerHTML=navGroups().map(([g,items])=>`<div class="ng">${g}</div>`+items.filter(([v])=>ok(v)).map(([v,l,ic])=>`<button class="nv ${navOn(v)?'on':''}" data-a="go" data-v="${v}" title="${NAVDESC[v]||''}">${icon(ic)}<span>${l}</span>${navBadge(v)}</button>`).join('')).join('')+
+  const rail=navGroups().map(([g,items])=>{ const r=RAIL[g]||[g,'more'], b=railBadge(items); return `<button class="rg ${items.some(([v])=>navOn(v))?'on':''} ${UI.fly===g?'open':''}" data-a="fly" data-g="${g}" aria-label="${g}">${icon(r[1])}<span>${r[0]}</span>${b?`<span class="badge">${b>99?'99+':b}</span>`:''}</button>`; }).join('');
+  $('#nav').innerHTML=rail+navGroups().map(([g,items])=>`<div class="ng">${g}</div>`+items.filter(([v])=>ok(v)).map(([v,l,ic])=>`<button class="nv ${navOn(v)?'on':''}" data-a="go" data-v="${v}" title="${NAVDESC[v]||''}">${icon(ic)}<span>${l}</span>${navBadge(v)}</button>`).join('')).join('')+
    `<div class="sep"></div><button class="nv" data-a="exit">${icon('exit')}<span>Menú principal</span></button>`;
+  renderFly();
   const B=isJug(W)?[['home','Inicio','home'],['world','Mundo','world'],['cal','Calendario','cal'],['jme','Jugador','mgr'],['jtrain','Entreno','tactics']]:[['home','Inicio','home'],['world','Mundo','world'],['cal','Calendario','cal'],['squad','Plantilla','squad'],['tactics','Tácticas','tactics']];
   const unread=W.inbox.filter(m=>!m.read).length, nwn=UI.view==='world'?0:W.news.filter(x=>x.id>(W.nseen||0)).length;
   $('#bnav').innerHTML=B.map(([v,l,ic])=>`<button class="nv ${navOn(v)?'on':''}" data-a="go" data-v="${v}">${icon(ic)}<span>${l}</span>${v==='home'&&unread?`<span class="badge" style="position:absolute;margin:-4px 0 0 22px">${unread}</span>`:''}${v==='world'&&nwn?`<span class="badge" style="position:absolute;margin:-4px 0 0 22px;background:#2f7dd1;color:#fff">${nwn>99?'99+':nwn}</span>`:''}</button>`).join('')+`<button class="nv ${B.some(b=>navOn(b[0]))?'':'on'}" data-a="more">${icon('more')}<span>Más</span></button>`;
@@ -2948,7 +3020,9 @@ VIEWS.settings=()=>{
    <div class="row wrap"><button class="btn pri" data-a="save">Guardar ahora</button>${CAP.db?'<button class="btn" data-a="cloudsave">Guardar en la nube</button><button class="btn" data-a="cloudload">Cargar de la nube</button>':''}</div>
    <div class="row wrap" style="margin-top:10px"><button class="btn" data-a="export">Exportar partida</button><button class="btn" data-a="import">Importar partida</button><button class="btn" data-a="bakopen">Copias de seguridad</button></div>
    <p class="snote">Además del guardado, el juego crea copias de seguridad automáticas: cada semana de juego, al empezar cada temporada y antes de sustituir o borrar tu partida.</p></div>
-  <div class="card"><h3>Apariencia</h3><div class="seg">${[['auto','Sistema'],['light','Claro'],['dark','Oscuro']].map(([k,l])=>`<button class="${th===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div></div>
+  <div class="card"><h3>Apariencia</h3><div class="instr"><span>Tema</span><div class="seg">${[['auto','Sistema'],['light','Claro'],['dark','Oscuro']].map(([k,l])=>`<button class="${th===k?'on':''}" data-a="theme" data-v="${k}">${l}</button>`).join('')}</div>
+   <span>Diseño compacto</span><div class="seg">${[['auto','Automático'],['on','Siempre'],['off','Nunca']].map(([k,l])=>`<button class="${cmpPref()===k?'on':''}" data-a="cmp" data-v="${k}">${l}</button>`).join('')}</div></div>
+   <p class="snote">El diseño compacto junta el menú en una columna de grupos (cada uno abre su panel) y aprieta textos y tablas para que quepa más sin bajar. En automático se activa en el teléfono en horizontal; con "Siempre" también sirve dentro de la ventana de Claude.</p></div>
   <div class="card"><h3>Partidos</h3><div class="instr"><span>Velocidad inicial</span><div class="seg">${[1,2,4].map(v=>`<button class="${s.speed===v?'on':''}" data-a="set" data-k="speed" data-v="${v}">${v}×</button>`).join('')}</div>
    <span>Narración</span><div class="seg">${[['full','Completo'],['hl','Destacados']].map(([k,l])=>`<button class="${s.mode===k?'on':''}" data-a="set" data-k="mode" data-v="${k}">${l}</button>`).join('')}</div>
    <span>Repeticiones de gol</span><div class="seg">${[[1,'Sí'],[0,'No']].map(([k,l])=>`<button class="${(s.rep??1)===k?'on':''}" data-a="set" data-k="rep" data-v="${k}">${l}</button>`).join('')}</div>
@@ -5359,6 +5433,8 @@ const ACT={
   pastejson:()=>pasteJSON(),
   pastego:()=>pasteGo(),
   theme:(el)=>{ setTheme(el.dataset.v); refresh(); },
+  cmp:(el)=>{ try{ localStorage.setItem('dt26_cmp',el.dataset.v); }catch(e){} cmpApply(); render(); },
+  fly:(el)=>{ const g=el.dataset.g||null; UI.fly=UI.fly===g?null:g; renderNav(); },
   set:(el)=>{ const k=el.dataset.k; let v=el.dataset.v; if(['speed','audio','rep'].includes(k)) v=+v; W.settings[k]=v; if(k==='gfx') GFX.setQuality(v); render(); autosave(); },
   wipe:()=>modal(`<header><h3>Borrar partida local</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Se borrará la partida guardada en este dispositivo. Antes se guarda una copia de seguridad, por si te arrepientes.${CAP.db?' La copia de la nube, si existe, no se toca.':''}</p><div class="row"><button class="btn dan" data-a="wipego">Borrar</button><button class="btn" data-a="close">Cancelar</button></div>`),
   wipego:()=>wipeGo(),
@@ -8581,7 +8657,7 @@ Object.assign(ACT,{
   mjface:()=>{ APP.pick.face=genFace(APP.pick.nat||'MEX',17); renderMenu(); },
   mnewj:()=>menuNew('jug')
 });
-['jtf','jti','jtp','jcask','jpos','jpost','jvit','rktab','edtab','edpl','edcl','edst','edrandface','edrandcrest','ednewp','est','edwk','edcsel','tool','ecmoney','ecwage','plinj','plheal','plwage','jretask','jretgo','jsim','agead','realpl'].forEach(k=>JUG_OK.add(k));
+['jtf','jti','jtp','jcask','jpos','jpost','jvit','rktab','edtab','edpl','edcl','edst','edrandface','edrandcrest','ednewp','est','edwk','edcsel','tool','ecmoney','ecwage','plinj','plheal','plwage','jretask','jretgo','jsim','agead','realpl','cmp','fly'].forEach(k=>JUG_OK.add(k));
 Object.assign(MINP,{ jfn:(t)=>{ APP.pick.fn=t.value; }, jln:(t)=>{ APP.pick.ln=t.value; }, jnn:(t)=>{ APP.pick.nn=t.value; }, jpos:(t)=>{ APP.pick.pos=t.value; } });
 
 /* ---------- menú: crear al jugador ---------- */
@@ -8642,6 +8718,7 @@ async function wireCaps(){
 /* ---------- arranque ---------- */
 async function boot(){
   try{ const t=localStorage.getItem('dt26_theme'); if(t) setTheme(t); }catch(e){}
+  cmpApply();
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){} // pide al navegador que no borre los datos del juego por falta de espacio
   let mig=null; try{ mig=await slotsMigrate(); }catch(e){ console.warn('huecos',e); }
   if(mig){ const body=mig.moved?'Antes, empezar una carrera de jugador sustituía la de técnico. Ya no: cada una se guarda por separado. '+(mig.rec?`Tu carrera de técnico se recuperó de la copia de seguridad del ${bakWhen(mig.rec)}${mig.rec.date?' ('+mig.rec.date+')':''}.`:'No había ninguna copia de tu carrera de técnico para recuperarla.'):`Cada carrera se guarda ahora por separado. Tu carrera de jugador se recuperó de la copia de seguridad del ${bakWhen(mig.recJ)}.`;

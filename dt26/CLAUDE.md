@@ -81,6 +81,16 @@ Antes de publicar una versión nueva:
 - La edad de tus jugadores (o la de tu jugador en el modo jugador) se cambia con − / + en su ficha
   (`agead`, entre 15 y 45 años) o en el editor: sirve para evitar retiros.
 
+## Teléfono (diseño compacto)
+
+- La clase `cmp` en `<html>` activa el diseño compacto: `cmpApply()` la pone en teléfonos en horizontal
+  (`max-height:520px` y apaisado) o siempre/nunca según Ajustes (localStorage `dt26_cmp`).
+- En `cmp` el menú lateral es una columna de grupos (`.rg`, `RAIL`); cada grupo abre `#fly` con sus
+  secciones (`UI.fly`, acción `fly`), y `go()` lo cierra. Las filas de pestañas (`.seg`) se deslizan en
+  horizontal en vez de partirse en varias líneas. Toda regla compacta va bajo `.cmp`.
+- Los jugadores inventados que pasaban de 80 se acercan a 80 una sola vez (`rpCap`, marca `w.rpCap`) para
+  que las estrellas sean los reales; el club del usuario no se toca.
+
 ## Estética
 
 Fuentes Barlow y Barlow Condensed. Colores en variables CSS de `:root`, con tema claro y oscuro.

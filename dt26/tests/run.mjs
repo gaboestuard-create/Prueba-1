@@ -723,6 +723,36 @@ test('edad: tus jugadores se pueden rejuvenecer y así no se retiran', async () 
   await ctx.close();
 });
 
+/* ---------- 9. teléfono ---------- */
+test('teléfono en horizontal: diseño compacto con menú por grupos', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
+  const { page, errors } = await openGame(ctx, srv.url);
+  await newCareer(page);
+  const r = await page.evaluate(() => ({ cmp: document.documentElement.classList.contains('cmp'), rail: document.querySelectorAll('#nav .rg').length, list: [...document.querySelectorAll('#nav .nv')].filter(e => e.offsetParent).length }));
+  assert(r.cmp && r.rail === 5 && r.list === 0, 'no se activó el diseño compacto: ' + JSON.stringify(r));
+  // cada grupo abre su panel y lleva a la pantalla elegida, sin desbordar la pantalla
+  await page.click('#nav .rg[data-g="Club"]');
+  assert(await page.locator('#fly .fi').count() >= 5, 'el panel del grupo no se abrió');
+  await page.click('#fly .fi[data-v="market"]');
+  const s = await page.evaluate(() => ({ v: UI.view, fly: !!UI.fly, wide: document.documentElement.scrollWidth > innerWidth }));
+  assert(s.v === 'market' && !s.fly && !s.wide, 'el panel no llevó al mercado: ' + JSON.stringify(s));
+  for (const v of ['home', 'squad', 'tactics', 'comp', 'inbox', 'club', 'settings', 'world']) await page.evaluate(v => go(v), v);
+  // tocar fuera cierra el panel
+  await page.click('#nav .rg[data-g="Oficina"]'); await page.mouse.click(800, 300);
+  assert(!(await page.evaluate(() => UI.fly)), 'el panel no se cierra al tocar fuera');
+  // en Ajustes se puede apagar
+  await page.evaluate(() => go('settings')); await page.click('[data-a="cmp"][data-v="off"]');
+  assert(!(await page.evaluate(() => document.documentElement.classList.contains('cmp'))), 'no se apagó');
+  await page.click('[data-a="cmp"][data-v="auto"]');
+  // modo jugador
+  await page.evaluate(() => exitToMenu()); await newPlayerCareer(page);
+  assert(await page.locator('#nav .rg').count() === 4, 'el modo jugador no tiene sus grupos');
+  await page.click('#nav .rg[data-g="Mi carrera"]'); await page.click('#fly .fi[data-v="jtrain"]');
+  assert(await page.evaluate(() => UI.view) === 'jtrain', 'el modo jugador no navega desde el panel');
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 /* ---------- ejecución ---------- */
 const filter = process.argv.slice(2).join(' ').toLowerCase();
 const list = tests.filter(t => !filter || t.name.toLowerCase().includes(filter));
