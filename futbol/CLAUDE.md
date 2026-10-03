@@ -7,12 +7,14 @@ Se publica como artefacto de claude.ai con su propio enlace (ver "Publicar"). To
 
 | Archivo | Qué hay |
 | --- | --- |
-| `js/motor.js` | El partido: física, IA, controles, reglas, gráficos 3D. `nuevoPartido(cfg)` y `resultadoPartido()` |
+| `js/sonido.js` | `SFX`: todos los sonidos, sintetizados con Web Audio (sin archivos) |
+| `js/motor.js` | El partido: física, IA, controles, reglas, gráficos 3D. `nuevoPartido(cfg)` y `resultadoPartido()`. También la escena 3D de los menús (`construirMenu3D`, `animarMenu3D`) |
 | `js/datos.js` | Las 8 ligas con sus clubes (nombres reales, colores, estadios) y los nombres para inventar jugadores |
 | `js/mundo.js` | Generar el mundo, alineaciones, `equipoParaPartido`, `simularPartido`, calendarios, tablas, evolución |
 | `js/interfaz.js` | Marcador, controles táctiles, pausa, ajustes |
 | `js/guardado.js` | Guardado protegido y ranuras |
-| `js/menus.js` | Sistema de pantallas (`pantalla()`), menú principal, selector de clubes, amistoso, resultado |
+| `js/menus.js` | Sistema de pantallas (`pantalla()`), selector de clubes, amistoso, resultado, lista `MODOS` |
+| `js/portada.js` | Portada ("Pulsa cualquier botón"), menú principal por páginas y navegación con teclado y mando |
 | `js/torneos.js` | Liga, copa y Copa de Campeones |
 | `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
 | `js/carrera_dt.js` | Carrera de técnico (`CDT`) |
@@ -71,7 +73,7 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 Hecho: motor jugable (física, IA, controles, medio tiempo), 8 ligas, menús, amistoso, torneos, carrera de técnico,
 carrera de jugador (controlas solo a tu jugador, puedes salir del banquillo a mitad de partido), Equipo Estrella y
 editor con fotos y escudos.
-Pendiente: faltas, penaltis en juego, fuera de juego y saques con animación; sonido; repeticiones; mercado de cartas;
+Pendiente: faltas, penaltis en juego, fuera de juego y saques con animación; repeticiones; mercado de cartas;
 copas nacionales dentro de las carreras.
 
 ## Regla número uno: no perder el progreso
@@ -135,6 +137,22 @@ Hay dos, se elige en Ajustes → Jugadores (`DATOS.ajustes.modelo`):
 Las sombras de verdad solo están con el modelo realista y gráficos "Alta" o "Automático"; en automático se quitan
 primero si el juego va lento (`actualizarSombras`, `medirFps`). La prueba de modelos comprueba que el juego entero
 se dibuja con menos de 80 llamadas de dibujo.
+
+## Menús y sonido
+
+- Al abrir sale la **portada** (`mostrarPortada`): cualquier tecla, toque o botón del mando entra al menú. Ese primer
+  toque es también el que desbloquea el sonido (los navegadores no dejan sonar antes).
+- **Menú principal** (`menuPrincipal`, en `portada.js`): páginas `PAGINAS` (Jugar, Carreras, Estrella, Más) que se
+  deslizan de lado (desplazamiento con `scroll-snap`; con ratón se arrastra) y baldosas hechas con `tile()`. Las pruebas
+  buscan `#bJugar` (partido rápido) y `[data-acc="modo"][data-id=...]`: no les quites esos atributos.
+- Detrás de los menús no se dibuja el partido sino `R.menu`: un jugador haciendo toques en un estadio de noche
+  (reutiliza las piezas del modelo realista). En pantallas anchas se corre a la derecha con `setViewOffset`.
+- Navegación de todos los menús: `navegar(dx, dy)` mueve el foco al botón más cercano en esa dirección; Esc/B pulsa
+  el botón "volver" de la pantalla (`data-acc="__atras"`). El mando se lee en `navMando`, llamado desde el bucle.
+  En los menús el teclado del partido (`iniciarTeclado`) no hace nada.
+- Sonido: `SFX.patada`, `bote`, `silbato`, `gol`, `ocasion`, `palo`, `ambiente` (público que sube con el peligro) y los
+  de menú (`mover`, `aceptar`, `atras`, `inicio`). El motor llama a `suena(...)`, que no hace nada en los menús.
+  `pantalla()` ya suena al tocar botones. Volumen en Ajustes → Sonido.
 
 ## Estética
 

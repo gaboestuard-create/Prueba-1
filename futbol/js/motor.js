@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.6.0';
+const JUEGO_VERSION = '0.7.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -206,13 +206,13 @@ function pasoBalon(dt) {
     if (hyp(b.vx, b.vz) < .2) { b.vx = 0; b.vz = 0; }
   }
   b.x += b.vx * dt; b.y += b.vy * dt; b.z += b.vz * dt;
-  if (b.y < BR) { b.y = BR; if (b.vy < -1.2) { b.vy = -b.vy * .5; b.vx *= .88; b.vz *= .88; } else b.vy = 0; }
+  if (b.y < BR) { b.y = BR; if (b.vy < -1.2) { suena('bote', -b.vy); b.vy = -b.vy * .5; b.vx *= .88; b.vz *= .88; } else b.vy = 0; }
   b.rotX += b.vz * dt / BR; b.rotZ -= b.vx * dt / BR;
   // postes y larguero
   if (Math.abs(b.x) > HL - .3 && Math.abs(b.x) < HL + .3 && Math.abs(ox) <= HL) {
     const az = Math.abs(b.z);
-    if (b.y < GH + BR && Math.abs(az - GW2) < BR + .07) { b.vx *= -.55; b.vz += (b.z > 0 ? 1 : -1) * (az > GW2 ? 1.5 : -1.5); b.x = Math.sign(b.x) * (HL - .3); aviso('¡Al palo!', '', 1, true); }
-    else if (az < GW2 && Math.abs(b.y - GH) < BR + .06) { b.vx *= -.5; b.vy = Math.abs(b.vy) * .6 + 1; b.x = Math.sign(b.x) * (HL - .3); aviso('¡Al larguero!', '', 1, true); }
+    if (b.y < GH + BR && Math.abs(az - GW2) < BR + .07) { b.vx *= -.55; b.vz += (b.z > 0 ? 1 : -1) * (az > GW2 ? 1.5 : -1.5); b.x = Math.sign(b.x) * (HL - .3); aviso('¡Al palo!', '', 1, true); suena('palo'); }
+    else if (az < GW2 && Math.abs(b.y - GH) < BR + .06) { b.vx *= -.5; b.vy = Math.abs(b.vy) * .6 + 1; b.x = Math.sign(b.x) * (HL - .3); aviso('¡Al larguero!', '', 1, true); suena('palo'); }
   }
   // dentro de la red: se frena
   if (G.fase === 'gol') {
@@ -237,7 +237,10 @@ function guiarPase(b, dt) {
 }
 
 // patear el balón
+// sonidos del partido (solo durante un partido de verdad, no con el estadio de fondo de los menús)
+function suena(nombre, ...a) { if (typeof SFX !== 'undefined' && !document.body.classList.contains('en-menu')) SFX[nombre](...a); }
 function patear(p, vx, vy, vz, tipo, destino) {
+  suena('patada', clamp(hyp(vx, vy, vz) / 30, .15, 1));
   const b = G.balon;
   if (b.dueno && b.dueno !== p) return;
   b.dueno = null; b.vx = vx; b.vy = vy; b.vz = vz; b.tipo = tipo; b.destino = destino || null;
@@ -1018,6 +1021,7 @@ function saqueInicial(eq) {
   if (!G.autoplay) controlar(G.unJugador || (eq.i === G.usuario ? t : delanteroDe(G.eqs[G.usuario])));
 }
 function fueraDeJuego(tipo, eq, x, z, texto) {
+  suena('silbato', 'corto');
   // el balón salió: pequeña pausa y se reanuda con el equipo que corresponde
   G.muerto = 1; G.pendiente = { tipo, eq, x, z };
   const b = G.balon; b.dueno = null; b.vx = b.vy = b.vz = 0; b.tipo = null; b.destino = null;
@@ -1058,6 +1062,7 @@ function revisarLimites(ox) {
   }
 }
 function gol(eq) {
+  suena('gol');
   const b = G.balon, autor = b.ultimo;
   eq.goles++; G.fase = 'gol'; G.golT = 0; G.carga = null; G.buffer = null;
   if (b.dueno) { b.dueno = null; }
@@ -1073,12 +1078,14 @@ function gol(eq) {
 }
 // medio tiempo: los equipos cambian de campo y saca el visitante
 function descanso() {
+  suena('silbato', 'largo');
   G.parte = 2; G.reloj = 2700;
   for (const e of G.eqs) { e.dir *= -1; for (const p of e.pl) p.energia = Math.min(1, (p.energia ?? 1) + .5); }
   saqueInicial(G.eqs[1]);
   aviso('Descanso', 'Cambio de campo · empieza la segunda parte', 2.2);
 }
 function finPartido() {
+  suena('silbato', 'final'); suena('ambiente', false);
   G.fase = 'fin'; G.carga = null;
   if (G.cfg && G.cfg.alTerminar) { G.cfg.alTerminar(resultadoPartido()); return; }
   const [a, b] = [G.eqs[0].goles, G.eqs[1].goles];
@@ -1127,7 +1134,7 @@ function paso(dt) {
   pasoBalon(dt);
   if (G.fase === 'juego' && G.muerto <= 0) { contacto(); revisarLimites(ox); }
   if (G.muerto > 0) { G.muerto -= dt; if (G.muerto <= 0 && G.pendiente) reanudar(); }
-  if (G.fase === 'gol') { G.golT += dt; if (G.golT > 3.2) saqueInicial(golRecibido()); }
+  if (G.fase === 'gol') { G.golT += dt; if (G.golT > 3.2) { saqueInicial(golRecibido()); suena('silbato', 'corto'); } }
 }
 function golRecibido() { // saca el equipo que recibió el último gol
   const b = G.balon; return b.x > 0 ? G.eqs.find(e => e.dir === -1) : G.eqs.find(e => e.dir === 1);
@@ -1144,9 +1151,9 @@ function contacto() {
   if (gk && (cruza || hyp(b.x - gk.x, b.z - gk.z) < 1) && b.y < 2.8) {
     const vel = hyp(b.vx, b.vz);
     gk.z = b.z - (gk.estirada ? gk.estirada.lado * .4 : 0);
-    if (vel < 21 && b.y < 1.8 && rng() < (Math.abs(b.z - (gk.estirada ? gk.estirada.z : gk.z)) < .9 ? .7 : .4)) { b.dueno = null; tomar(gk); gk.retener = 1.2; aviso('¡Atrapada!', '', .9, true); }
+    if (vel < 21 && b.y < 1.8 && rng() < (Math.abs(b.z - (gk.estirada ? gk.estirada.z : gk.z)) < .9 ? .7 : .4)) { b.dueno = null; tomar(gk); gk.retener = 1.2; aviso('¡Atrapada!', '', .9, true); suena('ocasion'); }
     else { // rechace hacia un lado
-      const ld = Math.sign(b.z - gk.z) || (rng() < .5 ? -1 : 1); b.vx = -b.vx * rnd(.15, .35); b.vz = ld * rnd(3, 9); b.vy = rnd(2, 5); b.tipo = 'rechace'; b.paraPor = null; b.ultimo = gk; b.pateador = gk; b.id = ++G.idPatada; gk.patadaCD = .5; aviso('¡Paradón!', '', 1, true); }
+      const ld = Math.sign(b.z - gk.z) || (rng() < .5 ? -1 : 1); b.vx = -b.vx * rnd(.15, .35); b.vz = ld * rnd(3, 9); b.vy = rnd(2, 5); b.tipo = 'rechace'; b.paraPor = null; b.ultimo = gk; b.pateador = gk; b.id = ++G.idPatada; gk.patadaCD = .5; aviso('¡Paradón!', '', 1, true); suena('ocasion'); suena('patada', .7); }
     return;
   }
   let mejor = null, md = 1e9;
@@ -1200,6 +1207,7 @@ function iniciarGraficos() {
   construirJugadores();
   construirReal();
   construirBalon();
+  construirMenu3D();
   aplicarEstilo();
   aplicarModelo();
   ajustarTamano();
@@ -1496,10 +1504,11 @@ function junta(out, padre, px, py, pz, rz, rx = 0, ry = 0) {
   R.E2.set(rx, ry, rz); R.Q2.setFromEuler(R.E2); R.V2.set(px, py, pz); R.L2.compose(R.V2, R.Q2, R.U1);
   return out.multiplyMatrices(padre, R.L2);
 }
-function dibujarReal() {
+// dibuja jugadores con el modelo realista. K: juego de mallas (R para el partido, R.menu.K para el menú)
+function dibujarReal(K = R, lista = G.todos) {
   const b = G.balon;
   const th = [0, 0], kn = [0, 0], ua = [0, 0], ab = [0, 0], co = [0, 0];
-  G.todos.forEach((p, i) => {
+  lista.forEach((p, i) => {
     const sp = hyp(p.vx, p.vz), A = Math.min(1, sp / 7.5), f = p.fase;
     // ciclo de carrera: la rodilla se dobla sobre todo cuando la pierna va hacia delante
     let lean = .04 + A * .2, giro = A * .12 * Math.sin(f), y = A * .05 * Math.abs(Math.cos(f)), roll = 0, atras = 0, arriba = 0;
@@ -1509,7 +1518,7 @@ function dibujarReal() {
       ua[s] = -A * .7 * Math.sin(fs); ab[s] = .1; co[s] = .25 + A * .9;
     }
     if (sp < .3) { th[0] = .05; th[1] = -.05; kn[0] = kn[1] = .12; co[0] = co[1] = .3; lean = .06 + Math.sin(G.t * 2 + i) * .012; giro = 0; y = 0; }
-    if (p.toqueT > 0 && sp > .9) { // toque de conducción: la pierna se adelanta un poco
+    if (p.toqueT > 0 && (sp > .9 || p.malabar)) { // toque de conducción: la pierna se adelanta un poco
       const k = p.pie, w = Math.sin((1 - p.toqueT / .2) * Math.PI);
       th[k] = th[k] * (1 - w) + .55 * w; kn[k] = kn[k] * (1 - w) + .25 * w;
     }
@@ -1533,24 +1542,84 @@ function dibujarReal() {
     R.M.compose(R.V, R.Q, R.U); R.U.set(1, 1, 1);
     // tronco: gira e inclina desde la cintura
     junta(R.Mt, R.M, 0, 1, 0, -lean, 0, giro); R.Mt.multiply(R.T1);
-    R.rTorso.setMatrixAt(i, R.Mt); R.rCabeza.setMatrixAt(i, R.Mt); R.rPelo.setMatrixAt(i, R.Mt); R.rNum.setMatrixAt(i, R.Mt);
-    R.rShort.setMatrixAt(i, R.M);
+    K.rTorso.setMatrixAt(i, R.Mt); K.rCabeza.setMatrixAt(i, R.Mt); K.rPelo.setMatrixAt(i, R.Mt); K.rNum.setMatrixAt(i, R.Mt);
+    K.rShort.setMatrixAt(i, R.M);
     for (let s = 0; s < 2; s++) {
       const lado = s ? 1 : -1, j = i * 2 + s;
       junta(R.Ma, R.M, 0, .93, lado * .095, th[s], -lado * .03);
-      R.rMuslo.setMatrixAt(j, R.Ma); R.rMusloS.setMatrixAt(j, R.Ma);
-      junta(R.Mb, R.Ma, 0, -.42, 0, -kn[s]); R.rTibia.setMatrixAt(j, R.Mb);
-      junta(R.Mc, R.Mb, 0, -.42, 0, -(th[s] - kn[s]) * .8); R.rBota.setMatrixAt(j, R.Mc);
+      K.rMuslo.setMatrixAt(j, R.Ma); K.rMusloS.setMatrixAt(j, R.Ma);
+      junta(R.Mb, R.Ma, 0, -.42, 0, -kn[s]); K.rTibia.setMatrixAt(j, R.Mb);
+      junta(R.Mc, R.Mb, 0, -.42, 0, -(th[s] - kn[s]) * .8); K.rBota.setMatrixAt(j, R.Mc);
       let za = ua[s], xa = -lado * ab[s], codo = co[s];
       if (arriba) { za = 0; xa = -lado * arriba; codo = .15; }
       if (enManos) { za = 1.1; xa = -lado * .2; codo = .9; }
       junta(R.Ma, R.Mt, 0, 1.41, lado * .2, za, xa);
-      R.rBrazo.setMatrixAt(j, R.Ma); R.rManga.setMatrixAt(j, R.Ma);
-      junta(R.Mb, R.Ma, 0, -.28, 0, codo); R.rAntebrazo.setMatrixAt(j, R.Mb);
+      K.rBrazo.setMatrixAt(j, R.Ma); K.rManga.setMatrixAt(j, R.Ma);
+      junta(R.Mb, R.Ma, 0, -.28, 0, codo); K.rAntebrazo.setMatrixAt(j, R.Mb);
     }
   });
-  R.real.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  K.real.forEach(m => { m.instanceMatrix.needsUpdate = true; });
 }
+/* ---------- escena del menú: un jugador haciendo toques bajo un foco, en un estadio de noche ---------- */
+function construirMenu3D() {
+  const S = new THREE.Scene();
+  S.background = texturaCanvas(1024, 576, (c, w, h) => {
+    const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#071425'); g.addColorStop(.55, '#0b2236'); g.addColorStop(1, '#04080c');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    // haces de luz de los focos
+    for (const [x, ang] of [[.12, .5], [.88, -.5], [.35, .2], [.65, -.2]]) {
+      c.save(); c.translate(x * w, 30); c.rotate(ang); const lg = c.createLinearGradient(0, 0, 0, h * .9); lg.addColorStop(0, 'rgba(190,220,255,.22)'); lg.addColorStop(1, 'rgba(190,220,255,0)');
+      c.fillStyle = lg; c.beginPath(); c.moveTo(-8, 0); c.lineTo(8, 0); c.lineTo(130, h); c.lineTo(-130, h); c.closePath(); c.fill(); c.restore();
+      const rg = c.createRadialGradient(x * w, 30, 2, x * w, 30, 70); rg.addColorStop(0, 'rgba(255,255,245,.95)'); rg.addColorStop(.25, 'rgba(200,225,255,.45)'); rg.addColorStop(1, 'rgba(200,225,255,0)');
+      c.fillStyle = rg; c.fillRect(x * w - 80, 0, 160, 110);
+    }
+    // gradas con el público desenfocado (puntitos de colores)
+    const cols = ['255,210,63', '47,123,255', '232,70,58', '243,246,238', '127,209,255', '255,138,101'];
+    for (let i = 0; i < 2600; i++) { const y = h * (.42 + Math.random() * .36), x = Math.random() * w, r = 1 + Math.random() * 2.6; c.fillStyle = `rgba(${cols[Math.floor(Math.random() * cols.length)]},${.12 + Math.random() * .28})`; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+    const v = c.createLinearGradient(0, h * .7, 0, h); v.addColorStop(0, 'rgba(4,8,12,0)'); v.addColorStop(1, 'rgba(4,8,12,.95)'); c.fillStyle = v; c.fillRect(0, h * .7, w, h * .3);
+  });
+  S.fog = new THREE.Fog(0x05101a, 9, 30);
+  S.add(new THREE.HemisphereLight(0xa9c4ff, 0x0b1a10, .5));
+  const foco = new THREE.SpotLight(0xfff1d8, 2.2, 40, .42, .6, 1); foco.position.set(2.5, 11, 4); foco.castShadow = true; foco.shadow.mapSize.set(1024, 1024); foco.shadow.bias = -.0005;
+  S.add(foco, foco.target);
+  const contra = new THREE.DirectionalLight(0x7fd3ff, .9); contra.position.set(-5, 4, -7); S.add(contra);
+  const suelo = new THREE.Mesh(new THREE.CircleGeometry(18, 64), new THREE.MeshLambertMaterial({ map: texturaCesped(['#2a6e31', '#235f29']) }));
+  suelo.rotation.x = -Math.PI / 2; suelo.receiveShadow = true; S.add(suelo);
+  const K = { real: [] };
+  for (const k of ['rTorso', 'rShort', 'rMusloS', 'rMuslo', 'rTibia', 'rBota', 'rCabeza', 'rPelo', 'rBrazo', 'rManga', 'rAntebrazo']) {
+    const m = new THREE.InstancedMesh(R[k].geometry, R[k].material, k === 'rTorso' || k === 'rShort' || k === 'rCabeza' || k === 'rPelo' ? 1 : 2);
+    m.castShadow = true; m.frustumCulled = false; S.add(m); K[k] = m; K.real.push(m);
+  }
+  const gN = R.rNum.geometry.clone(); gN.setAttribute('aNum', new THREE.InstancedBufferAttribute(new Float32Array([10]), 1));
+  K.rNum = new THREE.InstancedMesh(gN, R.rNum.material, 1); K.rNum.frustumCulled = false; S.add(K.rNum); K.real.push(K.rNum);
+  const col = new THREE.Color(), pon = (m, i, c) => { col.set(c); m.setColorAt(i, col); };
+  const cam = 0xf2b51c, pan = 0x0e1520, piel = 0xc98d63;
+  pon(K.rTorso, 0, cam); pon(K.rShort, 0, pan); pon(K.rCabeza, 0, piel); pon(K.rPelo, 0, 0x1d1510);
+  for (let s = 0; s < 2; s++) { pon(K.rMusloS, s, pan); pon(K.rMuslo, s, piel); pon(K.rTibia, s, cam); pon(K.rBota, s, 0x111317); pon(K.rManga, s, cam); pon(K.rBrazo, s, piel); pon(K.rAntebrazo, s, piel); }
+  K.real.forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
+  const balon = new THREE.Mesh(R.balonR.geometry, R.balonR.material); balon.castShadow = true; S.add(balon);
+  const p = { x: 0, z: 0, vx: 0, vz: 0, cara: 0, fase: 0, patadaT: 0, pie: 0, toqueT: 0, num: 10, eq: { i: 0, dir: 1 }, inclLat: 0, frenado: 0, malabar: true, por: false, celebra: 0, suelo: 0, tropiezo: 0 };
+  R.menu = { S, K, balon, p, t: 0, foco };
+}
+// toques con los dos pies (el balón sube y baja al ritmo de la pierna) y cámara que gira despacio alrededor
+function animarMenu3D(dt) {
+  const E = R.menu, p = E.p, b = E.balon; E.t += dt;
+  const per = .64, n = Math.floor(E.t / per), fase = (E.t % per) / per, desde = fase * per, hasta = per - desde;
+  if (desde < .1) { p.pie = n % 2; p.toqueT = .1 - desde; } else if (hasta < .1) { p.pie = (n + 1) % 2; p.toqueT = .1 + hasta; } else p.toqueT = 0;
+  const lado = k => (k ? 1 : -1) * .12, z0 = lado(n % 2), z1 = lado((n + 1) % 2);
+  b.position.set(.42, .3 + 4.4 * fase * (1 - fase) * 1.05, z0 + (z1 - z0) * fase);
+  b.rotation.x += dt * 5; b.rotation.z -= dt * 3;
+  dibujarReal(E.K, [p]);
+  const a = .55 + Math.sin(E.t * .12) * .5, cam = R.cam, ancho = innerWidth, alto = innerHeight;
+  // en vertical la cámara se aleja para que el jugador quepa entre el título y los botones
+  const vertical = ancho <= alto * 1.1, dist = vertical ? 6.4 : 4.6, portada = typeof APP !== 'undefined' && APP.enPortada;
+  cam.fov = 36; cam.position.set(Math.cos(a) * dist, 1.35 + Math.sin(E.t * .2) * .1, Math.sin(a) * dist); cam.lookAt(0, 1.05, 0);
+  // en pantallas anchas el jugador queda a la derecha y los menús a la izquierda; en vertical, arriba (menú) o abajo (portada)
+  if (!vertical) cam.setViewOffset(ancho, alto, -ancho * .2, 0, ancho, alto);
+  else cam.setViewOffset(ancho, alto, 0, alto * (portada ? -.1 : .13), ancho, alto);
+  cam.updateProjectionMatrix();
+}
+
 function aplicarModelo() {
   const real = MODELO_REAL();
   R.real.forEach(m => m.visible = real);
@@ -1569,11 +1638,7 @@ function actualizarSombras() {
 // cámara: sigue al balón
 function moverCamara(dt) {
   const b = G.balon, cam = R.cam, modo = DATOS.ajustes.cam;
-  if (document.body.classList.contains('en-menu')) {
-    const a = G.frames * .0012;
-    cam.fov = 40; cam.position.set(Math.sin(a) * 62, 26, Math.cos(a) * 46); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
-    R.camX = 0; R.camZ = 0; return;
-  }
+  if (cam.view && cam.view.enabled) cam.clearViewOffset();
   const aspecto = window.innerWidth / Math.max(1, window.innerHeight);
   const vertical = aspecto < 1;
   const lead = G.autoplay ? 0 : eqUsuario().dir * 4;

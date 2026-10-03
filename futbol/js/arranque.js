@@ -14,7 +14,14 @@ function bucle(ahora) {
     if (n >= 6) acumulado = 0;
     G.pasosPorFrame = n;
   } else consumirBordes();
-  if (R) { moverCamara(dt); const real = MODELO_REAL(); if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
+  // ambiente del público: sube cuando el balón se acerca a una portería
+  if (typeof SFX !== 'undefined' && (G.frames & 7) === 0) {
+    const enJuego = !G.pausa && G.fase !== 'fin' && !document.body.classList.contains('en-menu');
+    SFX.ambiente(enJuego, enJuego ? clamp(1 - (HL - Math.abs(G.balon.x)) / 40, 0, 1) * (G.fase === 'gol' ? 1.5 : 1) : 0);
+  }
+  if (!$('capa').hidden) navMando(dt);
+  if (R && document.body.classList.contains('en-menu') && R.menu) { animarMenu3D(dt); R.renderer.render(R.menu.S, R.cam); }
+  else if (R) { moverCamara(dt); const real = MODELO_REAL(); if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
   actualizarHud(dt);
   G.frames++;
 }
@@ -36,7 +43,7 @@ async function arrancar() {
   if (rm.estado === 'perdida') setTimeout(() => toast('Tu base de datos editada estaba dañada y no tenía copias: se usa la de fábrica.', 6000), 400);
   if (!iniciarGraficos()) return;
   nuevoPartido();
-  iniciarTactil(); iniciarTeclado(); aplicarTactil();
+  iniciarTactil(); iniciarTeclado(); iniciarNavegacion(); aplicarTactil();
   addEventListener('resize', ajustarTamano);
   addEventListener('gamepadconnected', () => toast('Mando conectado'));
   document.addEventListener('visibilitychange', () => { if (document.hidden && !G.pausa && G.fase === 'juego' && !document.body.classList.contains('en-menu')) abrirPausa(); });

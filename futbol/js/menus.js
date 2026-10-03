@@ -6,19 +6,19 @@ const APP = { mundo: null, enPartido: false, volver: null };
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // muestra una pantalla de menú. acciones: { nombre: (datos del botón, botón) => ... } para los elementos con data-acc
-function pantalla(html, { titulo = '', atras = null, extra = '', acciones = {}, clase = '' } = {}) {
+function pantalla(html, { titulo = '', atras = null, extra = '', acciones = {}, clase = '', sinBarra = false } = {}) {
   document.body.classList.add('en-menu');
   G.pausa = true;
   const c = $('capa');
-  c.innerHTML = `<div class="pant ${clase}">
-    <div class="barra">${atras ? '<button class="b-atras" data-acc="__atras" aria-label="Volver">‹</button>' : ''}<h2>${titulo}</h2><div class="barra-extra">${extra}</div></div>
+  c.innerHTML = `<div class="pant ${clase}">${sinBarra ? '' : `
+    <div class="barra">${atras ? '<button class="b-atras" data-acc="__atras" aria-label="Volver">‹</button>' : ''}<h2>${titulo}</h2><div class="barra-extra">${extra}</div></div>`}
     <div class="cuerpo">${html}</div></div>`;
   c.hidden = false; c.scrollTop = 0;
   c.onclick = e => {
     const b = e.target.closest('[data-acc]'); if (!b || b.disabled) return;
     const a = b.dataset.acc;
-    if (a === '__atras') return atras();
-    if (acciones[a]) acciones[a](b.dataset, b);
+    if (a === '__atras') { SFX.atras(); return atras(); }
+    if (acciones[a]) { if (a !== 'pag') SFX.aceptar(); acciones[a](b.dataset, b); }
   };
   c.onchange = e => { const b = e.target.closest('[data-cambio]'); if (b && acciones[b.dataset.cambio]) acciones[b.dataset.cambio](b.dataset, b); };
   return c;
@@ -48,27 +48,7 @@ const MODOS = [
   { id: 'estrella', t: 'Equipo Estrella', d: 'Sobres, cartas y monedas del juego', f: () => menuEstrella() },
   { id: 'editor', t: 'Editor', d: 'Clubes, jugadores, escudos y fotos', f: () => menuEditor() },
 ];
-function menuPrincipal() {
-  APP.enPartido = false;
-  fondoMenu();
-  const s = DATOS.estad;
-  pantalla(`
-    <div class="portada"><h1>Pelo<span>tazo</span></h1><p>Fútbol de acción · ${APP.mundo.ligas.length} ligas · ${APP.mundo.clubes.length} clubes</p>
-      <button class="btn prin grande" id="bJugar" data-acc="rapido">Partido rápido</button></div>
-    <div class="modos">${MODOS.map(m => `<button class="modo modo-${m.id}" data-acc="modo" data-id="${m.id}"><b>${m.t}</b><span>${m.d}</span></button>`).join('')}</div>
-    <div class="pie-menu">
-      <button class="btn" data-acc="ajustes">Ajustes</button><button class="btn" data-acc="ayuda">Cómo se juega</button><button class="btn" data-acc="copias">Copias de seguridad</button>
-      <span class="nota">${s.jugados} partidos jugados · ${s.ganados} ganados · Pelotazo ${JUEGO_VERSION}</span>
-    </div>`, {
-    clase: 'principal', acciones: {
-      rapido: () => partidoRapido(),
-      modo: d => MODOS.find(m => m.id === d.id).f(),
-      ajustes: () => menuAjustes(menuPrincipal),
-      ayuda: () => pantalla(htmlAyuda(), { titulo: 'Cómo se juega', atras: menuPrincipal }),
-      copias: () => menuCopias(),
-    },
-  });
-}
+// el menú principal y la portada están en portada.js
 function menuAjustes(volver) {
   pantalla(`<div class="hoja-in">${htmlAjustes()}</div>`, { titulo: 'Ajustes', atras: volver });
   enlazarAjustes($('capa'));
@@ -115,6 +95,7 @@ function jugarPartido(cfg) {
   nuevoPartido({ ...cfg, semilla: Date.now() % 1e9, alTerminar: r => { APP.enPartido = false; fin(r); } });
   G.pausa = false;
   pantallaCompleta();
+  if (typeof SFX !== 'undefined') SFX.silbato('corto');
   aviso(cfg.titulo || '¡A jugar!', `${cfg.local.nombre} – ${cfg.visita.nombre}`, 1.8);
 }
 // termina el partido simulando lo que falta (botón de la pausa)
@@ -155,7 +136,10 @@ function mostrarResultado(res, { local, visita, titulo = 'Final del partido', ex
 const AMISTOSO = { local: null, visita: null, lado: 0 };
 function partidoRapido() {
   const M = APP.mundo, top = M.clubes.filter(c => c.rep >= 84);
-  AMISTOSO.local = azElige(top).id; AMISTOSO.visita = azElige(top.filter(c => c.id !== AMISTOSO.local)).id; AMISTOSO.lado = 0;
+  // los clubes que se ven en la baldosa del menú; la próxima vez salen otros
+  const par = APP.rapidoPar || [azElige(top).id, azElige(top).id];
+  APP.rapidoPar = null;
+  AMISTOSO.local = par[0]; AMISTOSO.visita = par[1] !== par[0] ? par[1] : azElige(top.filter(c => c.id !== par[0])).id; AMISTOSO.lado = 0;
   empezarAmistoso();
 }
 function menuAmistoso() {

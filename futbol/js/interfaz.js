@@ -98,6 +98,8 @@ function aplicarTactil() {
 }
 function iniciarTeclado() {
   addEventListener('keydown', e => {
+    // en los menús las teclas las maneja la navegación (portada.js)
+    if (document.body.classList.contains('en-menu')) return;
     if (e.code === 'Escape' || e.code === 'KeyP') { if (G.pausa && G.fase !== 'menu' && G.fase !== 'fin') reanudarJuego(); else abrirPausa(); e.preventDefault(); return; }
     if (e.target && (e.target.tagName === 'INPUT')) return;
     if (MAPA_TECLAS[e.code] || e.code.startsWith('Arrow') || ['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
@@ -114,6 +116,7 @@ function iniciarTeclado() {
 /* ---------- pantallas ---------- */
 const OPCIONES = [
   { k: 'cam', t: 'Cámara', o: [['diag', 'Diagonal'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
+  { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
   { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },
   { k: 'estilo', t: 'Estilo', o: [['dia', 'Día'], ['tarde', 'Atardecer'], ['noche', 'Noche']] },
   { k: 'calidad', t: 'Gráficos', o: [['auto', 'Automático'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']] },
@@ -143,6 +146,7 @@ function enlazarAjustes(capa) {
     if (op.k === 'modelo') aplicarModelo();
     if (op.k === 'calidad') { R.calidad = 1; ajustarTamano(); }
     if (op.k === 'tactil') aplicarTactil();
+    if (op.k === 'sonido') { SFX.volumen(); SFX.aceptar(); }
     guardarPronto();
   }));
 }
@@ -153,7 +157,7 @@ function htmlProgreso() {
 }
 function abrirCapa(html) { const c = $('capa'); c.innerHTML = html; c.hidden = false; return c; }
 function cerrarCapa() { $('capa').hidden = true; $('cv').focus({ preventScroll: true }); }
-function mostrarInicio() { menuPrincipal(); }
+function mostrarInicio() { mostrarPortada(); }
 function abrirPausa(desdeInicio) {
   if (G.fase === 'fin' || document.body.classList.contains('en-menu')) return;
   G.pausa = true;

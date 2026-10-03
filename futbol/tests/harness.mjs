@@ -57,7 +57,7 @@ export async function launch() {
 }
 
 // abre el juego en un contexto (perfil del navegador); devuelve la página y los errores capturados
-export async function openGame(ctx, url, { init } = {}) {
+export async function openGame(ctx, url, { init, portada = false } = {}) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + (e.stack || e.message)));
@@ -71,6 +71,8 @@ export async function openGame(ctx, url, { init } = {}) {
   // si el código del juego tiene un error, falla al momento y lo dice (en vez de esperar 30 s)
   await page.waitForFunction(() => (window.G && G.listo) || window.__fallo, null, { timeout: 30000 }).catch(() => { });
   if (!(await page.evaluate(() => !!(window.G && G.listo)))) throw new Error('el juego no arrancó:\n' + errors.join('\n'));
+  // pasa la portada ("Pulsa cualquier botón") salvo que la prueba quiera verla
+  if (!portada) await page.evaluate(() => { if (typeof APP !== 'undefined' && APP.enPortada && typeof salirPortada === 'function') salirPortada(); });
   return { page, errors };
 }
 

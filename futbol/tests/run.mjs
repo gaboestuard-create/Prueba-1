@@ -15,10 +15,14 @@ const fresh = (opts = {}) => browser.newContext({ viewport: { width: 1280, heigh
 
 /* ---------- 1. arranque ---------- */
 test('arranca sin errores, dibuja el campo y muestra la pantalla de inicio', async () => {
-  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url, { portada: true });
+  const p0 = await page.evaluate(() => ({ portada: !!document.querySelector('.ini-pulsa') && !$('bJugar'), menu3d: !!R.menu }));
+  assert(p0.portada, 'no aparece la portada "Pulsa cualquier botón"');
+  assert(p0.menu3d, 'no se creó la escena del menú');
+  await page.keyboard.press('Enter');
   const r = await page.evaluate(() => ({ n: G.todos.length, ini: !$('capa').hidden && !!$('bJugar'), ver: SAVE.estado }));
   assert(r.n === 22, 'debería haber 22 jugadores y hay ' + r.n);
-  assert(r.ini, 'no aparece la pantalla de inicio');
+  assert(r.ini, 'al pulsar una tecla no aparece el menú principal');
   await empezar(page);
   await page.waitForFunction(() => G.frames > 20);
   // el lienzo tiene algo dibujado (no está todo de un color)
@@ -71,6 +75,48 @@ test('se ve bien en un teléfono en vertical y en horizontal', async () => {
     assert(!r.choques.length, `${viewport.width}x${viewport.height}: elementos encimados: ${JSON.stringify(r.choques)}`);
     sinErrores(errors); await ctx.close();
   }
+});
+
+test('menú principal: páginas, teclado, mando y volver', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const pag = () => page.evaluate(() => APP.pagMenu);
+  // con el teclado: la primera flecha enfoca una baldosa y E / Q cambian de página
+  await page.keyboard.press('ArrowRight');
+  const f1 = await page.evaluate(() => document.activeElement.className);
+  assert(/tile/.test(f1), 'la flecha no enfoca una baldosa: ' + f1);
+  await page.keyboard.press('KeyE'); await page.waitForTimeout(500);
+  assert(await pag() === 1, 'E no pasa a la página de Carreras');
+  const f2 = await page.evaluate(() => document.activeElement.dataset.id);
+  assert(f2 === 'dt', 'en Carreras debería enfocarse la carrera de técnico: ' + f2);
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(500);
+  assert(await pag() === 2, 'la flecha desde el borde no pasa a la página siguiente');
+  await page.keyboard.press('KeyQ'); await page.keyboard.press('KeyQ'); await page.waitForTimeout(500);
+  assert(await pag() === 0, 'Q no vuelve a la primera página');
+  // las pestañas también cambian de página, y la página se ve
+  await page.click('.mp-tab[data-i="3"]'); await page.waitForTimeout(600);
+  const vis = await page.evaluate(() => { const r = document.querySelector('[data-acc="ajustes"]').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; });
+  assert(vis && await pag() === 3, 'la pestaña Más no muestra su página');
+  // Intro elige y Esc vuelve
+  await page.focus('[data-acc="ajustes"]'); await page.keyboard.press('Enter');
+  assert(await page.evaluate(() => !!document.querySelector('.barra h2') && document.querySelector('.barra h2').textContent === 'Ajustes'), 'Intro no abre Ajustes');
+  await page.keyboard.press('Escape');
+  assert(await page.evaluate(() => !!$('mpPags') && APP.pagMenu === 3), 'Esc no vuelve al menú en la misma página');
+  // el fondo del menú no se pone en marcha al pulsar Esc
+  assert(await page.evaluate(() => G.pausa && document.body.classList.contains('en-menu')), 'Esc en el menú reanudó el partido de fondo');
+  // mando (simulado): la cruceta mueve y A elige
+  await page.evaluate(() => {
+    const bt = () => Array.from({ length: 17 }, () => ({ pressed: false, value: 0 }));
+    window.__pad = { connected: true, axes: [0, 0, 0, 0], buttons: bt() };
+    navigator.getGamepads = () => [window.__pad];
+  });
+  const pulsa = async i => { await page.evaluate(i => { __pad.buttons[i].pressed = true; }, i); await page.waitForTimeout(80); await page.evaluate(i => { __pad.buttons[i].pressed = false; }, i); await page.waitForTimeout(80); };
+  await pulsa(4); await page.waitForTimeout(400);
+  assert(await pag() === 2, 'LB no cambia de página');
+  await pulsa(0);
+  assert(await page.evaluate(() => !$('mpPags') && !!DATOS.estrella), 'A no abre la baldosa enfocada (Equipo Estrella)');
+  await pulsa(1);
+  assert(await page.evaluate(() => !!$('mpPags')), 'B no vuelve al menú principal');
+  sinErrores(errors); await ctx.close();
 });
 
 /* ---------- 2. jugadas ---------- */
