@@ -22,5 +22,9 @@
   {
     "nombre": "0.6.0 (giros, primer toque y resistencia)",
     "commit": "ea4efab"
+  },
+  {
+    "nombre": "0.7.0 (portada, menú por páginas y sonido)",
+    "commit": "7eb3fcb"
   }
 ]
