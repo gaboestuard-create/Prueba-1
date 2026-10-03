@@ -34,5 +34,9 @@
   {
     "nombre": "0.9.0 (estrellas y leyendas en Equipo Estrella)",
     "commit": "95a9497"
+  },
+  {
+    "nombre": "0.10.0 (cartas especiales y plantilla en el campo)",
+    "commit": "141658f"
   }
 ]
