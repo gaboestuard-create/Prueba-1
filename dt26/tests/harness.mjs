@@ -25,13 +25,15 @@ export function serve() {
         const u = req.url.split('?')[0];
         let body = null;
         if (u === '/' || u === '/index.html') body = fs.readFileSync(path.join(ROOT, 'index.html'));
+        else if (/^\/(manifest\.webmanifest|sw\.js|icon-[a-z0-9-]+\.png)$/.test(u)) body = fs.readFileSync(path.join(ROOT, 'app', u.slice(1)));
         else if (/^\/v\/[0-9a-f]{7,40}\.html$/.test(u)) {
           const c = u.slice(3, -5);
           if (!cache.has(c)) cache.set(c, gitVersion(c));
           body = cache.get(c);
         }
         if (body == null) { rsp.writeHead(404); rsp.end(); return; }
-        rsp.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+        const ty = u.endsWith('.js') ? 'text/javascript' : u.endsWith('.png') ? 'image/png' : u.endsWith('.webmanifest') ? 'application/manifest+json' : 'text/html; charset=utf-8';
+        rsp.writeHead(200, { 'content-type': ty, 'cache-control': 'no-store' });
         rsp.end(body);
       } catch (e) { rsp.writeHead(500); rsp.end(String(e)); }
     });
@@ -40,6 +42,7 @@ export function serve() {
 }
 
 export async function launch() {
+  process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1'; // que las rutas del contexto vean las peticiones del service worker
   return chromium.launch({ headless: true, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
 }
 

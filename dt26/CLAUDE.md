@@ -64,6 +64,18 @@ Antes de publicar una versión nueva:
 2. Publicar el artefacto con `dt26/index.html`.
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprobarán
    que sus partidas siguen abriéndose en todas las versiones futuras.
+4. Publicar la aplicación (GitHub Pages, rama `gh-pages`): `sh dt26/app/publicar.sh` desde la raíz del
+   repositorio. Copia `index.html` y los archivos de `app/` (manifiesto, service worker, íconos).
+
+## Aplicación instalable (GitHub Pages)
+
+- Se publica en https://gaboestuard-create.github.io/Prueba-1/ desde la rama `gh-pages` (solo la rellena
+  `app/publicar.sh`; no se edita a mano).
+- Un script al principio de `index.html` añade el manifiesto y registra `sw.js` solo cuando el juego se
+  abre como página propia (https o localhost, sin marco y fuera de claude.ai). Dentro de Claude no hace nada.
+- `sw.js`: la página se pide siempre a internet (cada actualización llega al abrir) y guarda una copia para
+  jugar sin conexión; three.js y las fuentes se guardan la primera vez. Las partidas siguen en IndexedDB,
+  pero de ese dominio: no se comparten con las de Claude (se pasan con Exportar/Importar).
 
 ## Clubes y jugadores reales
 

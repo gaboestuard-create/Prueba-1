@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DT26 · Director Técnico</title>
+<script>
+// Instalable como aplicación solo cuando se abre como página propia (GitHub Pages), no dentro de Claude.
+(function(){ try{ if((location.protocol!=='https:'&&location.hostname!=='localhost')||window.top!==window||/claude\.ai|claudeusercontent|anthropic/.test(location.hostname)) return;
+  var h=document.head, add=function(t,a){ var e=document.createElement(t); for(var k in a) e.setAttribute(k,a[k]); h.appendChild(e); };
+  add('link',{rel:'manifest',href:'manifest.webmanifest'}); add('meta',{name:'theme-color',content:'#15201b'});
+  add('link',{rel:'apple-touch-icon',href:'icon-192.png'}); add('meta',{name:'mobile-web-app-capable',content:'yes'});
+  if('serviceWorker' in navigator) addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}catch(e){} })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,800;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">

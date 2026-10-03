@@ -753,6 +753,32 @@ test('teléfono en horizontal: diseño compacto con menú por grupos', async () 
   await ctx.close();
 });
 
+test('aplicación instalable: manifiesto, ícono y juego sin internet', async () => {
+  const ctx = await fresh(); const url = srv.url.replace('127.0.0.1', 'localhost');
+  // las peticiones del service worker solo pasan por las rutas del contexto
+  await ctx.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', r => r.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(path.join(ROOT, 'node_modules/three/build/three.min.js')) }));
+  await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  // sin las rutas de la página: como en un teléfono, todo pasa por el service worker
+  const page = await ctx.newPage(), errors = [];
+  page.on('pageerror', e => errors.push('pageerror: ' + (e.stack || e.message)));
+  await page.goto(url); await waitMenuReady(page);
+  const m = await page.evaluate(async () => { const l = document.querySelector('link[rel=manifest]'); if (!l) return null; const j = await (await fetch(l.href)).json(); const ic = await fetch(j.icons[0].src); return { name: j.short_name, icon: ic.ok, disp: j.display }; });
+  assert(m && m.name === 'DT26' && m.icon && m.disp === 'fullscreen', 'manifiesto: ' + JSON.stringify(m));
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload(); await waitMenuReady(page); await page.evaluate(() => navigator.serviceWorker.ready);
+  await newCareer(page); await page.evaluate(async () => { for (let i = 0; i < 50 && !(await saveNow()); i++) await new Promise(r => setTimeout(r, 100)); });
+  // sin conexión el juego abre igual y conserva la partida
+  await ctx.setOffline(true); await page.reload(); await waitMenuReady(page);
+  const off = await page.evaluate(async () => !!(APP.games && APP.games.dt) && typeof THREE !== 'undefined' || JSON.stringify({ g: !!(APP.games && APP.games.dt), t: typeof THREE, k: await Promise.all((await caches.keys()).map(async k => (await (await caches.open(k)).keys()).map(r => r.url))) }));
+  assert(off === true, 'sin internet no abrió el juego o no cargó el motor 3D: ' + off);
+  await ctx.setOffline(false);
+  // dentro de Claude (127.0.0.1 hace de página incrustada) no se instala nada
+  const p2 = (await openGame(ctx, srv.url)).page;
+  assert(!(await p2.evaluate(() => !!document.querySelector('link[rel=manifest]'))), 'fuera de su página no debe ofrecer instalación');
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 /* ---------- ejecución ---------- */
 const filter = process.argv.slice(2).join(' ').toLowerCase();
 const list = tests.filter(t => !filter || t.name.toLowerCase().includes(filter));
