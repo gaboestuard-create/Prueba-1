@@ -49,7 +49,7 @@ test('cerrar y volver a abrir conserva exactamente la partida', async () => {
   const before = await a.page.evaluate(async () => { await saveNow(); return { s: W.season, d: W.day, c: W.userClub, n: W.players.length, bal: W.clubs[W.userClub].fin.bal, inbox: W.inbox.length }; });
   await a.page.close();
   const b = await openGame(ctx, srv.url);
-  assert(await b.page.evaluate(() => !!APP.game), 'el menú no ofrece continuar la partida');
+  assert(await b.page.evaluate(() => !!APP.games.dt), 'el menú no ofrece continuar la partida');
   await continueCareer(b.page);
   const after = await b.page.evaluate(() => ({ s: W.season, d: W.day, c: W.userClub, n: W.players.length, bal: W.clubs[W.userClub].fin.bal, inbox: W.inbox.length }));
   assert(JSON.stringify(before) === JSON.stringify(after), `la partida cambió al reabrir:\n antes ${JSON.stringify(before)}\n después ${JSON.stringify(after)}`);
@@ -84,7 +84,7 @@ test('partida dañada al abrir: se aparta y se recupera la última copia', async
   await a.page.evaluate(async () => { const s = await Store.get('save'); await Store.set('save', s.slice(0, Math.floor(s.length / 2))); });
   await a.page.close();
   const b = await openGame(ctx, srv.url);
-  const r = await b.page.evaluate(async () => ({ game: !!APP.game, club: APP.game && APP.game.clubs[APP.game.userClub].name, notice: APP.notice && APP.notice.title, bad: (await bakList()).filter(x => x.kind === 'bad').length, menu: document.querySelector('#menu').textContent }));
+  const r = await b.page.evaluate(async () => ({ game: !!APP.games.dt, club: APP.games.dt && APP.games.dt.clubs[APP.games.dt.userClub].name, notice: APP.notice && APP.notice.title, bad: (await bakList()).filter(x => x.kind === 'bad').length, menu: document.querySelector('#menu').textContent }));
   assert(r.game, 'no se recuperó ninguna partida');
   assert(r.club === club, 'se recuperó otra partida');
   assert(r.bad === 1, 'la partida dañada no se conservó aparte');
@@ -92,7 +92,7 @@ test('partida dañada al abrir: se aparta y se recupera la última copia', async
   // y al reabrir otra vez ya está todo en orden, sin repetir el aviso
   await b.page.close();
   const c = await openGame(ctx, srv.url);
-  const r2 = await c.page.evaluate(() => ({ game: !!APP.game, notice: APP.notice }));
+  const r2 = await c.page.evaluate(() => ({ game: !!APP.games.dt, notice: APP.notice }));
   assert(r2.game && !r2.notice, 'tras recuperar, la partida no quedó guardada como principal');
   await ctx.close();
 });
@@ -103,7 +103,7 @@ test('partida dañada sin copias: no se borra al empezar otra', async () => {
   await a.page.evaluate(async () => { await saveNow(); for (const b of await bakList()) await Store.del(b.k); await Store.set('bak_index', [], true); await Store.set('save', 'gz:esto-no-es-una-partida'); });
   await a.page.close();
   const b = await openGame(ctx, srv.url);
-  const r = await b.page.evaluate(() => ({ game: !!APP.game, notice: APP.notice && APP.notice.title }));
+  const r = await b.page.evaluate(() => ({ game: !!APP.games.dt, notice: APP.notice && APP.notice.title }));
   assert(!r.game && /No se pudo abrir/.test(r.notice), 'no avisó de la partida perdida');
   await newCareer(b.page);
   const bad = await b.page.evaluate(async () => (await bakList()).filter(x => x.kind === 'bad').length);
@@ -158,7 +158,7 @@ test('partida dañada: se recupera una copia de esa misma partida, no la de otra
   await a.page.evaluate(async () => { await Store.set('save', 'gz:roto'); });
   await a.page.close();
   const b = await openGame(ctx, srv.url);
-  const got = await b.page.evaluate(() => APP.game && APP.game.clubs[APP.game.userClub].name);
+  const got = await b.page.evaluate(() => APP.games.dt && APP.games.dt.clubs[APP.games.dt.userClub].name);
   assert(got === club, `se recuperó ${got} en vez de la partida en curso (${club})`);
   await ctx.close();
 });
@@ -558,20 +558,97 @@ for (const v of compat.filter(v => v.guardado >= 5)) {
   });
 }
 
-test('modo jugador: las versiones anteriores del juego la abren sin guardar encima', async () => {
+test('modo jugador: las versiones anteriores del juego no tocan la carrera de jugador', async () => {
   const ctx = await fresh(); const a = await openGame(ctx, srv.url);
   await newPlayerCareer(a.page); await simDaysJug(a.page, 20);
-  const before = await a.page.evaluate(async () => { await saveNow(); return Store.get('save'); });
+  const before = await a.page.evaluate(async () => { await saveNow(); return { j: await Store.get('save_j'), dt: await Store.get('save') }; });
+  assert(before.j && !before.dt, 'la carrera de jugador no se guardó en su propio hueco');
   await a.page.close();
-  // la última versión publicada que todavía no conocía el modo jugador
+  // la última versión publicada que todavía no conocía el modo jugador: no ve la carrera y no puede escribirla
   const last = compat.filter(v => v.guardado < 5).pop().commit;
   const old = await openGame(ctx, srv.url + `v/${last}.html`);
-  const r = await old.page.evaluate(async () => { await ACT.mcont(); await new Promise(r => setTimeout(r, 300)); const ok = await saveNow(); return { ro: APP.ro, ok }; });
-  assert(r.ro === 'newer' && !r.ok, 'una versión anterior guardó encima de la partida de jugador');
+  const r = await old.page.evaluate(async () => { const ok = await saveNow(); return { game: !!APP.game, ok }; });
+  assert(!r.game && !r.ok, 'una versión anterior abrió o guardó la carrera de jugador');
   await old.page.close();
   const c = await openGame(ctx, srv.url);
-  const same = await c.page.evaluate(async (b) => (await Store.get('save')) === b, before);
-  assert(same, 'la partida de jugador cambió al abrirla con una versión anterior');
+  const same = await c.page.evaluate(async (b) => (await Store.get('save_j')) === b, before.j);
+  assert(same, 'la carrera de jugador cambió al abrirla con una versión anterior');
+  await ctx.close();
+});
+
+/* ---------- 7. dos carreras: técnico y jugador ---------- */
+test('dos carreras: empezar una de jugador no toca la de técnico (y al revés)', async () => {
+  const ctx = await fresh(); const a = await openGame(ctx, srv.url);
+  await newCareer(a.page); await simDays(a.page, 40);
+  const dt0 = await a.page.evaluate(async () => { await saveNow(); return { cr: W.created, d: W.day, c: W.userClub, s: await Store.get('save') }; });
+  await a.page.evaluate(() => exitToMenu());
+  await newPlayerCareer(a.page); await simDaysJug(a.page, 25);
+  const j0 = await a.page.evaluate(async () => { await saveNow(); return { cr: W.created, d: W.day, me: W.me, dtSame: (await Store.get('save')) }; });
+  assert(j0.dtSame === dt0.s, 'crear la carrera de jugador modificó el guardado de técnico');
+  // la de técnico sigue jugándose y guardándose sin tocar la de jugador
+  await a.page.evaluate(() => exitToMenu());
+  const jS = await a.page.evaluate(() => Store.get('save_j'));
+  await a.page.evaluate(() => ACT.mcont({ dataset: { s: 'dt' } }));
+  await a.page.waitForFunction(() => APP.mode === 'game' && !isJug(W));
+  await simDays(a.page, 10);
+  const r1 = await a.page.evaluate(async () => { await saveNow(); return { d: W.day, cr: W.created, jSame: await Store.get('save_j') }; });
+  assert(r1.cr === dt0.cr && r1.d > dt0.d, 'no se continuó la carrera de técnico correcta: ' + JSON.stringify([r1.cr, dt0.cr, r1.d, dt0.d]));
+  assert(r1.jSame === jS, 'jugar la carrera de técnico modificó la de jugador');
+  await a.page.close();
+  // al volver a abrir el juego aparecen las dos
+  const b = await openGame(ctx, srv.url);
+  const m = await b.page.evaluate(() => [...document.querySelectorAll('[data-a="mcont"]')].map(x => x.dataset.s + ':' + x.textContent));
+  assert(m.length === 2 && m.some(x => x.startsWith('dt:Continuar como técnico')) && m.some(x => x.startsWith('jug:Continuar como jugador')), 'el menú no ofrece las dos carreras: ' + m.join(' | '));
+  await b.page.evaluate(() => ACT.mcont({ dataset: { s: 'jug' } }));
+  await b.page.waitForFunction(() => APP.mode === 'game' && isJug(W));
+  const r2 = await b.page.evaluate(() => ({ cr: W.created, d: W.day, me: W.me }));
+  assert(r2.cr === j0.cr && r2.d === j0.d && r2.me === j0.me, 'la carrera de jugador no se reabrió igual');
+  const bk = await b.page.evaluate(async () => (await bakList()).map(x => x.sl));
+  assert(bk.includes('dt') && bk.includes('jug'), 'las copias no distinguen las dos carreras');
+  assert(realErrors(a.errors).length === 0 && realErrors(b.errors).length === 0, 'errores: ' + realErrors(a.errors.concat(b.errors)).join('\n'));
+  await ctx.close();
+});
+
+test('dos carreras: si una carrera de jugador sustituyó a la de técnico, se recuperan las dos', async () => {
+  // así guardaban las versiones 13 a 19: un solo hueco, y la de técnico quedaba como copia «Antes de empezar una partida nueva»
+  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat[compat.length - 1].commit}.html`);
+  await newCareer(old.page); await simDays(old.page, 30);
+  const dt = await old.page.evaluate(async () => { for (let i = 0; i < 50 && !(await saveNow()); i++) await new Promise(r => setTimeout(r, 100)); return { cr: W.created, d: W.day, club: W.clubs[W.userClub].name }; });
+  await old.page.evaluate(() => exitToMenu());
+  await newPlayerCareer(old.page); await simDaysJug(old.page, 10);
+  const jg = await old.page.evaluate(async () => { await saveNow(); return { cr: W.created, d: W.day, me: W.me, mode: (await unpackWorld(await Store.get('save'))).mode }; });
+  assert(jg.mode === 'jug', 'la versión antigua no reproduce el problema');
+  await old.page.close();
+  const cur = await openGame(ctx, srv.url);
+  const r = await cur.page.evaluate(() => ({ dt: APP.games.dt && { cr: APP.games.dt.created, d: APP.games.dt.day, club: APP.games.dt.clubs[APP.games.dt.userClub].name, mode: APP.games.dt.mode || 'dt' }, jug: APP.games.jug && { cr: APP.games.jug.created, d: APP.games.jug.day, me: APP.games.jug.me }, notice: APP.notice && APP.notice.title, menu: document.querySelectorAll('[data-a="mcont"]').length }));
+  assert(r.jug && r.jug.cr === jg.cr && r.jug.d === jg.d && r.jug.me === jg.me, 'la carrera de jugador no pasó a su hueco: ' + JSON.stringify(r));
+  assert(r.dt && r.dt.cr === dt.cr && r.dt.club === dt.club && r.dt.mode === 'dt', 'no se recuperó la carrera de técnico: ' + JSON.stringify(r));
+  assert(/cada una su guardado/.test(r.notice || '') && r.menu === 2, 'falta el aviso o el menú no ofrece las dos carreras');
+  // la recuperación se hace una sola vez
+  await cur.page.close(); const again = await openGame(ctx, srv.url);
+  const r2 = await again.page.evaluate(() => ({ notice: APP.notice, dt: !!APP.games.dt, jug: !!APP.games.jug }));
+  assert(!r2.notice && r2.dt && r2.jug, 'la separación se repitió al volver a abrir');
+  assert(realErrors(cur.errors).length === 0 && realErrors(again.errors).length === 0, 'errores: ' + realErrors(cur.errors.concat(again.errors)).join('\n'));
+  await ctx.close();
+});
+
+test('dos carreras: si ya restauraste la de técnico, la de jugador también vuelve', async () => {
+  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat[compat.length - 1].commit}.html`);
+  await newCareer(old.page); await simDays(old.page, 20);
+  const dt = await old.page.evaluate(async () => { for (let i = 0; i < 50 && !(await saveNow()); i++) await new Promise(r => setTimeout(r, 100)); return W.created; });
+  await old.page.evaluate(() => exitToMenu());
+  await newPlayerCareer(old.page); await simDaysJug(old.page, 10);
+  const jg = await old.page.evaluate(async () => { await saveNow(); return W.created; });
+  // con la versión antigua, el jugador restauró su carrera de técnico desde las copias
+  await old.page.evaluate(async () => { const b = (await bakList()).filter(b => b.kind === 'replace').sort((a, b) => b.t - a.t)[0]; await bakRestoreGo(b.k); });
+  const back = await old.page.evaluate(async () => (await unpackWorld(await Store.get('save'))).created);
+  assert(back === dt, 'la versión antigua no restauró la carrera de técnico');
+  await old.page.close();
+  const cur = await openGame(ctx, srv.url);
+  const r = await cur.page.evaluate(() => ({ dt: APP.games.dt && APP.games.dt.created, jug: APP.games.jug && APP.games.jug.created, notice: APP.notice && APP.notice.body }));
+  assert(r.dt === dt && r.jug === jg, 'no aparecen las dos carreras: ' + JSON.stringify(r));
+  assert(/jugador se recuperó/.test(r.notice || ''), 'falta el aviso: ' + r.notice);
+  assert(realErrors(cur.errors).length === 0, 'errores: ' + realErrors(cur.errors).join('\n'));
   await ctx.close();
 });
 

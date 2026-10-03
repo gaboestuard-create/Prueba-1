@@ -9,6 +9,10 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
 
 - La partida se guarda en IndexedDB con la clave `save`, en el formato de siempre (`gz:` + base64, o `js:` + JSON).
   No cambies ese formato: las versiones antiguas del juego tienen que poder leerlo.
+- Hay DOS carreras guardadas a la vez, cada una en su hueco (`SLOTK`): técnico en `save`/`save_meta` y jugador en
+  `save_j`/`save_j_meta`. `slotOf(w)` dice a cuál pertenece una partida; `APP.games.dt` y `APP.games.jug` son las dos
+  partidas abiertas. Todo lo que guarde, copie, borre o sustituya debe usar el hueco de esa partida y nunca tocar el otro.
+  Las copias llevan `sl` y se recortan por hueco. `slotsMigrate` separó las partidas de las versiones 13 a 19.
 - Junto a ella están `save_meta`, `bak_index` y las copias `bak_*`. La lógica vive en la sección
   "protección de la partida" (busca `validateWorld`, `bakPut`, `loadLocal`).
 - Si cambias la estructura de la partida (`W`): sube `VERSION` y añade la conversión en `MIGR[nueva]`.

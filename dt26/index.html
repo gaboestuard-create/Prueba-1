@@ -988,7 +988,7 @@ function genWorld(seed){
   for(let i=0;i<140;i++){ const pos=rp(POS); const p=newP(w,{club:-1,pos,nat:rp(allN),level:clamp(rg(10.5,2),6,15),age:ri(19,33)}); p.ce=0; p.wage=calcWage(p,1); p.val=calcValue(p); }
   w.clubs.forEach(c=>{ numberSquad(w,c); autoPick(w,c); c.fin.wb=Math.round(wageBill(w,c)*1.12); });
   // tus escudos propios se conservan al empezar otra partida (cada club mantiene su número)
-  const keep=(prev&&prev.cimg)||(APP.game&&APP.game.cimg)||null;
+  const keep=(prev&&prev.cimg)||(APP.games&&((APP.games.dt&&APP.games.dt.cimg)||(APP.games.jug&&APP.games.jug.cimg)))||null;
   w.cimg=keep?Object.assign({},keep):{}; w.pimg={}; w.imgRev=((prev&&prev.imgRev)||0)+1;
   w.settings.real=realPref()?1:0; if(w.settings.real) realNames(w,true);
   genMgrs(w);
@@ -2056,8 +2056,14 @@ async function unpackWorld(str){
 const BAK_KEEP={auto:3,season:3,replace:3,shrink:2,premig:2,bad:2};
 const BAK_NAME={auto:'Automática',season:'Inicio de temporada',replace:'Antes de sustituirla',shrink:'Antes de un guardado sospechoso',premig:'Antes de actualizar el juego',bad:'No se pudo abrir'};
 const SAVE={t:0,fail:0,err:'',warnT:0};
+// dos huecos de guardado: la carrera de técnico ('save', el de siempre, que leen todas las versiones) y la de jugador ('save_j').
+// Cada copia de seguridad lleva su hueco en sl y se recorta por separado: las copias de una carrera nunca echan a las de la otra.
+const SLOTK={dt:['save','save_meta'],jug:['save_j','save_j_meta']};
+const slotOf=w=>w&&w.mode==='jug'?'jug':'dt';
+const SLOTN={dt:'Técnico',jug:'Jugador'};
+const NEWER=new WeakSet();
 function strHash(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
-function worldMeta(w,s){ const c=w&&w.userClub>=0?w.clubs[w.userClub]:null; return {t:Date.now(),cr:(w&&w.created)||0,v:(w&&w.v)||VERSION,len:s.length,h:strHash(s),season:w?w.season:0,day:w?w.day:0,date:w?fDate(w,w.day,1):'',club:c?c.name:'',mgr:w&&w.mgr?w.mgr.name||'':''}; }
+function worldMeta(w,s){ const c=w&&w.userClub>=0?w.clubs[w.userClub]:null; return {t:Date.now(),sl:slotOf(w),cr:(w&&w.created)||0,v:(w&&w.v)||VERSION,len:s.length,h:strHash(s),season:w?w.season:0,day:w?w.day:0,date:w?fDate(w,w.day,1):'',club:c?c.name:'',mgr:w&&w.mgr?w.mgr.name||'':''}; }
 // revisa que la partida tenga sentido antes de escribirla encima de la anterior; fatal = no se guarda
 function validateWorld(w){
   const fatal=[], warn=[], int=Number.isInteger, num=v=>typeof v==='number'&&isFinite(v);
@@ -2097,34 +2103,36 @@ function bakPut(kind,s,meta,label){ return bakSerial(async()=>{
   if(typeof s!=='string'||s.length<10) return false;
   const k='bak_'+kind+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   if(!await Store.set(k,s,true)) return false;
-  const L=await bakList(); L.push(Object.assign({},meta||{},{k,kind,t:Date.now(),st:(meta&&meta.t)||0,label:label||''}));
-  const drop=[]; for(const kd in BAK_KEEP) drop.push(...L.filter(b=>b.kind===kd).sort((a,b)=>b.t-a.t).slice(BAK_KEEP[kd]));
+  const L=await bakList(); L.push(Object.assign({},meta||{},{k,kind,t:Date.now(),st:(meta&&meta.t)||0,label:label||'',sl:(meta&&meta.sl)||'dt'}));
+  const drop=[]; for(const kd in BAK_KEEP) for(const sl of ['dt','jug']) drop.push(...L.filter(b=>b.kind===kd&&(b.sl||'dt')===sl).sort((a,b)=>b.t-a.t).slice(BAK_KEEP[kd]));
   if(!await Store.set('bak_index',L.filter(b=>!drop.includes(b)),true)) return false;
   for(const b of drop) await Store.del(b.k);
   return true; }); }
 // copia lo que hay guardado ahora mismo, tal cual, antes de sustituirlo
-async function bakCurrent(kind,label){ const s=await Store.get('save'); if(typeof s!=='string'||s.length<10) return false; return bakPut(kind,s,await Store.get('save_meta')||{},label); }
+async function bakCurrent(kind,label,sl){ sl=sl||'dt'; const s=await Store.get(SLOTK[sl][0]); if(typeof s!=='string'||s.length<10) return false; return bakPut(kind,s,Object.assign({},await Store.get(SLOTK[sl][1])||{},{sl}),label); }
 async function bakAuto(s,meta){
   const L=await bakList();
-  if(!L.some(b=>b.kind==='season'&&b.season===meta.season&&b.cr===meta.cr)) await bakPut('season',s,meta);
-  const last=L.filter(b=>b.kind==='auto').sort((a,b)=>b.t-a.t)[0];
+  const sl=meta.sl||'dt';
+  if(!L.some(b=>b.kind==='season'&&(b.sl||'dt')===sl&&b.season===meta.season&&b.cr===meta.cr)) await bakPut('season',s,meta);
+  const last=L.filter(b=>b.kind==='auto'&&(b.sl||'dt')===sl).sort((a,b)=>b.t-a.t)[0];
   if(!last||last.season!==meta.season||meta.day-last.day>=7) await bakPut('auto',s,meta); }
 function saveFail(msg){ SAVE.fail++; SAVE.err=msg||'No se pudo escribir en este dispositivo.';
   if(Date.now()-SAVE.warnT>180000){ SAVE.warnT=Date.now(); toast('No se pudo guardar la partida. Descarga una copia desde Ajustes','bad'); } }
 // abre la partida del dispositivo; si está dañada, la aparta y recupera la copia más reciente que funcione
-async function loadLocal(){
-  let s=null, meta=null; try{ s=await Store.get('save'); meta=await Store.get('save_meta'); }catch(e){}
+async function loadLocal(sl){
+  sl=sl||'dt'; const [K,KM]=SLOTK[sl];
+  let s=null, meta=null; try{ s=await Store.get(K); meta=await Store.get(KM); }catch(e){}
   // sin partida ni rastro de ella: primera vez o partida borrada a propósito
   if((typeof s!=='string'||s.length<10)&&!meta) return {w:null};
   const r=await tryWorld(s); if(r.w) return {w:r.w,s,meta};
   if(typeof s!=='string'||s.length<10){ s=typeof s==='string'?s+' ':'vacía'; r.why='el guardado está vacío'; }
   console.warn('partida guardada no válida:',r.why);
-  if(await bakPut('bad',s,meta||{},r.why)){ await Store.del('save'); await Store.del('save_meta'); }
+  if(await bakPut('bad',s,Object.assign({},meta||{},{sl}),r.why)){ await Store.del(K); await Store.del(KM); }
   // primero las copias de esta misma partida (cr = cuándo se creó), de la más reciente a la más antigua; después las demás
   const same=b=>meta&&meta.cr&&b.cr===meta.cr?1:0;
-  for(const b of (await bakList()).filter(b=>b.kind!=='bad').sort((a,b)=>same(b)-same(a)||b.t-a.t)){
-    const bs=await Store.get(b.k,true), r2=await tryWorld(bs); if(!r2.w) continue;
-    const nm=Object.assign({},b,{t:Date.now()}); await Store.set('save',bs); await Store.set('save_meta',nm);
+  for(const b of (await bakList()).filter(b=>b.kind!=='bad'&&(b.sl||'dt')===sl).sort((a,b)=>same(b)-same(a)||b.t-a.t)){
+    const bs=await Store.get(b.k,true), r2=await tryWorld(bs); if(!r2.w||slotOf(r2.w)!==sl) continue;
+    const nm=Object.assign({},b,{t:Date.now(),sl}); await Store.set(K,bs); await Store.set(KM,nm);
     return {w:r2.w,s:bs,meta:nm,rec:b,why:r.why}; }
   return {w:null,lost:r.why}; }
 function bakWhen(b){ return new Date(b.t).toLocaleString('es-MX',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
@@ -2132,10 +2140,10 @@ async function bakModal(){
   const L=(await bakList()).sort((a,b)=>b.t-a.t);
   modal(`<header><h3>Copias de seguridad</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
   <p class="muted" style="margin-top:0">El juego guarda copias solo en este dispositivo: cada semana de juego, al empezar cada temporada y antes de sustituir o borrar tu partida. Al restaurar una copia, tu partida actual también se guarda como copia.</p>
-  <div class="col" style="gap:8px">${L.map(b=>`<div class="card" style="padding:10px 12px"><div class="row wrap" style="gap:10px"><div style="flex:1;min-width:190px"><b>${esc(b.club||'Partida')}</b> <span class="chip ${b.kind==='bad'?'bad':''}">${BAK_NAME[b.kind]||b.kind}</span><div class="muted" style="font-size:13px">${b.date?esc(b.date)+' · ':''}copia del ${bakWhen(b)}${b.label?' · '+esc(b.label):''}</div></div>${b.kind==='bad'?'':`<button class="btn sm pri" data-a="bakrestore" data-k="${b.k}">Restaurar</button>`}<button class="btn sm" data-a="bakdl" data-k="${b.k}">Descargar</button></div></div>`).join('')||'<p class="muted" style="margin:0">Todavía no hay copias. Se crearán solas mientras juegas.</p>'}</div>
+  <div class="col" style="gap:8px">${L.map(b=>`<div class="card" style="padding:10px 12px"><div class="row wrap" style="gap:10px"><div style="flex:1;min-width:190px"><b>${esc(b.club||'Partida')}</b> <span class="chip">${SLOTN[b.sl||'dt']}</span> <span class="chip ${b.kind==='bad'?'bad':''}">${BAK_NAME[b.kind]||b.kind}</span><div class="muted" style="font-size:13px">${b.date?esc(b.date)+' · ':''}copia del ${bakWhen(b)}${b.label?' · '+esc(b.label):''}</div></div>${b.kind==='bad'?'':`<button class="btn sm pri" data-a="bakrestore" data-k="${b.k}">Restaurar</button>`}<button class="btn sm" data-a="bakdl" data-k="${b.k}">Descargar</button></div></div>`).join('')||'<p class="muted" style="margin:0">Todavía no hay copias. Se crearán solas mientras juegas.</p>'}</div>
   <p class="snote">Las copias viven en este navegador: si borras sus datos o cambias de dispositivo, desaparecen. Descarga una de vez en cuando y guárdala donde quieras; se recupera con Importar.</p>`,true); }
 async function bakRestoreAsk(k){ const b=(await bakList()).find(x=>x.k===k); if(!b) return;
-  modal(`<header><h3>Restaurar copia</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Vas a volver a <b>${esc(b.club||'la partida')}</b>${b.date?', '+esc(b.date):''} (copia del ${bakWhen(b)}).</p><p class="muted">Tu partida actual no se pierde: se guarda como copia antes de restaurar.</p><div class="row"><button class="btn pri" data-a="bakrestorego" data-k="${k}">Restaurar</button><button class="btn" data-a="bakopen">Volver</button></div>`); }
+  modal(`<header><h3>Restaurar copia</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header><p style="margin-top:0">Vas a volver a <b>${esc(b.club||'la partida')}</b>${b.date?', '+esc(b.date):''} (copia del ${bakWhen(b)}).</p><p class="muted">Es una carrera de ${SLOTN[b.sl||'dt'].toLowerCase()}: solo sustituye la carrera de ${SLOTN[b.sl||'dt'].toLowerCase()}, que también se guarda como copia antes de restaurar.</p><div class="row"><button class="btn pri" data-a="bakrestorego" data-k="${k}">Restaurar</button><button class="btn" data-a="bakopen">Volver</button></div>`); }
 async function bakRestoreGo(k){ closeModal(); const s=await Store.get(k,true), r=await tryWorld(s);
   if(!r.w){ toast('Esa copia no se puede abrir: '+r.why,'bad'); return; }
   await adoptWorld(r.w,'Antes de restaurar una copia'); APP.notice=null; toast('Copia restaurada','good'); }
@@ -2178,10 +2186,32 @@ function tabLostUI(){
   if(MX.on&&MX.state==='play'&&!MX.paused){ MX.paused=true; hudBtns(); }
   modal(`<header><h3>Partida abierta en otra pestaña</h3></header><p style="margin-top:0">Abriste DT26 en otra pestaña o ventana. Para no pisar tu progreso, esta pestaña ya no guarda cambios.</p><div class="row wrap"><button class="btn pri" data-a="tabhere">Seguir jugando aquí</button></div><p class="snote">Seguir aquí vuelve a cargar tu último guardado en esta pestaña, y la otra dejará de guardar.</p>`); }
 // si otra pestaña guardó después que esta, se trae su progreso antes de seguir
-async function reloadIfNewer(){
-  const meta=await Store.get('save_meta'); if(!meta||!meta.t||meta.t<=(APP.savedT||0)+500) return false;
-  const r=await tryWorld(await Store.get('save')); if(!r.w) return false;
-  migrateWorld(r.w); APP.game=fixWorld(r.w); APP.savedT=SAVE.t=meta.t; return true; }
+async function reloadIfNewer(sl){
+  sl=sl||'dt'; const meta=await Store.get(SLOTK[sl][1]); if(!meta||!meta.t||meta.t<=((APP.savedT||{})[sl]||0)+500) return false;
+  const r=await tryWorld(await Store.get(SLOTK[sl][0])); if(!r.w||slotOf(r.w)!==sl) return false;
+  migrateWorld(r.w); APP.games[sl]=fixWorld(r.w); APP.savedT[sl]=SAVE.t=meta.t; return true; }
+// partidas guardadas antes de separar los huecos: una carrera de jugador pudo quedar en el hueco de técnico.
+// Se mueve a su hueco y se recupera la última partida de técnico de las copias de seguridad. Se hace una sola vez.
+async function slotsMigrate(){
+  if(await Store.get('slots_v')===1) return null; let out=null;
+  try{
+    const L=await bakList(); let changed=false;
+    for(const b of L){ if(b.sl) continue; const r=await tryWorld(await Store.get(b.k,true)); b.sl=r.w?slotOf(r.w):'dt'; changed=true; }
+    if(changed) await Store.set('bak_index',L,true);
+    const s=await Store.get('save'), r=await tryWorld(s);
+    if(r.w&&slotOf(r.w)==='jug'){
+      const mj=await Store.get('save_j_meta'), m0=Object.assign({},await Store.get('save_meta')||{},{sl:'jug'});
+      if(!mj||(mj.t||0)<(m0.t||0)){ if(!await Store.set('save_j',s)||!await Store.set('save_j_meta',m0)) return null; }
+      // la partida de técnico más reciente que haya en las copias vuelve a su hueco
+      let rec=null; for(const b of L.filter(b=>b.sl==='dt'&&b.kind!=='bad').sort((a,b)=>b.t-a.t)){ const bs=await Store.get(b.k,true), r2=await tryWorld(bs); if(r2.w&&slotOf(r2.w)==='dt'){ rec={b,bs}; break; } }
+      if(rec){ await Store.set('save',rec.bs); await Store.set('save_meta',Object.assign({},rec.b,{t:Date.now(),sl:'dt'})); out={moved:1,rec:rec.b}; }
+      else { await Store.del('save'); await Store.del('save_meta'); out={moved:1,rec:null}; } }
+    // si la carrera de jugador solo quedó como copia (por ejemplo, porque restauraste la de técnico), vuelve a su hueco
+    if(typeof await Store.get('save_j')!=='string'){
+      for(const b of L.filter(b=>b.sl==='jug'&&b.kind!=='bad').sort((a,b)=>b.t-a.t)){ const bs=await Store.get(b.k,true), r2=await tryWorld(bs); if(r2.w&&slotOf(r2.w)==='jug'){ await Store.set('save_j',bs); await Store.set('save_j_meta',Object.assign({},b,{t:Date.now(),sl:'jug'})); out=Object.assign(out||{},{recJ:b}); break; } } }
+    await Store.set('slots_v',1);
+  }catch(e){ console.warn('huecos',e); }
+  return out; }
 
 /* =========================================================
    Interfaz de gestión
@@ -4539,7 +4569,7 @@ function musStep(s,t){
 /* =========================================================
    Arranque, menú, acciones globales y guardado
    ========================================================= */
-const APP={mode:'boot',game:null,base:null,pick:{step:0,name:'',lg:-1,club:-1},fs:false,gen:false};
+const APP={mode:'boot',games:{dt:null,jug:null},savedT:{dt:0,jug:0},base:null,pick:{step:0,name:'',lg:-1,club:-1},fs:false,gen:false};
 
 /* ---------- guardado local ---------- */
 let _svT=0,_svP=null;
@@ -4548,7 +4578,7 @@ function autosave(){ clearTimeout(_svT); _svT=setTimeout(saveNow,700); }
 async function saveNow(){
   clearTimeout(_svT);
   while(_svP){ try{ await _svP; }catch(e){} }
-  if(!W||W.userClub<0||APP.ro) return false;
+  if(!W||W.userClub<0||APP.ro||NEWER.has(W)) return false;
   _svP=saveRun(); try{ return await _svP; } finally{ _svP=null; }
 }
 async function saveRun(){
@@ -4556,11 +4586,11 @@ async function saveRun(){
   try{
     const chk=validateWorld(W);
     if(!chk.ok){ console.error('partida no válida, no se guarda:',chk.fatal); saveFail('La partida tiene datos dañados ('+chk.fatal[0]+'). No se guardó para no estropear tu último guardado bueno.'); }
-    else { W.v=VERSION; const s=await packWorld(W), meta=worldMeta(W,s), prev=await Store.get('save_meta');
+    else { W.v=VERSION; const sl=slotOf(W), [K,KM]=SLOTK[sl], s=await packWorld(W), meta=worldMeta(W,s), prev=await Store.get(KM);
       // si el guardado encoge de golpe, algo raro pasó: se conserva antes el anterior
-      if(prev&&prev.len>150000&&s.length<prev.len*.6) await bakCurrent('shrink','El guardado se redujo de golpe');
-      ok=await Store.set('save',s);
-      if(ok){ await Store.set('save_meta',meta); SAVE.t=meta.t; SAVE.fail=0; SAVE.err=''; APP.savedT=meta.t; try{ await bakAuto(s,meta); }catch(e){ console.warn('copia',e); } }
+      if(prev&&prev.len>150000&&s.length<prev.len*.6) await bakCurrent('shrink','El guardado se redujo de golpe',sl);
+      ok=await Store.set(K,s);
+      if(ok){ await Store.set(KM,meta); SAVE.t=meta.t; SAVE.fail=0; SAVE.err=''; APP.savedT[sl]=meta.t; APP.games[sl]=W; try{ await bakAuto(s,meta); }catch(e){ console.warn('copia',e); } }
       else saveFail(); }
   }catch(e){ console.warn('save',e); ok=false; saveFail(); }
   return ok;
@@ -4767,7 +4797,8 @@ function stadClose(){ GFX.release('full'); $('#hud').innerHTML=''; $('#stage').c
 /* ---------- nube, exportar e importar ---------- */
 const CLOUD_N=200000;
 // la nube alterna dos ranuras (a y b): la copia anterior sigue intacta hasta que la nueva está completa y comprobada
-const cloudChunk=(m,i)=>m.slot?'dt26'+m.slot+i:'dt26c'+i;
+const cloudChunk=(m,i)=>m.slot?(m.p||'dt26')+m.slot+i:'dt26c'+i;
+const cloudP=sl=>sl==='jug'?'dt26j':'dt26';
 async function cloudMeta(name){ try{ const sn=await CAP.db.doc('data/users/'+CAP.uid+'/'+name).get(); return sn.exists?sn.data():null; }catch(e){ return null; } }
 async function cloudFetch(m){ const base='data/users/'+CAP.uid+'/'; let s='';
   for(let i=0;i<m.n;i++){ const sn=await CAP.db.doc(base+cloudChunk(m,i)).get(); if(!sn.exists) throw new Error('falta un fragmento'); s+=sn.data().s; }
@@ -4777,30 +4808,29 @@ async function cloudSave(){
   const chk=validateWorld(W); if(!chk.ok){ toast('La partida tiene datos dañados; no se sube para no estropear la copia de la nube','bad'); return; }
   toast('Subiendo tu partida…');
   try{
-    const s=await packWorld(W), n=Math.ceil(s.length/CLOUD_N), base='data/users/'+CAP.uid+'/', old=await cloudMeta('dt26save'), slot=old&&old.slot==='a'?'b':'a';
-    for(let i=0;i<n;i++) await CAP.db.doc(base+'dt26'+slot+i).set({s:s.slice(i*CLOUD_N,(i+1)*CLOUD_N)});
-    const c=W.clubs[W.userClub], meta={n,len:s.length,h:strHash(s),slot,t:Date.now(),club:c.name,season:seasonLabel(W),date:fDate(W,W.day,1),v:VERSION};
+    const P=cloudP(slotOf(W)), s=await packWorld(W), n=Math.ceil(s.length/CLOUD_N), base='data/users/'+CAP.uid+'/', old=await cloudMeta(P+'save'), slot=old&&old.slot==='a'?'b':'a';
+    for(let i=0;i<n;i++) await CAP.db.doc(base+P+slot+i).set({s:s.slice(i*CLOUD_N,(i+1)*CLOUD_N)});
+    const c=W.clubs[W.userClub], meta={n,len:s.length,h:strHash(s),slot,p:P,sl:slotOf(W),t:Date.now(),club:isJug(W)?pname(W.players[W.me])+' · '+c.name:c.name,season:seasonLabel(W),date:fDate(W,W.day,1),v:VERSION};
     if(await cloudFetch(meta)!==s) throw new Error('la copia subida no coincide');
-    if(old) await CAP.db.doc(base+'dt26prev').set(old);
-    await CAP.db.doc(base+'dt26save').set(meta);
+    if(old) await CAP.db.doc(base+P+'prev').set(old);
+    await CAP.db.doc(base+P+'save').set(meta);
     toast('Partida guardada en la nube','good');
   }catch(e){ console.warn(e); toast('No se pudo guardar en la nube. La copia anterior sigue intacta','bad'); }
 }
 async function cloudLoad(){
   if(!CAP.db||!CAP.uid){ toast('La nube no está disponible aquí','bad'); return; }
   try{
-    const snap=await CAP.db.doc('data/users/'+CAP.uid+'/dt26save').get();
-    if(!snap.exists){ toast('No tienes partidas en la nube todavía'); return; }
-    const m=snap.data(); APP.cloudMeta=m; APP.cloudPrev=await cloudMeta('dt26prev');
+    APP.cloud={}; for(const sl of ['dt','jug']){ const m=await cloudMeta(cloudP(sl)+'save'); if(m) APP.cloud[sl]={m,prev:await cloudMeta(cloudP(sl)+'prev')}; }
+    const ks=Object.keys(APP.cloud); if(!ks.length){ toast('No tienes partidas en la nube todavía'); return; }
     modal(`<header><h3>Cargar de la nube</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
-    <p style="margin-top:0">Partida con <b>${esc(m.club)}</b>, temporada ${esc(m.season)}, ${esc(m.date)}. Guardada el ${new Date(m.t).toLocaleString('es-MX')}.</p>
-    ${APP.game?'<p class="muted">Sustituirá la partida de este dispositivo.</p>':''}<div class="row"><button class="btn pri" data-a="cloudgo">Cargar</button><button class="btn" data-a="close">Cancelar</button></div>`);
+    ${ks.map(sl=>{ const m=APP.cloud[sl].m; return `<div class="card" style="margin-bottom:10px"><b>Carrera de ${SLOTN[sl].toLowerCase()}</b><p style="margin:4px 0 8px">${esc(m.club)}, temporada ${esc(m.season)}, ${esc(m.date)}. Guardada el ${new Date(m.t).toLocaleString('es-MX')}.</p>${APP.games[sl]?`<p class="muted" style="margin:0 0 8px">Sustituirá tu carrera de ${SLOTN[sl].toLowerCase()} de este dispositivo (queda una copia de seguridad).</p>`:''}<button class="btn pri" data-a="cloudgo" data-s="${sl}">Cargar</button></div>`; }).join('')}
+    <div class="row"><button class="btn" data-a="close">Cancelar</button></div>`);
   }catch(e){ console.warn(e); toast('No se pudo leer la nube','bad'); }
 }
-async function cloudLoadGo(){
-  const m=APP.cloudMeta; if(!m||!CAP.db) return; closeModal(); toast('Descargando partida…');
+async function cloudLoadGo(sl){
+  const C=APP.cloud&&APP.cloud[sl||'dt'], m=C&&C.m; if(!m||!CAP.db) return; closeModal(); toast('Descargando partida…');
   let w=null, err=null;
-  for(const [mm,prev] of [[m,0],[APP.cloudPrev,1]]){ if(!mm) continue;
+  for(const [mm,prev] of [[m,0],[C.prev,1]]){ if(!mm) continue;
     try{ const r=await tryWorld(await cloudFetch(mm)); if(!r.w) throw new Error(r.why); w=r.w; if(prev) toast('La última copia de la nube estaba incompleta: se cargó la anterior','bad'); break; }catch(e){ console.warn(e); err=err||e; } }
   if(!w){ toast('No se pudo cargar: '+(err&&err.message||err),'bad'); return; }
   try{ await adoptWorld(w,'Antes de cargar desde la nube'); toast('Partida cargada desde la nube','good'); }catch(e){ toast('No se pudo cargar: '+(e&&e.message||e),'bad'); }
@@ -4809,9 +4839,9 @@ async function adoptWorld(w,why){
   if(!w||!Array.isArray(w.clubs)||!Array.isArray(w.players)||!Array.isArray(w.leagues)) throw new Error('el archivo no es una partida de DT26');
   const chk=validateWorld(w); if(!chk.ok) throw new Error('la partida está dañada ('+chk.fatal[0]+')');
   if((w.v||0)>VERSION) throw new Error('la guardó una versión más nueva del juego');
-  if(w.userClub>=0){ await tabTakeover(); await bakCurrent('replace',why||'Antes de importar otra partida'); }
+  const sl=slotOf(w); if(w.userClub>=0){ await tabTakeover(); await bakCurrent('replace',why||'Antes de importar otra partida',sl); }
   migrateWorld(w); fixWorld(w); W=w; rnd=RNG(newSeed());
-  if(w.userClub>=0){ APP.game=w; enterGame(); await saveNow(); if(W.stop) seasonModal(); }
+  if(w.userClub>=0){ APP.games[sl]=w; if(APP.ro==='newer') APP.ro=null; enterGame(); await saveNow(); if(W.stop) seasonModal(); }
   else { APP.base=w; menuEditor(); }
 }
 async function exportGame(){
@@ -4842,7 +4872,7 @@ function pasteJSON(){
 }
 async function pasteGo(){ const t=$('#pastetxt'); if(!t||!t.value.trim()) return; try{ const v=t.value; closeModal(); await loadText(v); }catch(e){ toast('El texto no es una partida válida','bad'); } }
 async function wipeGo(){
-  closeModal(); await bakCurrent('replace','Antes de borrar la partida'); await Store.del('save'); await Store.del('save_meta'); APP.game=null; APP.savedT=0;
+  closeModal(); const sl=slotOf(W); await bakCurrent('replace','Antes de borrar la partida',sl); await Store.del(SLOTK[sl][0]); await Store.del(SLOTK[sl][1]); APP.games[sl]=null; APP.savedT[sl]=0;
   if(W.userClub>=0) genWorld(newSeed());
   toast('Partida borrada. Queda una copia en Copias de seguridad'); showMenu();
 }
@@ -4863,7 +4893,7 @@ function enterGame(){
 }
 async function exitToMenu(){
   closeModal();
-  if(APP.mode==='game'&&!UI.editorOnly&&W.userClub>=0){ APP.game=W; await saveNow(); }
+  if(APP.mode==='game'&&!UI.editorOnly&&W.userClub>=0){ APP.games[slotOf(W)]=W; await saveNow(); }
   if(UI.editorOnly) APP.base=W;
   UI.editorOnly=false; GFX.release('view'); showMenu();
 }
@@ -4905,18 +4935,18 @@ function renderMenu(){
     const L=W.leagues[P.lg], clubs=L.clubs.map(id=>W.clubs[id]).sort((a,b)=>b.rep-a.rep), c=P.club>=0?W.clubs[P.club]:null;
     const det=c&&P.kind==='jug'?jugMenuDet(P,c):c?`<div class="card mdet"><div class="row" style="gap:12px">${crestSVG(c,54)}<div style="flex:1;min-width:0"><b style="font:700 23px 'Barlow Condensed',sans-serif">${esc(c.name)}</b><div class="muted" style="font-size:13.5px">${esc(c.city)}. ${esc(c.st.name)}, ${c.st.cap.toLocaleString('es')} asientos.</div></div></div>
       <div class="kv"><dt>Objetivo de la directiva</dt><dd>${expLabel(c)}</dd><dt>Presupuesto de fichajes</dt><dd>${money(c.fin.tb)}</dd><dt>Nivel del once</dt><dd>${starsHTML(avgOvr(W,c))}</dd><dt>Reputación</dt><dd>${starsHTML(c.rep+5)}</dd></div>
-      ${APP.game?'<p class="muted" style="margin:0;font-size:13px">Empezar sustituirá la partida guardada en este dispositivo.</p>':''}
+      ${APP.games.dt?'<p class="muted" style="margin:0;font-size:13px">Empezar sustituirá tu carrera de técnico guardada (queda una copia de seguridad). Tu carrera de jugador no se toca.</p>':''}
       <button class="mbtn pri" data-a="mstart"><span>Firmar con ${esc(c.name)}</span>${icon('play')}</button></div>`:'<p class="muted" style="margin:12px 0 0">Toca un club para ver su estadio y sus objetivos.</p>';
     m.innerHTML=`<div class="mwrap wide"><div class="pick"><div class="row" style="margin-bottom:10px"><h3 style="flex:1">${esc(L.name)}</h3><button class="btn sm" data-a="mback">Cambiar de liga</button></div>
     <div class="pick2"><div class="clubgrid">${clubs.map(x=>`<button class="clubbtn ${x.id===P.club?'on':''}" data-a="mclub" data-id="${x.id}">${crestSVG(x,40)}<span>${esc(x.name)}</span>${starsHTML(x.rep+5)}</button>`).join('')}</div>${det}</div></div></div>`;
     return; }
-  const g=APP.game, mOn=!!(SND.on&&SND.music), N=APP.notice;
+  const G=APP.games, g=G.dt||G.jug, mOn=!!(SND.on&&SND.music), N=APP.notice;
   const note=N?`<div class="pick" style="padding:12px 14px;border-left:4px solid ${N.bad?'#ea5a51':'#f2b23a'}"><b style="font:700 19px 'Barlow Condensed',sans-serif">${esc(N.title)}</b><div style="font-size:14px;opacity:.86;margin-top:4px">${esc(N.body)}</div><div class="row wrap" style="gap:8px;margin-top:10px"><button class="btn sm" data-a="bakopen">Copias de seguridad</button>${APP.ro?'':'<button class="btn sm" data-a="noticeok">Entendido</button>'}</div></div>`:'';
   m.innerHTML=`<div class="mwrap"><div><div class="logo">DT<span>26</span></div><div class="tag">Director Técnico. Tu club, tu estadio, tus decisiones.</div></div>${note}
   <div class="col" style="gap:10px">
-   ${g?`<button class="mbtn pri" data-a="mcont"><span>Continuar partida<small>${esc(g.mode==='jug'&&g.players[g.me]?pname(g.players[g.me])+', '+(g.players[g.me].club>=0?g.clubs[g.players[g.me].club].name:g.pc&&g.pc.done?'retirado':'agente libre'):g.clubs[g.userClub].name)}, ${fDate(g,g.day,1)} ${seasonLabel(g)}</small></span>${icon('play')}</button>`:''}
-   <button class="mbtn ${g?'':'pri'}" data-a="mnew"><span>Nueva partida como técnico<small>11 ligas con segundas divisiones, 9 competiciones de clubes, 7 torneos de selecciones y un mundo que no se detiene</small></span>${g?'':icon('play')}</button>
-   <button class="mbtn" data-a="mnewj"><span>Nueva partida como jugador<small>Empieza con 17 años: entrena, gánate el puesto, elige tus ofertas y llega a leyenda</small></span></button>
+   ${['dt','jug'].filter(sl=>G[sl]).map((sl,i)=>{ const x=G[sl]; return `<button class="mbtn ${i===0?'pri':''}" data-a="mcont" data-s="${sl}"><span>Continuar como ${sl==='jug'?'jugador':'técnico'}<small>${esc(sl==='jug'&&x.players[x.me]?pname(x.players[x.me])+', '+(x.players[x.me].club>=0?x.clubs[x.players[x.me].club].name:x.pc&&x.pc.done?'retirado':'agente libre'):x.clubs[x.userClub].name)}, ${fDate(x,x.day,1)} ${seasonLabel(x)}</small></span>${i===0?icon('play'):''}</button>`; }).join('')}
+   <button class="mbtn ${g?'':'pri'}" data-a="mnew"><span>Nueva partida como técnico<small>${G.dt?'Sustituye tu carrera de técnico actual (queda una copia). ':''}11 ligas con segundas divisiones, 9 competiciones de clubes, 7 torneos de selecciones y un mundo que no se detiene</small></span>${g?'':icon('play')}</button>
+   <button class="mbtn" data-a="mnewj"><span>Nueva partida como jugador<small>${G.jug?'Sustituye tu carrera de jugador actual (queda una copia). ':''}Empieza con 17 años: entrena, gánate el puesto, elige tus ofertas y llega a leyenda</small></span></button>
    <button class="mbtn" data-a="medit"><span>Editor de base de datos<small>Jugadores, caras, escudos, estadios y ligas</small></span></button>
    ${CAP.db?`<button class="mbtn" data-a="mcloud"><span>Cargar de la nube<small>Sigue tu partida en otro dispositivo</small></span></button>`:''}
   </div>
@@ -4933,7 +4963,7 @@ function menuNew(kind){
 async function menuStart(){
   const P=APP.pick, c=W.clubs[P.club]; if(!c||APP.starting) return;
   // la partida anterior no se pierde: queda como copia de seguridad antes de empezar otra
-  APP.starting=true; try{ await tabTakeover(); await bakCurrent('replace','Antes de empezar una partida nueva'); }finally{ APP.starting=false; }
+  APP.starting=true; try{ await tabTakeover(); await bakCurrent('replace','Antes de empezar una partida nueva','dt'); }finally{ APP.starting=false; }
   APP.notice=null;
   W.userClub=c.id; W.mgr.name=(P.name||'').trim().slice(0,28)||'Mánager'; W.mgr.nat=P.nat||W.leagues[c.lg].nat;
   if(c.mg>=0&&W.mgrs&&W.mgrs[c.mg]){ W.mgrs[c.mg].club=-1; } c.mg=-1;
@@ -4944,7 +4974,7 @@ async function menuStart(){
   mail(W,'Asistente','Cómo funciona DT26',`Pulsa Continuar para avanzar hasta el próximo partido o decisión, o +1 día para ir día a día. Mientras avanzas verás los resultados y las noticias de todas las ligas.\n\nEl Calendario muestra fechas exactas, clima y partidos; toca cualquier día para ver qué pasa en el mundo o simular hasta él.\n\nEn Tácticas eliges sistema, roles, instrucciones, planes A, B y C, lanzadores y capitán. En los partidos en 3D puedes cambiar la cámara, hacer cambios, dar indicaciones desde la banda y la charla del descanso.\n\nLos fichajes y renovaciones se negocian por rondas: salario, años, rol, primas y cláusulas.\n\nBusca cualquier cosa con Ctrl+K.`);
   mail(W,'Directiva',`Bienvenido a ${c.name}`,`La directiva te da la bienvenida a ${c.name}.\n\nObjetivo de la temporada: ${W.board.exp.toLowerCase()}.\nPresupuesto de fichajes: ${money(c.fin.tb)}.\nLímite salarial semanal: ${money(c.fin.wb)}.\n\nEl mercado de fichajes está abierto hasta el 31 de agosto.`,'good');
   news(W,`${W.mgr.name}, nuevo técnico de ${c.name}`,`El club presenta a su entrenador para la temporada ${seasonLabel(W)}.`);
-  APP.game=W; APP.base=null;
+  APP.games.dt=W; APP.savedT.dt=0; APP.base=null; if(APP.ro==='newer') APP.ro=null;
   enterGame(); saveNow(); toast(`Bienvenido a ${c.name}`,'good');
 }
 function menuEditor(){
@@ -4997,7 +5027,7 @@ const ACT={
   tabhere:()=>{ closeModal(); location.reload(); },
   cloudsave:()=>cloudSave(),
   cloudload:()=>cloudLoad(),
-  cloudgo:()=>cloudLoadGo(),
+  cloudgo:(el)=>cloudLoadGo(el.dataset.s),
   export:()=>exportGame(),
   copyexp:()=>copyExport(),
   import:()=>importGame(),
@@ -5037,7 +5067,9 @@ const ACT={
   msnd:()=>{ if(!SND.on){ SND.on=1; SND.music=1; } else SND.music=SND.music?0:1; if(W) W.settings.audio=SND.on; sndSave(); sndApply(); renderMenu(); },
   mx:(el)=>mxCmd(el.dataset.v),
   mhome:()=>{ APP.pick.step=0; renderMenu(); },
-  mcont:async()=>{ if(!APP.game) return; await tabTakeover(); if(await reloadIfNewer()) toast('Cargado tu progreso más reciente','good'); if(APP.ro==='newer'){ toast('Esta partida es de una versión más nueva: se abre sin guardar','bad'); } APP.notice=APP.ro?APP.notice:null; W=APP.game; enterGame(); if(W.jobless) jobOffersModal('Sin club','Sigues buscando banquillo. Elige tu próximo reto.'); else if(W.stop) seasonModal(); },
+  mcont:async(el)=>{ const sl=(el&&el.dataset&&el.dataset.s)||(APP.games.dt?'dt':'jug'); if(!APP.games[sl]) return; await tabTakeover(); if(await reloadIfNewer(sl)) toast('Cargado tu progreso más reciente','good');
+    if(NEWER.has(APP.games[sl])){ APP.ro='newer'; toast('Esta partida es de una versión más nueva: se abre sin guardar','bad'); } else if(APP.ro==='newer') APP.ro=null;
+    APP.notice=APP.ro?APP.notice:null; W=APP.games[sl]; SAVE.t=APP.savedT[sl]||0; enterGame(); if(W.jobless) jobOffersModal('Sin club','Sigues buscando banquillo. Elige tu próximo reto.'); else if(W.stop) seasonModal(); },
   mnew:()=>menuNew(),
   mlg:(el)=>{ APP.pick.lg=+el.dataset.id; APP.pick.club=-1; APP.pick.step=2; renderMenu(); },
   mclub:(el)=>{ APP.pick.club=+el.dataset.id; renderMenu(); },
@@ -8247,12 +8279,12 @@ function jugMenuDet(P,c){
   const ovr=jugStartOvr(P), a=avgOvr(W,c), r=c.pids.map(id=>W.players[id]).filter(q=>q.ovr>ovr).length, role=r<=8?'Titular':r<=14?'Rotación':r<=20?'Suplente':'Reserva';
   return `<div class="card mdet"><div class="row" style="gap:12px">${crestSVG(c,54)}<div style="flex:1;min-width:0"><b style="font:700 23px 'Barlow Condensed',sans-serif">${esc(c.name)}</b><div class="muted" style="font-size:13.5px">${esc(c.city)}. ${esc(c.st.name)}, ${c.st.cap.toLocaleString('es')} asientos.</div></div></div>
    <div class="kv"><dt>Nivel del once</dt><dd>${starsHTML(a)}</dd><dt>Tu nivel al llegar</dt><dd>${starsHTML(ovr)}</dd><dt>Papel esperado</dt><dd>${role}</dd><dt>Reputación</dt><dd>${starsHTML(c.rep+5)}</dd></div>
-   ${APP.game?'<p class="muted" style="margin:0;font-size:13px">Empezar sustituirá la partida guardada en este dispositivo (queda una copia de seguridad).</p>':''}
+   ${APP.games.jug?'<p class="muted" style="margin:0;font-size:13px">Empezar sustituirá tu carrera de jugador guardada (queda una copia de seguridad). Tu carrera de técnico no se toca.</p>':''}
    <button class="mbtn pri" data-a="mstart"><span>Firmar con ${esc(c.name)}</span>${icon('play')}</button></div>`;
 }
 async function menuStartJug(){
   const P=APP.pick, c=W.clubs[P.club]; if(!c||APP.starting) return;
-  APP.starting=true; try{ await tabTakeover(); await bakCurrent('replace','Antes de empezar una partida nueva'); }finally{ APP.starting=false; }
+  APP.starting=true; try{ await tabTakeover(); await bakCurrent('replace','Antes de empezar una partida nueva','jug'); }finally{ APP.starting=false; }
   APP.notice=null; jugPickDefaults(P);
   const tal=JUG_TAL[P.tal]||JUG_TAL[1], p=newP(W,{club:c.id,pos:P.pos,nat:P.nat,level:tal[2]/5,age:17});
   const fn=(P.fn||'').trim().slice(0,18), ln=(P.ln||'').trim().slice(0,20); if(fn) p.fn=fn; if(ln) p.ln=ln; p.nn=(P.nn||'').trim().slice(0,16);
@@ -8266,7 +8298,7 @@ async function menuStartJug(){
   mail(W,'Tu agente','Cómo funciona tu carrera',`Eres futbolista: el técnico del club decide la alineación, tú decides cómo entrenas, qué ofertas aceptas y cuándo renuevas.\n\nPulsa Continuar para avanzar hasta tu próximo partido. Si estás convocado, puedes verlo en 3D (la cámara Jugador te sigue) o pedir el resultado rápido.\n\nTus notas en los partidos y la intensidad del entrenamiento hacen crecer la confianza del técnico, y con ella tus minutos.\n\nCada temporada tienes objetivos. En verano y en enero llegan ofertas de otros clubes.`);
   mail(W,c.name,`Bienvenido a ${c.name}`,`${c.name} te da la bienvenida. Contrato hasta ${p.ce}, ${money(p.wage)} por semana, dorsal ${p.no}.\n\nPapel esperado: ${W.pc.obj.role.toLowerCase()}. Objetivos: ${jugObjText(W)}.`,'good');
   news(W,`${c.name} presenta a ${pname(p)}`,`El club incorpora a un ${PNAME[p.pos].toLowerCase()} de 17 años con mucho futuro.`,'fich',c.lg,{p:p.id});
-  APP.game=W; APP.base=null;
+  APP.games.jug=W; APP.savedT.jug=0; APP.base=null; if(APP.ro==='newer') APP.ro=null;
   enterGame(); saveNow(); toast(`Bienvenido a ${c.name}`,'good');
 }
 
@@ -8284,14 +8316,20 @@ async function wireCaps(){
 async function boot(){
   try{ const t=localStorage.getItem('dt26_theme'); if(t) setTheme(t); }catch(e){}
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){} // pide al navegador que no borre los datos del juego por falta de espacio
-  let g=null, L={w:null};
-  try{ L=await loadLocal(); }catch(e){ console.warn('save',e); }
-  if(L.rec) APP.notice={bad:1,title:'Tu partida guardada estaba dañada',body:`No se pudo abrir (${L.why}), así que recuperamos la copia de seguridad del ${bakWhen(L.rec)}${L.rec.date?' ('+L.rec.date+')':''}. La partida dañada se conserva en Copias de seguridad.`};
-  else if(L.lost) APP.notice={bad:1,title:'No se pudo abrir tu partida guardada',body:`El archivo está dañado (${L.lost}). Se conserva en Copias de seguridad por si se puede recuperar; mientras tanto puedes importar una copia descargada.`};
-  if(L.w){ g=L.w;
-    if((g.v||0)>VERSION){ APP.ro='newer'; APP.notice={bad:1,title:'Partida de una versión más nueva',body:'Esta partida se guardó con una versión más reciente de DT26. Puedes jugarla, pero esta versión no la guardará para no estropearla. Recarga la página para usar la versión nueva.'}; }
-    else if((g.v||0)<VERSION) await bakPut('premig',L.s,L.meta||{});
-    migrateWorld(g); W=fixWorld(g); APP.game=g; APP.savedT=SAVE.t=(L.meta&&L.meta.t)||0; rnd=RNG(newSeed()); }
+  let mig=null; try{ mig=await slotsMigrate(); }catch(e){ console.warn('huecos',e); }
+  if(mig){ const body=mig.moved?'Antes, empezar una carrera de jugador sustituía la de técnico. Ya no: cada una se guarda por separado. '+(mig.rec?`Tu carrera de técnico se recuperó de la copia de seguridad del ${bakWhen(mig.rec)}${mig.rec.date?' ('+mig.rec.date+')':''}.`:'No había ninguna copia de tu carrera de técnico para recuperarla.'):`Cada carrera se guarda ahora por separado. Tu carrera de jugador se recuperó de la copia de seguridad del ${bakWhen(mig.recJ)}.`;
+    APP.notice={title:'Tus dos carreras ya tienen cada una su guardado',body}; }
+  let newest=null;
+  for(const sl of ['dt','jug']){ let L={w:null}; try{ L=await loadLocal(sl); }catch(e){ console.warn('save',e); }
+    const nm=sl==='jug'?'Tu carrera de jugador':'Tu partida de técnico';
+    if(L.rec) APP.notice={bad:1,title:`${nm} estaba dañada`,body:`No se pudo abrir (${L.why}), así que recuperamos la copia de seguridad del ${bakWhen(L.rec)}${L.rec.date?' ('+L.rec.date+')':''}. La partida dañada se conserva en Copias de seguridad.`};
+    else if(L.lost) APP.notice={bad:1,title:`No se pudo abrir ${nm.toLowerCase()}`,body:`El archivo está dañado (${L.lost}). Se conserva en Copias de seguridad por si se puede recuperar; mientras tanto puedes importar una copia descargada.`};
+    if(!L.w||slotOf(L.w)!==sl) continue; const g=L.w;
+    if((g.v||0)>VERSION){ NEWER.add(g); APP.notice={bad:1,title:'Partida de una versión más nueva',body:'Esta partida se guardó con una versión más reciente de DT26. Puedes jugarla, pero esta versión no la guardará para no estropearla. Recarga la página para usar la versión nueva.'}; }
+    else if((g.v||0)<VERSION) await bakPut('premig',L.s,Object.assign({},L.meta||{},{sl}));
+    migrateWorld(g); fixWorld(g); APP.games[sl]=g; APP.savedT[sl]=(L.meta&&L.meta.t)||0;
+    if(!newest||APP.savedT[sl]>newest[1]) newest=[g,APP.savedT[sl]]; }
+  if(newest){ W=newest[0]; SAVE.t=newest[1]; rnd=RNG(newSeed()); }
   else genWorld(newSeed());
   if(W.settings&&W.settings.gfx) GFX.setQuality(W.settings.gfx);
   try{ if(!localStorage.getItem('dt26_snd')&&W.settings&&W.settings.audio===0){ SND.on=0; sndSave(); } }catch(e){}
