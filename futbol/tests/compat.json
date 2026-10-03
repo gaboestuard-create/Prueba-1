@@ -26,5 +26,9 @@
   {
     "nombre": "0.7.0 (portada, menú por páginas y sonido)",
     "commit": "7eb3fcb"
+  },
+  {
+    "nombre": "0.8.0 (faltas, tiros libres y tarjetas)",
+    "commit": "8c3d35c"
   }
 ]
