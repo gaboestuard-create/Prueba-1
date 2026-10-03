@@ -160,7 +160,12 @@ se dibuja con menos de 80 llamadas de dibujo.
 - Los atributos de carta salen de `statsCarta(puesto, media, estilo)`: perfil del puesto (`PERFIL_CARTA`) + estilo
   (`ARQUETIPOS`) + un poco de ruido fijo por nombre, y luego se ajustan para que la media según el puesto
   (`PESOS_CARTA`) sea la de la carta. `atribMotor` los pasa a los atributos del partido.
-- Tipos: bronce/plata/oro por media, `figura` (azul, +3, para las filas con figura = 1) y `leyenda`.
+- Tipos: bronce/plata/oro por media, `figura` (azul), `promesa` (verde), `flashback` (morado, una versión de hace
+  años: 2 o 3 como mucho por jugador), `leyenda` y `cumbre` (negra y dorada, 97-100, rarísima). Las especiales se
+  escriben en `ESPECIALES_TXT` apuntando al nombre corto de una fila de estrellas o leyendas.
+- Un mismo jugador no puede estar dos veces en el once aunque sea con cartas distintas (`personaCarta`).
+- La plantilla se ve en un campo (`vistaEquipoEst`): cartas pequeñas (`fc-mini`) en los puestos de la formación;
+  tocar una y otra las intercambia, tocar una reserva con un puesto elegido la mete.
 - Las cartas guardadas por versiones anteriores no tienen `st`, `look`, `hab`... `completarCarta` las rellena.
 - `presentarCarta` es la animación de bandera → puesto → club → carta para las cartas buenas de un sobre.
 

@@ -37,6 +37,11 @@ const PAISES = {
   RU: ['Rusia', _h('#fff', '#0039a6', '#d52b1e')], LR: ['Liberia', _h('#bf0a30', '#fff', '#bf0a30', '#fff', '#bf0a30', '#fff') + '<rect width="10" height="10" fill="#002868"/><circle cx="5" cy="5" r="2" fill="#fff"/>'],
   DZ: ['Argelia', _v('#006233', '#fff') + '<circle cx="15" cy="10" r="4" fill="#d21034"/><circle cx="16.3" cy="10" r="3.3" fill="#fff"/>'], GN: ['Guinea', _v('#ce1126', '#fcd116', '#009460')],
   GR: ['Grecia', _h('#0d5eaf', '#fff', '#0d5eaf', '#fff', '#0d5eaf', '#fff', '#0d5eaf', '#fff', '#0d5eaf') + '<rect width="11" height="11" fill="#0d5eaf"/><rect x="4.4" width="2.2" height="11" fill="#fff"/><rect y="4.4" width="11" height="2.2" fill="#fff"/>'],
+  NIR: ['Irlanda del Norte', '<rect width="30" height="20" fill="#fff"/><rect x="13" width="4" height="20" fill="#ce1124"/><rect y="8" width="30" height="4" fill="#ce1124"/><circle cx="15" cy="10" r="2.6" fill="#fff"/><circle cx="15" cy="10" r="1.6" fill="#ce1124"/>'],
+  IE: ['Irlanda', _v('#169b62', '#fff', '#ff883e')], CL: ['Chile', _h('#fff', '#d52b1e') + '<rect width="10" height="10" fill="#0039a6"/><circle cx="5" cy="5" r="1.8" fill="#fff"/>'],
+  PY: ['Paraguay', _h('#d52b1e', '#fff', '#0038a8') + '<circle cx="15" cy="10" r="1.6" fill="none" stroke="#0038a8" stroke-width=".5"/>'], PE: ['Perú', _v('#d91023', '#fff', '#d91023')],
+  GH: ['Ghana', _h('#ce1126', '#fcd116', '#006b3f') + '<path d="M15 7.6l.8 2.2h2.3l-1.9 1.4.7 2.2-1.9-1.4-1.9 1.4.7-2.2-1.9-1.4h2.3Z" fill="#000"/>'], GA: ['Gabón', _h('#009e60', '#fcd116', '#3a75c4')],
+  SK: ['Eslovaquia', _h('#fff', '#0b4ea2', '#ee1c25') + '<path d="M8 5h6v6q0 3-3 4.5Q8 14 8 11Z" fill="#ee1c25" stroke="#fff" stroke-width=".6"/>'],
   CZ: ['Chequia', _h('#fff', '#d7141a') + '<path d="M0 0 13 10 0 20Z" fill="#11457e"/>'],
 };
 const nombrePais = c => (PAISES[c] && PAISES[c][0]) || (typeof NACIONES !== 'undefined' && NACIONES[c] && NACIONES[c].nombre) || c;
@@ -47,6 +52,7 @@ const CLUBES_EXTRA = {
   'Inter Miami': ['MIA', 0xf7b5cd, 0x231f20], 'Al Nassr': ['NAS', 0xfcd116, 0x1d3f91], 'Al Hilal': ['HIL', 0x1b4f9c, 0xf5f5f5], 'Al Ittihad': ['ITT', 0xf5d000, 0x111111],
   'Al Ahli': ['AHL', 0x0b7a3e, 0xf5f5f5], 'Santos': ['SAN', 0xf5f5f5, 0x111111], 'Galatasaray': ['GS', 0xa90432, 0xfdb912], 'Fenerbahçe': ['FB', 0xfde100, 0x163962],
   'LAFC': ['LAF', 0x111111, 0xc39e6d], 'Vancouver Whitecaps': ['VAN', 0xf5f5f5, 0x00245d], 'Rosario Central': ['RCE', 0x00338d, 0xf9d400], 'San Diego FC': ['SDF', 0x0a1d36, 0x8fb5e0],
+  'Boca Juniors': ['BOC', 0x0b3c8c, 0xf6c200], 'Colo-Colo': ['CC', 0xf5f5f5, 0x111111], 'Fluminense': ['FLU', 0x8a1538, 0x006b3f],
   'Leyendas': ['LEY', 0x1b1b1b, 0xd4aa46],
 };
 // el club de una carta: el de la base de datos si existe; si no, uno de fuera (con insignia de colores)
@@ -252,6 +258,174 @@ Sanné|Leroy Sanné|DE|ED|84|Galatasaray|velocista|4|3|I|4|n|rapado|-|10|0
 Gundogán|Ilkay Gundogán|DE|MC|83|Galatasaray|pasador|3|4|D|1|n|corto|corta|20|0
 Edersson|Edersson Moraes|BR|POR|86|Fenerbahçe|barredor|1|4|I|1|n|rapado|corta|31|0
 Núñes|Darwin Núñes|UY|DC|82|Al Hilal|rematador|3|3|D|2|n|corto|-|9|0
+Mastantono|Franco Mastantono|AR|ED|78|Real Madrid|regateador|4|3|I|1|n|corto|-|30|0
+Huysen|Dean Huysen|ES|DFC|82|Real Madrid|pasador|2|3|D|0|c|corto|-|24|0
+Carrera|Álvaro Carrera|ES|LI|80|Real Madrid|carrilero|3|3|I|0|c|corto|-|18|0
+Brahim|Brahim Dias|ES|MCO|81|Real Madrid|regateador|4|3|D|2|n|corto|corta|21|0
+Asensio R.|Raúl Asensio|ES|DFC|79|Real Madrid|muro|2|3|D|0|n|corto|-|35|0
+Mendi|Ferland Mendi|FR|LI|82|Real Madrid|velocista|3|3|I|4|n|rapado|-|23|0
+Fermín|Fermín Lopes|ES|MCO|82|FC Barcelona|completo|3|3|D|1|n|corto|-|16|0
+Tores|Ferran Tores|ES|DC|82|FC Barcelona|rematador|3|4|D|0|c|corto|-|7|0
+Garsía E.|Eric Garsía|ES|DFC|80|FC Barcelona|pasador|2|3|D|0|n|corto|-|24|0
+Garsía J.|Joan Garsía|ES|POR|83|FC Barcelona|felino|1|3|D|0|c|corto|-|13|0
+Koque|Jorge Koque|ES|MC|81|Atlético de Madrid|pasador|3|4|D|0|n|corto|corta|6|0
+Simeoni|Giuliano Simeoni|AR|ED|81|Atlético de Madrid|motor|3|3|D|1|n|largo|-|20|0
+Sorlot|Alexander Sorlot|NO|DC|82|Atlético de Madrid|tanque|3|3|D|0|r|largo|-|9|0
+Le Normán|Robin Le Normán|ES|DFC|82|Atlético de Madrid|muro|2|3|D|0|c|corto|corta|24|0
+Lorente|Marcos Lorente|ES|LD|82|Atlético de Madrid|motor|3|3|D|0|c|corto|-|14|0
+Baenna|Alex Baenna|ES|MCO|83|Atlético de Madrid|creador|4|4|I|0|n|corto|-|10|0
+Almadá|Thiago Almadá|AR|MCO|80|Atlético de Madrid|regateador|4|4|D|1|n|corto|-|11|0
+Wiliams I.|Iñaki Wiliams|GH|DC|81|Athletic Club|velocista|3|3|D|5|n|corto|corta|9|0
+Sanset|Oihan Sanset|ES|MCO|81|Athletic Club|creador|4|3|D|0|c|corto|-|8|0
+Oyarsabal|Mikel Oyarsabal|ES|DC|83|Real Sociedad|completo|3|4|I|0|c|corto|-|10|0
+Kubbo|Take Kubbo|JP|ED|81|Real Sociedad|regateador|4|3|I|0|n|corto|-|14|0
+Morenno|Gerard Morenno|ES|DC|80|Villarreal|rematador|3|4|D|1|n|corto|corta|7|0
+Parejjo|Dani Parejjo|ES|MC|81|Villarreal|pasador|3|4|D|0|n|corto|-|10|0
+Pepe N.|Nicolás Pepe|CI|ED|79|Villarreal|regateador|4|3|I|4|n|trenzas|-|19|0
+Iskó|Francisco Iskó|ES|MCO|84|Real Betis|creador|5|4|D|1|n|corto|larga|22|1
+Antonny|Antonny Santos|BR|ED|80|Real Betis|regateador|5|3|I|3|n|corto|-|7|0
+Lo Selso|Gio Lo Selso|AR|MC|81|Real Betis|pasador|4|4|I|0|c|largo|-|20|0
+Aspás|Iago Aspás|ES|DC|79|Celta de Vigo|completo|4|4|I|0|c|corto|corta|10|0
+Mamardashvily|Giorgi Mamardashvily|GE|POR|82|Liverpool|felino|1|3|D|0|n|corto|-|25|0
+Dokku|Jeremy Dokku|BE|EI|82|Manchester City|regateador|5|3|D|4|n|rapado|-|11|0
+Reinders|Tijani Reinders|NL|MC|84|Manchester City|completo|3|4|D|2|n|corto|-|4|0
+Cherky|Rayan Cherky|FR|MCO|81|Manchester City|regateador|5|5|D|2|n|corto|-|10|0
+Marmush|Omar Marmush|EG|DC|83|Manchester City|completo|4|4|D|2|n|corto|corta|7|0
+Stons|John Stons|EN|DFC|82|Manchester City|pasador|2|3|D|0|c|corto|-|5|0
+Saviño|Saviño Moreyra|BR|ED|80|Manchester City|regateador|4|3|I|2|n|rizado|-|26|0
+Aït-Nuri|Rayan Aït-Nuri|DZ|LI|81|Manchester City|carrilero|4|3|I|3|n|rizado|-|21|0
+Konatté|Ibrahima Konatté|FR|DFC|85|Liverpool|muro|2|3|D|5|n|rapado|corta|5|0
+Frimpon|Jeremie Frimpon|NL|LD|83|Liverpool|velocista|4|3|D|4|n|rizado|-|30|0
+Kerkés|Milos Kerkés|HU|LI|81|Liverpool|carrilero|3|3|I|0|n|corto|-|6|0
+Gravenberg|Ryan Gravenberg|NL|MCD|85|Liverpool|completo|3|3|D|4|n|trenzas|-|38|0
+Equitiké|Hugo Equitiké|FR|DC|83|Liverpool|regateador|4|3|D|4|n|rapado|-|22|0
+Robertsón|Andy Robertsón|SC|LI|82|Liverpool|carrilero|3|3|I|0|c|corto|corta|26|0
+Endó|Wataru Endó|JP|MCD|78|Liverpool|muro|2|3|D|1|n|corto|-|3|0
+Trosard|Leandro Trosard|BE|EI|82|Arsenal|completo|4|5|D|0|c|corto|corta|19|0
+Martinely|Gabriel Martinely|BR|EI|82|Arsenal|velocista|4|3|D|1|n|corto|-|11|0
+Timbre|Jurriën Timbre|NL|LD|84|Arsenal|completo|3|3|D|4|n|corto|-|12|0
+Califiori|Riccardo Califiori|IT|DFC|82|Arsenal|pasador|2|3|I|0|c|largo|-|33|0
+Whyte|Ben Whyte|EN|LD|82|Arsenal|muro|2|3|D|0|c|corto|-|4|0
+Ezé|Eberechi Ezé|EN|MCO|84|Arsenal|regateador|5|4|D|4|n|rapado|-|10|1
+Madueque|Noni Madueque|EN|ED|80|Arsenal|regateador|4|3|I|4|n|corto|-|20|0
+Jeims|Reece Jeims|EN|LD|83|Chelsea|completo|3|4|D|3|n|corto|corta|24|0
+Netto|Pedro Netto|PT|EI|82|Chelsea|velocista|4|3|I|1|n|corto|-|7|0
+Pedriño|Joao Pedriño|BR|DC|82|Chelsea|regateador|4|3|D|2|n|rizado|-|20|0
+Garnaccho|Alejandro Garnaccho|AR|EI|80|Chelsea|velocista|4|3|D|0|n|largo|-|49|0
+Sanches R.|Robert Sanches|ES|POR|80|Chelsea|barredor|1|3|D|0|n|corto|-|1|0
+Estevinho|Estevinho Willian|BR|ED|78|Chelsea|regateador|5|4|I|2|n|rizado|-|41|0
+Mbeumó|Bryan Mbeumó|CM|ED|83|Manchester United|completo|4|4|I|5|n|rapado|corta|19|0
+Cuña|Matheus Cuña|BR|MCO|82|Manchester United|regateador|4|4|D|2|n|rizado|corta|10|0
+Sesko|Benjamin Sesko|SI|DC|81|Manchester United|tanque|3|3|D|0|c|corto|-|30|0
+Mainú|Kobbie Mainú|EN|MC|79|Manchester United|regateador|4|3|D|4|n|rizado|-|37|0
+Dalott|Diogo Dalott|PT|LD|80|Manchester United|carrilero|3|3|D|0|n|corto|corta|2|0
+De Licht|Matthijs de Licht|NL|DFC|81|Manchester United|muro|2|3|D|0|r|corto|-|4|0
+Onanna|André Onanna|CM|POR|80|Manchester United|barredor|1|3|D|5|n|calvo|-|24|0
+Gorden|Anthony Gorden|EN|EI|82|Newcastle United|velocista|4|3|D|0|c|peinado|-|10|0
+Tonalli|Sandro Tonalli|IT|MC|84|Newcastle United|motor|3|3|D|0|c|largo|-|8|0
+Joelintón|Joelintón Cassio|BR|MC|81|Newcastle United|tanque|3|3|D|3|n|rapado|corta|7|0
+Poppe|Nick Poppe|EN|POR|82|Newcastle United|felino|1|3|D|0|c|corto|-|22|0
+Romeró|Cristian Romeró|AR|DFC|84|Tottenham Hotspur|muro|2|3|D|1|n|corto|corta|17|0
+Kudús|Mohammed Kudús|GH|ED|82|Tottenham Hotspur|regateador|4|3|I|4|n|rapado|-|14|0
+Vicarió|Guglielmo Vicarió|IT|POR|83|Tottenham Hotspur|felino|1|3|D|0|c|corto|-|1|0
+Madison|James Madison|EN|MCO|81|Tottenham Hotspur|creador|4|4|D|0|c|corto|-|10|0
+Kulusevsky|Dejan Kulusevsky|SE|ED|82|Tottenham Hotspur|completo|4|3|I|0|r|corto|-|21|0
+Tielemanns|Youri Tielemanns|BE|MC|82|Aston Villa|pasador|3|4|D|0|p|corto|-|8|0
+Roger|Morgan Roger|EN|MCO|82|Aston Villa|regateador|4|3|D|3|n|corto|-|27|0
+Torrez P.|Pau Torrez|ES|DFC|82|Aston Villa|pasador|2|3|I|0|c|corto|-|14|0
+Konssa|Ezri Konssa|EN|DFC|81|Aston Villa|muro|2|3|D|4|n|rapado|-|4|0
+Mitomma|Kaoru Mitomma|JP|EI|80|Brighton & Hove Albion|regateador|4|3|D|0|n|corto|-|22|0
+Semenyó|Antoine Semenyó|GH|ED|80|Bournemouth|velocista|3|4|D|5|n|rapado|-|24|0
+Matetta|Jean-Philippe Matetta|FR|DC|80|Crystal Palace|tanque|3|3|D|4|n|trenzas|-|14|0
+Bowan|Jarrod Bowan|EN|ED|81|West Ham United|completo|3|3|I|0|c|corto|-|20|0
+Paquettá|Lucas Paquettá|BR|MCO|81|West Ham United|regateador|4|4|I|2|n|rizado|-|10|0
+Pickfort|Jordan Pickfort|EN|POR|82|Everton|barredor|1|3|I|0|c|corto|-|1|0
+Dimarko|Federico Dimarko|IT|LI|85|Inter|carrilero|3|4|I|0|c|corto|-|32|0
+Somer|Yann Somer|CH|POR|85|Inter|felino|1|3|D|0|c|corto|sombra|1|0
+Dumfris|Denzel Dumfris|NL|LD|84|Inter|motor|3|3|D|4|n|corto|-|2|0
+Pavar|Benjamin Pavar|FR|DFC|82|Inter|muro|2|3|D|0|c|corto|-|28|0
+Lobotca|Stanislav Lobotca|SK|MCD|84|Napoli|pasador|3|3|D|0|c|calvo|corta|68|0
+Di Lorenso|Giovanni Di Lorenso|IT|LD|84|Napoli|lider|2|3|D|0|c|corto|corta|22|0
+Anguisa|Frank Anguisa|CM|MC|83|Napoli|motor|3|3|D|5|n|rapado|-|99|0
+Hoylund|Rasmus Hoylund|DK|DC|80|Napoli|velocista|3|3|I|0|r|corto|-|19|0
+Nerez|David Nerez|BR|EI|80|Napoli|regateador|4|3|I|3|n|rizado|-|7|0
+Bremmer|Gleisón Bremmer|BR|DFC|84|Juventus|muro|2|3|D|3|n|rapado|corta|3|0
+Conseição|Francisco Conseição|PT|ED|81|Juventus|regateador|5|3|I|0|n|corto|-|7|0
+Davyd|Jonathan Davyd|CA|DC|82|Juventus|rematador|3|4|D|4|n|corto|-|30|0
+Locateli|Manuel Locateli|IT|MC|82|Juventus|pasador|3|3|D|0|c|corto|corta|5|0
+Koopmeiner|Teun Koopmeiner|NL|MC|82|Juventus|pasador|3|4|I|0|c|corto|-|8|0
+Rabió|Adrien Rabió|FR|MC|82|Milan|motor|3|3|I|0|c|largo|-|12|0
+Tomory|Fikayo Tomory|EN|DFC|81|Milan|velocista|2|3|D|4|n|rapado|-|23|0
+Nkunkú|Christopher Nkunkú|FR|MCO|81|Milan|regateador|4|4|D|4|n|rapado|-|18|0
+De Ketelaire|Charles De Ketelaire|BE|MCO|82|Atalanta|creador|4|4|I|0|c|corto|-|17|0
+Éderson J.|Éderson José|BR|MC|82|Atalanta|motor|3|3|D|3|n|corto|-|13|0
+Svilár|Mile Svilár|RS|POR|84|Roma|felino|1|3|I|0|c|corto|-|99|0
+Mancinni|Gianluca Mancinni|IT|DFC|81|Roma|muro|2|3|D|0|c|corto|corta|23|0
+Sulé|Matías Sulé|AR|ED|80|Roma|regateador|4|3|I|1|c|largo|-|18|0
+Zacagni|Mattia Zacagni|IT|EI|81|Lazio|regateador|4|3|D|0|c|corto|corta|10|0
+Kin|Moise Kin|IT|DC|82|Fiorentina|velocista|3|3|D|4|n|trenzas|-|20|0
+De Jea|David de Jea|ES|POR|83|Fiorentina|felino|1|3|D|0|c|corto|corta|43|0
+Pás|Nico Pás|AR|MCO|81|Como|creador|4|4|I|0|c|corto|-|10|0
+Ta|Jonathan Ta|DE|DFC|84|Bayern München|muro|2|3|D|4|n|rapado|-|4|0
+Goretska|Leon Goretska|DE|MC|81|Bayern München|motor|3|3|D|0|c|corto|corta|8|0
+Gnabri|Serge Gnabri|DE|ED|82|Bayern München|velocista|4|3|D|4|n|corto|-|7|0
+Paliña|João Paliña|PT|MCD|82|Bayern München|muro|2|3|D|0|c|corto|-|16|0
+Kimm|Min-jae Kimm|KR|DFC|83|Bayern München|muro|2|3|D|1|n|corto|-|3|0
+Kobell|Gregor Kobell|CH|POR|84|Borussia Dortmund|felino|1|3|D|0|c|corto|corta|1|0
+Brant|Julian Brant|DE|MCO|81|Borussia Dortmund|creador|4|4|D|0|c|corto|-|10|0
+Adeyémi|Karim Adeyémi|DE|EI|80|Borussia Dortmund|velocista|4|3|D|4|n|corto|-|27|0
+Schlotterbek|Nico Schlotterbek|DE|DFC|83|Borussia Dortmund|muro|2|3|I|0|c|corto|-|4|0
+Grimaldó|Álex Grimaldó|ES|LI|84|Bayer Leverkusen|pasador|4|4|I|0|p|corto|-|20|0
+Undaf|Deniz Undaf|DE|DC|80|VfB Stuttgart|rematador|4|4|D|2|n|corto|corta|26|0
+Eriksson|Christian Eriksson|DK|MC|78|VfL Wolfsburg|pasador|3|4|D|0|r|corto|-|24|0
+Chevalié|Lucas Chevalié|FR|POR|82|Paris Saint-Germain|felino|1|3|D|0|c|corto|-|30|0
+Pachó|Willian Pachó|EC|DFC|84|Paris Saint-Germain|muro|2|3|I|5|n|corto|-|51|0
+Zaïre-Emeri|Warren Zaïre-Emeri|FR|MC|81|Paris Saint-Germain|motor|3|3|D|4|n|rapado|-|33|0
+Ramós G.|Gonçalo Ramós|PT|DC|81|Paris Saint-Germain|rematador|3|3|D|0|c|corto|-|9|0
+Li|Kang-in Li|KR|MCO|80|Paris Saint-Germain|creador|4|4|I|0|n|corto|-|19|0
+Grinwood|Mason Grinwood|EN|ED|81|Olympique de Marseille|rematador|4|5|I|3|n|corto|-|10|0
+Obameyang|Pierre-Emerick Obameyang|GA|DC|79|Olympique de Marseille|velocista|4|3|D|4|n|cresta|-|97|0
+Ruli|Gerónimo Ruli|AR|POR|82|Olympique de Marseille|felino|1|3|D|1|n|corto|corta|1|0
+Hojberg|Pierre-Emile Hojberg|DK|MC|81|Olympique de Marseille|lider|3|3|D|0|c|corto|-|23|0
+Pogbá|Paul Pogbá|FR|MC|79|AS Monaco|completo|5|4|D|5|n|cresta|-|8|0
+Minamimo|Takumi Minamimo|JP|MCO|79|AS Monaco|creador|4|3|D|0|n|corto|-|18|0
+Fatti|Ansu Fatti|ES|EI|77|AS Monaco|regateador|4|3|D|5|n|rizado|-|31|0
+L. de Yong|Luuk de Yong|NL|DC|79|PSV|tanque|2|3|D|0|c|corto|-|9|0
+Perisich|Ivan Perisich|HR|EI|79|PSV|completo|3|5|D|0|c|corto|-|5|0
+Verman|Joey Verman|NL|MC|79|PSV|pasador|3|3|D|0|r|corto|-|23|0
+Weghorts|Wout Weghorts|NL|DC|76|Ajax|tanque|2|3|D|0|c|corto|corta|25|0
+Ueeda|Ayase Ueeda|JP|DC|77|Feyenoord|rematador|3|3|D|0|n|corto|-|9|0
+Trubín|Anatoliy Trubín|UA|POR|82|Benfica|felino|1|3|D|0|c|corto|-|1|0
+Sylva A.|António Sylva|PT|DFC|80|Benfica|pasador|2|3|D|0|n|corto|-|4|0
+Gonsalves|Pedro Gonsalves|PT|MCO|81|Sporting CP|creador|4|4|D|0|n|corto|corta|8|0
+Fidalgó|Álvaro Fidalgó|ES|MC|77|América|pasador|3|4|D|0|c|corto|corta|8|0
+Malagón|Luis Malagón|MX|POR|77|América|felino|1|3|D|1|n|corto|-|1|0
+Andradda|Esteban Andradda|AR|POR|77|Monterrey|felino|1|3|D|1|n|corto|corta|1|0
+Guzmán N.|Nahuel Guzmán|AR|POR|76|Tigres UANL|felino|1|3|D|1|n|largo|larga|1|0
+Brunneta|Juan Brunneta|AR|MCO|78|Tigres UANL|creador|4|4|I|0|c|corto|corta|11|0
+Myer|Kevin Myer|CO|POR|76|Cruz Azul|felino|1|3|D|3|n|corto|-|1|0
+Sepúlbeda|Ángel Sepúlbeda|MX|DC|76|Cruz Azul|rematador|3|3|D|2|n|corto|-|29|0
+Paulinyo|Paulinyo Silva|PT|DC|79|Toluca|rematador|3|3|D|1|n|corto|corta|26|0
+Vegga|Alexis Vegga|MX|EI|77|Toluca|regateador|4|3|D|2|n|corto|-|10|0
+Albarado|Roberto Albarado|MX|ED|75|Guadalajara|regateador|4|3|D|2|n|corto|-|25|0
+Vázques|Johan Vázques|MX|DFC|79|Genoa|muro|2|3|I|2|n|corto|-|22|0
+Tony|Ivan Tony|EN|DC|80|Al Ahli|rematador|3|4|D|4|n|corto|corta|99|0
+Komán|Kingsley Komán|FR|EI|82|Al Nassr|velocista|4|3|D|4|n|corto|-|21|0
+Félis|Joao Félis|PT|MCO|79|Al Nassr|regateador|4|4|D|0|n|corto|-|79|0
+R. Nevez|Rúben Nevez|PT|MCD|82|Al Hilal|pasador|3|4|D|0|c|corto|corta|8|0
+Mitrovich|Aleksandar Mitrovich|RS|DC|80|Al Hilal|tanque|3|3|D|0|n|corto|corta|9|0
+Kulibaly|Kalidou Kulibaly|SN|DFC|81|Al Hilal|muro|2|3|D|5|n|rapado|corta|3|0
+Bunu|Yassine Bunu|MA|POR|84|Al Hilal|felino|1|3|D|2|n|rapado|corta|37|0
+Fabiñho|Fabiñho Tavares|BR|MCD|80|Al Ittihad|muro|2|3|D|3|n|corto|corta|8|0
+De Paúl|Rodrigo De Paúl|AR|MC|82|Inter Miami|motor|3|4|D|1|n|largo|corta|7|0
+Busquest|Sergio Busquest|ES|MCD|80|Inter Miami|pasador|3|3|D|0|n|corto|corta|5|0
+Albá|Jordi Albá|ES|LI|79|Inter Miami|carrilero|3|3|I|0|c|corto|-|18|0
+Cavanni|Edinson Cavanni|UY|DC|77|Boca Juniors|rematador|3|4|D|1|n|largo|corta|10|0
+Paredez|Leandro Paredez|AR|MC|79|Boca Juniors|pasador|3|4|D|1|n|corto|corta|5|0
+Vydal|Arturo Vydal|CL|MC|74|Colo-Colo|motor|3|3|D|2|n|cresta|corta|23|0
+Sylva T.|Thiago Sylva|BR|DFC|78|Fluminense|lider|2|3|D|2|n|rapado|corta|3|0
+Icardy|Mauro Icardy|AR|DC|80|Galatasaray|rematador|3|3|D|1|n|corto|-|9|0
+Asensió|Marco Asensió|ES|MCO|80|Fenerbahçe|rematador|4|3|I|0|c|corto|-|21|0
 `;
 const LEYENDAS_TXT = `
 Pelié|Edson Nascimiento|BR|DC|98|Leyendas|completo|5|5|D|4|n|rapado|-|10
@@ -329,6 +503,229 @@ Haghi|Gheorghe Haghi|RO|MCO|90|Leyendas|creador|4|3|I|0|n|corto|-|10
 Beil|Gareth Beil|WA|ED|89|Leyendas|velocista|4|3|I|0|c|moño|corta|11
 Marselo|Marselo Vieyra|BR|LI|88|Leyendas|carrilero|5|3|I|3|n|afro|-|12
 Turé|Yaya Turé|CI|MC|89|Leyendas|motor|4|3|D|5|n|rapado|-|42
+Hazzard|Eden Hazzard|BE|EI|90|Leyendas|regateador|5|4|D|1|c|corto|sombra|10
+Agüeró|Sergio Agüeró|AR|DC|90|Leyendas|rematador|4|4|D|1|n|corto|-|10
+Hiero|Fernando Hiero|ES|DFC|89|Leyendas|lider|2|3|D|1|n|corto|bigote|4
+Butragueñho|Emilio Butragueñho|ES|DC|88|Leyendas|regateador|4|3|D|0|c|rizado|-|7
+Sylva D.|David Sylva|ES|MCO|89|Leyendas|creador|4|4|I|0|n|corto|-|21
+Fábrigas|Cesc Fábrigas|ES|MC|88|Leyendas|pasador|4|4|D|0|c|corto|corta|4
+Jento|Paco Jento|ES|EI|90|Leyendas|velocista|4|3|I|0|n|peinado|-|11
+Zubisarreta|Andoni Zubisarreta|ES|POR|87|Leyendas|felino|1|3|D|0|c|corto|bigote|1
+Gutti|José Gutti|ES|MCO|86|Leyendas|creador|4|4|I|0|r|largo|-|14
+Kempés|Mario Kempés|AR|DC|90|Leyendas|rematador|4|3|I|0|n|largo|-|10
+Pasarella|Daniel Pasarella|AR|DFC|90|Leyendas|lider|2|3|D|0|n|largo|-|6
+Canigia|Claudio Canigia|AR|DC|87|Leyendas|velocista|4|3|D|0|r|largo|-|7
+Mascheranno|Javier Mascheranno|AR|MCD|88|Leyendas|muro|2|3|D|0|n|corto|-|14
+Tébez|Carlos Tébez|AR|DC|87|Leyendas|tanque|4|3|D|2|n|corto|-|32
+Higuaim|Gonzalo Higuaim|AR|DC|87|Leyendas|rematador|3|3|D|0|n|corto|corta|9
+Crespó|Hernán Crespó|AR|DC|88|Leyendas|rematador|3|4|D|0|n|corto|-|9
+Berón|Juan Sebastián Berón|AR|MC|88|Leyendas|pasador|3|4|D|0|g|calvo|-|11
+Aymar|Pablo Aymar|AR|MCO|86|Leyendas|creador|5|4|D|0|n|largo|-|10
+Sócratess|Sócratess Oliveira|BR|MCO|91|Leyendas|creador|4|4|D|1|n|rizado|larga|8
+Rivelinno|Roberto Rivelinno|BR|MCO|90|Leyendas|creador|5|3|I|2|n|largo|bigote|11
+Jairziño|Jairziño Ventura|BR|ED|90|Leyendas|velocista|4|3|D|4|n|afro|-|7
+Albertto|Carlos Albertto|BR|LD|90|Leyendas|carrilero|3|3|D|3|n|corto|-|4
+Bebetto|Bebetto Oliveira|BR|DC|88|Leyendas|rematador|4|3|D|3|n|corto|-|7
+Adriánno|Adriánno Leite|BR|DC|89|Leyendas|tanque|4|4|I|4|n|rapado|-|10
+Lúzio|Lúzio Ferreira|BR|DFC|87|Leyendas|muro|2|3|D|2|n|rapado|-|3
+Juniño|Juniño Pernambucano|BR|MC|88|Leyendas|pasador|4|4|D|2|n|rapado|-|8
+Tafarel|Cláudio Tafarel|BR|POR|86|Leyendas|felino|1|3|D|1|c|largo|-|1
+Didda|Didda Silva|BR|POR|87|Leyendas|felino|1|3|D|5|n|rapado|-|12
+Tostãu|Eduardo Tostãu|BR|DC|89|Leyendas|creador|4|4|I|1|n|largo|-|9
+Nestta|Alessandro Nestta|IT|DFC|91|Leyendas|muro|2|3|D|0|n|largo|-|13
+Baressi|Franco Baressi|IT|DFC|92|Leyendas|lider|2|3|D|0|c|calvo|-|6
+Zof|Dino Zof|IT|POR|91|Leyendas|felino|1|3|D|0|g|corto|-|1
+Meaza|Giuseppe Meaza|IT|DC|91|Leyendas|rematador|4|4|D|0|n|peinado|-|8
+Vierri|Christian Vierri|IT|DC|89|Leyendas|tanque|3|3|I|0|n|corto|-|32
+Inzagui|Pippo Inzagui|IT|DC|87|Leyendas|rematador|2|3|D|0|n|corto|-|9
+Gatuso|Gennaro Gatuso|IT|MCD|87|Leyendas|motor|2|3|D|0|n|corto|larga|8
+De Rosi|Daniele De Rosi|IT|MCD|87|Leyendas|lider|2|3|D|0|c|corto|corta|16
+Chielini|Giorgio Chielini|IT|DFC|89|Leyendas|muro|2|3|I|0|n|corto|-|3
+Rosi|Paolo Rosi|IT|DC|89|Leyendas|rematador|3|4|D|0|n|rizado|-|20
+Rumenigge|Karl-Heinz Rumenigge|DE|DC|91|Leyendas|completo|4|4|D|0|r|largo|-|11
+Klinsman|Jürgen Klinsman|DE|DC|89|Leyendas|rematador|3|4|D|0|r|corto|-|18
+Balack|Michael Balack|DE|MC|89|Leyendas|completo|3|4|D|0|c|corto|-|13
+Schweinsteigerr|Bastian Schweinsteigerr|DE|MC|89|Leyendas|motor|3|4|D|0|r|corto|-|31
+Mayer|Sepp Mayer|DE|POR|90|Leyendas|felino|1|3|D|0|c|corto|-|1
+Voller|Rudi Voller|DE|DC|87|Leyendas|rematador|3|3|D|0|g|rizado|bigote|9
+Samer|Matthias Samer|DE|DFC|89|Leyendas|lider|3|3|D|0|p|corto|-|6
+Ozil|Mesut Ozil|DE|MCO|88|Leyendas|creador|4|3|I|1|n|corto|-|10
+Reuss|Marco Reuss|DE|EI|86|Leyendas|completo|4|4|D|0|r|corto|-|11
+Humels|Mats Humels|DE|DFC|87|Leyendas|pasador|2|3|D|0|c|corto|corta|5
+Neeskins|Johan Neeskins|NL|MC|90|Leyendas|motor|3|4|D|0|r|largo|-|13
+Rijkard|Frank Rijkard|NL|MCD|91|Leyendas|completo|3|4|D|4|n|trenzas|-|3
+Koemann|Ronald Koemann|NL|DFC|89|Leyendas|pasador|2|4|D|0|r|corto|-|4
+Sedorf|Clarence Sedorf|NL|MC|90|Leyendas|completo|4|5|D|4|n|rapado|-|10
+Kluyvert|Patrick Kluyvert|NL|DC|88|Leyendas|rematador|3|4|D|4|n|corto|-|9
+Davidz|Edgar Davidz|NL|MC|88|Leyendas|motor|4|3|I|4|n|trenzas|-|26
+Sneyder|Wesley Sneyder|NL|MCO|88|Leyendas|pasador|4|5|D|0|c|corto|-|10
+Van Persi|Robin van Persi|NL|DC|89|Leyendas|rematador|4|3|I|0|n|corto|corta|20
+Van Nistelroy|Ruud van Nistelroy|NL|DC|89|Leyendas|rematador|3|4|D|0|c|corto|-|10
+Stamm|Jaap Stamm|NL|DFC|89|Leyendas|muro|2|3|D|0|g|calvo|-|6
+Fontainne|Just Fontainne|FR|DC|90|Leyendas|rematador|3|4|D|0|n|peinado|-|17
+Copa|Raymond Copa|FR|MCO|89|Leyendas|regateador|4|4|D|0|n|peinado|-|10
+Desayi|Marcel Desayi|FR|DFC|89|Leyendas|muro|2|3|D|5|n|rapado|-|8
+Turam L.|Lilian Turam|FR|DFC|89|Leyendas|muro|2|3|D|5|n|rapado|-|15
+Blanch|Laurent Blanch|FR|DFC|87|Leyendas|pasador|2|3|D|0|g|calvo|-|5
+Makelelé|Claude Makelelé|FR|MCD|88|Leyendas|muro|2|3|D|5|n|calvo|-|4
+Pirés|Robert Pirés|FR|EI|88|Leyendas|regateador|4|4|D|0|c|largo|perilla|7
+Trezegué|David Trezegué|FR|DC|88|Leyendas|rematador|3|4|D|1|n|corto|-|17
+Papín|Jean-Pierre Papín|FR|DC|89|Leyendas|rematador|3|4|D|0|n|corto|-|9
+Bartez|Fabien Bartez|FR|POR|87|Leyendas|felino|1|3|D|0|c|calvo|-|16
+Loris|Hugo Loris|FR|POR|86|Leyendas|felino|1|3|I|0|c|corto|-|1
+Linnekar|Gary Linnekar|EN|DC|89|Leyendas|rematador|3|4|D|0|c|corto|-|10
+Shiarer|Alan Shiarer|EN|DC|90|Leyendas|rematador|3|4|D|0|c|corto|-|9
+Escoles|Paul Escoles|EN|MC|89|Leyendas|pasador|3|4|D|0|p|corto|-|18
+Tery|John Tery|EN|DFC|89|Leyendas|lider|2|3|D|0|n|corto|-|26
+Kole|Ashley Kole|EN|LI|88|Leyendas|carrilero|3|3|I|4|n|rapado|-|3
+Owenn|Michael Owenn|EN|DC|89|Leyendas|velocista|4|3|D|0|n|corto|-|10
+Gascoyne|Paul Gascoyne|EN|MCO|88|Leyendas|regateador|4|4|D|0|b|corto|-|8
+Bancks|Gordon Bancks|EN|POR|90|Leyendas|felino|1|3|D|0|c|peinado|-|1
+Mor|Bobby Mor|EN|DFC|91|Leyendas|lider|2|3|D|0|r|corto|-|6
+Kegan|Kevin Kegan|EN|DC|88|Leyendas|completo|4|3|D|0|c|rizado|-|7
+Cambel|Sol Cambel|EN|DFC|87|Leyendas|muro|2|3|D|5|n|rapado|-|23
+Kosta R.|Rui Kosta|PT|MCO|88|Leyendas|creador|4|4|D|0|n|largo|-|10
+Decco|Decco Souza|PT|MC|88|Leyendas|creador|4|4|D|2|n|calvo|-|20
+Carbalho|Ricardo Carbalho|PT|DFC|87|Leyendas|muro|2|3|D|0|n|corto|-|6
+Borjetti|Jared Borjetti|MX|DC|84|Leyendas|rematador|3|3|D|2|n|corto|bigote|9
+Chicharo|Javier 'Chicharo' Hernándes|MX|DC|84|Leyendas|rematador|3|4|D|1|n|corto|-|14
+Pardó|Pável Pardó|MX|MC|82|Leyendas|pasador|3|3|D|1|n|corto|-|8
+Guardao|Andrés Guardao|MX|MC|84|Leyendas|pasador|3|4|I|1|n|corto|corta|18
+Bela|Carlos Bela|MX|ED|85|Leyendas|creador|4|4|I|2|n|corto|-|11
+Dos Santtos|Giovani dos Santtos|MX|MCO|82|Leyendas|regateador|4|3|I|2|n|trenzas|-|10
+Matador|Luis 'Matador' Hernándes|MX|DC|84|Leyendas|rematador|3|3|D|1|r|largo|-|15
+Sánches O.|Oswaldo Sánches|MX|POR|83|Leyendas|felino|1|3|D|2|n|corto|-|1
+Bestt|George Bestt|NIR|ED|92|Leyendas|regateador|5|4|D|0|n|largo|corta|7
+Dalgish|Kenny Dalgish|SC|DC|90|Leyendas|completo|4|4|D|0|c|corto|-|7
+Rusch|Ian Rusch|WA|DC|88|Leyendas|rematador|3|3|D|0|n|corto|bigote|9
+Gigs|Ryan Gigs|WA|EI|88|Leyendas|regateador|4|3|I|0|n|corto|-|11
+Kean|Roy Kean|IE|MCD|88|Leyendas|motor|2|3|D|0|n|corto|larga|16
+Laudrop|Michael Laudrop|DK|MCO|90|Leyendas|creador|5|4|D|0|c|corto|-|10
+Larson|Henrik Larson|SE|DC|88|Leyendas|rematador|3|4|D|3|n|trenzas|-|7
+Suker|Davor Suker|HR|DC|88|Leyendas|rematador|4|3|I|0|n|corto|-|9
+Nedvet|Pavel Nedvet|CZ|MC|91|Leyendas|motor|4|4|D|0|r|largo|-|11
+Chech|Petr Chech|CZ|POR|89|Leyendas|felino|1|3|D|0|c|corto|-|1
+Vidich|Nemanja Vidich|RS|DFC|88|Leyendas|muro|2|3|D|0|n|corto|-|15
+Essyen|Michael Essyen|GH|MC|87|Leyendas|motor|3|3|D|5|n|rapado|-|5
+Okoxa|Jay-Jay Okoxa|NG|MCO|88|Leyendas|regateador|5|4|D|5|n|rapado|-|10
+Kanú|Nwankwo Kanú|NG|DC|86|Leyendas|regateador|4|3|D|5|n|rapado|-|4
+Mila|Roger Mila|CM|DC|87|Leyendas|rematador|4|3|D|5|n|corto|bigote|9
+Nakatta|Hidetoshi Nakatta|JP|MCO|85|Leyendas|creador|4|4|D|0|r|corto|-|7
+Parck|Ji-sung Parck|KR|MC|85|Leyendas|motor|3|4|D|1|n|corto|-|13
+Donovann|Landon Donovann|US|EI|84|Leyendas|velocista|4|4|D|0|c|corto|-|10
+Figueroá|Elías Figueroá|CL|DFC|89|Leyendas|lider|2|3|D|1|n|peinado|-|2
+Zamoranno|Iván Zamoranno|CL|DC|87|Leyendas|rematador|3|3|D|1|n|corto|-|9
+Salaz|Marcelo Salaz|CL|DC|87|Leyendas|rematador|4|3|I|1|n|corto|-|11
+Francescolli|Enzo Francescolli|UY|MCO|89|Leyendas|creador|4|4|D|0|n|largo|-|10
+Forlám|Diego Forlám|UY|DC|88|Leyendas|rematador|4|5|D|0|r|largo|-|10
+Cubiyas|Teófilo Cubiyas|PE|MCO|88|Leyendas|creador|4|4|D|3|n|afro|-|10
+Higüita|René Higüita|CO|POR|85|Leyendas|barredor|3|3|D|3|n|largo|bigote|1
+Asprila|Faustino Asprila|CO|DC|86|Leyendas|regateador|5|3|D|4|n|corto|-|11
+Falkao|Radamel Falkao|CO|DC|88|Leyendas|rematador|3|4|D|1|n|largo|-|9
+Chilaver|José Luis Chilaver|PY|POR|87|Leyendas|felino|1|3|I|1|n|corto|-|1
+Blojín|Oleg Blojín|UA|EI|89|Leyendas|velocista|4|3|I|0|c|corto|-|11
+`;
+/* Cartas especiales de jugadores de arriba (se busca la fila por el nombre corto):
+   'tipo|nombre corto|etiqueta|puesto|media|club de entonces|estilo|habilidad|pie malo|peinado|barba|pelo' (vacío = el de la fila)
+   flashback: una versión de hace años (2 o 3 de los más icónicos); cumbre: 97-100, rarísimas; promesa: jóvenes en verde;
+   figura: más cartas azules. */
+const ESPECIALES_TXT = `
+flashback|Messio|2009|ED|93|FC Barcelona|regateador|5|3|largo|-
+flashback|Messio|2012|DC|96|FC Barcelona|regateador|5|4|corto|-
+flashback|Messio|2022|ED|94|Paris Saint-Germain|creador|4|4|corto|larga
+flashback|Ronalldo|2008|ED|93|Manchester United|velocista|5|4|peinado|-
+flashback|Ronalldo|2014|EI|95|Real Madrid|rematador|5|4|corto|-
+flashback|Ronalldo|2017|DC|94|Real Madrid|rematador|5|4|corto|-
+flashback|Neimar Jr.|2011|EI|86|Santos|regateador|5|4|cresta|-
+flashback|Neimar Jr.|2015|EI|92|FC Barcelona|regateador|5|5|corto|-
+flashback|Neimar Jr.|2018|EI|93|Paris Saint-Germain|regateador|5|5|corto|-|r
+flashback|Maradonna|1982|MCO|93|Boca Juniors|regateador|5|3||
+flashback|Maradonna|1990|MCO|96|Napoli|regateador|5|3||
+flashback|Pelié|1958|DC|95|Santos|velocista|5|4||
+flashback|Pelié|1962|DC|97|Santos|completo|5|5||
+flashback|Nazaryo|1997|DC|97|FC Barcelona|velocista|5|4|rapado|-
+flashback|Nazaryo|2002|DC|96|Real Madrid|rematador|5|4|cresta|-
+flashback|Ronaldiño|2002|MCO|91|Paris Saint-Germain|regateador|5|4||
+flashback|Ronaldiño|2006|EI|97|FC Barcelona|regateador|5|4||
+flashback|Zidán|1998|MCO|94|Juventus|creador|5|4|corto|-
+flashback|Zidán|2002|MCO|96|Real Madrid|creador|5|4||
+flashback|Kakah|2007|MCO|95|Milan|velocista|4|4||
+flashback|Henri|2004|DC|95|Arsenal|velocista|4|4||
+flashback|Kruyff|1971|DC|97|Ajax|creador|5|4||
+flashback|Van Bastin|1988|DC|96|Milan|rematador|4|4||
+flashback|Bekenbauer|1974|DFC|96|Bayern München|lider|3|4||
+flashback|Platinni|1984|MCO|96|Juventus|creador|4|4||
+flashback|Romárion|1994|DC|94|FC Barcelona|rematador|5|4||
+flashback|Rivaldho|1999|MCO|95|FC Barcelona|regateador|5|3||
+flashback|Shevchenco|2004|DC|94|Milan|rematador|4|4||
+flashback|Fygo|2000|ED|94|FC Barcelona|regateador|5|3||
+flashback|Pushkás|1960|DC|96|Real Madrid|rematador|4|2||
+flashback|Di Stéfanno|1957|DC|97|Real Madrid|completo|4|4||
+flashback|Eusebiu|1965|DC|96|Benfica|rematador|4|4||
+flashback|Maldinni|1994|DFC|96|Milan|lider|2|4||
+flashback|Bufón|2006|POR|95|Juventus|felino|1|3||
+flashback|Casiyas|2010|POR|93|Real Madrid|felino|1|3||
+flashback|Iniestra|2010|MC|94|FC Barcelona|creador|5|4||
+flashback|Xavy|2011|MC|94|FC Barcelona|pasador|4|4||
+flashback|Gerard|2005|MC|92|Liverpool|completo|3|4||
+flashback|Beckam|1999|ED|90|Manchester United|pasador|3|3|corto|-
+flashback|Rooni|2010|DC|92|Manchester United|completo|4|4||
+flashback|Torrés|2008|DC|92|Liverpool|velocista|4|4||
+flashback|Drogbá|2012|DC|92|Chelsea|tanque|3|3||
+flashback|Etoo|2009|DC|92|FC Barcelona|velocista|4|4||
+flashback|Ibrahimovich|2013|DC|92|Paris Saint-Germain|tanque|5|4|largo|-
+flashback|Hazzard|2019|EI|93|Chelsea|regateador|5|4||
+flashback|Roben|2014|ED|93|Bayern München|regateador|4|2||
+flashback|Riberi|2013|EI|93|Bayern München|regateador|5|3||
+flashback|Agüeró|2012|DC|92|Manchester City|rematador|4|4||
+flashback|Beil|2014|ED|91|Real Madrid|velocista|4|3|corto|-
+flashback|Kross|2017|MC|92|Real Madrid|pasador|3|5||
+flashback|Marselo|2017|LI|89|Real Madrid|carrilero|5|3||
+flashback|Ramós|2017|DFC|91|Real Madrid|lider|3|3|largo|corta
+flashback|Modrich|2018|MC|92|Real Madrid|creador|4|4||
+flashback|Suáres|2016|DC|92|FC Barcelona|rematador|4|4||
+flashback|Lewandoski|2020|DC|93|Bayern München|rematador|4|4||
+flashback|Benzemá|2022|DC|92|Real Madrid|rematador|4|4||
+flashback|Mbapé|2018|ED|88|Paris Saint-Germain|velocista|5|4||
+flashback|Mbapé|2022|DC|93|Paris Saint-Germain|velocista|5|4||
+flashback|Halland|2020|DC|86|Borussia Dortmund|rematador|3|3|largo|-
+flashback|Salaj|2018|ED|91|Liverpool|velocista|4|3||
+flashback|De Bruine|2020|MC|92|Manchester City|pasador|4|5||
+flashback|Van Dyk|2019|DFC|92|Liverpool|lider|2|3||
+flashback|Grizman|2018|DC|91|Atlético de Madrid|completo|4|4|largo|-
+flashback|Kantí|2018|MCD|89|Chelsea|motor|2|3||
+flashback|Sánches|1986|DC|93|Real Madrid|rematador|4|4||
+flashback|Márques|2006|DFC|89|FC Barcelona|lider|3|4||
+flashback|Batistutta|1998|DC|93|Fiorentina|rematador|3|4||
+flashback|Riquelmé|2001|MCO|91|Boca Juniors|pasador|4|4||
+flashback|Kampos|1994|POR|88|UNAM Pumas|barredor|1|3||
+cumbre|Pelié|La cima|DC|100|Santos|completo|5|5||
+cumbre|Maradonna|La cima|MCO|99|Napoli|regateador|5|4||
+cumbre|Messio|La cima|ED|99|FC Barcelona|regateador|5|4|corto|-
+cumbre|Ronalldo|La cima|DC|99|Real Madrid|rematador|5|5|corto|-
+cumbre|Nazaryo|La cima|DC|99|Inter|velocista|5|4|rapado|-
+cumbre|Kruyff|La cima|DC|98|Ajax|creador|5|4||
+cumbre|Zidán|La cima|MCO|98|Real Madrid|creador|5|5||
+cumbre|Ronaldiño|La cima|MCO|98|FC Barcelona|regateador|5|5||
+cumbre|Bekenbauer|La cima|DFC|98|Bayern München|lider|3|4||
+cumbre|Maldinni|La cima|DFC|97|Milan|lider|3|4||
+promesa|Yamall|Promesa|ED|91|FC Barcelona|regateador|5|4||
+promesa|Cubarzí|Promesa|DFC|87|FC Barcelona|pasador|2|3||
+promesa|Endryck|Promesa|DC|84|Real Madrid|rematador|4|3||
+promesa|Mastantono|Promesa|ED|82|Real Madrid|regateador|4|3||
+promesa|Mainú|Promesa|MC|83|Manchester United|regateador|4|3||
+promesa|Zaïre-Emeri|Promesa|MC|85|Paris Saint-Germain|motor|3|3||
+promesa|Dué|Promesa|ED|88|Paris Saint-Germain|regateador|5|4||
+promesa|Estevinho|Promesa|ED|83|Chelsea|regateador|5|4||
+promesa|Pás|Promesa|MCO|85|Como|creador|4|4||
+promesa|Gúler|Promesa|MCO|87|Real Madrid|creador|4|4||
+promesa|Yildís|Promesa|EI|87|Juventus|regateador|5|4||
+promesa|Musiela|Promesa|MCO|91|Bayern München|regateador|5|4||
+figura|Grizman|Figura|DC|89|||||
+figura|Olisé|Figura|ED|90|||||
+figura|Gyokeres|Figura|DC|89|||||
+figura|Bremmer|Figura|DFC|87|||||
+figura|Rodrígues J.|Figura|MCO|85|||||
 `;
 function leerFilas(txt, leyenda) {
   return txt.trim().split('\n').map((l, i) => {
@@ -338,6 +735,13 @@ function leerFilas(txt, leyenda) {
   });
 }
 const ESTRELLAS = [...leerFilas(ESTRELLAS_TXT, false), ...leerFilas(LEYENDAS_TXT, true)];
+const ESPECIALES = ESPECIALES_TXT.trim().split('\n').map((l, i) => {
+  const [tipo, corto, etq, pos, med, club, arq, hab, pm, peinado, barba, pelo] = l.split('|');
+  const b = ESTRELLAS.find(e => e.corto === corto);
+  if (!b) return null;
+  return { ...b, sid: 'X' + i, base: b.sid, tipo, etq, pos: pos || b.pos, med: +med, club: club || b.club, arq: arq || b.arq, hab: +hab || b.hab, pm: +pm || b.pm,
+    look: { ...b.look, peinado: peinado || b.look.peinado, barba: barba || b.look.barba, pelo: pelo || b.look.pelo } };
+}).filter(Boolean);
 // todas las cartas posibles de la base de estrellas: normales, Figura (azul, +3) y Leyenda
 const CARTAS_ESTRELLA = (() => {
   const L = [];
@@ -345,6 +749,7 @@ const CARTAS_ESTRELLA = (() => {
     L.push({ ...e, clave: e.sid, tipo: e.leyenda ? 'leyenda' : 'normal' });
     if (e.figura) L.push({ ...e, clave: e.sid + 'f', tipo: 'figura', med: Math.min(99, e.med + 3) });
   }
+  for (const e of ESPECIALES) L.push({ ...e, clave: e.sid });
   return L;
 })();
 
@@ -395,8 +800,9 @@ function retratoSVG(look, camiseta = 0x2b5d8a, cuello = 0xf5f5f5) {
 }
 
 /* ---------- la carta ---------- */
-const TIPOS_CARTA = { figura: 'Figura', leyenda: 'Leyenda' };
-const claseDeCarta = c => c.tipo === 'figura' || c.tipo === 'leyenda' ? c.tipo : c.med >= 75 ? 'oro' : c.med >= 65 ? 'plata' : 'bronce';
+const TIPOS_CARTA = { figura: 'Figura', leyenda: 'Leyenda', flashback: 'Flashback', cumbre: 'Cumbre', promesa: 'Promesa' };
+const claseDeCarta = c => TIPOS_CARTA[c.tipo] ? c.tipo : c.med >= 75 ? 'oro' : c.med >= 65 ? 'plata' : 'bronce';
+const etiquetaCarta = c => TIPOS_CARTA[c.tipo] ? TIPOS_CARTA[c.tipo] + (c.etq && c.tipo !== 'promesa' && c.tipo !== 'figura' && c.etq !== 'La cima' ? ' ' + c.etq : '') : '';
 // completa una carta (también las guardadas por versiones anteriores, que no tenían estos datos)
 function completarCarta(c) {
   if (c.st && c.look) return c;
@@ -418,20 +824,20 @@ function completarCarta(c) {
 function cartaDeEstrella(e) {
   const st = statsCarta(e.pos, e.med, e.arq, e.nombre);
   const club = clubCarta(e.club);
-  return { tipo: e.tipo, s: e.clave, nombre: e.corto, nombre1: '', completo: e.nombre, pos: e.pos, med: e.med, nac: e.nac, club: club.nombre, liga: club.liga,
+  return { tipo: e.tipo, etq: e.etq || '', s: e.clave, nombre: e.corto, nombre1: '', completo: e.nombre, pos: e.pos, med: e.med, nac: e.nac, club: club.nombre, liga: club.liga,
     st, at: atribMotor(e.pos, st), hab: e.hab, pm: e.pm, pie: e.pie, num: e.num, look: { ...e.look },
     piel: PIEL_CARTA[e.look.piel], pelo: PELO_CARTA[e.look.pelo] || 0x15110f };
 }
 const estrellitas = n => '★'.repeat(n) + '<i>' + '★'.repeat(5 - n) + '</i>';
-function cartaHTML(c, extra = '', sel = false, grande = false) {
+function cartaHTML(c, extra = '', sel = false, grande = false, acc = null, mini = false) {
   completarCarta(c);
   const club = clubCarta(c.club), clase = claseDeCarta(c), S = c.pos === 'POR' ? STATS_POR : STATS_CAMPO;
   const foto = c.j != null && APP.mundo && APP.mundo.jug[c.j] && APP.mundo.jug[c.j].foto;
-  return `<button class="fc fc-${clase} ${sel ? 'sel' : ''} ${grande ? 'fc-grande' : ''}" data-acc="carta" data-uid="${c.uid}" aria-label="${esc(c.completo || c.nombre)} ${c.med}">
+  return `<button class="fc fc-${clase} ${sel ? 'sel' : ''} ${grande ? 'fc-grande' : ''} ${mini ? 'fc-mini' : ''}" ${acc || `data-acc="carta" data-uid="${c.uid}"`} aria-label="${esc(c.completo || c.nombre)} ${c.med}">
     <span class="fc-brillo"></span>
     <span class="fc-izq"><b class="fc-med">${c.med}</b><span class="fc-pos">${c.pos}</span>${banderaSVG(c.nac)}${escudoHTML(club, 22)}</span>
     <span class="fc-foto">${foto ? `<img src="${foto}" alt="">` : retratoSVG(c.look, club.camiseta, club.camiseta2 === club.camiseta ? club.pantalon : club.camiseta2)}</span>
-    ${TIPOS_CARTA[c.tipo] ? `<span class="fc-tipo">${TIPOS_CARTA[c.tipo]}</span>` : ''}
+    ${TIPOS_CARTA[c.tipo] ? `<span class="fc-tipo">${etiquetaCarta(c)}</span>` : ''}
     <span class="fc-nom">${esc(c.nombre)}</span>
     <span class="fc-st">${S.map(([k, t]) => `<span><b>${c.st[k]}</b> ${t}</span>`).join('')}</span>
     <span class="fc-pie"><span title="Habilidad">${c.hab}★ HAB</span><span title="Pie malo">${c.pm}★ PM</span><span>${c.pie === 'I' ? 'ZUR' : 'DIE'}</span></span>

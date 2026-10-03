@@ -4,16 +4,18 @@
    división ganando a la computadora. Se guarda en DATOS.estrella (guardado principal).
    E = { monedas, cartas: [carta], once: [uid x11], formacion, nombre, camiseta, pantalon, division, temp: { pj, pts, g, e, p }, sig } */
 // prob: probabilidad de cada carta del sobre de ser [estrella, Figura, Leyenda]; el resto son jugadores de la base de datos
+// prob: probabilidad de cada carta del sobre de ser de cada tipo especial; el resto son jugadores de la base de datos
 const SOBRES = [
-  { id: 'bronce', t: 'Sobre bronce', precio: 750, n: 5, min: 55, max: 64, clase: 'bronce', prob: [0, 0, 0], d: '5 jugadores de bronce' },
-  { id: 'plata', t: 'Sobre plata', precio: 2000, n: 5, min: 65, max: 74, clase: 'plata', prob: [0, 0, 0], d: '5 jugadores de plata' },
-  { id: 'oro', t: 'Sobre oro', precio: 5000, n: 5, min: 75, max: 99, clase: 'oro', prob: [.12, .02, .006], d: '5 de oro · puede salir una estrella' },
-  { id: 'estrella', t: 'Sobre estrellas', precio: 15000, n: 3, min: 80, max: 99, clase: 'figura', prob: [.85, .11, .04], d: '3 estrellas conocidas · Figuras y Leyendas' },
-  { id: 'leyenda', t: 'Sobre leyenda', precio: 40000, n: 1, min: 86, max: 99, clase: 'leyenda', prob: [.3, .3, .4], d: '1 carta 86+ · 40 % Leyenda' },
+  { id: 'bronce', t: 'Sobre bronce', precio: 750, n: 5, min: 55, max: 64, clase: 'bronce', prob: {}, d: '5 jugadores de bronce' },
+  { id: 'plata', t: 'Sobre plata', precio: 2000, n: 5, min: 65, max: 74, clase: 'plata', prob: {}, d: '5 jugadores de plata' },
+  { id: 'oro', t: 'Sobre oro', precio: 5000, n: 5, min: 75, max: 99, clase: 'oro', prob: { normal: .14, promesa: .012, figura: .015, flashback: .005, leyenda: .005, cumbre: .0004 }, d: '5 de oro · puede salir una estrella' },
+  { id: 'estrella', t: 'Sobre estrellas', precio: 15000, n: 3, min: 80, max: 99, clase: 'figura', prob: { normal: .76, promesa: .06, figura: .09, flashback: .045, leyenda: .04, cumbre: .005 }, d: '3 estrellas conocidas · cartas especiales' },
+  { id: 'flashback', t: 'Sobre Flashback', precio: 30000, n: 1, min: 84, max: 99, clase: 'flashback', prob: { flashback: .7, figura: .14, leyenda: .14, cumbre: .02 }, d: '1 carta · 70 % Flashback' },
+  { id: 'leyenda', t: 'Sobre leyenda', precio: 40000, n: 1, min: 86, max: 99, clase: 'leyenda', prob: { leyenda: .55, flashback: .2, figura: .1, normal: .12, cumbre: .03 }, d: '1 carta 86+ · 55 % Leyenda' },
 ];
 const PARTIDOS_DIVISION = 10;
 const claseCarta = m => m >= 75 ? 'oro' : m >= 65 ? 'plata' : 'bronce';
-const ventaRapida = c => Math.round(40 * Math.pow(1.13, c.med - 55) * (c.tipo === 'leyenda' ? 2.5 : c.tipo === 'figura' ? 1.6 : c.s ? 1.2 : 1) / 10) * 10 + 20;
+const ventaRapida = c => Math.round(40 * Math.pow(1.13, c.med - 55) * ({ cumbre: 6, leyenda: 2.5, flashback: 2.2, figura: 1.6, promesa: 1.4 }[c.tipo] || (c.s ? 1.2 : 1)) / 10) * 10 + 20;
 const nombreCarta = c => c.completo || ((c.nombre1 ? c.nombre1 + ' ' : '') + c.nombre);
 const premioVictoria = div => 250 + (10 - div) * 120;
 
@@ -50,21 +52,34 @@ function elegirEstrella(tipo, min = 0) {
 }
 const yaTiene = (E, x) => x.e ? E.cartas.some(c => c.s === x.e.clave) : E.cartas.some(c => c.j === x.j.id);
 const cartaPorUid = (E, uid) => E.cartas.find(c => c.uid === uid);
+// la persona detrás de la carta (un mismo jugador no puede estar dos veces en el once, aunque sea con otra versión)
+function personaCarta(c) {
+  if (!c.s) return 'j' + c.j;
+  const e = CARTAS_ESTRELLA.find(x => x.clave === c.s);
+  return e ? (e.base || e.sid) : c.s.replace(/f$/, '');
+}
+// ¿puede ir esta carta en el hueco k sin repetir jugador?
+const repiteEnOnce = (E, uid, k) => { const c = cartaPorUid(E, uid), p = c && personaCarta(c); return E.once.some((u, i) => i !== k && u !== uid && u != null && cartaPorUid(E, u) && personaCarta(cartaPorUid(E, u)) === p); };
 // química: cada jugador del once suma por compartir liga, club o nacionalidad con sus compañeros
+// química de cada jugador del once (0-10): suma por compartir club, liga o país con sus compañeros
+function quimicaCarta(E, c) {
+  const once = E.once.map(u => cartaPorUid(E, u)).filter(Boolean), ley = t => t === 'leyenda' || t === 'cumbre';
+  let v = 0;
+  for (const o of once) { if (o === c) continue; if (o.club === c.club && c.liga !== 'leyenda') v += 2; else if (o.liga === c.liga || ley(o.tipo) || ley(c.tipo)) v += 1; if (o.nac === c.nac) v += 1; }
+  return Math.min(10, v);
+}
 function quimica(E) {
   const once = E.once.map(u => cartaPorUid(E, u)).filter(Boolean);
   if (!once.length) return 0;
-  let s = 0;
-  for (const c of once) { let v = 0; for (const o of once) { if (o === c) continue; if (o.club === c.club && c.liga !== 'leyenda') v += 2; else if (o.liga === c.liga || o.tipo === 'leyenda' || c.tipo === 'leyenda') v += 1; if (o.nac === c.nac) v += 1; } s += Math.min(10, v); }
-  return Math.round(s / (once.length * 10) * 100);
+  return Math.round(once.reduce((s, c) => s + quimicaCarta(E, c), 0) / (once.length * 10) * 100);
 }
 function autoOnce(E) {
   const form = FORMACIONES[E.formacion], usadas = new Set(), once = [];
   const orden = form.map((f, k) => k).sort((a, b) => (form[a].p === 'POR' ? -1 : 0) - (form[b].p === 'POR' ? -1 : 0));
   for (const k of orden) {
     let mejor = null, mv = -1;
-    for (const c of E.cartas) { if (usadas.has(c.uid)) continue; const v = c.med * encaje(c.pos, form[k].p); if (v > mv) { mv = v; mejor = c; } }
-    once[k] = mejor ? mejor.uid : null; if (mejor) usadas.add(mejor.uid);
+    for (const c of E.cartas) { if (usadas.has(c.uid) || usadas.has(personaCarta(c))) continue; const v = c.med * encaje(c.pos, form[k].p); if (v > mv) { mv = v; mejor = c; } }
+    once[k] = mejor ? mejor.uid : null; if (mejor) { usadas.add(mejor.uid); usadas.add(personaCarta(mejor)); }
   }
   E.once = once;
 }
@@ -117,8 +132,11 @@ const ACC_EST = {
   sobre: d => abrirSobre(d.id),
   carta: d => fichaCarta(+d.uid),
   auto: () => { autoOnce(DATOS.estrella); guardarEstrella(); hubEstrella('equipo'); },
-  form: d => { DATOS.estrella.formacion = d.f; autoOnce(DATOS.estrella); guardarEstrella(); hubEstrella('equipo'); },
-  hueco: d => elegirCartaHueco(+d.k),
+  form: d => { APP.selHueco = null; DATOS.estrella.formacion = d.f; autoOnce(DATOS.estrella); guardarEstrella(); hubEstrella('equipo'); },
+  hueco: d => tocarHueco(+d.k),
+  reserva: d => tocarReserva(+d.uid),
+  cambiar: () => { const k = APP.selHueco; APP.selHueco = null; elegirCartaHueco(k); },
+  soltar: () => { APP.selHueco = null; hubEstrella('equipo'); },
   color: (d, el) => { DATOS.estrella[d.k] = parseInt(el.value.slice(1), 16); guardarEstrella(); },
   nombre: (d, el) => { DATOS.estrella.nombre = el.value.trim().slice(0, 28) || 'Mi Equipo Estrella'; guardarEstrella(); },
   reiniciar: () => confirmar('¿Empezar de cero en Equipo Estrella? Perderás tus cartas y monedas (queda una copia de seguridad).', () => { DATOS.estrella = null; bakCurrent('reemplazo').then(() => { menuEstrella(); }); }, () => hubEstrella('club')),
@@ -134,22 +152,52 @@ function vistaPartidosEst() {
       <p class="nota centro">Victoria: ${premioVictoria(E.division)} monedas · empate: ${Math.round(premioVictoria(E.division) * .4)} · derrota: ${Math.round(premioVictoria(E.division) * .2)} · +50 por gol</p>
       <div class="acciones"><button class="btn prin grande" data-acc="jugar">Jugar</button><button class="btn" data-acc="simular">Simular</button></div></div>`;
 }
+// la plantilla en el campo: cada carta en su puesto de la formación. Toca una y luego otra para cambiarlas de sitio;
+// toca dos veces la misma (o "Cambiar") para elegir otra carta; con una seleccionada, toca una reserva para meterla.
+const posHueco = f => ({ x: 50 + f.fz * 43, y: 91 - f.fx * 118 });
 function vistaEquipoEst() {
-  const E = DATOS.estrella, form = FORMACIONES[E.formacion];
-  const enOnce = new Set(E.once);
-  return `<p class="nota">Media ${Math.round(fuerzaEstrella(E))} · química ${quimica(E)} (jugadores de la misma liga, club o país juntos rinden más).</p>
-    <div class="etq">Formación</div><div class="seg">${Object.keys(FORMACIONES).map(f => `<button class="${E.formacion === f ? 'sel' : ''}" data-acc="form" data-f="${f}">${f}</button>`).join('')}</div>
-    <div class="etq">Once (toca un puesto para cambiarlo)</div>
-    <div class="panel">${form.map((f, k) => { const c = cartaPorUid(E, E.once[k]); return `<button class="fila-j" data-acc="hueco" data-k="${k}"><span class="pos pos-${f.p}">${f.p}</span>${c ? `<span class="info"><b>${esc(nombreCarta(c))}</b><small>${c.pos} · ${esc(c.club)}</small></span>${mediaHTML(c.med)}` : '<span class="info"><b class="aviso-es">Vacío</b></span>'}</button>`; }).join('')}</div>
-    <div class="acciones"><button class="btn" data-acc="auto">Once automático</button></div>
-    <div class="etq">Todas tus cartas (${E.cartas.length})</div>
-    <div class="tarjetas">${E.cartas.slice().sort((a, b) => b.med - a.med).map(c => cartaHTML(c, '', enOnce.has(c.uid))).join('')}</div>`;
+  const E = DATOS.estrella, form = FORMACIONES[E.formacion], sel = APP.selHueco;
+  const enOnce = new Set(E.once), csel = sel != null ? cartaPorUid(E, E.once[sel]) : null;
+  const huecos = form.map((f, k) => {
+    const c = cartaPorUid(E, E.once[k]), { x, y } = posHueco(f);
+    const q = c ? quimicaCarta(E, c) : 0, fuera = c && encaje(c.pos, f.p) < 1;
+    return `<div class="hueco ${sel === k ? 'sel' : ''}" style="left:${x}%;top:${y}%">
+      ${c ? cartaHTML(c, '', false, false, `data-acc="hueco" data-k="${k}"`, true) : `<button class="hueco-vacio" data-acc="hueco" data-k="${k}">+</button>`}
+      <span class="hueco-pos ${fuera ? 'mal' : ''}">${f.p}</span>${c ? `<span class="quim q${Math.round(q / 10 * 3)}" title="Química ${q}/10"><i></i><i></i><i></i></span>` : ''}</div>`;
+  }).join('');
+  const reservas = E.cartas.filter(c => !enOnce.has(c.uid)).sort((a, b) => b.med - a.med);
+  const ayuda = sel == null ? 'Toca una carta del campo para moverla o cambiarla.'
+    : `<b>${esc(csel ? nombreCarta(csel) : form[sel].p)}</b> seleccionado: toca otra carta del campo para intercambiarlos, una reserva para meterla, o <button class="btn chico" data-acc="cambiar">Elegir de mis cartas</button> <button class="btn chico" data-acc="soltar">Cancelar</button>`;
+  return `<div class="plantilla">
+    <div class="pl-izq"><div class="cancha-est">${huecos}</div></div>
+    <div class="pl-der">
+      <div class="pl-datos"><span><b>${Math.round(fuerzaEstrella(E))}</b>Media</span><span><b>${quimica(E)}</b>Química</span><span><b>${E.formacion}</b>Formación</span></div>
+      <div class="seg">${Object.keys(FORMACIONES).map(f => `<button class="${E.formacion === f ? 'sel' : ''}" data-acc="form" data-f="${f}">${f}</button>`).join('')}</div>
+      <p class="nota pl-ayuda">${ayuda}</p>
+      <div class="acciones"><button class="btn" data-acc="auto">Once automático</button></div>
+      <p class="nota">Química: jugadores del mismo club, liga o país juntos rinden más (las Leyendas conectan con todos). Un puesto en rojo es que la carta juega fuera de su posición.</p>
+    </div></div>
+    <div class="etq">Reservas (${reservas.length})</div>
+    <div class="tarjetas">${reservas.map(c => cartaHTML(c, '', false, false, `data-acc="reserva" data-uid="${c.uid}"`)).join('')}</div>`;
+}
+function tocarHueco(k) {
+  const E = DATOS.estrella, sel = APP.selHueco;
+  if (sel == null) APP.selHueco = k;
+  else if (sel === k) { APP.selHueco = null; return elegirCartaHueco(k); }
+  else { const n = E.once.slice(); [n[k], n[sel]] = [n[sel], n[k]]; E.once = n; APP.selHueco = null; guardarEstrella(); }
+  hubEstrella('equipo');
+}
+function tocarReserva(uid) {
+  const E = DATOS.estrella, sel = APP.selHueco;
+  if (sel == null) return fichaCarta(uid);
+  if (repiteEnOnce(E, uid, sel)) return toast('Ese jugador ya está en tu once con otra carta.');
+  const n = E.once.slice(); n[sel] = uid; E.once = n; APP.selHueco = null; guardarEstrella(); hubEstrella('equipo');
 }
 function vistaSobresEst() {
   const E = DATOS.estrella;
   return `<p class="intro">Los sobres solo se compran con monedas del juego, que ganas jugando partidos.</p>
     <div class="sobres">${SOBRES.map(s => `<button class="sobre sb-${s.clase}" data-acc="sobre" data-id="${s.id}" ${E.monedas < s.precio ? 'disabled' : ''}><span class="sb-logo">${LOGO_SVG}</span><b>${s.t}</b><small>${s.d}</small><span class="sb-precio moneda">${s.precio.toLocaleString('es')}</span></button>`).join('')}</div>
-    <p class="nota">${CARTAS_ESTRELLA.filter(e => e.tipo === 'normal').length} estrellas actuales, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'figura').length} Figuras y ${CARTAS_ESTRELLA.filter(e => e.tipo === 'leyenda').length} Leyendas por coleccionar.</p>`;
+    <p class="nota">${CARTAS_ESTRELLA.length} cartas por coleccionar: ${CARTAS_ESTRELLA.filter(e => e.tipo === 'normal').length} estrellas, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'leyenda').length} Leyendas, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'flashback').length} Flashback, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'figura').length} Figuras, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'promesa').length} Promesas y ${CARTAS_ESTRELLA.filter(e => e.tipo === 'cumbre').length} Cumbre.</p>`;
 }
 // álbum: todas las cartas de estrellas; las que no tienes se ven tapadas (solo media, puesto y país)
 function vistaAlbumEst() {
@@ -157,7 +205,7 @@ function vistaAlbumEst() {
   const mias = new Map(E.cartas.filter(c => c.s).map(c => [c.s, c]));
   const L = CARTAS_ESTRELLA.filter(e => e.tipo === tipo).sort((a, b) => b.med - a.med);
   const n = t => CARTAS_ESTRELLA.filter(e => e.tipo === t && mias.has(e.clave)).length + '/' + CARTAS_ESTRELLA.filter(e => e.tipo === t).length;
-  return `<div class="chips">${[['normal', 'Estrellas'], ['figura', 'Figuras'], ['leyenda', 'Leyendas']].map(([id, t]) => `<button class="chip ${id === tipo ? 'sel' : ''}" data-acc="alb" data-id="${id}">${t} ${n(id)}</button>`).join('')}</div>
+  return `<div class="chips">${[['normal', 'Estrellas'], ['figura', 'Figuras'], ['promesa', 'Promesas'], ['flashback', 'Flashback'], ['leyenda', 'Leyendas'], ['cumbre', 'Cumbre']].map(([id, t]) => `<button class="chip ${id === tipo ? 'sel' : ''}" data-acc="alb" data-id="${id}">${t} ${n(id)}</button>`).join('')}</div>
     <div class="tarjetas">${L.map(e => mias.has(e.clave) ? cartaHTML(mias.get(e.clave)) : `<div class="fc fc-oculta fc-${tipo === 'normal' ? 'oro' : tipo}"><span class="fc-brillo"></span><span class="fc-izq"><b class="fc-med">${e.med}</b><span class="fc-pos">${e.pos}</span>${banderaSVG(e.nac)}</span><span class="fc-int">?</span></div>`).join('')}</div>`;
 }
 function vistaClubEst() {
@@ -170,10 +218,8 @@ function vistaClubEst() {
     <div class="acciones"><button class="btn" data-acc="reiniciar">Empezar de cero</button></div>`;
 }
 function sacarDelSobre(S) {
-  const r = AZ(), [pe, pf, pl] = S.prob;
-  if (r < pl) return { e: elegirEstrella('leyenda') };
-  if (r < pl + pf) return { e: elegirEstrella('figura') };
-  if (r < pl + pf + pe) return { e: elegirEstrella('normal', S.min) };
+  let r = AZ();
+  for (const [tipo, p] of Object.entries(S.prob)) { if (r < p) return { e: elegirEstrella(tipo, S.min) }; r -= p; }
   const max = S.id === 'oro' && AZ() > .12 ? 84 : S.max;
   return { j: elegirJugadorCarta(S.min, max) };
 }
@@ -198,7 +244,7 @@ function abrirSobre(id) {
   if (especial) presentarCarta(mejor, verSobre); else { SFX.aceptar(); verSobre(); }
 }
 // cuánto emociona una carta (para el orden y para la presentación)
-const valorSorpresa = c => c.med + (c.tipo === 'leyenda' ? 20 : c.tipo === 'figura' ? 12 : c.s ? 6 : 0);
+const valorSorpresa = c => c.med + ({ cumbre: 40, leyenda: 20, flashback: 16, figura: 12, promesa: 8 }[c.tipo] || (c.s ? 6 : 0));
 // presentación de una carta buena: bandera, puesto, club y la carta (toca para saltar)
 function presentarCarta(c, despues) {
   const club = clubCarta(c.club), clase = claseDeCarta(c);
@@ -212,7 +258,7 @@ function presentarCarta(c, despues) {
   let hecho = false; const tt = [];
   const fin = () => { if (hecho) return; hecho = true; tt.forEach(clearTimeout); despues(); };
   tt.push(setTimeout(() => SFX.ocasion(), 300), setTimeout(() => SFX.ocasion(), 1500), setTimeout(() => SFX.ocasion(), 2700));
-  tt.push(setTimeout(() => { if (c.tipo === 'leyenda' || c.med >= 90) SFX.gol(); else SFX.inicio(); }, 3900));
+  tt.push(setTimeout(() => { if (c.tipo === 'leyenda' || c.tipo === 'cumbre' || c.med >= 90) SFX.gol(); else SFX.inicio(); }, 3900));
   tt.push(setTimeout(() => { const b = document.querySelector('.walk-saltar'); if (b) b.textContent = 'Seguir'; }, 4400));
 }
 function fichaCarta(uid) {
@@ -236,10 +282,12 @@ function fichaCarta(uid) {
 }
 function elegirCartaHueco(k) {
   const E = DATOS.estrella, form = FORMACIONES[E.formacion], puesto = form[k].p;
-  const cs = E.cartas.slice().sort((a, b) => b.med * encaje(b.pos, puesto) - a.med * encaje(a.pos, puesto));
-  pantalla(`<div class="panel">${cs.map(c => { const en = E.once.indexOf(c.uid); return `<button class="fila-j" data-acc="poner" data-uid="${c.uid}"><span class="pos pos-${c.pos}">${c.pos}</span><span class="info"><b>${esc(nombreCarta(c))}</b><small>${esc(c.club)}${en >= 0 ? ' · ya juega de ' + form[en].p : ''}</small></span>${mediaHTML(Math.round(c.med * encaje(c.pos, puesto)))}</button>`; }).join('')}</div>`, {
+  const cs = E.cartas.filter(c => c.uid !== E.once[k]).sort((a, b) => b.med * encaje(b.pos, puesto) - a.med * encaje(a.pos, puesto));
+  pantalla(`<p class="nota">Las primeras son las que mejor encajan de ${puesto}. Si eliges una que ya juega, se intercambian.</p>
+    <div class="tarjetas">${cs.map(c => { const en = E.once.indexOf(c.uid), m = Math.round(c.med * encaje(c.pos, puesto));
+      return cartaHTML(c, `<span class="fc-marca ${m < c.med ? 'rep' : ''}">${en >= 0 ? 'Juega de ' + form[en].p + ' · ' : ''}${m} de ${puesto}</span>`, en >= 0, false, `data-acc="poner" data-uid="${c.uid}"`); }).join('')}</div>`, {
     titulo: 'Elegir ' + puesto, atras: () => hubEstrella('equipo'), acciones: {
-      poner: d => { const uid = +d.uid, n = E.once.slice(), antes = n.indexOf(uid); if (antes >= 0) n[antes] = n[k]; n[k] = uid; E.once = n; guardarEstrella(); hubEstrella('equipo'); },
+      poner: d => { const uid = +d.uid, n = E.once.slice(), antes = n.indexOf(uid); if (antes < 0 && repiteEnOnce(E, uid, k)) return toast('Ese jugador ya está en tu once con otra carta.'); if (antes >= 0) n[antes] = n[k]; n[k] = uid; E.once = n; guardarEstrella(); hubEstrella('equipo'); },
     },
   });
 }

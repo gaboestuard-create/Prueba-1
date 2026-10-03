@@ -829,10 +829,13 @@ test('cartas: base de estrellas y leyendas, atributos con fórmula, sobres espec
       if (Object.values(c.at).some(v => !(v >= 10 && v <= 99))) malos.push('atributos ' + e.corto);
       if (!(e.hab >= 1 && e.hab <= 5 && e.pm >= 1 && e.pm <= 5)) malos.push('estrellas ' + e.corto);
       const club = clubCarta(e.club); if (!club.corto || club.corto === '???') malos.push('club ' + e.club);
-      if (e.tipo !== 'figura') { if (nombres.has(e.nombre)) malos.push('repetido ' + e.nombre); nombres.add(e.nombre); }
+      if (e.tipo === 'normal' || e.tipo === 'leyenda') { if (nombres.has(e.nombre)) malos.push('repetido ' + e.nombre); nombres.add(e.nombre); }
       if (!retratoSVG(c.look, 0xff0000).includes('<svg')) malos.push('retrato ' + e.corto);
     }
     const cuenta = t => CARTAS_ESTRELLA.filter(e => e.tipo === t).length;
+    // cada línea de cartas especiales encuentra a su jugador
+    const sinBase = ESPECIALES_TXT.trim().split('\n').length - ESPECIALES.length;
+    const flashMessio = CARTAS_ESTRELLA.filter(e => e.tipo === 'flashback' && e.corto === 'Messio').length;
     // sobres especiales
     menuEstrella(); const E = DATOS.estrella; E.monedas = 1e6;
     const antes = E.cartas.length;
@@ -847,15 +850,49 @@ test('cartas: base de estrellas y leyendas, atributos con fórmula, sobres espec
     autoOnce(E); const eq = equipoEstrella(E);
     const okMotor = eq.jugadores.every(j => j && j.atrib && j.atrib.vel > 0 && j.piel != null);
     hubEstrella('album'); const album = document.querySelectorAll('#capa .fc').length;
-    return { malos, n: { normal: cuenta('normal'), figura: cuenta('figura'), leyenda: cuenta('leyenda') }, deEstrellas, nuevas: nuevas.length, ultima: { s: ultima.s, med: ultima.med }, vieja: { st: !!vieja.st, look: !!vieja.look, hab: vieja.hab, html: html.includes('fc-plata') }, okMotor, album };
+    return { malos, sinBase, flashMessio, n: { normal: cuenta('normal'), figura: cuenta('figura'), leyenda: cuenta('leyenda'), flashback: cuenta('flashback'), cumbre: cuenta('cumbre'), promesa: cuenta('promesa') }, deEstrellas, nuevas: nuevas.length, ultima: { s: ultima.s, med: ultima.med }, vieja: { st: !!vieja.st, look: !!vieja.look, hab: vieja.hab, html: html.includes('fc-plata') }, okMotor, album };
   });
   assert(!r.malos.length, 'problemas en la base de estrellas: ' + r.malos.slice(0, 10).join(', '));
-  assert(r.n.normal >= 100 && r.n.leyenda >= 50 && r.n.figura >= 20, 'pocas cartas: ' + JSON.stringify(r.n));
+  assert(r.n.normal >= 250 && r.n.leyenda >= 150 && r.n.figura >= 30 && r.n.flashback >= 50 && r.n.cumbre >= 5 && r.n.promesa >= 8, 'pocas cartas: ' + JSON.stringify(r.n));
+  assert(r.sinBase === 0, 'hay cartas especiales sin su jugador: ' + r.sinBase);
+  assert(r.flashMessio >= 2 && r.flashMessio <= 3, 'Messio debería tener 2 o 3 Flashback: ' + r.flashMessio);
   assert(r.deEstrellas >= 12, 'el sobre de estrellas debería dar estrellas conocidas: ' + r.deEstrellas + ' de ' + r.nuevas);
   assert(r.ultima.s && r.ultima.med >= 86, 'el sobre leyenda debería dar una carta 86+: ' + JSON.stringify(r.ultima));
   assert(r.vieja.st && r.vieja.look && r.vieja.hab >= 1 && r.vieja.html, 'una carta antigua no se completó: ' + JSON.stringify(r.vieja));
   assert(r.okMotor, 'el once de cartas no llega bien al motor');
   assert(r.album === r.n.normal, 'el álbum debería mostrar todas las estrellas: ' + r.album);
+  sinErrores(errors); await ctx.close();
+});
+
+test('plantilla en el campo: intercambiar, meter reservas y no repetir jugador', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    menuEstrella(); const E = DATOS.estrella;
+    const base = darCartaEstrella(E, CARTAS_ESTRELLA.find(e => e.tipo === 'normal' && e.corto === 'Messio'));
+    const flash = darCartaEstrella(E, CARTAS_ESTRELLA.find(e => e.tipo === 'flashback' && e.corto === 'Messio'));
+    autoOnce(E);
+    const messiosEnOnce = E.once.filter(u => [base.uid, flash.uid].includes(u)).length;
+    hubEstrella('equipo');
+    const huecos = document.querySelectorAll('.cancha-est .hueco').length, mini = document.querySelectorAll('.cancha-est .fc-mini').length;
+    // tocar dos cartas del campo las intercambia
+    const a0 = E.once[1], b0 = E.once[2];
+    document.querySelector('.cancha-est [data-k="1"]').click(); const sel = APP.selHueco;
+    document.querySelector('.cancha-est [data-k="2"]').click();
+    const cambiadas = E.once[1] === b0 && E.once[2] === a0 && APP.selHueco == null;
+    // seleccionar un hueco y tocar una reserva la mete
+    const fuera = E.cartas.find(c => !E.once.includes(c.uid) && personaCarta(c) !== personaCarta(base));
+    tocarHueco(3); tocarReserva(fuera.uid); const metida = E.once[3] === fuera.uid;
+    // la otra versión del mismo jugador no puede entrar
+    const enOnce = E.once.includes(base.uid) ? base : flash, otra = enOnce === base ? flash : base;
+    const k = E.once.findIndex(u => u !== enOnce.uid); tocarHueco(k); tocarReserva(otra.uid);
+    const noRepite = !E.once.includes(otra.uid);
+    return { messiosEnOnce, huecos, mini, sel, cambiadas, metida, noRepite };
+  });
+  assert(r.messiosEnOnce === 1, 'el once automático no debe repetir jugador: ' + r.messiosEnOnce);
+  assert(r.huecos === 11 && r.mini === 11, 'el campo debería mostrar 11 cartas: ' + JSON.stringify(r));
+  assert(r.sel === 1 && r.cambiadas, 'tocar dos cartas no las intercambió: ' + JSON.stringify(r));
+  assert(r.metida, 'no se metió la reserva');
+  assert(r.noRepite, 'dejó poner dos versiones del mismo jugador');
   sinErrores(errors); await ctx.close();
 });
 
