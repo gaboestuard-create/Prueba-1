@@ -1,9 +1,9 @@
-// DT26 como aplicación: la página se pide siempre a internet (así cada actualización llega al abrir)
+// DT26 como aplicación (vive en la carpeta dt26/ de GitHub Pages, junto a otros juegos: solo toca sus propias cachés): la página se pide siempre a internet (así cada actualización llega al abrir)
 // y se guarda una copia para jugar sin conexión. Las librerías y fuentes se guardan la primera vez.
 const CACHE = 'dt26-v1';
 const CORE = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
-self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('dt26-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
   const r = e.request; if (r.method !== 'GET') return;
   const u = new URL(r.url);

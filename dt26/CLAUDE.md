@@ -69,8 +69,9 @@ Antes de publicar una versión nueva:
 
 ## Aplicación instalable (GitHub Pages)
 
-- Se publica en https://gaboestuard-create.github.io/Prueba-1/ desde la rama `gh-pages` (solo la rellena
-  `app/publicar.sh`; no se edita a mano).
+- Se publica en https://gaboestuard-create.github.io/Prueba-1/dt26/ (carpeta `dt26/` de la rama `gh-pages`; la raíz es
+  otro juego, Pelotazo, que no se toca). Solo la rellena
+  `app/publicar.sh`, que solo escribe en `dt26/`. `sw.js` solo borra sus propias cachés (`dt26-…`).
 - Un script al principio de `index.html` añade el manifiesto y registra `sw.js` solo cuando el juego se
   abre como página propia (https o localhost, sin marco y fuera de claude.ai). Dentro de Claude no hace nada.
 - `sw.js`: la página se pide siempre a internet (cada actualización llega al abrir) y guarda una copia para
