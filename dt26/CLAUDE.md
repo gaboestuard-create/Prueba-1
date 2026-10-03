@@ -65,6 +65,22 @@ Antes de publicar una versión nueva:
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprobarán
    que sus partidas siguen abriéndose en todas las versiones futuras.
 
+## Clubes y jugadores reales
+
+- `REAL` (clave = nombre ficticio de `LG`) da nombre, abreviatura, ciudad, colores y escudo generado a
+  todos los clubes de primera. Las abreviaturas no se pueden repetir; `realNames` busca otra libre en
+  partidas antiguas y la guarda en `c.fic.rs` para poder volver atrás.
+- `RPLAY` (clave = nombre real del club) lleva las plantillas de 2025/26 con los nombres un poco
+  cambiados (`nombre|apellido|apodo|pos|nación|edad|media|piel`). `applyRealPlayers` convierte jugadores
+  generados del mismo club y posición; marca `p.rk` para no repetir y nunca toca a `W.me` ni la cantera.
+- Las partidas nuevas los traen si los nombres reales están activados. Las anteriores solo cambian al
+  pulsar el botón de Ajustes (`realpl`), que guarda antes una copia: abrir una partida vieja no la altera.
+- `NAT0` son las 31 naciones de siempre: solo ellas se usan al azar para agentes libres, técnicos y
+  empleados. Las demás llegan con los jugadores reales; el ranking de selecciones solo muestra naciones
+  con 16 jugadores o más.
+- La edad de tus jugadores (o la de tu jugador en el modo jugador) se cambia con − / + en su ficha
+  (`agead`, entre 15 y 45 años) o en el editor: sirve para evitar retiros.
+
 ## Estética
 
 Fuentes Barlow y Barlow Condensed. Colores en variables CSS de `:root`, con tema claro y oscuro.

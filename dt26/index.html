@@ -625,6 +625,35 @@ const NAT={
  IRN:['Irán','ir',[2,3,3,2,1,.3,.1,0],.02], KSA:['Arabia Saudita','ab',[1,3,3,3,2,1,.4,.1],.01],
  QAT:['Catar','ab',[1,3,3,3,2,1,.4,.1],.01]
 };
+// las 31 naciones de siempre generan jugadores, técnicos y empleados al azar; las demás llegan con los jugadores reales
+const NAT0=Object.keys(NAT);
+Object.assign(NAT,{
+ BEL:["Bélgica", "fr", [3, 3, 1, 0.5, 0.5, 1, 1, 1], 0.2],
+ UKR:["Ucrania", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.3],
+ TUR:["Turquía", "ab", [2, 3, 3, 1.5, 0.5, 0.2, 0.1, 0], 0.03],
+ SVN:["Eslovenia", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.25],
+ SVK:["Eslovaquia", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.25],
+ POL:["Polonia", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.3],
+ NOR:["Noruega", "de", [6, 3, 1, 0.3, 0.2, 0.3, 0.3, 0.2], 0.45],
+ GEO:["Georgia", "hr", [4, 4, 2, 0.5, 0, 0, 0, 0], 0.08],
+ SUI:["Suiza", "de", [5, 3, 1, 0.4, 0.3, 0.5, 0.6, 0.5], 0.25],
+ SRB:["Serbia", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.15],
+ CZE:["Chequia", "hr", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.3],
+ HUN:["Hungría", "de", [5, 3, 1, 0.3, 0, 0, 0, 0], 0.2],
+ SCO:["Escocia", "en", [6, 3, 1, 0.3, 0.2, 0.2, 0.2, 0.1], 0.3],
+ DEN:["Dinamarca", "de", [6, 3, 1, 0.3, 0.2, 0.3, 0.3, 0.2], 0.4],
+ SWE:["Suecia", "de", [6, 3, 1, 0.3, 0.3, 0.4, 0.5, 0.4], 0.45],
+ WAL:["Gales", "en", [6, 3, 1, 0.3, 0.2, 0.3, 0.3, 0.2], 0.25],
+ GRE:["Grecia", "it", [2, 4, 3, 1, 0.2, 0.2, 0.2, 0.1], 0.05],
+ AUT:["Austria", "de", [5, 3, 1, 0.4, 0.3, 0.4, 0.4, 0.3], 0.3],
+ CHI:["Chile", "ar", [2, 4, 3, 1, 0.3, 0.1, 0, 0], 0.04],
+ VEN:["Venezuela", "co", [1, 2, 3, 3, 2, 1, 1, 0.5], 0.02],
+ ECU:["Ecuador", "co", [1, 2, 3, 3, 2, 1, 1, 0.5], 0.01],
+ PAN:["Panamá", "co", [1, 2, 3, 3, 2, 1, 1, 0.5], 0.01],
+ PER:["Perú", "ar", [1, 2, 3, 3, 2, 0.6, 0.3, 0], 0.01],
+ PAR:["Paraguay", "ar", [1, 3, 3, 2, 1, 0.3, 0.1, 0], 0.02],
+ GUI:["Guinea", "sn", [0, 0, 0, 0, 0, 0.5, 2, 5], 0]
+});
 const NM={
  mx:{f:'Luis,José,Juan,Carlos,Jesús,Miguel,Alejandro,Diego,Jorge,Fernando,Ricardo,Eduardo,Roberto,Javier,Héctor,Raúl,Andrés,Emilio,Santiago,Sebastián,Rodrigo,Érick,Iván,Omar,Uriel,Alan,Brian,Kevin,Édgar,Óscar,Julián,Mauricio,Gerardo,Ángel,Israel,Rafael,Armando,Marco,Pablo,Gael,Joaquín,Hugo,Damián,Adrián,Isaac,Salvador,Ulises,Jonathan',
   l:'Hernández,García,Martínez,López,González,Pérez,Rodríguez,Sánchez,Ramírez,Cruz,Flores,Gómez,Morales,Vázquez,Reyes,Jiménez,Torres,Díaz,Gutiérrez,Ruiz,Mendoza,Aguilar,Ortiz,Moreno,Castillo,Romero,Álvarez,Méndez,Chávez,Rivera,Juárez,Ramos,Domínguez,Herrera,Medina,Castro,Vargas,Guzmán,Velázquez,Rojas,Contreras,Salazar,Luna,Ortega,Estrada,Bautista,Cortés,Soto,Alvarado,Delgado,Ríos,Cervantes,Navarro,Solís,Camacho,Villanueva,Ibarra,Zamora,Olvera,Montes,Pineda,Valdez,Arellano,Quintero,Beltrán,Carrillo,Ochoa,Espinoza,Macías,Tapia,Campos,Nava,Padilla,Cuevas,Esquivel,Robles,Trejo,Fuentes,Márquez,Galindo'},
@@ -758,7 +787,164 @@ const REAL={
  'Pelourinho FC':'Corinthians|COR|São Paulo|ffffff|111111|111111|0|4,6,0',
  'Capibaribe FC':'Botafogo|BOT|Río de Janeiro|111111|ffffff|ffffff|1|0,6,0',
  'Iracema FC':'São Paulo FC|SAO|São Paulo|ffffff|d0102b|111111|0|2,4,0',
- 'Litoral Paulista':'Santos|SAN|Santos|ffffff|111111|111111|0|3,6,0'
+ 'Litoral Paulista':'Santos|SAN|Santos|ffffff|111111|111111|0|3,6,0',
+ 'Halcones de Villahermosa':'Pachuca|PAC|Pachuca|0b2a5c|ffffff|ffffff|1|4,2,4',
+ 'Frontera Tijuana':'Club León|LEO|León|0b6b3a|ffffff|f2c230|0|1,2,6',
+ 'Atlético Mérida':'Santos Laguna|SLA|Torreón|0b6e3b|ffffff|ffffff|1|0,1,5',
+ 'Real Veracruz':'Atlas|ATS|Guadalajara|c8102e|111111|ffffff|1|1,2,4',
+ 'Arrecife Cancún':'Necaxa|NCX|Aguascalientes|d0102b|ffffff|111111|0|5,4,7',
+ 'Estrella de Oaxaca':'Puebla|PUE|Puebla|ffffff|0b2a5c|0b2a5c|3|2,1,0',
+ 'Norteños de Chihuahua':'Querétaro|QRO|Querétaro|0b2a5c|111111|ffffff|1|5,3,4',
+ 'Sol de Hermosillo':'FC Juárez|JUA|Ciudad Juárez|c8102e|1f7a3a|ffffff|0|5,0,0',
+ 'Real Morelia':'Mazatlán FC|MAZ|Mazatlán|5b2a86|ffffff|ffffff|0|0,2,0',
+ 'Club Potosino':'Atlético San Luis|ASL|San Luis Potosí|c8102e|0b2a5c|ffffff|0|0,1,0',
+ 'Algodoneros de Torreón':'Club Tijuana|XOL|Tijuana|c8102e|111111|ffffff|1|1,3,2',
+ 'Herculino CF':'Real Betis|BET|Sevilla|0b8a3e|ffffff|ffffff|1|2,1,2',
+ 'Ebro CF':'Villarreal|VIL|Villarreal|f5d000|0b4e9e|0b4e9e|0|1,3,0',
+ 'Racing Malagueño':'Girona FC|GIR|Girona|d0102b|ffffff|ffffff|1|5,1,0',
+ 'Nazarí CF':'Celta de Vigo|CEL|Vigo|8ac3ea|ffffff|d0102b|0|0,4,6',
+ 'Astur Oviedo':'Osasuna|OSA|Pamplona|d0102b|0b2a5c|ffffff|0|1,1,3',
+ 'Club Iruña':'Rayo Vallecano|RAY|Madrid|ffffff|d0102b|d0102b|3|1,7,3',
+ 'Pisuerga CF':'RCD Mallorca|MLL|Palma|d0102b|111111|f2c230|0|0,1,0',
+ 'Balear CF':'Getafe|GET|Getafe|0b4e9e|ffffff|ffffff|0|1,7,6',
+ 'Canario Atlético':'Espanyol|ESY|Barcelona|0a64ad|ffffff|ffffff|1|2,0,0',
+ 'Gaditano CF':'Deportivo Alavés|ALV|Vitoria|0b4e9e|ffffff|ffffff|1|3,7,5',
+ 'Cántabro FC':'Real Oviedo|OVI|Oviedo|0b4e9e|ffffff|ffffff|0|1,2,1',
+ 'Lucentum CF':'Elche CF|ELC|Elche|ffffff|0b8a3e|0b8a3e|0|3,5,6',
+ 'Segura CF':'Levante UD|LUD|Valencia|0b2a5c|d0102b|d0102b|1|4,4,0',
+ 'Avon Town':'Brighton|BHA|Brighton|0057b8|ffffff|ffffff|1|4,2,0',
+ 'Trent Athletic':'West Ham|WHU|Londres|7a263a|1bb1e7|1bb1e7|0|1,5,7',
+ 'Soar Town':'Crystal Palace|CRY|Londres|1b458f|c4122e|c4122e|1|5,7,0',
+ 'Solent FC':'Brentford|BRE|Londres|e30613|ffffff|111111|1|4,4,4',
+ 'Seafront FC':'Fulham|FUL|Londres|ffffff|111111|111111|0|1,1,1',
+ 'Yare Town':'Bournemouth|BOU|Bournemouth|d71920|111111|111111|1|4,6,6',
+ 'Orwell Town':'Nottingham Forest|NFO|Nottingham|dd0000|ffffff|ffffff|0|4,0,0',
+ 'Portsea FC':'Everton|EVE|Liverpool|003399|ffffff|ffffff|0|2,1,5',
+ 'Godiva FC':'Wolverhampton|WOL|Wolverhampton|fdb913|231f20|231f20|0|2,5,0',
+ 'Wear Town':'Leeds United|LEE|Leeds|ffffff|1d428a|f2c230|0|2,2,0',
+ 'Derwent FC':'Burnley|BUR|Burnley|6c1d45|99d6ea|99d6ea|0|2,5,3',
+ 'Tees United':'Sunderland|SUN|Sunderland|eb172b|ffffff|111111|1|5,4,5',
+ 'Felsina':'Bologna|BOL|Bolonia|1a2f48|a21c26|a21c26|1|3,4,0',
+ 'Laguna Venezia':'Fiorentina|FIO|Florencia|482e92|ffffff|ffffff|0|5,3,6',
+ 'Scaligera':'Como|COM|Como|1b3a6b|ffffff|ffffff|0|2,6,6',
+ 'Conca d\'Oro':'Torino|TOR|Turín|8a1e03|ffffff|ffffff|0|1,6,0',
+ 'Levante Bari':'Udinese|UDI|Udine|111111|ffffff|ffffff|1|2,7,0',
+ 'Sardegna Calcio':'Genoa|GEN|Génova|a50e26|0b2a5c|0b2a5c|4|2,7,0',
+ 'Ducale Parma':'Cagliari|CAG|Cagliari|a50e26|0b2a5c|ffffff|4|0,4,0',
+ 'Friuli Udine':'Parma|PAR|Parma|ffffff|111111|f2c230|0|4,5,3',
+ 'Salento':'Lecce|LEC|Lecce|f2c230|c8102e|c8102e|1|0,7,6',
+ 'Alabarda Trieste':'Hellas Verona|HVE|Verona|f2c230|0b2a5c|0b2a5c|0|3,6,0',
+ 'Etrusca Perugia':'Sassuolo|SAS|Sassuolo|00a651|111111|111111|1|2,3,0',
+ 'Torre Pisa':'Cremonese|CRE|Cremona|c8102e|9c9fa3|9c9fa3|1|5,3,0',
+ 'Etna Catania':'Pisa|PIS|Pisa|111111|0b2a5c|0b2a5c|1|3,1,0',
+ 'Hafen Hamburg':'SC Freiburg|SCF|Friburgo|111111|d0102b|ffffff|0|1,7,0',
+ 'Rhein Köln':'VfL Wolfsburg|WOB|Wolfsburgo|65b32e|ffffff|ffffff|0|0,0,6',
+ 'Weser Bremen':'Werder Bremen|SVW|Bremen|1d9053|ffffff|ffffff|0|4,0,0',
+ 'Altstadt Düsseldorf':'Borussia M\'gladbach|BMG|Mönchengladbach|ffffff|111111|1f7a3a|0|1,6,4',
+ 'Leine Hannover':'Hoffenheim|TSG|Sinsheim|1c63b7|ffffff|ffffff|0|5,0,0',
+ 'Pegnitz Nürnberg':'Mainz 05|M05|Maguncia|c3141e|ffffff|ffffff|0|4,6,0',
+ 'Schwarzwald Freiburg':'FC Augsburg|FCA|Augsburgo|ffffff|ba3733|2f8b48|0|5,7,0',
+ 'Rheinhessen Mainz':'Union Berlin|FCU|Berlín|d4011d|ffffff|f2c230|0|0,4,0',
+ 'Zeche Bochum':'FC St. Pauli|STP|Hamburgo|624839|ffffff|d0102b|0|2,3,0',
+ 'Förde Kiel':'Hamburger SV|HSV|Hamburgo|0a3f86|ffffff|111111|0|5,5,0',
+ 'Elbflorenz Dresden':'1. FC Köln|KOE|Colonia|ffffff|ed1c24|ed1c24|0|0,3,0',
+ 'Ostsee Rostock':'Heidenheim|HDH|Heidenheim|e2001a|003b79|ffffff|0|1,1,0',
+ 'Andino Mendoza':'Vélez Sarsfield|VEL|Buenos Aires|ffffff|0b4e9e|0b4e9e|0|5,7,0',
+ 'Jardín Tucumán':'Talleres|TAL|Córdoba|0b2a5c|ffffff|ffffff|1|1,3,0',
+ 'Lobos de Mar del Plata':'Rosario Central|CEN|Rosario|0b4e9e|f2c230|f2c230|1|3,4,6',
+ 'Litoral Santa Fe':'Newell\'s Old Boys|NOB|Rosario|c8102e|111111|111111|4|4,4,0',
+ 'Gaucho Salta':'Lanús|LAN|Lanús|7a1f2b|ffffff|ffffff|0|3,6,0',
+ 'Puerto Bahía':'Argentinos Juniors|ARJ|Buenos Aires|d0102b|ffffff|ffffff|0|2,2,0',
+ 'Patagonia Neuquén':'Huracán|HUR|Buenos Aires|ffffff|d0102b|d0102b|0|2,2,0',
+ 'Cuyano San Juan':'Belgrano|CAB|Córdoba|6ab2e7|ffffff|111111|0|4,3,0',
+ 'Taragüí Corrientes':'Godoy Cruz|GCZ|Mendoza|0b2a5c|ffffff|ffffff|1|4,0,3',
+ 'Fluvial Rosario':'Defensa y Justicia|DYJ|Florencio Varela|f2c230|1f7a3a|1f7a3a|0|2,7,0',
+ 'Quebrada Jujuy':'Gimnasia La Plata|GIM|La Plata|ffffff|0b2a5c|0b2a5c|2|3,3,0',
+ 'Fin del Mundo':'Unión de Santa Fe|UNI|Santa Fe|d0102b|ffffff|ffffff|1|1,7,0',
+ 'Araucária FC':'Athletico Paranaense|CAP|Curitiba|d0102b|111111|111111|1|2,2,0',
+ 'Amazonas Selva':'Fluminense|FLU|Río de Janeiro|7a1f3d|1f7a3a|ffffff|1|5,7,0',
+ 'Marajó EC':'Grêmio|GRE|Porto Alegre|0d80bf|111111|ffffff|1|1,5,6',
+ 'Cerrado FC':'Atlético Mineiro|CAM|Belo Horizonte|111111|ffffff|ffffff|1|4,6,3',
+ 'Ilha da Magia':'Vasco da Gama|VAS|Río de Janeiro|111111|ffffff|d0102b|3|4,0,0',
+ 'Potiguar FC':'Bahia|BAH|Salvador|ffffff|0b4e9e|d0102b|0|0,7,1',
+ 'Barão Campinas':'Red Bull Bragantino|RBB|Bragança Paulista|ffffff|d0102b|f2c230|0|1,1,7',
+ 'Capixaba EC':'Fortaleza|FOR|Fortaleza|0b4e9e|d0102b|ffffff|2|3,6,0',
+ 'Maranhense FC':'Vitória|VIT|Salvador|d0102b|111111|111111|1|5,0,0',
+ 'Pantanal EC':'Mirassol|MIR|Mirassol|f2c230|1f7a3a|1f7a3a|0|5,3,0',
+ 'Paraíba Sol':'Ceará|CEA|Fortaleza|111111|ffffff|ffffff|1|1,6,1',
+ 'Carioca Atlântico':'Sport Recife|SPT|Recife|d0102b|111111|f2c230|2|0,5,0',
+ 'Cascadia Rain':'Inter Miami|MIA|Miami|f7b5cd|231f20|231f20|0|1,5,0',
+ 'Golden Gate FC':'LAFC|LAF|Los Ángeles|111111|c39e6d|c39e6d|0|0,5,5',
+ 'Lone Star SC':'LA Galaxy|LAG|Los Ángeles|ffffff|00245d|f2c230|0|4,2,0',
+ 'Bayou City':'Seattle Sounders|SEA|Seattle|5d9741|236192|236192|0|4,0,0',
+ 'Empire Athletic':'New York City FC|NYC|Nueva York|6cace4|041e42|f58220|0|1,3,1',
+ 'Liberty Union':'Philadelphia Union|PHI|Filadelfia|071b2c|b19b69|b19b69|0|5,5,0',
+ 'Peachtree FC':'Atlanta United|ATL|Atlanta|80000a|221f1f|a29061|1|5,1,5',
+ 'Sunshine SC':'Columbus Crew|CLB|Columbus|fedd00|111111|111111|0|1,7,0',
+ 'Windy City FC':'Chicago Fire|CHI|Chicago|c8102e|ffffff|7ccdef|0|2,1,2',
+ 'Motor City Rovers':'FC Cincinnati|CIN|Cincinnati|003087|fe5000|fe5000|0|2,3,0',
+ 'Rose City FC':'Portland Timbers|PTI|Portland|00482b|d69a00|d69a00|0|3,3,0',
+ 'Big Sky United':'Colorado Rapids|RAP|Denver|960a2c|9cc2ea|9cc2ea|0|5,6,2',
+ 'Desert Foxes':'Austin FC|ATX|Austin|00b140|111111|111111|0|4,4,5',
+ 'Harbor FC':'New England Revolution|NER|Boston|0a2240|ce0e2d|ce0e2d|0|0,6,4',
+ 'Capital Eagles':'D.C. United|DCU|Washington|111111|ef3e42|ef3e42|0|3,6,6',
+ 'Maple Leaf Athletic':'Toronto FC|TFC|Toronto|b81137|ffffff|ffffff|0|1,4,0',
+ 'Rocky Mountain FC':'Real Salt Lake|RSL|Salt Lake City|b30838|013a81|f2c230|0|5,3,6',
+ 'Lakeside City':'Houston Dynamo|HOU|Houston|ff6b00|101820|101820|0|2,5,0',
+ 'Seine Paris':'Paris Saint-Germain|PSG|París|004170|da291c|ffffff|0|1,1,3',
+ 'Olympique Phocéen':'Olympique de Marseille|OMA|Marsella|ffffff|2faee0|2faee0|0|5,0,5',
+ 'Rhône Lyonnais':'Olympique Lyonnais|OLY|Lyon|ffffff|0b2a5c|d0102b|0|0,7,0',
+ 'Côte d\'Azur FC':'OGC Niza|NIC|Niza|d0102b|111111|111111|1|5,7,2',
+ 'Lille Flandres':'LOSC Lille|LIL|Lille|d0102b|0b2a5c|ffffff|0|0,0,7',
+ 'Girondin FC':'AS Mónaco|MON|Mónaco|d0102b|ffffff|ffffff|4|0,5,3',
+ 'Nantais Atlantique':'FC Nantes|NAN|Nantes|f2e600|1f7a3a|1f7a3a|0|1,7,0',
+ 'Stade Breton':'Stade Rennais|REN|Rennes|d0102b|111111|111111|0|2,2,5',
+ 'Alsace Strasbourg':'RC Estrasburgo|RCS|Estrasburgo|0b4e9e|ffffff|ffffff|0|5,5,0',
+ 'Rocher FC':'RC Lens|RCL|Lens|f2e600|d0102b|d0102b|0|5,7,3',
+ 'Occitan Toulouse':'Toulouse FC|TOU|Toulouse|5b2a86|ffffff|ffffff|0|5,5,0',
+ 'Languedoc Montpellier':'Stade Brestois|BRS|Brest|d0102b|ffffff|ffffff|0|4,3,0',
+ 'Armor Brest':'AJ Auxerre|AJA|Auxerre|ffffff|0b4e9e|0b4e9e|0|2,6,5',
+ 'Artois Lens':'Le Havre|HAC|Le Havre|6cace4|0b2a5c|0b2a5c|0|2,5,0',
+ 'Champagne Reims':'Angers SCO|SCO|Angers|111111|ffffff|ffffff|1|4,4,0',
+ 'Yonne Auxerre':'FC Lorient|FCL|Lorient|f58220|111111|111111|0|3,5,0',
+ 'Anjou FC':'FC Metz|MET|Metz|7a1f3d|ffffff|ffffff|0|3,7,0',
+ 'Auvergne FC':'Paris FC|PFC|París|0b2a5c|ffffff|ffffff|0|1,2,1',
+ 'Águias de Lisboa':'Benfica|SLB|Lisboa|d0102b|ffffff|ffffff|0|3,3,3',
+ 'Leões de Alvalade':'Sporting CP|SCP|Lisboa|008057|ffffff|ffffff|2|0,2,0',
+ 'Dragões do Porto':'FC Porto|FCP|Oporto|0b4e9e|ffffff|ffffff|1|4,2,0',
+ 'Guimarães Vitória':'Vitória SC|VSC|Guimarães|ffffff|111111|111111|0|1,0,0',
+ 'Braga Arcebispo':'SC Braga|SCB|Braga|d0102b|ffffff|ffffff|0|5,2,1',
+ 'Boavista Axadrezados':'Boavista|BOA|Oporto|111111|ffffff|ffffff|0|1,2,0',
+ 'Famalicão FC':'Famalicão|FAM|Famalicão|0b2a5c|ffffff|ffffff|0|1,1,0',
+ 'Estoril Praia':'Estoril|GDE|Estoril|f2e600|0b4e9e|0b4e9e|0|0,6,0',
+ 'Vitória de Setúbal':'Gil Vicente|GVF|Barcelos|d0102b|0b4e9e|ffffff|0|4,2,0',
+ 'Portimonense SC':'Casa Pia|CPA|Lisboa|111111|ffffff|ffffff|0|1,3,3',
+ 'Galo de Barcelos':'Moreirense|MOR|Moreira de Cónegos|1f7a3a|ffffff|ffffff|0|0,6,0',
+ 'Moreirense FC':'Nacional|CDN|Funchal|111111|ffffff|ffffff|1|1,5,0',
+ 'Nacional da Madeira':'Santa Clara|SCC|Ponta Delgada|d0102b|ffffff|ffffff|0|1,7,2',
+ 'Santa Clara Açores':'Rio Ave|RAV|Vila do Conde|1f7a3a|ffffff|ffffff|1|2,7,5',
+ 'Rio Ave FC':'Arouca|ARO|Arouca|f2e600|0b4e9e|0b4e9e|0|5,5,0',
+ 'Arouca FC':'Estrela da Amadora|EAM|Amadora|d0102b|1f7a3a|ffffff|0|1,4,0',
+ 'Farense Algarve':'Farense|FAR|Faro|111111|ffffff|ffffff|0|3,2,0',
+ 'Chaves Flavienses':'AVS|AVS|Vila das Aves|d0102b|ffffff|ffffff|0|2,6,5',
+ 'Amstel Amsterdam':'Ajax|AJX|Ámsterdam|ffffff|d0102b|d0102b|0|2,4,0',
+ 'Maas Rotterdam':'Feyenoord|FEY|Róterdam|d0102b|ffffff|111111|4|5,6,6',
+ 'Eindhoven Lichtstad':'PSV|PSV|Eindhoven|d0102b|ffffff|ffffff|1|2,4,0',
+ 'Twente Enschede':'FC Twente|TWE|Enschede|d0102b|ffffff|ffffff|0|1,3,5',
+ 'Utrecht Domstad':'FC Utrecht|UTR|Utrecht|d0102b|ffffff|ffffff|0|2,4,3',
+ 'Kaas Alkmaar':'AZ Alkmaar|AZA|Alkmaar|d0102b|ffffff|ffffff|0|0,0,0',
+ 'Rijn Arnhem':'Go Ahead Eagles|GAE|Deventer|f2e600|d0102b|d0102b|0|2,6,0',
+ 'Groningen Noord':'FC Groningen|GRO|Groninga|1f7a3a|ffffff|ffffff|0|2,0,2',
+ 'Fryslân FC':'SC Heerenveen|HEE|Heerenveen|0b4e9e|ffffff|d0102b|1|0,1,0',
+ 'IJssel Deventer':'NEC Nijmegen|NEC|Nimega|d0102b|1f7a3a|111111|1|2,0,0',
+ 'Almelo Heracles':'Heracles Almelo|HER|Almelo|111111|ffffff|ffffff|1|1,4,0',
+ 'Tilburg Brabant':'Willem II|WIL|Tilburg|0b4e9e|d0102b|ffffff|1|3,4,0',
+ 'Waal Nijmegen':'Sparta Rotterdam|SPA|Róterdam|d0102b|ffffff|ffffff|1|4,2,1',
+ 'Limburg Sittard':'Fortuna Sittard|FSI|Sittard|f2e600|1f7a3a|1f7a3a|0|1,7,0',
+ 'Zwolle Blauwvingers':'PEC Zwolle|PEC|Zwolle|0b4e9e|ffffff|1f7a3a|0|4,6,0',
+ 'Excelsior Maassluis':'Excelsior|EXC|Róterdam|d0102b|111111|111111|0|2,6,4',
+ 'Volendam Oranje':'FC Volendam|FCV|Volendam|f58220|111111|111111|0|1,1,5',
+ 'Leeuwarden FC':'NAC Breda|NAC|Breda|f2e600|111111|111111|0|0,6,0'
 };
 let _realM=null;
 function realMap(){ if(_realM) return _realM; _realM={};
@@ -777,8 +963,9 @@ function realNames(w,on){
     if(on){
       if(c.fic) continue; const d=M[c.name]; if(!d) continue;
       c.fic={name:c.name,short:c.short,city:c.city,col:c.col.slice(),kit:c.kit,crest:Object.assign({},c.crest),stn:c.st.name,seat:c.st.seat,facade:c.st.facade};
-      const oc=c.city;
-      Object.assign(c,{name:d.name,short:d.short,city:d.city,col:d.col.slice(),kit:d.kit,crest:Object.assign({},d.crest)});
+      const oc=c.city; let sh=d.short;
+      if(w.clubs.some(o=>o!==c&&o.short===sh)){ let k=0; while(w.clubs.some(o=>o!==c&&o.short===sh)) sh=d.short.slice(0,2)+String.fromCharCode(65+(k++%26))+(k>26?k:''); c.fic.rs=sh; }
+      Object.assign(c,{name:d.name,short:sh,city:d.city,col:d.col.slice(),kit:d.kit,crest:Object.assign({},d.crest)});
       if(oc!==d.city&&oc&&c.st.name.includes(oc)) c.st.name=c.st.name.split(oc).join(d.city);
       if(lc(c.st.seat)===lc(c.fic.col[0])) c.st.seat=d.col[0];
       if(lc(c.st.facade)===lc(c.fic.col[1])) c.st.facade=d.col[1];
@@ -788,7 +975,7 @@ function realNames(w,on){
       if(d){
         const stApplied=(f.city!==d.city&&f.city&&f.stn.includes(f.city))? f.stn.split(f.city).join(d.city) : f.stn;
         if(c.st.name===stApplied) c.st.name=f.stn;
-        if(c.name===d.name) c.name=f.name; if(c.short===d.short) c.short=f.short; if(c.city===d.city) c.city=f.city;
+        if(c.name===d.name) c.name=f.name; if(c.short===(f.rs||d.short)) c.short=f.short; if(c.city===d.city) c.city=f.city;
         if(sameCol(c.col,d.col)) c.col=f.col.slice(); if(c.kit===d.kit) c.kit=f.kit; if(sameCrest(c.crest,d.crest)) c.crest=Object.assign({},f.crest);
         if(lc(c.st.seat)===lc(d.col[0])) c.st.seat=f.seat; if(lc(c.st.facade)===lc(d.col[1])) c.st.facade=f.facade;
       }
@@ -796,6 +983,111 @@ function realNames(w,on){
     }
   }
   w.settings.real=on?1:0;
+  return n;
+}
+/* ---------- jugadores reales (temporada 2025/26) ----------
+   Nombres ligeramente cambiados a propósito. Formato: nombre|apellido|apodo|posición|nación|edad|media|tono de piel */
+const RPLAY={
+ "Real Madrid":"Thibaut|Curtois||GK|BEL|34|88|0;Andriy|Lunnin||GK|UKR|27|78|0;Dani|Carbajal||DR|ESP|34|82|2;Trent|Alexander-Arnóld||DR|ENG|27|85|3;Éder|Militao||DC|BRA|28|84|3;Antonio|Rudiger||DC|GER|33|85|6;Dean|Huysen||DC|ESP|21|80|1;Álvaro|Careras||DL|ESP|23|79|1;Ferland|Mendi||DL|FRA|31|80|6;Aurélien|Tchuaméni||DM|FRA|26|85|6;Federico|Valberde||MC|URU|28|88|1;Eduardo|Cammavinga||MC|FRA|23|83|6;Jude|Belingham||AMC|ENG|23|89|4;Arda|Guler||AMC|TUR|21|82|1;Vinicius|Jr.||AML|BRA|26|89|6;Rodrigo|Rodrigo|Rodrigo|AMR|BRA|25|84|5;Kylian|Mbapé||ST|FRA|27|91|5;Endrik|Endrik|Endrik|ST|BRA|20|78|5;Franco|Mastantuonno||AMR|ARG|19|76|1;Brahim|Días||AMR|MAR|27|80|3",
+ "FC Barcelona":"Joan|Garcia||GK|ESP|25|83|1;Marc-André|ter Stegén||GK|GER|34|84|0;Jules|Kundé||DR|FRA|27|85|5;Ronald|Arraújo||DC|URU|27|83|5;Pau|Cubbarsí||DC|ESP|19|83|1;Eric|Garcia||DC|ESP|25|79|1;Alejandro|Baldé||DL|ESP|22|82|5;Frenkie|de Jóng||MC|NED|29|86|1;Pedry|Pedry|Pedry|MC|ESP|23|89|1;Gavy|Gavy|Gavy|MC|ESP|21|82|2;Marc|Casaddó||DM|ESP|22|78|1;Dani|Olmó||AMC|ESP|28|85|1;Fermín|Lópes||AMC|ESP|23|81|2;Lamine|Yammal||AMR|ESP|19|90|5;Rafinha|Rafinha|Rafinha|AML|BRA|29|87|3;Robert|Levandowski||ST|POL|37|86|0;Ferran|Tores||ST|ESP|26|81|1;Marcus|Rashfórd||AML|ENG|28|81|6",
+ "Atlético de Madrid":"Jan|Oblac||GK|SVN|33|87|0;Marcos|Llorrente||DR|ESP|31|83|1;José|María Giménes||DC|URU|31|82|3;Robin|Le Normánd||DC|ESP|29|81|0;Dávid|Hanko||DC|SVK|28|81|0;Nahuel|Molinna||DR|ARG|28|80|3;Kokke|Kokke|Kokke|MC|ESP|34|81|1;Pablo|Barios||MC|ESP|23|80|1;Conor|Galagher||MC|ENG|26|81|0;Johnny|Cardosso||DM|USA|24|78|4;Álex|Baenna||AML|ESP|25|83|1;Thiago|Almadda||AMC|ARG|25|80|1;Giuliano|Simeonne||AMR|ARG|23|78|1;Antoine|Griezman||ST|FRA|35|85|0;Julián|Álvares||ST|ARG|26|87|1;Alexander|Sørlot||ST|NOR|30|82|0",
+ "Athletic Club":"Unai|Simmón||GK|ESP|29|84|1;Dani|Vibian||DC|ESP|27|82|1;Aitor|Pareddes||DC|ESP|26|78|1;Yuri|Berchiché||DL|ESP|36|77|1;Mikel|Jauregisar||MC|ESP|22|77|1;Mikel|Vesgá||DM|ESP|33|77|1;Oihan|Sancét||AMC|ESP|26|82|1;Álex|Berrenguer||AMR|ESP|31|79|1;Nico|Wiliams||AML|ESP|24|85|7;Iñaki|Wiliams||ST|GHA|32|81|7;Gorka|Guruseta||ST|ESP|29|78|1",
+ "Real Sociedad":"Álex|Remirro||GK|ESP|31|82|1;Igor|Zubbeldia||DC|ESP|29|80|1;Sergio|Gómes||DL|ESP|25|78|1;Luka|Sučič||MC|CRO|23|77|0;Brais|Méndes||AMC|ESP|29|81|1;Takefusa|Kubbo||AMR|JPN|25|82|1;Ander|Barenetxea||AML|ESP|24|79|1;Mikel|Oyarsabal||ST|ESP|29|83|1",
+ "Villarreal":"Juan|Foyt||DC|ARG|28|80|1;Renato|Veigá||DC|POR|22|79|1;Pape|Gueie||DM|SEN|27|80|7;Dani|Parrejo||MC|ESP|37|79|1;Santi|Comessaña||MC|ESP|29|78|1;Alberto|Moleirro||AMC|ESP|22|79|1;Nicolas|Péppé||AMR|CIV|31|80|6;Tajon|Buchannan||AMR|CAN|27|78|6;Ayoze|Péres||ST|ESP|32|81|1;Gerard|Morenno||ST|ESP|34|80|1;Georges|Mikautadse||ST|GEO|25|79|0",
+ "Real Betis":"Pau|Lópes||GK|ESP|31|79|1;Marc|Bartrá||DC|ESP|35|76|1;Diego|Llorrente||DC|ESP|32|77|1;Héctor|Belerín||DR|ESP|31|77|2;Sofyan|Amrabbat||DM|MAR|29|79|3;Pablo|Fornáls||MC|ESP|30|80|1;Giovani|Lo Celsó||AMC|ARG|30|81|1;Iscó|Iscó|Iscó|AMC|ESP|34|82|1;Antoni|Antoni|Antoni|AMR|BRA|26|81|5;Abde|Ezzalzuli||AML|MAR|24|80|3;Cucho|Hernándes||ST|COL|27|80|4",
+ "Sevilla FC":"Ørjan|Niland||GK|NOR|35|76|0;Loïc|Baddé||DC|FRA|26|80|6;Kike|Sallas||DC|ESP|24|76|1;José|Ángel Carmonna||DR|ESP|24|76|1;Nemanja|Guddelj||DM|SRB|34|77|0;Djibril|Sov||MC|SUI|29|77|6;Rubén|Vargás||AML|SUI|28|78|1;Chidera|Ejukke||AML|NGA|28|77|7;Isaac|Romerro||ST|ESP|26|77|1;Alexis|Sánches||ST|CHI|37|77|3",
+ "Valencia CF":"Julen|Agirezabala||GK|ESP|25|77|1;José|Gaià||DL|ESP|31|80|1;César|Tárega||DC|ESP|24|77|1;Mouctar|Diakhabi||DC|GUI|29|77|7;Pepellu|Pepellu|Pepellu|DM|ESP|28|79|1;Javi|Guera||MC|ESP|23|80|1;Diego|Lópes||AML|ESP|24|78|1;Luis|Riojá||AML|ESP|32|77|1;Hugo|Durro||ST|ESP|26|77|1",
+ "Girona FC":"Paulo|Gazaniga||GK|ARG|34|80|1;Daley|Blínd||DC|NED|36|77|0;Miguel|Gutiérez||DL|ESP|25|80|1;Yangel|Herera||MC|VEN|28|79|5;Iván|Martin||MC|ESP|27|78|1;Viktor|Tsigankov||AMR|UKR|28|80|0;Bryan|Gíl||AML|ESP|25|77|1;Abel|Ruis||ST|ESP|26|77|1;Cristhian|Stuany||ST|URU|39|74|1",
+ "Manchester City":"Gianluigi|Donarumma||GK|ITA|27|89|1;Rúben|Diás||DC|POR|29|87|1;John|Stonnes||DC|ENG|32|83|0;Joško|Gbardiol||DC|CRO|24|85|0;Nathan|Akké||DC|NED|31|81|6;Rico|Levis||DR|ENG|21|79|4;Matheus|Nunnes||DR|POR|27|80|4;Rayan|Aït-Nuri||DL|ALG|25|82|3;Rodry|Rodry|Rodry|DM|ESP|30|89|1;Mateo|Kovačič||MC|CRO|32|83|1;Bernardo|Silba||MC|POR|31|86|1;Tijjani|Reynders||MC|NED|27|85|3;Phil|Fodden||AMC|ENG|26|86|0;Rayan|Cherky||AMC|FRA|22|83|3;Jérémy|Docu||AML|BEL|24|84|6;Saviño|Saviño|Saviño|AMR|BRA|22|82|4;Omar|Marmush||ST|EGY|27|84|3;Erling|Haland||ST|NOR|25|91|0;Nico|O'Reily||DL|ENG|21|76|0",
+ "Arsenal":"David|Raia||GK|ESP|30|87|1;Ben|Whitte||DR|ENG|28|83|0;Jurriën|Timbér||DR|NED|25|84|6;William|Salibba||DC|FRA|25|88|6;Gabriel|Magalhaes||DC|BRA|28|87|3;Cristhian|Mosquerra||DC|ESP|22|79|6;Riccardo|Calafiory||DL|ITA|24|82|1;Piero|Hinkapié||DL|ECU|24|83|5;Myles|Lewis-Skely||DL|ENG|19|78|6;Declan|Ricé||MC|ENG|27|88|1;Martín|Zubimendy||DM|ESP|27|86|1;Mikel|Merinno||MC|ESP|30|83|1;Martin|Ødegard||AMC|NOR|27|87|0;Eberechi|Ese||AMC|ENG|28|84|6;Bukayo|Saca||AMR|ENG|24|89|6;Noni|Maduekke||AMR|ENG|24|81|6;Gabriel|Martineli||AML|BRA|25|83|2;Leandro|Trosard||AML|BEL|31|82|1;Viktor|Gyokeres||ST|SWE|28|86|1;Kai|Haverts||ST|GER|27|84|0",
+ "Liverpool":"Alison|Alison|Alison|GK|BRA|33|89|1;Giorgi|Mamardashvily||GK|GEO|25|83|0;Jeremie|Frimpóng||DR|NED|25|84|6;Virgil|van Dijc||DC|NED|35|88|5;Ibrahima|Konatté||DC|FRA|27|85|7;Milos|Kerkes||DL|HUN|22|82|0;Andrew|Robbertson||DL|SCO|32|82|0;Ryan|Grabenberch||DM|NED|24|86|6;Alexis|Mac Alister||MC|ARG|27|87|1;Dominik|Szobosslai||MC|HUN|25|85|0;Curtis|Jonnes||MC|ENG|25|81|4;Florian|Wirts||AMC|GER|23|89|0;Mohamed|Sallah||AMR|EGY|34|89|4;Federico|Chiessa||AMR|ITA|28|80|1;Cody|Gakpó||AML|NED|27|85|5;Alexander|Isac||ST|SWE|26|88|6;Hugo|Ekitikké||ST|FRA|24|84|6",
+ "Chelsea":"Robert|Sánches||GK|ESP|28|81|2;Reece|Jammes||DR|ENG|26|84|5;Malo|Gustó||DR|FRA|23|80|6;Levi|Colwil||DC|ENG|23|82|0;Wesley|Fofanna||DC|FRA|25|80|6;Trevoh|Chalobbah||DC|ENG|27|80|6;Marc|Cucurela||DL|ESP|28|84|1;Moisés|Caiceddo||DM|ECU|24|87|6;Romeo|Labia||DM|BEL|22|78|6;Enzo|Fernándes||MC|ARG|25|86|1;Cole|Palmér||AMC|ENG|24|88|2;Pedro|Netto||AML|POR|26|83|2;Estêvao|Estêvao|Estêvao|AMR|BRA|19|80|4;Jamie|Gitens||AML|ENG|21|79|6;João|Pedro||ST|BRA|24|83|3;Liam|Dellap||ST|ENG|23|79|0",
+ "Manchester United":"Senne|Lamens||GK|BEL|24|78|0;Diogo|Dallot||DR|POR|27|81|1;Matthijs|de Lígt||DC|NED|26|83|0;Lisandro|Martínes||DC|ARG|28|83|1;Leny|Yorro||DC|FRA|20|80|6;Harry|Maguirre||DC|ENG|33|79|0;Luke|Shav||DL|ENG|31|78|0;Patrick|Dorgú||DL|DEN|21|78|6;Casemirro|Casemirro|Casemirro|DM|BRA|34|81|3;Manuel|Ugarté||DM|URU|25|80|1;Kobbie|Maino||MC|ENG|21|80|6;Bruno|Fernandés||AMC|POR|31|87|1;Mason|Munt||AMC|ENG|27|79|0;Matheus|Cuña||AMC|BRA|27|84|3;Bryan|Mbeummo||AMR|CMR|26|85|7;Amad|Dialo||AMR|CIV|23|81|7;Benjamin|Šešco||ST|SVN|23|82|0",
+ "Tottenham Hotspur":"Guglielmo|Vikario||GK|ITA|29|84|1;Pedro|Poro||DR|ESP|26|83|1;Cristian|Romerro||DC|ARG|28|85|1;Micky|van de Vén||DC|NED|25|84|0;Destiny|Uddogie||DL|ITA|23|80|6;Djed|Spencé||DL|ENG|25|78|6;João|Palhiña||DM|POR|31|83|1;Rodrigo|Bentankur||DM|URU|29|81|1;Pape|Matar Sar||MC|SEN|23|80|7;Lucas|Bergval||MC|SWE|20|78|0;James|Madison||AMC|ENG|29|82|0;Xavi|Simmons||AMC|NED|23|84|4;Mohammed|Kuddus||AMR|GHA|25|83|6;Dejan|Kulusevsky||AMR|SWE|26|82|1;Brennan|Johnsón||AMR|WAL|25|80|4;Mathys|Tél||ST|FRA|21|78|6;Dominic|Sollanke||ST|ENG|28|81|6;Richarlisson|Richarlisson|Richarlisson|ST|BRA|29|79|5",
+ "Newcastle United":"Nick|Poppe||GK|ENG|34|82|0;Kieran|Tripier||DR|ENG|35|80|0;Tino|Livrammento||DR|ENG|23|80|5;Sven|Botmán||DC|NED|26|82|0;Malick|Thiav||DC|GER|25|80|5;Fabian|Schäro||DC|SUI|34|79|0;Dan|Búrn||DC|ENG|34|79|0;Lewis|Hal||DL|ENG|21|80|0;Bruno|Guimaraes||MC|BRA|28|86|3;Sandro|Tonaly||MC|ITA|26|84|1;Joellinton|Joellinton|Joellinton|MC|BRA|29|82|4;Jacob|Murfy||AMR|ENG|31|79|0;Anthony|Ellanga||AMR|SWE|24|80|6;Anthony|Gordón||AML|ENG|25|83|0;Harvey|Barnés||AML|ENG|28|79|4;Nick|Woltemadde||ST|GER|24|81|0",
+ "Aston Villa":"Emiliano|Martínes||GK|ARG|33|86|1;Matty|Cásh||DR|POL|28|80|0;Ezri|Konsá||DC|ENG|28|82|6;Pau|Tores||DC|ESP|29|83|1;Lucas|Digné||DL|FRA|32|79|1;Boubacar|Kamarra||DM|FRA|26|83|6;Amadou|Onanna||DM|BEL|24|82|7;Youri|Tielemmans||MC|BEL|29|83|3;John|McGin||MC|SCO|31|81|0;Morgan|Rogérs||AMC|ENG|24|83|5;Emiliano|Buendia||AMR|ARG|29|79|1;Harvey|Eliott||AMR|ENG|23|79|1;Jadon|Sanchó||AML|ENG|26|79|6;Ollie|Watkíns||ST|ENG|30|84|6",
+ "Inter":"Yann|Somer||GK|SUI|37|84|0;Josep|Martínes||GK|ESP|28|79|1;Denzel|Dumfriés||DR|NED|30|83|6;Alessandro|Bastony||DC|ITA|27|87|1;Francesco|Acerby||DC|ITA|38|79|1;Stefan|de Vry||DC|NED|34|81|0;Manuel|Acanji||DC|SUI|30|84|5;Yann|Biseck||DC|GER|25|80|6;Federico|Dimarko||DL|ITA|28|85|1;Hakan|Çalhannoğlu||DM|TUR|32|86|1;Nicolò|Barela||MC|ITA|29|87|1;Davide|Fratesi||MC|ITA|26|80|1;Petar|Sučič||MC|CRO|22|77|0;Lautaro|Martínes||ST|ARG|28|88|2;Marcus|Thurram||ST|FRA|28|85|6;Ange-Yoan|Bony||ST|FRA|22|77|6;Pio|Espositto||ST|ITA|21|76|1",
+ "AC Milan":"Mike|Maignán||GK|FRA|30|87|6;Fikayo|Tomory||DC|ENG|28|82|6;Strahinja|Pavlovič||DC|SRB|25|79|0;Matteo|Gabia||DC|ITA|26|79|1;Pervis|Estuppiñán||DL|ECU|28|79|6;Luka|Modrič||MC|CRO|40|83|0;Adrien|Rabbiot||MC|FRA|31|83|1;Youssouf|Fofanna||MC|FRA|27|82|7;Samuele|Rici||DM|ITA|24|80|1;Ruben|Loftus-Chek||MC|ENG|30|79|6;Alexis|Saelemaekkers||AMR|BEL|27|80|1;Christian|Pulisik||AMR|USA|27|85|0;Rafael|Leao||AML|POR|27|86|6;Christopher|Ncunku||ST|FRA|28|82|6;Santiago|Giménes||ST|MEX|25|80|1",
+ "Juventus":"Michele|Di Gregorrio||GK|ITA|29|83|1;Bremmer|Bremmer|Bremmer|DC|BRA|29|85|5;Federico|Gati||DC|ITA|28|80|1;Pierre|Kalullu||DC|FRA|26|80|6;Andrea|Cambiasso||DL|ITA|26|82|1;Juan|Cabbal||DL|COL|25|78|6;Manuel|Locateli||DM|ITA|28|83|1;Khéphren|Thurram||MC|FRA|25|82|6;Teun|Kopmeiners||MC|NED|28|82|0;Weston|McKenie||MC|USA|27|80|0;Kenan|Yıldıs||AML|TUR|21|85|1;Francisco|Conceiçao||AMR|POR|23|81|1;Jonathan|Dabid||ST|CAN|26|84|6;Dušan|Vlahovič||ST|SRB|26|82|1;Loïs|Oppenda||ST|BEL|26|82|5",
+ "Napoli":"Alex|Merret||GK|ITA|29|83|0;Vanja|Milinković-Savič||GK|SRB|29|80|0;Giovanni|Di Lorenso||DR|ITA|32|84|1;Alessandro|Buongiornó||DC|ITA|27|83|1;Sam|Beukemma||DC|NED|27|81|0;Mathías|Oliverra||DL|URU|28|79|1;Leonardo|Spinazola||DL|ITA|33|78|1;Stanislav|Lobotca||DM|SVK|31|84|1;Scott|McTominai||MC|SCO|29|86|0;Frank|Anguisa||MC|CMR|30|83|7;Kevin|De Bruine||AMC|BEL|35|86|0;Matteo|Politanno||AMR|ITA|33|80|1;David|Nerres||AML|BRA|29|80|5;Noa|Láng||AML|NED|27|80|6;Romelu|Lucaku||ST|BEL|33|82|7;Rasmus|Højlúnd||ST|DEN|23|81|0",
+ "AS Roma":"Mile|Svillar||GK|SRB|26|85|0;Gianluca|Manciny||DC|ITA|30|81|1;Evan|Ndika||DC|CIV|26|81|7;Zeki|Çelic||DR|TUR|29|78|1;Angelliño|Angelliño|Angelliño|DL|ESP|29|79|1;Bryan|Cristanté||DM|ITA|31|79|1;Manu|Konné||MC|FRA|25|82|6;Neil|El Aynaui||MC|MAR|25|78|4;Lorenzo|Pelegrini||AMC|ITA|30|80|1;Paulo|Dibala||AMC|ARG|32|83|1;Matías|Sulé||AMR|ARG|23|80|1;Leon|Bailei||AMR|JAM|28|79|6;Artem|Dovbik||ST|UKR|29|80|0",
+ "Atalanta":"Marco|Carnesechi||GK|ITA|26|82|1;Isak|Hién||DC|SWE|27|81|7;Raoul|Belanova||DR|ITA|26|79|1;Davide|Zapacosta||DR|ITA|34|77|1;Marten|de Ron||DM|NED|35|79|0;Édderson|Édderson|Édderson|MC|BRA|27|83|3;Charles|De Ketelaerre||AMC|BEL|25|83|0;Ademola|Lokman||AML|NGA|28|84|7;Kamaldeen|Sulemanna||AML|GHA|24|77|7;Gianluca|Scamaca||ST|ITA|27|80|1",
+ "Lazio":"Ivan|Proveddel||GK|ITA|32|81|1;Alessio|Romagnoly||DC|ITA|31|80|1;Mario|Gilla||DC|ESP|25|80|1;Nuno|Tavarres||DL|POR|26|79|6;Nicolò|Rovela||DM|ITA|24|79|1;Matteo|Guenduzi||MC|FRA|27|81|4;Mattia|Zacagni||AML|ITA|31|81|1;Gustav|Issaksen||AMR|DEN|25|79|0;Taty|Castelanos||ST|ARG|27|80|1;Boulaye|Diá||ST|SEN|29|78|7",
+ "Fiorentina":"David|de Geá||GK|ESP|35|83|1;Dodo|Dodo|Dodo|DR|BRA|27|80|4;Pietro|Comuzo||DC|ITA|21|78|1;Robin|Gossens||DL|GER|32|79|0;Rolando|Mandragorra||MC|ITA|29|78|1;Moise|Keán||ST|ITA|26|83|7",
+ "Bologna":"Lewis|Fergusson||MC|SCO|26|80|0;Remo|Freuller||MC|SUI|34|79|0;Juan|Mirranda||DL|ESP|26|78|1;Riccardo|Orsoliny||AMR|ITA|29|80|1;Federico|Bernardeschy||AML|ITA|32|77|1;Santiago|Castró||ST|ARG|21|78|1",
+ "Bayern Múnich":"Manuel|Neuér||GK|GER|40|85|0;Jonas|Urbíg||GK|GER|23|76|0;Josip|Stanišič||DR|CRO|26|80|0;Konrad|Laimmer||DR|AUT|29|82|0;Dayot|Upamekano||DC|FRA|27|85|6;Jonathan|Táh||DC|GER|30|85|5;Min-jae|Kím||DC|KOR|29|84|1;Hiroki|Itto||DC|JPN|27|80|1;Alphonso|Dabies||DL|CAN|25|84|7;Joshua|Kimich||DM|GER|31|88|0;Aleksandar|Pavlovič||DM|GER|22|82|0;Leon|Goretska||MC|GER|31|82|0;Jamal|Musialla||AMC|GER|23|89|4;Lennart|Kárl||AMC|GER|18|74|0;Michael|Olisse||AMR|FRA|24|87|6;Serge|Gnabri||AMR|GER|31|81|5;Luis|Días||AML|COL|29|86|5;Harry|Kanne||ST|ENG|33|90|0;Nicolas|Jakson||ST|SEN|25|80|7",
+ "Borussia Dortmund":"Gregor|Kobbel||GK|SUI|28|86|0;Julian|Rierson||DR|NOR|28|80|0;Yan|Cuto||DR|BRA|24|78|4;Nico|Schloterbeck||DC|GER|26|84|0;Waldemar|Antón||DC|GER|29|81|0;Ramy|Bensebainy||DL|ALG|31|79|3;Daniel|Svenson||DL|SWE|24|78|0;Emre|Cán||DM|GER|32|80|3;Marcel|Sabitser||MC|AUT|32|81|0;Felix|Nmechá||MC|GER|25|81|6;Jobe|Belingham||MC|ENG|20|79|4;Julian|Brándt||AMC|GER|30|82|0;Karim|Adeiemi||AML|GER|24|80|6;Maximilian|Beiér||ST|GER|23|79|0;Serhou|Guirasy||ST|GUI|30|85|7",
+ "Bayer Leverkusen":"Mark|Fleken||GK|NED|33|80|0;Jarell|Quansáh||DC|ENG|23|79|5;Alejandro|Grimmaldo||DL|ESP|31|84|1;Robert|Andrích||DM|GER|32|81|0;Exequiel|Pallacios||MC|ARG|28|82|1;Aleix|Garcia||MC|ESP|29|80|1;Malik|Tilman||AMC|USA|24|80|5;Ibrahim|Masa||AMC|ALG|20|77|4;Claudio|Echeveri||AMC|ARG|20|76|1;Martin|Terier||AML|FRA|29|79|0;Patrik|Schik||ST|CZE|30|82|0",
+ "RB Leipzig":"Péter|Gulácsy||GK|HUN|36|79|0;Maarten|Vandevordt||GK|BEL|24|77|0;Willi|Orban||DC|HUN|33|81|0;Castello|Lukebba||DC|FRA|23|81|6;David|Raúm||DL|GER|28|81|0;Xaver|Schlagér||MC|AUT|28|81|0;Assan|Ouedraogo||MC|GER|20|77|7;Christoph|Baumgartnér||AMC|AUT|27|80|0;Antonio|Nussa||AML|NOR|21|79|6",
+ "VfB Stuttgart":"Alexander|Nubel||GK|GER|29|82|0;Jeff|Chabbot||DC|GER|28|79|0;Maximilian|Mitelstädt||DL|GER|29|80|0;Angelo|Stiler||DM|GER|25|83|0;Atakan|Karasor||DM|GER|29|78|1;Jamie|Leveling||AMR|GER|25|79|0;Chris|Fuhrich||AML|GER|28|79|0;Deniz|Undab||ST|GER|30|81|1",
+ "Eintracht Fráncfort":"Robin|Kóch||DC|GER|30|80|0;Arthur|Theatte||DC|BEL|26|79|0;Nathaniel|Brovn||DL|GER|23|78|6;Hugo|Larson||MC|SWE|22|80|0;Mario|Gotze||AMC|GER|34|78|0;Can|Usun||AMC|TUR|20|79|1;Farès|Chaïby||AMC|ALG|23|78|3;Ritsu|Dōán||AMR|JPN|28|79|1;Ansgar|Knauf||AMR|GER|24|77|0;Jonathan|Burcardt||ST|GER|26|80|0",
+ "Paris Saint-Germain":"Lucas|Chevallier||GK|FRA|24|84|0;Achraf|Hakimy||DR|MAR|27|88|4;Marquiños|Marquiños|Marquiños|DC|BRA|32|86|3;Willian|Pachó||DC|ECU|24|85|6;Ilya|Zabarnii||DC|UKR|23|81|0;Lucas|Berraldo||DC|BRA|22|78|1;Nuno|Mendés||DL|POR|24|87|6;Vitiña|Vitiña|Vitiña|MC|POR|26|88|1;João|Neves||MC|POR|21|87|1;Fabián|Ruis||MC|ESP|30|84|1;Warren|Zaïre-Emeri||MC|FRA|20|81|6;Senny|Maiulu||MC|FRA|20|76|6;Lee|Kang-ín||AMC|KOR|25|80|1;Désiré|Dué||AMR|FRA|21|86|6;Khvicha|Kvaratskhellia||AML|GEO|25|87|0;Bradley|Barkola||AML|FRA|23|84|6;Ousmane|Dembéllé||ST|FRA|29|90|6;Gonçalo|Rammos||ST|POR|25|81|1",
+ "Olympique de Marseille":"Gerónimo|Ruli||GK|ARG|34|82|1;Leonardo|Balerdy||DC|ARG|27|81|1;Nayef|Aguérd||DC|MAR|30|81|4;Facundo|Medinna||DC|ARG|27|79|1;Pierre-Emile|Højbjérg||DM|DEN|31|82|5;Matt|O'Rilei||MC|DEN|25|80|0;Angel|Gommes||MC|ENG|25|79|6;Mason|Grenwood||AMR|ENG|24|84|5;Igor|Paixao||AML|BRA|25|79|4;Amine|Guiri||ST|ALG|26|81|4",
+ "AS Mónaco":"Philipp|Kohn||GK|SUI|28|78|0;Thilo|Kehrér||DC|GER|29|79|4;Mohammed|Salissu||DC|GHA|27|79|7;Eric|Diér||DC|ENG|32|78|0;Denis|Zacaria||DM|SUI|29|81|7;Lamine|Camarra||MC|SEN|22|79|7;Paul|Pogbá||MC|FRA|33|78|7;Takumi|Minaminno||AMC|JPN|31|79|1;Maghnes|Akliuche||AMR|FRA|24|81|3;Ansu|Faty||AML|ESP|23|77|6;Folarin|Ballogun||ST|USA|25|80|6",
+ "Olympique Lyonnais":"Lucas|Peri||GK|BRA|28|81|2;Moussa|Niakhatté||DC|SEN|30|79|7;Nicolás|Tagliafiko||DL|ARG|33|80|1;Corentin|Toliso||MC|FRA|32|79|4;Pavel|Šulk||AMC|CZE|25|78|0;Malick|Fofanna||AML|BEL|21|80|7;Ernest|Nuammah||AMR|GHA|22|77|7",
+ "LOSC Lille":"Berke|Ozer||GK|TUR|26|77|1;Aïssa|Mandy||DC|ALG|34|77|4;Romain|Peraud||DL|FRA|28|77|0;Benjamin|Andre||DM|FRA|35|78|0;Nabil|Bentalleb||MC|ALG|31|77|3;Olivier|Girud||ST|FRA|39|77|0",
+ "Benfica":"Anatoliy|Trubbin||GK|UKR|24|83|0;António|Silba||DC|POR|22|81|1;Nicolás|Otamendy||DC|ARG|38|79|1;Tomás|Arraújo||DC|POR|24|79|1;Samuel|Dáhl||DL|SWE|23|76|0;Fredrik|Aursnés||MC|NOR|30|81|0;Enzo|Barenechea||DM|ARG|25|79|1;Richard|Rios||MC|COL|26|80|5;Georgiy|Sudacov||AMC|UKR|23|80|0;Dodi|Lukébakkio||AMR|BEL|28|80|6;Andreas|Schjelderrup||AML|DEN|22|78|0;Vangelis|Pavliddis||ST|GRE|27|81|1",
+ "Sporting CP":"Rui|Silba||GK|POR|32|81|1;Ousmane|Diommande||DC|CIV|22|82|7;Gonçalo|Innácio||DC|POR|24|83|1;Zeno|Debbast||DC|BEL|22|79|0;Maximiliano|Arraújo||DL|URU|26|79|2;Iván|Fresnedda||DR|ESP|21|76|1;Morten|Hjulmánd||DM|DEN|27|83|0;Hidemasa|Moritta||MC|JPN|31|80|1;Pedro|Gonçalbes||AMC|POR|28|83|1;Francisco|Trincao||AMR|POR|26|83|2;Geovany|Quendá||AMR|POR|19|79|6;Luis|Suáres||ST|COL|28|82|3;Fotis|Ioanidis||ST|GRE|26|79|1",
+ "FC Porto":"Diogo|Costá||GK|POR|26|86|1;Jan|Bednarec||DC|POL|30|79|0;Nehuén|Péres||DC|ARG|26|78|1;Francisco|Mura||DL|POR|26|78|1;Alberto|Costá||DR|POR|22|77|1;Alan|Varella||DM|ARG|25|81|1;Victor|Frohóldt||MC|DEN|20|77|0;Gabri|Veigá||MC|ESP|24|80|1;Rodrigo|Morra||AMC|POR|19|79|1;Pepe|Pepe|Pepe|AMR|BRA|29|80|4;William|Gommes||AML|BRA|20|76|5;Samu|Aghehova||ST|ESP|22|81|7;Luuk|de Jóng||ST|NED|36|77|0",
+ "Ajax":"Vítězslav|Jarroš||GK|CZE|25|77|0;Josip|Šutallo||DC|CRO|26|79|0;Youri|Bas||DL|NED|23|78|0;Lucas|Rossa||DR|BRA|26|76|3;Kenneth|Tailor||MC|NED|24|79|0;Davy|Klaasen||MC|NED|33|76|0;Kian|Fitz-Jím||MC|NED|22|76|5;Steven|Berghuís||AMR|NED|34|77|0;Mika|Gódts||AML|BEL|21|78|0;Wout|Weghórst||ST|NED|33|77|0",
+ "PSV":"Matej|Kobář||GK|CZE|26|78|0;Ryan|Flammingo||DC|NED|23|78|6;Mauro|Júnnior||DL|BRA|27|77|3;Jerdy|Schuten||DM|NED|29|80|0;Joey|Verman||MC|NED|27|81|0;Guus|Tíl||AMC|NED|28|78|0;Ismael|Saibary||AMC|MAR|25|80|4;Ivan|Perišič||AML|CRO|37|78|0;Ricardo|Pepy||ST|USA|23|78|3",
+ "Feyenoord":"Timon|Welenreuther||GK|GER|30|77|0;Gernot|Traunner||DC|AUT|34|78|0;Jordan|Bós||DL|AUS|23|76|0;Quinten|Timbér||MC|NED|25|81|6;In-beom|Hvang||MC|KOR|30|79|1;Sem|Steyn||AMC|NED|24|77|0;Gonçalo|Borgés||AMR|POR|25|77|1;Anis|Hadj Mussa||AML|ALG|24|78|4;Ayase|Uedda||ST|JPN|27|77|1",
+ "Boca Juniors":"Agustín|Marchessín||GK|ARG|38|75|1;Luis|Advínkula||DR|PER|36|74|6;Marcos|Rojó||DC|ARG|36|74|2;Ayrton|Costá||DC|ARG|26|74|1;Lautaro|Di Lolo||DC|ARG|22|73|1;Frank|Fabrá||DL|COL|35|73|6;Leandro|Pareddes||DM|ARG|32|80|1;Ander|Herera||MC|ESP|36|76|1;Carlos|Pallacios||AMR|CHI|25|75|2;Exequiel|Zebalos||AML|ARG|24|75|1;Miguel|Merrentiel||ST|URU|30|76|2;Edinson|Cavany||ST|URU|39|75|1;Milton|Giménes||ST|ARG|29|74|1",
+ "River Plate":"Franco|Armany||GK|ARG|39|77|1;Gonzalo|Montiél||DR|ARG|29|77|1;Germán|Pezella||DC|ARG|35|76|1;Lucas|Martínez Quartá||DC|ARG|30|77|1;Marcos|Akuña||DL|ARG|34|78|2;Enzo|Péres||DM|ARG|40|74|1;Kevin|Castañó||MC|COL|25|75|5;Giuliano|Galopo||MC|ARG|27|75|1;Juan|Fernando Quinterro||AMC|COL|33|78|3;Maximiliano|Mesa||AMR|ARG|33|75|2;Ian|Subbiabre||AML|ARG|19|72|1;Facundo|Coliddio||ST|ARG|26|76|1;Miguel|Borjá||ST|COL|33|77|6;Sebastián|Driusi||ST|ARG|30|77|1",
+ "Racing Club":"Gabriel|Arrias||GK|CHI|38|76|1;Gastón|Martirenna||DR|URU|26|75|2;Marco|Di Césarre||DC|ARG|24|75|1;Gabriel|Rojás||DL|ARG|28|74|1;Santiago|Sossa||DM|ARG|27|76|1;Santiago|Solary||AMR|ARG|28|75|1;Adrián|Martínes||ST|ARG|33|77|1",
+ "Flamengo":"Agustín|Rosi||GK|ARG|30|79|1;Guillermo|Varella||DR|URU|33|76|1;Léo|Ortis||DC|BRA|30|78|4;Léo|Pereirra||DC|BRA|30|77|2;Alex|Sandró||DL|BRA|35|75|5;Ayrton|Lukas||DL|BRA|28|76|5;Jorgiño|Jorgiño|Jorgiño|DM|ITA|34|79|2;Erick|Pulgár||DM|CHI|32|76|2;Saúl|Ñígues||MC|ESP|31|77|1;Nicolás|de la Crus||MC|URU|29|79|1;Giorgian|de Arascaeta||AMC|URU|32|82|1;Jorge|Carascal||AMC|COL|27|77|5;Luiz|Arraújo||AMR|BRA|30|77|3;Gonzalo|Platta||AMR|ECU|25|77|6;Samuel|Linno||AML|BRA|26|78|4;Bruno|Henriqué||AML|BRA|35|76|5;Pedró|Pedró|Pedró|ST|BRA|29|80|3",
+ "Palmeiras":"Weberton|Weberton|Weberton|GK|BRA|38|77|2;Gustavo|Gómes||DC|PAR|33|79|3;Murillo|Murillo|Murillo|DC|BRA|29|76|4;Joaquín|Piqueres||DL|URU|27|77|1;Aníbal|Morenno||DM|ARG|27|77|1;Andreas|Pereirra||MC|BRA|30|78|2;Raphael|Veigá||AMC|BRA|31|78|2;Facundo|Tores||AMR|URU|25|78|1;Ramón|Sossa||AML|PAR|26|77|3;Felipe|Andersón||AMR|BRA|33|76|5;Vitor|Roqué||ST|BRA|21|78|5;José|Manuel Lópes||ST|ARG|25|77|1",
+ "Botafogo":"Jóhn|Jóhn|Jóhn|GK|BRA|30|75|5;Alexander|Barbosa||DC|ARG|30|76|1;Alex|Teles||DL|BRA|33|76|2;Marlon|Freittas||DM|BRA|30|76|4;Jefferson|Savarinno||AMR|VEN|29|77|4;Artúr|Artúr|Artúr|AMR|BRA|28|76|4;Arthur|Cabrál||ST|BRA|28|75|4",
+ "Corinthians":"Hugo|Suza||GK|BRA|27|76|4;André|Rammalho||DC|BRA|34|74|2;Gustavo|Henriqué||DC|BRA|33|74|5;Matheus|Biddu||DL|BRA|27|73|4;José|Martínes||DM|VEN|31|74|4;André|Carillo||AMR|PER|35|74|5;Rodrigo|Garo||AMC|ARG|28|78|1;Memfis|Memfis|Memfis|ST|NED|32|79|6;Yuri|Albertó||ST|BRA|25|77|3",
+ "Inter Miami":"Óscar|Ustary||GK|ARG|40|72|1;Maximiliano|Falcon||DC|URU|29|72|1;Jordi|Albá||DL|ESP|37|78|1;Sergio|Busquéts||DM|ESP|38|78|1;Rodrigo|De Paúl||MC|ARG|32|82|1;Telasco|Segobia||MC|VEN|23|74|2;Tadeo|Alende||AMR|ARG|27|75|1;Lionel|Mesi||ST|ARG|39|87|1;Luis|Suáres||ST|URU|39|78|1",
+ "LA Galaxy":"Maya|Yoshidda||DC|JPN|38|72|1;Riqui|Puíg||MC|ESP|27|77|1;Marco|Reús||AMC|GER|37|77|0;Gabriel|Pek||AMR|BRA|25|76|5;Joseph|Paintsíl||AML|GHA|28|75|7",
+ "LAFC":"Hugo|Llorris||GK|FRA|39|80|0;Heung-min|Són||AML|KOR|34|84|1",
+ "Club América":"Luis|Ángel Mallagón||GK|MEX|29|77|2;Kevin|Álvares||DR|MEX|27|74|2;Israel|Reies||DC|MEX|26|75|3;Ramón|Juáres||DC|MEX|25|73|2;Igor|Lichnovski||DC|CHI|32|73|1;Sebastián|Cácerres||DC|URU|26|74|1;Cristian|Borjá||DL|COL|33|72|6;Erick|Sánches||MC|MEX|26|75|2;Álvaro|Fiddalgo||MC|ESP|29|77|1;Alan|Cerbantes||MC|MEX|28|73|2;Jonathan|dos Santós||MC|MEX|36|72|2;Alejandro|Zendejás||AMR|USA|28|75|2;Brian|Rodrígues||AML|URU|26|76|1;Allan|Saint-Maximmin||AML|FRA|29|77|6;Henry|Martin||ST|MEX|33|74|3;Víctor|Dávilla||ST|CHI|28|75|2;Rodrigo|Aguire||ST|URU|31|74|1",
+ "Chivas":"Raúl|Rangél||GK|MEX|26|73|2;Alan|Moso||DR|MEX|29|72|2;Gilberto|Sepúlvedda||DC|MEX|27|72|2;Luis|Ollivas||DC|MEX|26|70|2;Diego|Campilo||DC|MEX|23|70|2;Bryan|Gonzáles||DL|MEX|22|71|2;Omar|Gobea||DM|MEX|29|71|2;Fernando|Beltran||MC|MEX|28|73|2;Érick|Gutiérez||MC|MEX|30|72|2;Efraín|Álvares||AMC|MEX|24|72|2;Roberto|Alvaraddo||AMR|MEX|28|75|2;Cade|Cowel||AML|USA|22|72|3;Armando|Gonzáles||ST|MEX|22|73|2;Alan|Puliddo||ST|MEX|35|72|2",
+ "Monterrey":"Esteban|Andradda||GK|ARG|35|76|1;Stefan|Medinna||DR|COL|33|74|3;Sergio|Rammos||DC|ESP|40|79|1;Víctor|Gusmán||DC|MEX|23|73|2;Gerardo|Arteagá||DL|MEX|27|75|2;Sergio|Canalles||MC|ESP|35|80|1;Óliver|Tores||MC|ESP|31|77|1;Iker|Fimbrés||MC|MEX|21|72|2;Lucas|Okampos||AMR|ARG|32|78|1;Anthony|Martiál||ST|FRA|30|78|6;Germán|Berteramme||ST|MEX|27|77|1",
+ "Cruz Azul":"Kevin|Miér||GK|COL|26|75|5;Jorge|Sánches||DR|MEX|28|73|2;Willer|Dita||DC|COL|28|74|6;Gonzalo|Piovy||DC|ARG|31|73|1;Jesús|Orosco||DC|MEX|23|72|2;Omar|Campós||DL|MEX|23|72|2;Erik|Lirra||DM|MEX|26|74|2;Carlos|Rodrígues||MC|MEX|29|75|2;Lorenzo|Faraveli||MC|ARG|32|74|1;José|Paradella||AMC|ARG|27|75|1;Mateusz|Boguss||AMC|POL|24|74|0;Luka|Romerro||AMC|ARG|21|72|1;Carlos|Rotondy||AMR|ARG|29|72|1;Ignacio|Riverro||AMR|URU|33|72|1;Ángel|Sepúlvedda||ST|MEX|35|72|2;Gabriel|Fernándes||ST|URU|32|72|1",
+ "Toluca":"Hugo|Gonzáles||GK|MEX|35|73|2;Diego|Barbossa||DR|MEX|29|71|2;Federico|Pereirra||DC|URU|37|72|1;Bruno|Méndes||DC|URU|26|73|2;Jesús|Galardo||DL|MEX|31|73|2;Marcel|Ruis||MC|MEX|25|74|2;Héctor|Herera||MC|MEX|36|74|2;Nicolás|Castró||AMC|ARG|25|73|1;Heliño|Heliño|Heliño|AMR|BRA|25|74|5;Alexis|Vegá||AML|MEX|28|76|3;Pauliño|Pauliño|Pauliño|ST|POR|33|78|4",
+ "Tigres UANL":"Nahuel|Gusmán||GK|ARG|40|72|1;Javier|Aquinno||DR|MEX|36|70|2;Jesús|Angullo||DC|MEX|28|72|2;Joaquim|Pereirra||DC|BRA|25|73|3;Jesús|Garsa||DL|MEX|26|70|2;Juan|Pablo Vigon||DM|MEX|34|72|2;Rafael|Carioka||DM|BRA|36|71|6;Fernando|Goriarán||MC|URU|31|75|1;Juan|Bruneta||AMC|ARG|28|77|1;Diego|Laines||AMR|MEX|26|74|2;Marcelo|Florres||AML|CAN|22|72|2;Ozziel|Herera||AML|MEX|25|72|2;Ángel|Corea||ST|ARG|31|79|1;Nicolás|Ibáñes||ST|ARG|31|74|1;André-Pierre|Gignak||ST|FRA|40|72|1",
+ "Pumas UNAM":"Keylor|Nabas||GK|CRC|39|77|3;Pablo|Benevendo||DR|MEX|26|70|2;Lisandro|Magalán||DC|ARG|32|72|1;Rubén|Duarté||DL|ESP|30|72|1;Adalberto|Carasquilla||MC|PAN|27|74|5;Pedro|Vitte||MC|ECU|23|72|5;Aaron|Ramsei||AMC|WAL|35|74|0;Jorge|Ruvalkaba||AMR|MEX|24|71|2;José|Juan Macias||ST|MEX|26|71|2;Guillermo|Martínes||ST|MEX|31|71|2;Rogelio|Funes Mory||ST|MEX|35|71|1",
+ "Pachuca":"Carlos|Morenno||GK|MEX|27|72|2;Sergio|Bareto||DC|ARG|27|72|1;Elías|Montiél||MC|MEX|20|71|2;Pedro|Pedrasa||MC|MEX|24|70|2;Kenedi|Kenedi|Kenedi|AML|BRA|30|73|5;Oussama|Idrisi||AML|MAR|30|72|3;Salomón|Rondon||ST|VEN|36|74|5;Enner|Vallencia||ST|ECU|36|72|6",
+ "Club León":"Óscar|Jiménes||GK|MEX|37|70|2;Stiven|Bareiro||DC|COL|30|72|6;Rodrigo|Echevería||DM|CHI|30|72|1;Jordi|Cortiso||MC|MEX|29|70|2;Ismael|Días||AMR|PAN|28|72|5;Ettson|Aión||AMR|MEX|25|70|2",
+ "Atlas":"Camilo|Vargás||GK|COL|37|74|3;Matheus|Dorria||DC|BRA|31|71|3;Aldo|Rochá||MC|MEX|33|71|2;Jeremy|Márques||MC|MEX|26|70|2;Gustavo|Ferareis||AMR|BRA|30|71|2;Uroš|Đurđevič||ST|SRB|31|72|0;Eduardo|Aguire||ST|MEX|28|70|2",
+ "Santos Laguna":"Carlos|Aceveddo||GK|MEX|30|74|2;Ezequiel|Bulaude||AMC|ARG|25|71|1;Bruno|Barticiotto||ST|CHI|25|70|1",
+ "Necaxa":"Ezequiel|Unsaín||GK|ARG|30|72|1;Agustín|Palavecinno||MC|ARG|29|72|1;Diber|Cambindó||ST|COL|26|71|6;Ricardo|Monreál||ST|MEX|24|69|2",
+ "FC Juárez":"Sebastián|Juraddo||GK|MEX|29|70|2;Diego|Valoies||AMR|COL|29|70|6;Óscar|Estuppiñán||ST|COL|29|71|6",
+ "Club Tijuana":"Domingo|Blanko||MC|ARG|30|72|1;Kevin|Castañedda||AMR|MEX|26|72|2"
+};
+const rpKey=(c,fn,ln)=>c+'|'+fn+' '+ln;
+// lleva al jugador a la media exacta subiendo o bajando sus atributos clave
+function rpTune(p,ovr){ const L=PWL[p.pos].l;
+  for(let k=0;k<400;k++){ upd(p); const d=ovr-p.ovr; if(!d) break; const s=d>0?1:-1;
+    const [i]=L[ri(0,L.length-1)]; const v=p.a[i]+s; if(v<1||v>20) continue; p.a[i]=v; }
+  upd(p); }
+// Convierte jugadores generados en los reales de cada club. Nunca toca a tu jugador ni a los canteranos.
+function applyRealPlayers(w){
+  const have=new Set(w.players.filter(p=>p.rk).map(p=>p.rk)); let n=0;
+  for(const c of w.clubs){
+    const rows=RPLAY[c.name]; if(!rows) continue;
+    const list=rows.split(';').map(s=>{ const [fn,ln,nn,pos,nat,age,ovr,skin]=s.split('|'); return {fn,ln,nn,pos,nat,age:+age,ovr:+ovr,skin:+skin}; })
+      .filter(r=>!have.has(rpKey(c.name,r.fn,r.ln))).sort((a,b)=>b.ovr-a.ovr);
+    if(!list.length) continue;
+    const pool=c.pids.map(id=>w.players[id]).filter(p=>p&&!p.rk&&!p.yth&&!p.loan&&!isMe(w,p)&&p.id!==w.me);
+    for(const r of list){
+      const same=pool.filter(p=>p.pos===r.pos), grp=pool.filter(p=>PGRP[p.pos]===PGRP[r.pos]), any=pool.filter(p=>(p.pos==='GK')===(r.pos==='GK'));
+      const cands=same.length?same:grp.length?grp:any;
+      let p=cands.sort((a,b)=>Math.abs(a.ovr-r.ovr)-Math.abs(b.ovr-r.ovr))[0];
+      const t=newP(w,{club:c.id,pos:r.pos,nat:NAT[r.nat]?r.nat:'ESP',level:r.ovr/5,age:r.age}); w.players.pop();
+      if(p) pool.splice(pool.indexOf(p),1);
+      else { p=t; p.id=w.players.length; w.players.push(p); c.pids.push(p.id); p.no=0; p.ce=w.season+ri(1,4); }
+      Object.assign(p,{fn:r.fn,ln:r.ln,nn:r.nn,nat:t.nat,age:r.age,pos:r.pos,a:t.a,sec:t.sec,foot:t.foot,h:t.h,face:t.face,rk:rpKey(c.name,r.fn,r.ln)});
+      p.face[0]=clamp(r.skin,0,7);
+      rpTune(p,r.ovr);
+      p.pa= r.age<=23? Math.min(96,Math.max(p.ovr+2,Math.round(p.ovr+(24-r.age)*1.6))) : r.age<=27? p.ovr+ri(0,2) : p.ovr;
+      p.wage=calcWage(p); p.val=calcValue(p); have.add(p.rk); n++;
+    }
+    numberSquad(w,c); if(c.id!==w.userClub) autoPick(w,c);
+    const wb=wageBill(w,c); if(c.fin.wb<wb*1.05) c.fin.wb=Math.round(wb*1.12);
+  }
   return n;
 }
 
@@ -984,13 +1276,13 @@ function genWorld(seed){
   });
   addTier2(w,false); addExtraLeagues(w,false);
   // agentes libres
-  const allN=Object.keys(NAT);
+  const allN=NAT0;
   for(let i=0;i<140;i++){ const pos=rp(POS); const p=newP(w,{club:-1,pos,nat:rp(allN),level:clamp(rg(10.5,2),6,15),age:ri(19,33)}); p.ce=0; p.wage=calcWage(p,1); p.val=calcValue(p); }
   w.clubs.forEach(c=>{ numberSquad(w,c); autoPick(w,c); c.fin.wb=Math.round(wageBill(w,c)*1.12); });
   // tus escudos propios se conservan al empezar otra partida (cada club mantiene su número)
   const keep=(prev&&prev.cimg)||(APP.games&&((APP.games.dt&&APP.games.dt.cimg)||(APP.games.jug&&APP.games.jug.cimg)))||null;
   w.cimg=keep?Object.assign({},keep):{}; w.pimg={}; w.imgRev=((prev&&prev.imgRev)||0)+1;
-  w.settings.real=realPref()?1:0; if(w.settings.real) realNames(w,true);
+  w.settings.real=realPref()?1:0; if(w.settings.real){ realNames(w,true); applyRealPlayers(w); }
   genMgrs(w);
   return w;
 }
@@ -1243,7 +1535,32 @@ function flagSVG(code){
     AUS:'<rect width="30" height="20" fill="#012169"/><path d="M0,0 L14,10 M14,0 L0,10" stroke="#fff" stroke-width="2"/><path d="M7,0 V10 M0,5 H14" stroke="#c8102e" stroke-width="2.2"/><circle cx="22" cy="6" r="1.2" fill="#fff"/><circle cx="22" cy="15" r="1.4" fill="#fff"/><circle cx="26" cy="10" r="1.2" fill="#fff"/><circle cx="18" cy="11" r="1.2" fill="#fff"/>',
     IRN:h('#239f40','#fff','#da0000')+'<circle cx="15" cy="10" r="1.8" fill="none" stroke="#da0000" stroke-width="1"/>',
     KSA:'<rect width="30" height="20" fill="#006c35"/><rect x="7" y="7" width="16" height="1.6" fill="#fff"/><rect x="9" y="12.5" width="12" height="1.2" fill="#fff"/>',
-    QAT:'<rect width="30" height="20" fill="#8d1b3d"/><path d="M0,0 H9 L12,1.4 L9,2.9 L12,4.3 L9,5.7 L12,7.1 L9,8.6 L12,10 L9,11.4 L12,12.9 L9,14.3 L12,15.7 L9,17.1 L12,18.6 L9,20 H0 Z" fill="#fff"/>'
+    QAT:'<rect width="30" height="20" fill="#8d1b3d"/><path d="M0,0 H9 L12,1.4 L9,2.9 L12,4.3 L9,5.7 L12,7.1 L9,8.6 L12,10 L9,11.4 L12,12.9 L9,14.3 L12,15.7 L9,17.1 L12,18.6 L9,20 H0 Z" fill="#fff"/>',
+    BEL:v('#000','#fdda24','#ef3340'),
+    UKR:'<rect width="30" height="10" fill="#0057b7"/><rect y="10" width="30" height="10" fill="#ffd700"/>',
+    TUR:'<rect width="30" height="20" fill="#e30a17"/><circle cx="12" cy="10" r="5" fill="#fff"/><circle cx="13.3" cy="10" r="4" fill="#e30a17"/><circle cx="18.5" cy="10" r="1.6" fill="#fff"/>',
+    SVN:h('#fff','#005ce5','#ed1c24'),
+    SVK:h('#fff','#0b4ea2','#ee1c25'),
+    POL:'<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#dc143c"/>',
+    NOR:'<rect width="30" height="20" fill="#ba0c2f"/><rect x="8" width="6" height="20" fill="#fff"/><rect y="7" width="30" height="6" fill="#fff"/><rect x="9.5" width="3" height="20" fill="#00205b"/><rect y="8.5" width="30" height="3" fill="#00205b"/>',
+    GEO:'<rect width="30" height="20" fill="#fff"/><rect x="13" width="4" height="20" fill="#ff0000"/><rect y="8" width="30" height="4" fill="#ff0000"/>',
+    SUI:'<rect width="30" height="20" fill="#da291c"/><rect x="13" y="4" width="4" height="12" fill="#fff"/><rect x="9" y="8" width="12" height="4" fill="#fff"/>',
+    SRB:h('#c6363c','#0c4076','#fff'),
+    CZE:'<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#d7141a"/><path d="M0,0 L15,10 L0,20 Z" fill="#11457e"/>',
+    HUN:h('#ce2939','#fff','#477050'),
+    SCO:'<rect width="30" height="20" fill="#005eb8"/><path d="M0,0 L30,20 M30,0 L0,20" stroke="#fff" stroke-width="3.4"/>',
+    DEN:'<rect width="30" height="20" fill="#c8102e"/><rect x="9" width="4" height="20" fill="#fff"/><rect y="8" width="30" height="4" fill="#fff"/>',
+    SWE:'<rect width="30" height="20" fill="#006aa7"/><rect x="9" width="4" height="20" fill="#fecc00"/><rect y="8" width="30" height="4" fill="#fecc00"/>',
+    WAL:'<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#00b140"/><circle cx="15" cy="10" r="4" fill="#d30731"/>',
+    GRE:'<rect width="30" height="20" fill="#0d5eaf"/><g fill="#fff"><rect y="2.2" width="30" height="2.2"/><rect y="6.6" width="30" height="2.2"/><rect y="11" width="30" height="2.2"/><rect y="15.5" width="30" height="2.2"/></g><rect width="11" height="11" fill="#0d5eaf"/><rect x="4.4" width="2.2" height="11" fill="#fff"/><rect y="4.4" width="11" height="2.2" fill="#fff"/>',
+    AUT:h('#ed2939','#fff','#ed2939'),
+    CHI:'<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#d52b1e"/><rect width="10" height="10" fill="#0039a6"/><circle cx="5" cy="5" r="1.8" fill="#fff"/>',
+    VEN:h('#ffcc00','#00247d','#cf142b'),
+    ECU:'<rect width="30" height="20" fill="#ed1c24"/><rect width="30" height="15" fill="#034ea2"/><rect width="30" height="10" fill="#ffdd00"/>',
+    PAN:'<rect width="30" height="20" fill="#fff"/><rect x="15" width="15" height="10" fill="#d21034"/><rect y="10" width="15" height="10" fill="#005293"/>',
+    PER:v('#d91023','#fff','#d91023'),
+    PAR:h('#d52b1e','#fff','#0038a8'),
+    GUI:v('#ce1126','#fcd116','#009460')
   };
   return `<svg class="flag" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${NAT[code]?NAT[code][0]:code}">${F[code]||'<rect width="30" height="20" fill="#999"/>'}</svg>`;
 }
@@ -2447,6 +2764,11 @@ function miniPitch(p){
   for(const pos of POS){ const f=fam(p,pos); if(f<11) continue; const [x,y]=PMAP[pos]; s+=`<i style="left:${x}%;top:${y}%;background:${f>=18?'#2fd06a':f>=15?'#b9e04a':'#f2b23a'}" title="${PNAME[pos]}"></i>`; }
   return s+'</div>';
 }
+// la edad de tus jugadores se cambia aquí mismo (o en el editor): sirve para alargar carreras y evitar retiros
+const ageCan=p=>!!p&&!p.ret&&(isJug(W)? p.id===W.me : W.userClub>=0&&p.club===W.userClub);
+function ageEd(p){ if(!ageCan(p)) return `<span class="chip">${p.age} años</span>`;
+  return `<span class="chip" style="gap:4px;padding-right:3px">${p.age} años<button class="btn sm" data-a="agead" data-id="${p.id}" data-v="-1" aria-label="Restar un año" title="Restar un año" style="padding:0 7px;min-height:22px">−</button><button class="btn sm" data-a="agead" data-id="${p.id}" data-v="1" aria-label="Sumar un año" title="Sumar un año" style="padding:0 7px;min-height:22px">+</button></span>`; }
+function ageSet(w,p,a){ p.age=clamp(Math.round(a),15,45); upd(p); p.val=calcValue(p); }
 VIEWS.player=()=>{
   const p=W.players[UI.pid]; if(!p) return VIEWS.squad();
   const c=W.clubs[p.club], mine=p.club===W.userClub, sl=W.short.includes(p.id);
@@ -2460,7 +2782,7 @@ VIEWS.player=()=>{
     : `<button class="btn pri" data-a="bid" data-id="${p.id}">${p.club<0?'Ofrecer contrato':'Hacer oferta'}</button>${p.club>=0?`<button class="btn" data-a="loanin" data-id="${p.id}">Pedir cesión</button>`:''}<button class="btn" data-a="shortl" data-id="${p.id}">${sl?'Quitar de seguimiento':'Seguir jugador'}</button><button class="btn" data-a="scoobs" data-id="${p.id}" title="Afina la estimación de su potencial">Ojear en directo</button>`;
   return `<div class="card" style="margin-bottom:14px"><div class="phead"><div class="face-big">${faceSVG(p)}</div>
    <div style="flex:1;min-width:220px"><div class="row" style="gap:8px">${flagSVG(p.nat)}<span class="muted">${NAT[p.nat][0]}</span></div><h2>${esc(p.fn)} ${esc(p.ln)}${p.nn?` <span class="muted" style="font-size:22px">“${esc(p.nn)}”</span>`:''}</h2>
-   <div class="row wrap" style="margin-top:6px">${c?crestLink(c,20):'<span class="chip">Agente libre</span>'}${posChip(p.pos)} ${secs}${playerExtra(p)} <span class="chip">${p.age} años</span><span class="chip">${p.h} cm</span><span class="chip">Pie ${p.foot==='D'?'derecho':p.foot==='I'?'izquierdo':'ambidiestro'}</span>${p.no?`<span class="chip">Dorsal ${p.no}</span>`:''}${p.yth?'<span class="chip good">Cantera</span>':''}${p.loan?`<span class="chip">${p.loan.o===W.userClub?'Cedido a '+esc(c?c.short:''):'Cedido por '+esc(W.clubs[p.loan.o].short)}</span>`:''}${p.nt&&p.nt.ap?`<span class="chip" title="Con su selección">${NAT[p.nat][0]}: ${p.nt.ap} PJ, ${p.nt.g} G</span>`:''}</div></div>
+   <div class="row wrap" style="margin-top:6px">${c?crestLink(c,20):'<span class="chip">Agente libre</span>'}${posChip(p.pos)} ${secs}${playerExtra(p)} ${ageEd(p)}<span class="chip">${p.h} cm</span><span class="chip">Pie ${p.foot==='D'?'derecho':p.foot==='I'?'izquierdo':'ambidiestro'}</span>${p.no?`<span class="chip">Dorsal ${p.no}</span>`:''}${p.yth?'<span class="chip good">Cantera</span>':''}${p.loan?`<span class="chip">${p.loan.o===W.userClub?'Cedido a '+esc(c?c.short:''):'Cedido por '+esc(W.clubs[p.loan.o].short)}</span>`:''}${p.nt&&p.nt.ap?`<span class="chip" title="Con su selección">${NAT[p.nat][0]}: ${p.nt.ap} PJ, ${p.nt.g} G</span>`:''}</div></div>
    <div class="kv" style="min-width:230px"><dt>Nivel actual</dt><dd>${starsHTML(p.ovr)} ${p.ovr}</dd><dt>Potencial</dt><dd>${scoPot(p)}</dd><dt>Valor</dt><dd>${money(p.val)}</dd><dt>Salario</dt><dd>${money(p.wage)}/sem</dd><dt>Contrato</dt><dd>${p.ce?'hasta '+p.ce:'Libre'}${p.pre!=null&&W.clubs[p.pre]?` <span class="bad">(precontrato con ${esc(W.clubs[p.pre].short)})</span>`:''}</dd>${p.role!=null?`<dt>Rol prometido</dt><dd>${ROLES[p.role]}</dd>`:''}${p.clause?`<dt>Cláusula</dt><dd>${money(p.clause)}</dd>`:''}<dt>Moral</dt><dd class="${morLabel(p.mor)[1]}">${morLabel(p.mor)[0]}</dd><dt>Estado</dt><dd>${Math.round(p.cnd)}%${p.inj>0?` <span class="bad">(${esc(p.injT)})</span>`:''}</dd></div></div>
    <div class="row wrap" style="margin-top:14px">${acts}<button class="btn" data-a="edpl" data-id="${p.id}">${icon('editor').replace('<svg','<svg width="16" height="16"')} Editar</button></div></div>
   <div class="g2"><div class="card"><h3>Atributos</h3><div class="attrs">${grp(p.pos==='GK'?'Portería':'Técnicos',tecKeys)}${grp('Mentales',G_MEN)}${grp('Físicos',G_PHY)}</div></div>
@@ -2654,11 +2976,14 @@ function sndCard(){
    <div class="row wrap" style="margin-top:12px;gap:8px"><button class="btn" data-a="sndtest" data-v="voz">Probar narrador</button><button class="btn" data-a="sndtest" data-v="gol">Probar gol</button><button class="btn" data-a="sndtest" data-v="afi">Probar afición</button></div>
    ${note?`<p class="snote">${note}</p>`:''}${ios?'<p class="snote">En iPhone y iPad el interruptor de silencio también apaga el juego.</p>':''}</div>`;
 }
+function realClubsLeft(w){ const M=realMap(); return w.clubs.filter(c=>!c.fic&&M[c.name]).length; }
+function realLeft(w){ const M=realMap(), have=new Set(w.players.filter(p=>p.rk).map(p=>p.rk)); let n=0; for(const c of w.clubs){ const r=RPLAY[!c.fic&&M[c.name]?M[c.name].name:c.name]; if(r) for(const x of r.split(';')){ const q=x.split('|'); if(!have.has(rpKey(!c.fic&&M[c.name]?M[c.name].name:c.name,q[0],q[1]))) n++; } } return n; }
 function realCard(){
-  const on=!!W.settings.real, all=Object.keys(REAL).length, n=W.clubs.filter(c=>c.fic).length;
+  const on=!!W.settings.real, all=Object.keys(REAL).length, n=W.clubs.filter(c=>c.fic).length, nr=W.players.filter(p=>p.rk&&!p.ret).length, left=realLeft(W), cl=realClubsLeft(W);
   return `<div class="card"><h3>Clubes</h3><div class="instr"><span>Nombres reales</span><div class="seg"><button class="${on?'on':''}" data-a="real" data-v="1">Sí</button><button class="${on?'':'on'}" data-a="real" data-v="0">No</button></div></div>
    <p class="snote">${on?`${n} clubes grandes llevan su nombre real, sus colores y un escudo generado.`:`Con Sí, los ${all} clubes grandes pasan a su nombre real, con sus colores y un escudo generado.`} Lo que hayas cambiado a mano en el editor se respeta.</p>
-   <p class="snote">Tu propio escudo o la foto de un jugador se suben desde el editor.</p><div class="row wrap" style="margin-top:10px"><button class="btn" data-a="go" data-v="editor">Abrir editor</button></div></div>`;
+   <p class="snote">Tu propio escudo o la foto de un jugador se suben desde el editor.</p><div class="row wrap" style="margin-top:10px"><button class="btn" data-a="go" data-v="editor">Abrir editor</button></div>
+   ${on?`<h4 style="margin:16px 0 6px">Jugadores reales</h4><p class="snote" style="margin-top:0">${nr?`Hay ${nr} jugadores reales en esta partida (plantillas de 2025/26, con el nombre un poco cambiado).`:'Las partidas nuevas ya empiezan con las plantillas reales de 2025/26. Esta partida es anterior: puedes traerlos ahora.'}${cl?` Además, ${cl} clubes de esta partida todavía no llevan su nombre real.`:''} Cada jugador real ocupa el lugar de uno inventado de su mismo club y posición. Antes se guarda una copia de seguridad.</p>${left||cl?`<button class="btn pri" data-a="realpl">Traer ${cl?'clubes y ':''}jugadores reales${left?` (${left})`:''}</button>`:''}`:''}</div>`;
 }
 function sndTest(k){
   if(!SND.on){ toast('El sonido está en silencio'); return; }
@@ -2991,7 +3316,7 @@ const INP={
   mk:(t)=>{ const k=t.dataset.k; let v=t.value; if(k!=='q'&&k!=='pos') v=+v; UI.mk[k]=v; if(k==='q'){ clearTimeout(INP._q); INP._q=setTimeout(render,250); } else render(); },
   bidr:(t)=>{ $('#bidfee').value=t.value; $('#bidv').textContent=money(+t.value); },
   edq:(t)=>{ UI.edit.q=t.value; clearTimeout(INP._q); INP._q=setTimeout(()=>{ render(); const i=document.querySelector('[data-in="edq"]'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length);} },300); },
-  ep:(t)=>{ const p=W.players[UI.edit.pid], k=t.dataset.k; let v=t.value; if(['age','h','pa','no'].includes(k)) v=clamp(+v||0,1,215);
+  ep:(t)=>{ const p=W.players[UI.edit.pid], k=t.dataset.k; let v=t.value; if(['age','h','pa','no'].includes(k)) v=clamp(+v||0,1,215); if(k==='age') v=clamp(v,15,45);
     p[k]=v; if(isMe(W,p)&&['fn','ln','nn'].includes(k)) W.mgr.name=pname(p); if(k==='pos'){ p.sec={}; for(const adj of PADJ[p.pos]) p.sec[adj]=14; } if(k==='age'||k==='pa'||k==='pos'){ upd(p); p.val=calcValue(p); p.wage=p.wage||calcWage(p); }
     const o=$('#edovr'); if(o) o.textContent=p.ovr; const vl=$('#edval'); if(vl) vl.textContent=money(p.val); const f=$('#edface'); if(f) f.innerHTML=faceSVG(p); },
   epclub:(t)=>{ const p=W.players[UI.edit.pid], to=+t.value; if(to===p.club) return; if(isMe(W,p)){ jugEdMove(p,to); toast(to<0?'Ahora eres agente libre':`Fichas por ${W.clubs[to].name}`,'good'); autosave(); return; } if(to<0) release(W,p); else transfer(W,p,W.clubs[to],0,p.wage||calcWage(p),Math.max(1,(p.ce||W.season)-W.season||2)); toast('Jugador movido'); },
@@ -5063,6 +5388,8 @@ const ACT={
   edcl:(el)=>{ UI.edit.tab='club'; UI.edit.cid=+el.dataset.id; go('editor'); },
   sndset:(el)=>{ const k=el.dataset.k, v=+el.dataset.v; SND[k]=v; if(k==='on'&&W) W.settings.audio=v; sndSave(); sndApply(); if(APP.mode==='game') render(); },
   sndtest:(el)=>sndTest(el.dataset.v),
+  agead:(el)=>{ const p=W.players[+el.dataset.id]; if(!ageCan(p)) return; ageSet(W,p,p.age+(+el.dataset.v)); render(); autosave(); if(p.age>=34&&+el.dataset.v<0) return; if(p.age>=34) toast(isJug(W)?'A partir de los 41 años llega el retiro obligatorio':'Desde los 34 años puede retirarse al acabar la temporada'); },
+  realpl:async()=>{ const sl=slotOf(W); try{ await saveNow(); await bakCurrent('replace','Antes de traer los jugadores reales',sl); }catch(e){} const k=realNames(W,true), n=applyRealPlayers(W); render(); autosave(); toast(n||k?`${k?k+' clubes con nombre real · ':''}${n} jugadores reales`:'No hay nada que traer',n||k?'good':''); },
   real:(el)=>{ const on=el.dataset.v==='1'; if(!!W.settings.real===on) return; const n=realNames(W,on); realPrefSet(on); render(); autosave(); toast(on?`Nombres reales en ${n} clubes`:'Vuelven los nombres de DT26','good'); },
   msnd:()=>{ if(!SND.on){ SND.on=1; SND.music=1; } else SND.music=SND.music?0:1; if(W) W.settings.audio=SND.on; sndSave(); sndApply(); renderMenu(); },
   mx:(el)=>mxCmd(el.dataset.v),
@@ -5192,7 +5519,7 @@ function wxNote(wx){ if(!wx) return ''; const a={llu:'Césped mojado: más error
 
 /* ---------- entrenadores de la IA y carrera del mánager ---------- */
 function genMgr(w,nat,rep,club){ const [fn,ln]=genName(nat); const m={id:w.mgrs.length,fn,ln,nat,age:ri(38,66),rep:clamp(Math.round(rep+rg(0,5)),20,96),club,since:w.season,hs:w.season,hd:0,face:genFace(nat,50),troph:[],sacks:0,style:rp(['ofensivo','pragmático','de presión alta','defensivo','de posesión','de contragolpe'])}; w.mgrs.push(m); return m; }
-function genMgrs(w){ w.mgrs=[]; for(const c of w.clubs){ if(c.id===w.userClub){ c.mg=-1; continue; } c.mg=genMgr(w,w.leagues[c.lg].nat,c.rep,c.id).id; } const nats=Object.keys(NAT); for(let i=0;i<16;i++) genMgr(w,rp(nats),ri(38,74),-1); }
+function genMgrs(w){ w.mgrs=[]; for(const c of w.clubs){ if(c.id===w.userClub){ c.mg=-1; continue; } c.mg=genMgr(w,w.leagues[c.lg].nat,c.rep,c.id).id; } const nats=NAT0; for(let i=0;i<16;i++) genMgr(w,rp(nats),ri(38,74),-1); }
 const mgrName=m=>m?m.fn+' '+m.ln:'—';
 function curStint(w){ const s=w.mgr&&w.mgr.stints; return s&&s.length&&s[s.length-1].s1==null?s[s.length-1]:null; }
 function startStint(w,cid){ if(!w.mgr.stints) w.mgr.stints=[]; w.mgr.stints.push({c:cid,s0:w.season,d0:w.day,s1:null,d1:null,why:'',p:0,w:0,d:0,l:0,t:[]}); }
@@ -6558,7 +6885,7 @@ const sWage=(rat,lf)=>roundMoney(Math.max(300,600*Math.exp(.22*rat)*lf));
 function staffR(w,role){ if(!w||w.userClub<0) return 0; const c=w.clubs[w.userClub], s=c&&c.staff&&c.staff[role]; return s?s.rat:0; }
 function genStaff(w,role,nat,rat){ const [fn,ln]=genName(nat); return {id:(w.staffId=(w.staffId||0)+1),role,fn,ln,nat,age:ri(34,64),face:genFace(nat,50),rat}; }
 function staffInit(w,c){ c.staff={}; const lf=w.leagues[c.lg].lf; for(const r of Object.keys(SROLE)){ const s=genStaff(w,r,w.leagues[c.lg].nat,clamp(Math.round(c.rep/12+ri(-1,2)),3,14)); s.wage=sWage(s.rat,lf); s.ce=w.season+2; c.staff[r]=s; } }
-function staffPoolRefresh(w){ const nats=Object.keys(NAT); w.staffPool={}; for(const r of Object.keys(SROLE)) w.staffPool[r]=Array.from({length:5},()=>genStaff(w,r,rp(nats),clamp(Math.round(rg(11,3.6)),4,19))).sort((a,b)=>b.rat-a.rat); }
+function staffPoolRefresh(w){ const nats=NAT0; w.staffPool={}; for(const r of Object.keys(SROLE)) w.staffPool[r]=Array.from({length:5},()=>genStaff(w,r,rp(nats),clamp(Math.round(rg(11,3.6)),4,19))).sort((a,b)=>b.rat-a.rat); }
 function staffDaily(w){ const c=w.clubs[w.userClub]; if(!c) return; const fr=staffR(w,'fit'), pr=staffR(w,'phy'); if(!fr&&!pr) return;
   for(const id of c.pids){ const p=w.players[id]; if(!p) continue; if(p.cnd<100) p.cnd=Math.min(100,p.cnd+fr*.12); if(p.inj>0&&rc(pr*.012)) p.inj--; } }
 function staffYearEnd(w,nl){ const c=w.clubs[w.userClub]; if(!c||!c.staff) return; const lf=w.leagues[c.lg].lf;
@@ -6611,7 +6938,7 @@ function weeklyExtra(w){
 function monthlyExtra(w){ if(w.userClub<0) return; youthMonthly(w); staffPoolRefresh(w); scoutReport(w); }
 
 /* ---------- selecciones y torneos ---------- */
-const NATCOL={MEX:['#006847','#ffffff','#ce1126'],ESP:['#c60b1e','#ffc400','#ffffff'],ENG:['#f4f4f4','#1c2c5b','#ce1124'],ITA:['#0a4ea3','#ffffff','#009246'],GER:['#f4f4f4','#111111','#dd0000'],ARG:['#74acdf','#ffffff','#f6b40e'],BRA:['#ffdf00','#009c3b','#002776'],FRA:['#1d3f8f','#ffffff','#ef4135'],POR:['#a3121f','#046a38','#ffe900'],NED:['#f36c21','#ffffff','#21468b'],NGA:['#008751','#ffffff','#008751'],SEN:['#f4f4f4','#00853f','#fdef42'],JPN:['#1d3a8a','#ffffff','#bc002d'],COL:['#fcd116','#003893','#ce1126'],URU:['#5bb5e8','#ffffff','#111111'],USA:['#f4f4f4','#b22234','#3c3b6e'],CRO:['#ffffff','#ff0000','#171796'],GHA:['#f4f4f4','#ce1126','#fcd116'],CAN:['#f4f4f4','#d52b1e','#111111'],CRC:['#ce1126','#002b7f','#ffffff'],JAM:['#fed100','#009b3a','#111111'],MAR:['#c1272d','#006233','#ffffff'],CIV:['#f77f00','#ffffff','#009e60'],CMR:['#007a5e','#ce1126','#fcd116'],ALG:['#f4f4f4','#006233','#d21034'],EGY:['#ce1126','#ffffff','#111111'],KOR:['#f4f4f4','#cd2e3a','#0047a0'],AUS:['#fcd116','#012169','#00843d'],IRN:['#f4f4f4','#239f40','#da0000'],KSA:['#006c35','#ffffff','#111111'],QAT:['#8d1b3d','#ffffff','#111111']};
+const NATCOL={MEX:['#006847','#ffffff','#ce1126'],ESP:['#c60b1e','#ffc400','#ffffff'],ENG:['#f4f4f4','#1c2c5b','#ce1124'],ITA:['#0a4ea3','#ffffff','#009246'],GER:['#f4f4f4','#111111','#dd0000'],ARG:['#74acdf','#ffffff','#f6b40e'],BRA:['#ffdf00','#009c3b','#002776'],FRA:['#1d3f8f','#ffffff','#ef4135'],POR:['#a3121f','#046a38','#ffe900'],NED:['#f36c21','#ffffff','#21468b'],NGA:['#008751','#ffffff','#008751'],SEN:['#f4f4f4','#00853f','#fdef42'],JPN:['#1d3a8a','#ffffff','#bc002d'],COL:['#fcd116','#003893','#ce1126'],URU:['#5bb5e8','#ffffff','#111111'],USA:['#f4f4f4','#b22234','#3c3b6e'],CRO:['#ffffff','#ff0000','#171796'],GHA:['#f4f4f4','#ce1126','#fcd116'],CAN:['#f4f4f4','#d52b1e','#111111'],CRC:['#ce1126','#002b7f','#ffffff'],JAM:['#fed100','#009b3a','#111111'],MAR:['#c1272d','#006233','#ffffff'],CIV:['#f77f00','#ffffff','#009e60'],CMR:['#007a5e','#ce1126','#fcd116'],ALG:['#f4f4f4','#006233','#d21034'],EGY:['#ce1126','#ffffff','#111111'],KOR:['#f4f4f4','#cd2e3a','#0047a0'],AUS:['#fcd116','#012169','#00843d'],IRN:['#f4f4f4','#239f40','#da0000'],KSA:['#006c35','#ffffff','#111111'],QAT:['#8d1b3d','#ffffff','#111111'],BEL:["#e30613", "#000000", "#fdda24"],UKR:["#ffd700", "#0057b7", "#ffffff"],TUR:["#e30a17", "#ffffff", "#111111"],SVN:["#ffffff", "#005ce5", "#ed1c24"],SVK:["#ffffff", "#0b4ea2", "#ee1c25"],POL:["#ffffff", "#dc143c", "#111111"],NOR:["#ba0c2f", "#ffffff", "#00205b"],GEO:["#ffffff", "#ff0000", "#111111"],SUI:["#da291c", "#ffffff", "#111111"],SRB:["#c6363c", "#0c4076", "#ffffff"],CZE:["#d7141a", "#ffffff", "#11457e"],HUN:["#ce2939", "#ffffff", "#477050"],SCO:["#005eb8", "#ffffff", "#111111"],DEN:["#c8102e", "#ffffff", "#111111"],SWE:["#fecc00", "#006aa7", "#ffffff"],WAL:["#d30731", "#ffffff", "#00b140"],GRE:["#0d5eaf", "#ffffff", "#111111"],AUT:["#ed2939", "#ffffff", "#111111"],CHI:["#d52b1e", "#ffffff", "#0039a6"],VEN:["#cf142b", "#ffcc00", "#00247d"],ECU:["#ffdd00", "#034ea2", "#ed1c24"],PAN:["#d21034", "#ffffff", "#005293"],PER:["#ffffff", "#d91023", "#111111"],PAR:["#d52b1e", "#ffffff", "#0038a8"],GUI:["#ce1126", "#fcd116", "#009460"]};
 const TS3=['Fase de grupos','Semifinales','Final'];
 const TOURN={wc:{name:'Mundial',y:2,groups:4,ko:[9,12,16],stages:['Fase de grupos','Cuartos de final','Semifinales','Final']},
  eu:{name:'Eurocopa',y:0,nats:['ESP','ENG','ITA','GER','FRA','POR','NED','CRO'],groups:2,ko:[9,12],stages:TS3},
@@ -6730,7 +7057,7 @@ VIEWS.sel=()=>{
       const ko=D.stages.slice(1).map((n,i)=>`<div class="card" style="margin-top:12px"><h3>${n}</h3>${stt(i+1).map(f=>tourFxRow(T,f)).join('')||'<p class="muted" style="margin:0">Por definir</p>'}</div>`).join('');
       body=`${T.done?`<div class="card" style="text-align:center;margin-bottom:12px">${flagSVG(T.champ).replace('class="flag"','class="flag" style="width:60px;height:40px"')}<h3 style="margin-top:8px">${esc(NAT[T.champ][0])}, campeón</h3></div>`:''}${groups}${ko}
       <div class="card" style="margin-top:12px"><h3>Goleadores</h3>${top.length?top.map(([id,n],i)=>{ const p=W.players[+id]; return `<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line);gap:8px;cursor:pointer" data-a="pl" data-id="${id}"><span class="muted" style="width:20px">${i+1}</span>${avatar(p)}<b style="flex:1;font-weight:600">${esc(pname(p))}</b>${flagSVG(p.nat)}<b>${n}</b></div>`; }).join(''):'<p class="muted" style="margin:0">Aún no hay goles.</p>'}</div>`; } }
-  else if(tab==='ranking'){ const rows=Object.keys(NAT).map(n=>({n,s:natStrength(W,n)})).sort((a,b)=>b.s-a.s), sel=UI.selNat, sq=sel?natSquad(W,sel):null;
+  else if(tab==='ranking'){ const nc={}; for(const p of W.players) if(!p.ret&&p.club>=0&&!p.yth) nc[p.nat]=(nc[p.nat]||0)+1; const rows=Object.keys(NAT).filter(n=>(nc[n]||0)>=16).map(n=>({n,s:natStrength(W,n)})).sort((a,b)=>b.s-a.s), sel=UI.selNat, sq=sel?natSquad(W,sel):null;
     body=`<div class="g2"><div class="tw"><table class="t"><thead><tr><th class="c">#</th><th>Selección</th><th class="c">Nivel</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${sel===r.n?'me':''}" data-a="selsq" data-n="${r.n}"><td class="c">${i+1}</td><td>${natFlagName(r.n)}</td><td class="c"><b>${r.s.toFixed(1)}</b></td></tr>`).join('')}</tbody></table></div>
     <div class="card"><h3>${sel?`Convocatoria de ${esc(NAT[sel][0])}`:'Toca una selección'}</h3>${sq?sq.map(p=>`<div class="row" style="padding:4px 0;border-bottom:1px solid var(--line);gap:8px;cursor:pointer" data-a="pl" data-id="${p.id}">${posChip(p.pos)}<span style="flex:1">${esc(pname(p))}</span><span class="muted">${p.club>=0?esc(W.clubs[p.club].short):''}</span><b class="num">${p.ovr}</b></div>`).join(''):'<p class="muted" style="margin:0">Verás a los 23 mejores jugadores de esa nación según su estado actual.</p>'}</div></div>`; }
   else body=(W.tourHist||[]).length?`<div class="tw"><table class="t"><thead><tr><th>Año</th><th>Torneo</th><th>Campeón</th><th>Finalista</th><th class="c">Final</th><th>Bota de Oro</th></tr></thead><tbody>${W.tourHist.slice().reverse().map(h=>`<tr><td>${dOf(W,0).getUTCFullYear()-(W.season-h.s)}</td><td>${esc(h.name)}</td><td>${natFlagName(h.champ)}</td><td>${natFlagName(h.run)}</td><td class="c">${h.score}</td><td>${h.top?esc(pname(W.players[h.top.p]))+' ('+h.top.g+')':'—'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">Todavía no se ha disputado ningún torneo.</div>';
@@ -7803,7 +8130,7 @@ VIEWS.jlife=()=>{
 
 /* ---------- rankings mundiales (los dos modos) ---------- */
 // continentes por nacionalidad para los premios continentales
-const CONT={EU:['ESP','ENG','ITA','GER','FRA','POR','NED','CRO'],AM:['MEX','ARG','BRA','COL','URU','USA','CAN','CRC','JAM'],AF:['NGA','SEN','GHA','MAR','CIV','CMR','ALG','EGY'],AS:['JPN','KOR','AUS','IRN','KSA','QAT']};
+const CONT={EU:['ESP','ENG','ITA','GER','FRA','POR','NED','CRO','BEL','UKR','TUR','SVN','SVK','POL','NOR','GEO','SUI','SRB','CZE','HUN','SCO','DEN','SWE','WAL','GRE','AUT'],AM:['MEX','ARG','BRA','COL','URU','USA','CAN','CRC','JAM','CHI','VEN','ECU','PAN','PER','PAR'],AF:['NGA','SEN','GHA','MAR','CIV','CMR','ALG','EGY','GUI'],AS:['JPN','KOR','AUS','IRN','KSA','QAT']};
 const CONTN={EU:'Europa',AM:'América',AF:'África',AS:'Asia y Oceanía'};
 const contOf=nat=>Object.keys(CONT).find(k=>CONT[k].includes(nat))||null;
 // puntuación de la carrera al Balón Dorado: la misma fórmula del premio de fin de temporada
@@ -8254,7 +8581,7 @@ Object.assign(ACT,{
   mjface:()=>{ APP.pick.face=genFace(APP.pick.nat||'MEX',17); renderMenu(); },
   mnewj:()=>menuNew('jug')
 });
-['jtf','jti','jtp','jcask','jpos','jpost','jvit','rktab','edtab','edpl','edcl','edst','edrandface','edrandcrest','ednewp','est','edwk','edcsel','tool','ecmoney','ecwage','plinj','plheal','plwage','jretask','jretgo','jsim'].forEach(k=>JUG_OK.add(k));
+['jtf','jti','jtp','jcask','jpos','jpost','jvit','rktab','edtab','edpl','edcl','edst','edrandface','edrandcrest','ednewp','est','edwk','edcsel','tool','ecmoney','ecwage','plinj','plheal','plwage','jretask','jretgo','jsim','agead','realpl'].forEach(k=>JUG_OK.add(k));
 Object.assign(MINP,{ jfn:(t)=>{ APP.pick.fn=t.value; }, jln:(t)=>{ APP.pick.ln=t.value; }, jnn:(t)=>{ APP.pick.nn=t.value; }, jpos:(t)=>{ APP.pick.pos=t.value; } });
 
 /* ---------- menú: crear al jugador ---------- */

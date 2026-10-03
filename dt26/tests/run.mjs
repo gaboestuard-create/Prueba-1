@@ -652,6 +652,77 @@ test('dos carreras: si ya restauraste la de técnico, la de jugador también vue
   await ctx.close();
 });
 
+/* ---------- 8. clubes y jugadores reales ---------- */
+test('partida nueva: clubes con nombre real y plantillas reales', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newCareer(page);
+  const r = await page.evaluate(() => {
+    const M = realMap(), first = W.leagues.filter(l => !l.tier);
+    const left = first.flatMap(l => l.clubs.map(id => W.clubs[id])).filter(c => !c.fic).map(c => c.name);
+    const shorts = W.clubs.map(c => c.short), dup = shorts.filter((s, i) => shorts.indexOf(s) !== i);
+    const rm = W.clubs.find(c => c.name === 'Real Madrid'), mb = W.players.find(p => p.ln === 'Mbapé');
+    const real = W.players.filter(p => p.rk), bad = real.filter(p => !NAT[p.nat] || p.club < 0 || !W.clubs[p.club].pids.includes(p.id) || p.ovr < 60 || p.ovr > 95);
+    const sizes = W.clubs.map(c => c.pids.length);
+    return { left, dup, rmId: rm && rm.id, mb: mb && { club: mb.club, nat: mb.nat, pos: mb.pos, ovr: mb.ovr, age: mb.age }, n: real.length, bad: bad.map(p => pname(p)), maxSq: Math.max(...sizes), v: validateWorld(W).ok, mex: W.clubs.filter(c => c.lg === 0).map(c => c.name) };
+  });
+  assert(r.left.length === 0, 'clubes de primera sin nombre real: ' + r.left.join(', '));
+  assert(r.dup.length === 0, 'abreviaturas repetidas: ' + r.dup.join(', '));
+  assert(r.mb && r.mb.club === r.rmId && r.mb.nat === 'FRA' && r.mb.pos === 'ST' && r.mb.ovr >= 88, 'Mbapé no está bien: ' + JSON.stringify(r.mb));
+  assert(r.n > 700, 'pocos jugadores reales: ' + r.n);
+  assert(r.bad.length === 0, 'jugadores reales mal colocados: ' + r.bad.join(', '));
+  assert(r.v, 'la partida no pasa la validación');
+  assert(r.mex.includes('Pachuca') && r.mex.includes('Club América'), 'Liga MX: ' + r.mex.join(', '));
+  // las vistas con banderas nuevas se dibujan
+  await page.evaluate(() => { const p = W.players.find(p => p.nat === 'BEL'); UI.pid = p.id; go('player'); go('sel'); go('world'); });
+  await simDays(page, 20);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('partida anterior: el botón de Ajustes trae clubes y jugadores reales', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newCareer(page);
+  // se simula una partida de antes: sin jugadores reales y con un club sin su nombre real
+  await page.evaluate(() => { for (const p of W.players) delete p.rk; const c = W.clubs.find(c => c.name === 'Pachuca'); Object.assign(c, c.fic); delete c.fic; render(); });
+  await page.evaluate(() => go('settings'));
+  assert(await page.locator('[data-a="realpl"]').count() === 1, 'no aparece el botón');
+  await page.click('[data-a="realpl"]');
+  await page.waitForFunction(() => W.players.some(p => p.rk));
+  const r = await page.evaluate(async () => ({ pac: W.clubs.some(c => c.name === 'Pachuca'), n: W.players.filter(p => p.rk).length, me: W.clubs[W.userClub].pids.length, v: validateWorld(W).ok, bak: (await bakList()).some(b => /jugadores reales/.test(b.label || '')) }));
+  assert(r.pac, 'el club no recuperó su nombre real');
+  assert(r.n > 700, 'llegaron pocos: ' + r.n);
+  assert(r.v, 'la partida no pasa la validación');
+  assert(r.bak, 'no se guardó copia antes');
+  // pulsarlo otra vez no duplica nada
+  const again = await page.evaluate(() => applyRealPlayers(W));
+  assert(again === 0, 'se duplicaron jugadores: ' + again);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
+test('edad: tus jugadores se pueden rejuvenecer y así no se retiran', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newCareer(page);
+  const id = await page.evaluate(() => { const p = W.clubs[W.userClub].pids.map(i => W.players[i]).sort((a, b) => b.age - a.age)[0]; p.age = 38; UI.pid = p.id; go('player'); return p.id; });
+  for (let i = 0; i < 6; i++) await page.click('[data-a="agead"][data-v="-1"]');
+  const age = await page.evaluate(id => W.players[id].age, id);
+  assert(age === 32, 'la edad no bajó: ' + age);
+  // un jugador ajeno no tiene los botones
+  const other = await page.evaluate(() => { const p = W.players.find(p => p.club >= 0 && p.club !== W.userClub); UI.pid = p.id; go('player'); return document.querySelectorAll('[data-a="agead"]').length; });
+  assert(other === 0, 'se puede cambiar la edad de un jugador de otro club');
+  await page.evaluate(() => exitToMenu());
+  // modo jugador: con 40 años y bajando a 30 no llega el retiro obligatorio
+  await newPlayerCareer(page);
+  await page.evaluate(() => { W.players[W.me].age = 40; UI.pid = W.me; go('player'); });
+  for (let i = 0; i < 10; i++) await page.click('[data-a="agead"][data-v="-1"]');
+  const s0 = await page.evaluate(() => W.season);
+  for (let k = 0; k < 30 && (await simDaysJug(page, 20)).season === s0; k++);
+  const j = await page.evaluate(() => ({ age: W.players[W.me].age, ret: !!W.players[W.me].ret, done: !!W.pc.done }));
+  assert(!j.ret && !j.done && j.age === 31, 'el jugador se retiró o la edad no cambió: ' + JSON.stringify(j));
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 /* ---------- ejecución ---------- */
 const filter = process.argv.slice(2).join(' ').toLowerCase();
 const list = tests.filter(t => !filter || t.name.toLowerCase().includes(filter));
