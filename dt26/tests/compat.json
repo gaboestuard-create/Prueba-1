@@ -30,6 +30,11 @@
       "commit": "192b63f",
       "guardado": 5,
       "descripcion": "Versión 16 del artefacto: rankings, premios mundiales y vitrina"
+    },
+    {
+      "commit": "eb14bf9",
+      "guardado": 5,
+      "descripcion": "Versión 17 del artefacto: tu partido en 3D en el modo jugador"
     }
   ]
 }
