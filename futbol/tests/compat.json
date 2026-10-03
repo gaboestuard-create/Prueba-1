@@ -18,5 +18,9 @@
   {
     "nombre": "0.5.0 (menús y modos de juego)",
     "commit": "62e8070"
+  },
+  {
+    "nombre": "0.6.0 (giros, primer toque y resistencia)",
+    "commit": "ea4efab"
   }
 ]
