@@ -19,6 +19,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (u.origin !== self.location.origin) return;
+  // solo los archivos de Pelotazo: otras carpetas del mismo sitio (por ejemplo dt26/) son otros juegos
+  const rel = r.url.slice(self.registration.scope.length).split('?')[0];
+  if (rel.includes('/') && !rel.startsWith('js/') && !rel.startsWith('icons/')) return;
   e.respondWith(fetch(r).then(res => {
     if (res.ok) { const copia = res.clone(); caches.open(CACHE).then(c => c.put(r, copia)); }
     return res;
