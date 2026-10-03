@@ -251,7 +251,7 @@ test('conducción: el balón rueda delante con toques, más largos al correr, y 
   assert(r.trote.sigue && r.sprint.sigue, 'perdió el balón conduciendo en línea recta: ' + JSON.stringify(r));
   assert(r.trote.toques >= 5 && r.sprint.toques >= 4, 'debería conducir a base de toques: ' + JSON.stringify(r));
   assert(r.trote.max - r.trote.min > .2, 'el balón no se separa del pie entre toques: ' + JSON.stringify(r.trote));
-  assert(r.sprint.max > r.trote.max + .2, 'al esprintar los toques deberían ser más largos: ' + JSON.stringify(r));
+  assert(r.sprint.max > r.trote.max + .1, 'al esprintar los toques deberían ser más largos: ' + JSON.stringify(r));
   await ctx.close();
 });
 

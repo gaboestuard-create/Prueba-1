@@ -524,13 +524,13 @@ function conducir(b, o, dt) {
     const bv = hyp(b.vx, b.vz), mismaDir = bv < .3 ? -1 : (b.vx * ux + b.vz * uz) / bv;
     const delante = rx * ux + rz * uz;
     const hace = (b.vx * ux + b.vz * uz) < sp * 1.02 || delante < .3 || mismaDir < .8;
-    if (dist < .75 + sp * .045 && o.toqueCD <= 0 && hace) {
+    if (dist < .75 + sp * .06 && o.toqueCD <= 0 && hace) {
       // toque para cambiar de dirección: el balón iba hacia otro lado, o está quieto pero no delante (arrastre con la suela)
       const giro = bv > .3 ? mismaDir < .7 : delante < .2;
       const sprint = sp > velMax(o, false) * 1.05;
       // media vuelta corriendo: pisa el balón para frenarlo y se da la vuelta con él (no lo manda lejos hacia atrás)
       const pisa = giro && sp > 3.2 && (bv > .3 ? mismaDir < -.2 : delante < -.2);
-      const v = pisa ? .8 : giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.3 : 1.15) + .45;
+      const v = pisa ? .8 : giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.12 : 1.15) + (sprint ? .7 : .45);
       b.vx = ux * v; b.vz = uz * v;
       o.toqueCD = giro ? .26 : clamp(.36 - sp * .02, .18, .36);
       o.toqueT = .2; o.pie = ladoBalon(o); b.toque = (b.toque || 0) + 1;
