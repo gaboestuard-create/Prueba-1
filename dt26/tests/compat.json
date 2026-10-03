@@ -40,6 +40,11 @@
       "commit": "14b98b0",
       "guardado": 5,
       "descripcion": "Versión 18 del artefacto: selección nacional en el modo jugador"
+    },
+    {
+      "commit": "3b97ac2",
+      "guardado": 5,
+      "descripcion": "Versión 19 del artefacto: capitanía y editor en el modo jugador"
     }
   ]
 }
