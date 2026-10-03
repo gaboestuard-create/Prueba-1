@@ -335,16 +335,21 @@ test('modo jugador: partido en 3D de principio a fin', async () => {
   await page.click('[data-a="play3d"]');
   await page.waitForFunction(() => APP.mode === 'match' && MX.on);
   const r = await page.evaluate(async (fid) => {
-    mxCmd('kick'); await new Promise(r => setTimeout(r, 1500));
+    const mode = MX.mode; mxCmd('kick'); await new Promise(r => setTimeout(r, 1500));
+    const card = !!document.querySelector('#mxme'), q = []; for (let i = 0; i < 6; i++) { MX.q.length = 0; fillQueue(); q.push(MX.q.length); }
     const tac0 = JSON.stringify(MX.M.s[MX.us].tac); mxCmd('tac_m_2'); mxCmd('tac');
     const blocked = MX.panel !== 'tac' && tac0 === JSON.stringify(MX.M.s[MX.us].tac);
     const userSide = MX.M.s[0].user || MX.M.s[1].user;
     mxCmd('skip'); await new Promise(r => setTimeout(r, 300)); mxCmd('fin'); await new Promise(r => setTimeout(r, 300));
-    return { blocked, userSide, mode: APP.mode, played: !!W.fx[fid].r, uc: W.userClub, same: W.players[W.me].club === W.userClub, ok: validateWorld(W).ok };
+    const me = W.players[W.me], mlOk = me.st.ap === 0 || (W.pc.ml || []).length === me.st.ap;
+    return { blocked, userSide, mode: APP.mode, played: !!W.fx[fid].r, uc: W.userClub, same: me.club === W.userClub, ok: validateWorld(W).ok, mxMode: mode, card, q, mlOk };
   }, fid);
   assert(r.blocked, 'en modo jugador se pudo cambiar la táctica durante el partido');
   assert(!r.userSide, 'el partido se jugó como si el usuario fuera el técnico');
   assert(r.mode === 'game' && r.played && r.same && r.ok, 'el partido no terminó bien: ' + JSON.stringify(r));
+  assert(r.mxMode === 'me' && r.card, 'el partido del jugador no empieza en «mis jugadas» o falta la tarjeta en vivo');
+  assert(r.q.every(n => n > 0), 'el modo «mis jugadas» dejó la cola vacía');
+  assert(r.mlOk, 'el historial de partidos no coincide con los partidos jugados');
   assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
   await ctx.close();
 });

@@ -264,6 +264,13 @@ table.t{border-collapse:separate;border-spacing:0;width:100%;white-space:nowrap;
 .statline .bb i{display:block;height:100%}
 .minimap{position:absolute;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);width:150px;aspect-ratio:105/68;border-radius:8px;background:rgba(20,70,40,.8);border:1.5px solid rgba(255,255,255,.4);pointer-events:none}
 @media (max-width:600px){.minimap{width:110px}.feed .ln0{font-size:15px}.sb{font-size:17px}.sb .sc{font-size:20px;min-width:56px}}
+.mecard{position:absolute;left:10px;top:calc(env(safe-area-inset-top,0px) + 62px);display:flex;gap:9px;align-items:center;background:rgba(12,18,15,.86);border:1px solid rgba(242,178,58,.55);border-radius:12px;padding:6px 10px 6px 6px;box-shadow:0 6px 20px rgba(0,0,0,.35);font:600 13px 'Barlow',sans-serif;max-width:min(300px,calc(100vw - 150px))}
+@media (min-width:900px){.mecard{top:calc(env(safe-area-inset-top,0px) + 10px)}}
+.mecard .av{width:38px;height:38px;border:2px solid #f2b23a}
+.mecard b{font:700 16px 'Barlow Condensed',sans-serif;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mecard .rtv{font:800 20px 'Barlow Condensed',sans-serif;background:#f2b23a;color:#1f1604;border-radius:8px;padding:2px 7px;margin-left:auto}
+.mecard .rtv.lo{background:#ea5a51;color:#fff}.mecard .rtv.off{background:rgba(255,255,255,.18);color:#fff}
+.mecard .cb{display:block;height:4px;border-radius:3px;background:rgba(255,255,255,.15);margin-top:3px;width:90px}.mecard .cb i{display:block;height:100%;border-radius:3px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
 
 /* ---------- extras: partido, menú y formato horizontal ---------- */
@@ -3360,7 +3367,7 @@ function startMatch(fid){
   const M=newMatch(W,H,Aw,{cup:isKO(f),user:isJug(W)?null:us,wx,eff:f.pre?f.pre.eff||0:0});
   const s=W.settings;
   for(const k in MX) delete MX[k];
-  Object.assign(MX,{on:true,f,fid,M,us,H,Aw,speed:s.speed||1,mode:s.mode||'full',cam:isJug(W)?(s.jcam||'jug'):(s.cam||'tv'),paused:false,state:'intro',
+  Object.assign(MX,{on:true,f,fid,M,us,H,Aw,speed:s.speed||1,mode:isJug(W)?(s.jmode||'me'):(s.mode||'full'),cam:isJug(W)?(s.jcam||'jug'):(s.cam||'tv'),paused:false,state:'intro',
     half:1,ct:0,c0:0,cEnd:0,sch:[],q:[],acts:{},list:[],cur:null,
     ball:{x:0,y:BY,z:0,fly:null,own:null,hold:null,spin:0,dir:0},
     ex:.15,exT:.15,slow:1,clk:[0,0],sc:[0,0],feed:['',''],hot:false,panel:null,subSel:{o:null,i:null},shoutT:-999,
@@ -3380,7 +3387,7 @@ function startMatch(fid){
 function r2Loop(now){ if(!MX.on) return; MX.raf=requestAnimationFrame(r2Loop); const dt=MX.lastNow?Math.min(.05,Math.max(0,(now-MX.lastNow)/1000)):.016; MX.lastNow=now; mxFrame(dt,now/1000); }
 function mxTeardown(){
   MX.on=false; if(MX.raf) cancelAnimationFrame(MX.raf); MX.raf=0;
-  if(R3.on){ GFX.onFrame=null; GFX.release('match'); try{ disposeScene(R3.S); }catch(e){} R3.S=null; R3.fx=null; R3.mud=null; R3.on=false; GFX.scene=null; GFX.cam=null; MX.look=null; }
+  if(R3.on){ GFX.onFrame=null; GFX.release('match'); try{ disposeScene(R3.S); }catch(e){} R3.S=null; R3.fx=null; R3.mud=null; R3.meMk=null; R3.on=false; GFX.scene=null; GFX.cam=null; MX.look=null; }
   r2Hide(); auStop(); leaveFull(); $('#hud').innerHTML=''; $('#stage').classList.add('hidden');
 }
 function mxFinish(){
@@ -3481,9 +3488,9 @@ function isKey(e){
   return false;
 }
 function fillQueue(){
-  if(MX.mode!=='hl'){ const it=mxStep(); if(it) MX.q.push(it); return; }
-  const buf=[]; let n=0;
-  while(n++<700){ const it=mxStep(); if(!it) break; buf.push(it); if(isKey(it.e)) break; }
+  if(MX.mode!=='hl'&&MX.mode!=='me'){ const it=mxStep(); if(it) MX.q.push(it); return; }
+  const buf=[], key0=MX.mode==='me'?jugKeyE:isKey; let n=0;
+  while(n++<700){ const it=mxStep(); if(!it) break; buf.push(it); if(key0(it.e)) break; }
   if(!buf.length) return;
   const key=buf[buf.length-1]; let k=buf.length-1;
   if(['shot','cross','pass','drib'].includes(key.e.k)&&!key.e.pen&&!key.e.fk&&key.e.k!=='shot'||(key.e.k==='shot'&&!key.e.pen&&!key.e.fk&&!key.e.head)){
@@ -3524,6 +3531,7 @@ function visSub(r,animate){
   const S=MX.M.s[r.si], inM=S.pl.find(m=>m.id===r.in); const out=ac(r.out);
   if(out&&!out.out) exitAct(out,animate);
   if(inM&&!MX.acts[r.in]){ const a=addAct(inM,r.si); if(animate){ a.x=rf()*4-2; a.z=-35.5; const pm=posMap(MX.M,r.si)[r.in]; if(pm){ const [x,z]=tw(r.si,pm[0],pm[1]); a.tx=x; a.tz=z; } else { a.tx=a.x; a.tz=-28; } } else { const pm=posMap(MX.M,r.si)[r.in]||[40,34]; const [x,z]=tw(r.si,pm[0],pm[1]); place(a,x,z); } }
+  if(animate&&isJug(W)&&(r.in===W.me||r.out===W.me)){ notice(r.in===W.me?`<b>¡Entras al campo!</b> Sustituyes a ${esc(sname(W.players[r.out]))}`:`Te sustituyen. Entra ${esc(sname(W.players[r.in]))}${r.inj?' (sales lesionado)':''}`,3.5); return; }
   if(animate){ const ip=W.players[r.in], op=W.players[r.out]; notice(`<span class="subi in">Entra</span>${esc(sname(ip))}<span class="subi out">Sale</span>${esc(sname(op))}${r.inj?' (lesionado)':''}<small>${esc(S.c.short)}</small>`,3); }
 }
 
@@ -3900,6 +3908,7 @@ function r3Sync(k,dt,now){
     let d=Math.atan2(bl0.x-a.x,bl0.z-a.z)-a.yaw; while(d>Math.PI) d-=Math.PI*2; while(d<-Math.PI) d+=Math.PI*2; const tg=a.spd<2&&!a.anim?clamp(d,-.7,.7)*.5:0; A_.tw=(A_.tw||0)+(tg-(A_.tw||0))*Math.min(1,dt*6);
     poseActor(A_,k); };
   for(const a of MX.list) put(a); put(MX.ref);
+  if(isJug(W)){ try{ jugMark3D(now); }catch(e){} }
   if(MX.state==='play'&&!MX.paused) mudTick(dt); fxTick(dt);
   const b=MX.ball, B=R3.ball; B.b.position.set(b.x,b.y,b.z); B.b.rotation.set(Math.cos(b.dir)*b.spin,0,-Math.sin(b.dir)*b.spin); B.sh.position.set(b.x,.03,b.z); const ss=.35/(1+Math.max(0,b.y-BY)*.35); B.sh.scale.set(ss,1,ss);
   S.userData.update(dt,now); S.userData.crowd.uniforms.uEx.value=MX.ex;
@@ -3951,8 +3960,8 @@ function hudBuild(){
   <div id="mxnote" aria-live="polite"></div>
   <div class="feed"><div class="ln1" id="mxf1"></div><div class="ln0" id="mxf0" style="visibility:hidden"></div></div>
   <div class="hpanel hidden" id="mxpanel"></div>
-  <div id="mxgoal"></div><div id="mxrep"></div><div id="mxover"></div>`;
-  MX.scTxt=''; MX.ckTxt=''; MX.rt=0; MX.mmT=0; MX.pT=0; MX.more=false;
+  <div id="mxgoal"></div><div id="mxrep"></div><div id="mxover"></div>${isJug(W)?'<div class="mecard" id="mxme"></div>':''}`;
+  MX.scTxt=''; MX.ckTxt=''; MX.rt=0; MX.mmT=0; MX.pT=0; MX.more=false; MX.jT=-9;
   hudBtns(); mmVis();
 }
 function mmVis(){ const m=$('#mxmm'); if(m) m.style.display=(R3.on&&MX.cam!=='2d'&&(MX.state==='play'||MX.state==='replay'))?'':'none'; const b=$('#mxbtns'); if(b) b.style.visibility=MX.state==='intro'?'hidden':''; }
@@ -3964,7 +3973,8 @@ function hudBtns(){
   if(R3.on) h+=b('cam','Cámara: '+cam,false);
   h+=isJug(W)?b('stats','Datos',MX.panel==='stats'):`<div class="hrow">${b('tac','Táctica',MX.panel==='tac')}${b('stats','Datos',MX.panel==='stats')}</div>`;
   h+=b('more',MX.more?'Menos opciones':'Más opciones',MX.more);
-  if(MX.more) h+=b('mode',MX.mode==='hl'?'Ver: jugadas clave':'Ver: partido completo',false)+b('snd',SND.on?'Sonido: sí':'Sonido: no',false)+b('voz',SND.voice?'Narrador: sí':'Narrador: no',false)+b('skip','Ir al final',false);
+  if(isJug(W)) h+=b('mode',MX.mode==='me'?'Ver: mis jugadas':MX.mode==='hl'?'Ver: jugadas clave':'Ver: partido completo',MX.mode==='me');
+  if(MX.more) h+=(isJug(W)?'':b('mode',MX.mode==='hl'?'Ver: jugadas clave':'Ver: partido completo',false))+b('snd',SND.on?'Sonido: sí':'Sonido: no',false)+b('voz',SND.voice?'Narrador: sí':'Narrador: no',false)+b('skip','Ir al final',false);
   el.innerHTML=h;
 }
 function hudTick(dt){
@@ -3979,6 +3989,7 @@ function hudTick(dt){
   if(MX.noteUntil&&MX.rt>MX.noteUntil){ MX.noteUntil=0; const n=$('#mxnote'); if(n) n.innerHTML=''; }
   if(R3.on&&MX.cam!=='2d'&&MX.rt-MX.mmT>1/15){ MX.mmT=MX.rt; drawMini(); }
   if(MX.panel==='stats'&&MX.rt-MX.pT>1.2){ MX.pT=MX.rt; renderPanel(); }
+  if(isJug(W)&&MX.rt-MX.jT>.8){ MX.jT=MX.rt; try{ jugMeCard(); }catch(e){} }
   // ajuste automático de calidad si el dispositivo va justo
   if(R3.on&&MX.cam!=='2d'&&MX.state==='play'&&!MX.paused&&!MX.qDone&&GFX.q==='hi'){
     MX.fN=(MX.fN||0)+1; MX.fT=(MX.fT||0)+dt;
@@ -4013,7 +4024,7 @@ function feedPush(e){
   if(e.k==='shot'){
     const pre=e.pen?`${nm(e.a)} frente a ${nm(e.k2)||'el portero'} desde los once metros`:e.fk?`${nm(e.a)} se perfila para el tiro libre`:e.head?`Balón aéreo para ${nm(e.a)}`:`${nm(e.a)} arma el disparo`;
     feedLine(pre,false);
-    at(Math.max(.2,rel-(e.out==='goal'?4.3:.85)),()=>feedLine(e.txt,e.out==='goal'));
+    at(Math.max(.2,rel-(e.out==='goal'?4.3:.85)),()=>{ feedLine(e.txt,e.out==='goal'); if(isJug(W)&&e.out==='goal'&&e.a===W.me) notice('<b>¡GOL TUYO!</b> La grada corea tu nombre',3.5); });
     return;
   }
   if(e.k==='foul'&&(e.card||e.pen)){ feedLine(`${nm(e.c)} va con todo sobre ${nm(e.a)}`,false); at(Math.max(.2,rel-(e.pen?1.7:2.1)),()=>feedLine(e.txt,!!e.pen||e.card==='R'||e.card==='R2')); return; }
@@ -4158,7 +4169,8 @@ function mxCmd(v){
       if(nx==='2d'&&was!=='2d'){ GFX.scene=null; r2Show(); }
       else if(nx!=='2d'&&was==='2d'){ r2Hide(); GFX.scene=R3.S; }
       mmVis(); hudBtns(); notice('Cámara: '+(CAMS.find(c=>c[0]===nx)||[0,''])[1],1.2); break; }
-    case 'mode': MX.mode=MX.mode==='hl'?'full':'hl'; W.settings.mode=MX.mode; hudBtns(); notice(MX.mode==='hl'?'Solo jugadas clave':'Partido completo',1.4); break;
+    case 'mode': if(isJug(W)){ MX.mode=MX.mode==='me'?'full':MX.mode==='full'?'hl':'me'; W.settings.jmode=MX.mode; MX.q.length=0; } else { MX.mode=MX.mode==='hl'?'full':'hl'; W.settings.mode=MX.mode; }
+      hudBtns(); notice(MX.mode==='me'?'Solo tus jugadas, los goles y el descanso':MX.mode==='hl'?'Solo jugadas clave':'Partido completo',1.8); break;
     case 'snd': SND.on=SND.on?0:1; W.settings.audio=SND.on; sndSave(); sndApply(); hudBtns(); break;
     case 'voz': SND.voice=SND.voice?0:1; sndSave(); if(!SND.voice) narStop(); hudBtns(); break;
     case 'more': MX.more=!MX.more; hudBtns(); break;
@@ -4175,7 +4187,7 @@ function mxCmd(v){
     case 'reps': if(MX.replay) endReplay(); break;
     case 'lineups': if(MX.state==='intro') showIntro(); break;
     case 'kick': if(MX.state!=='intro') return; $('#mxover').innerHTML=''; MX.state='play'; MX.camCut=true; mxNext(); crowdKO();
-      if(!W.tips) W.tips={}; if(!W.tips.m1){ W.tips.m1=1; setTimeout(()=>{ if(MX.on&&MX.state==='play') notice('<span style="white-space:normal"><b>Táctica</b> pausa el juego para hacer cambios. <b>Cámara</b> cambia la vista.</span>',6); },2400); }
+      if(!W.tips) W.tips={}; if(!W.tips.m1){ W.tips.m1=1; setTimeout(()=>{ if(MX.on&&MX.state==='play') notice(isJug(W)?'<span style="white-space:normal"><b>Ver: mis jugadas</b> salta lo que no te toca. <b>Cámara</b> cambia la vista.</span>':'<span style="white-space:normal"><b>Táctica</b> pausa el juego para hacer cambios. <b>Cámara</b> cambia la vista.</span>',6); },2400); }
       break;
     case 'h2': if(MX.state!=='ht') return; $('#mxover').innerHTML=''; MX.state='play'; MX.camCut=true; mxNext(); break;
     case 'fin': mxFinish(); break;
@@ -7494,6 +7506,7 @@ function jugAfterMatch(w,f,M){
   pc.trust=clamp(pc.trust+(rt>=7.5?4:rt>=7?2.5:rt>=6.4?1:rt<5.8?-3:-1)+(m.g?1:0),0,100);
   pc.fame=clamp((pc.fame||0)+(rt>=8?.6:rt>=7?.25:0)+m.g*.35+(f.cc!=null||f.cup?.15:0),0,100);
   const res=S.g>O.g?'Victoria':S.g<O.g?'Derrota':'Empate', nat=S.c.national;
+  try{ jugMatchLog(w,f,S,O,m,min); }catch(e){ console.error('historial',e); }
   const bits=[`${min} minutos${m.min0>0?' (entraste desde el banquillo)':''}`]; if(m.g) bits.push(m.g===1?'1 gol':m.g+' goles'); if(m.as) bits.push(m.as===1?'1 asistencia':m.as+' asistencias'); if(m.yc) bits.push('tarjeta amarilla'); if(m.rc) bits.push('expulsado');
   const mom=M.mom&&(M.mom.p===p||M.mom.id===p.id);
   if(m.g>=3){ jugLog(w,`Hat-trick ante ${O.c.name}`); pc.hat=(pc.hat||0)+1; }
@@ -7957,10 +7970,11 @@ function jugHome(){
       <div class="kv" style="margin-top:10px"><dt>Temporada</dt><dd>${st.ap} PJ · ${st.g} G · ${st.as} A${st.ap?` · ${rtChip(jugAvg(p))}`:''}</dd><dt>Confianza del técnico</dt><dd>${tr}%</dd></div>${jugBar(tr,100,tr>60?'var(--good)':tr>35?'#d9a526':'var(--bad)')}<div class="kv" style="margin-top:8px"><dt>Fama</dt><dd>${jugFame(W.pc.fame)}${W.pc.fol?` · ${jugFol(W.pc.fol)} seguidores`:''}</dd></div>
       <div class="kv" style="margin-top:8px"><dt>Entrenamiento</dt><dd>${JUG_FOCUS.find(x=>x[0]===T.f)[1]}, ${JUG_INT.find(x=>x[0]===T.i)[1].toLowerCase()}</dd><dt>Estado</dt><dd>${p.inj>0?`<span class="bad">${esc(p.injT)} (${Math.ceil(p.inj/7)} sem.)</span>`:Math.round(p.cnd)+'%'}</dd><dt>Moral</dt><dd class="${morLabel(p.mor)[1]}">${morLabel(p.mor)[0]}</dd></div></div>
     ${jugObjCard(p)}
+    ${(W.pc.ml||[]).length>=2?`<div class="card"><h3>Tu forma<span class="sp"></span><button class="btn sm" data-a="go" data-v="jme">Ver partidos</button></h3>${jugSpark(W.pc.ml.slice(-10),320,60)}</div>`:''}
     <div class="card"><h3>${esc(L.name)}<span class="sp"></span><button class="btn sm" data-a="go" data-v="comp">Tabla</button></h3><div class="tw"><table class="t"><thead><tr><th class="c">#</th><th>Club</th><th class="c">PJ</th><th class="c">Pts</th></tr></thead><tbody>${mini}</tbody></table></div></div>
   </div></div>`;
 }
-VIEWS.jme=()=>{ UI.pid=W.me; return VIEWS.player(); };
+VIEWS.jme=()=>{ UI.pid=W.me; return VIEWS.player()+`<div class="g2" style="margin-top:14px"><div class="col">${jugFormCard()}</div><div class="col">${jugCareerCard()}</div></div>`; };
 VIEWS.jclub=()=>{ UI.cid=jugClub(W); return VIEWS.team(); };
 VIEWS.jtrain=()=>{
   const p=jugMe(), T=W.pc.tr||(W.pc.tr={f:'bal',i:'normal'}), adj=PADJ[p.pos];
@@ -8021,9 +8035,38 @@ function jugPreMatch(f){
    <div class="card" style="display:flex;gap:12px;align-items:center">${avatar(p)}<div style="flex:1"><b>${esc(pname(p))}</b><div class="muted">${st[0]==='Titular'?`Titular como ${PNAME[form[i][0]].toLowerCase()}`:'Empiezas en el banquillo: el técnico decide si sales'}. Estado físico ${Math.round(p.cnd)}%.</div></div><span class="chip ${st[1]}">${st[0]}</span></div>
    <div class="row wrap" style="margin-top:14px"><button class="go" data-a="play3d" data-f="${f.id}">Ver en 3D ${icon('play')}</button><button class="btn" data-a="jsim" data-f="${f.id}">Resultado rápido</button></div>`,true);
 }
+// modo "mis jugadas": se ven tus acciones, los goles, los cambios que te afectan y las pausas del partido
+function jugKeyE(e){ const me=W.me; if(e.a===me||e.b===me||e.c===me) return true; if(e.subs&&e.subs.some(s=>s.in===me||s.out===me)) return true;
+  if(e.k==='ht'||e.k==='ft'||e.k==='ko') return true; return e.k==='shot'&&e.out==='goal'; }
+// tarjeta en vivo de tu jugador durante el partido
+function jugMeCard(){ const el=$('#mxme'); if(!el) return; const m=jugMxMe(), p=jugMe(); if(!m||!p){ el.style.display='none'; return; }
+  el.style.display=MX.panel||MX.state==='intro'||MX.state==='ht'||MX.state==='ft'?'none':'';
+  const on=m.on, played=m.min0>=0, cur=Math.max(0,Math.min(MX.half===1?45:90,Math.floor((MX.cur?MX.cur.t1:0)/60)+1)), min=played?Math.max(0,(m.min1>=0?m.min1:cur)-m.min0):0;
+  const st=!played?'En el banquillo':!on?`Sustituido · ${min}'`:`${min}' jugados`, bits=[m.g?'⚽'.repeat(Math.min(3,m.g)):'',m.as?`${m.as} asist.`:'',m.yc?'🟨':'',m.rc?'🟥':''].filter(Boolean).join(' ');
+  const cnd=Math.round(m.cnd), rt=played?m.rt.toFixed(1):'—', cls=!played?'off':m.rt<6?'lo':'';
+  const k=[rt,st,bits,cnd,cls,el.style.display].join('|'); if(k===MX.jK) return; MX.jK=k;
+  el.innerHTML=`<span class="av">${faceSVG(p)}</span><div style="min-width:0"><b>${esc(sname(p))}</b><span style="opacity:.85">${st}${bits?' · '+bits:''}</span>${played?`<span class="cb" title="Estado físico ${cnd}%"><i style="width:${cnd}%;background:${cnd>75?'#5fe08a':cnd>55?'#e8c14a':'#ea5a51'}"></i></span>`:''}</div><span class="rtv ${cls}">${rt}</span>`; }
+// aro dorado en el césped y flecha sobre la cabeza de tu jugador
+function jugMark3D(now){ const S=R3.S; if(!S||typeof THREE==='undefined') return;
+  if(!R3.meMk){ const g=new THREE.Group(), mat=new THREE.MeshBasicMaterial({color:0xf2b23a,transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false});
+    const ring=new THREE.Mesh(new THREE.RingGeometry(.62,.86,32),mat); ring.rotation.x=-Math.PI/2; ring.position.y=.04; g.add(ring);
+    const cone=new THREE.Mesh(new THREE.ConeGeometry(.28,.5,12),new THREE.MeshBasicMaterial({color:0xf2b23a})); cone.rotation.x=Math.PI; cone.position.y=2.75; cone.name='cone'; g.add(cone);
+    S.add(g); R3.meMk=g; }
+  const a=MX.acts[W.me], vis=!!(a&&a.vis&&!a.out&&MX.state!=='intro'); R3.meMk.visible=vis; if(!vis) return;
+  R3.meMk.position.set(a.x,0,a.z); const c=R3.meMk.getObjectByName('cone'); if(c) c.position.y=2.75+Math.sin((now||0)*4)*.12; }
+// historial de tus partidos (últimos 40) para la gráfica de forma
+function jugMatchLog(w,f,S,O,m,min){ const L=w.pc.ml||(w.pc.ml=[]); L.push({s:w.season,d:w.day,o:O.c.short,h:f.h===S.c.id?1:0,gf:S.g,ga:O.g,rt:Math.round(m.rt*10)/10,g:m.g,as:m.as,min,nt:S.c.national?1:0,k:w.rep&&w.rep[repKey(w,f)]?repKey(w,f):null}); if(L.length>40) L.shift(); }
+function jugSpark(L,wd,ht){ if(L.length<2) return ''; const x=i=>(i/(L.length-1))*(wd-8)+4, y=v=>ht-4-((clamp(v,4,10)-4)/6)*(ht-8);
+  const pts=L.map((e,i)=>`${x(i).toFixed(1)},${y(e.rt).toFixed(1)}`).join(' '), y7=y(7).toFixed(1), y6=y(6).toFixed(1);
+  return `<svg viewBox="0 0 ${wd} ${ht}" width="100%" height="${ht}" role="img" aria-label="Notas de tus últimos partidos" style="display:block"><line x1="0" x2="${wd}" y1="${y7}" y2="${y7}" stroke="var(--good)" stroke-dasharray="3 4" stroke-opacity=".5"/><line x1="0" x2="${wd}" y1="${y6}" y2="${y6}" stroke="var(--bad)" stroke-dasharray="3 4" stroke-opacity=".4"/><polyline points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2.2" stroke-linejoin="round"/>${L.map((e,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(e.rt).toFixed(1)}" r="${e.g?4:2.6}" fill="${e.rt>=7?'var(--good)':e.rt<6?'var(--bad)':'var(--acc)'}"><title>${esc(e.o)}: ${e.rt.toFixed(1)}${e.g?`, ${e.g} gol${e.g>1?'es':''}`:''}</title></circle>`).join('')}</svg>`; }
+function jugFormCard(){ const L=(W.pc.ml||[]).slice(-12); if(!L.length) return `<div class="card"><h3>Tus últimos partidos</h3><p class="muted" style="margin:0">Todavía no has jugado. Tu historial aparecerá aquí.</p></div>`;
+  const avg=L.reduce((a,e)=>a+e.rt,0)/L.length;
+  return `<div class="card"><h3>Tus últimos partidos<span class="sp"></span><span class="muted" style="font-size:14px;font-weight:500">Nota media ${avg.toFixed(2)}</span></h3>${jugSpark(L,320,74)}
+   <div class="tw" style="margin-top:8px"><table class="t"><thead><tr><th>Fecha</th><th>Rival</th><th class="c">Res.</th><th class="c">Min</th><th class="c">G</th><th class="c">A</th><th class="c">Nota</th></tr></thead><tbody>${L.slice().reverse().slice(0,8).map(e=>`<tr ${e.k&&getRep(e.k)?`data-a="report" data-f="${e.k}"`:''}><td>${fDate({season:e.s},e.d)}</td><td>${e.nt?'Selección · ':''}${e.h?'':'@ '}${esc(e.o)}</td><td class="c"><b>${e.gf}-${e.ga}</b></td><td class="c">${e.min}</td><td class="c">${e.g||''}</td><td class="c">${e.as||''}</td><td class="c">${rtChip(e.rt)}</td></tr>`).join('')}</tbody></table></div></div>`; }
 function jugMxMe(){ const M=MX.M; for(let s=0;s<2;s++) for(const x of M.s[s].pl.concat(M.s[s].bench)) if(x.id===W.me) return x; return null; }
 function jugMxLine(){ const m=jugMxMe(), p=jugMe(); if(!m||!p) return '';
-  const txt=m.min0<0?'No llegaste a salir del banquillo.':`${m.g?`${m.g} gol${m.g>1?'es':''}. `:''}${m.as?`${m.as} asistencia${m.as>1?'s':''}. `:''}${m.on||MX.state==='ft'?'':'Sustituido. '}`;
+  const end=MX.state==='ft', min=m.min0<0?0:Math.max(1,(m.min1>=0?m.min1:end?90:45)-m.min0);
+  const txt=m.min0<0?(end?'No llegaste a salir del banquillo.':'Sigues en el banquillo.'):`${end?`${min} minutos jugados. `:''}${m.g?`${m.g} gol${m.g>1?'es':''}. `:''}${m.as?`${m.as} asistencia${m.as>1?'s':''}. `:''}${m.on?'':'Sustituido. '}`;
   return `<div class="card" style="display:flex;gap:12px;align-items:center;margin-bottom:12px">${avatar(p)}<div style="flex:1"><b>${esc(pname(p))}</b><div class="muted">${esc(txt)||'Tu actuación hasta ahora.'}</div></div>${m.min0>=0?rtChip(m.rt):''}</div>`; }
 function jugHT(){
   $('#mxover').innerHTML=`<div class="over"><div class="mbox wide"><header><div style="flex:1"><h3>Descanso</h3><div class="muted" style="font-size:13px">${esc(compName(MX.f))}</div></div><button class="go" data-a="mx" data-v="h2">Segunda parte ${icon('play')}</button></header>
