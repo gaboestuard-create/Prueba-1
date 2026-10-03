@@ -14,29 +14,36 @@ const THREE = path.join(ROOT, 'node_modules/three/build/three.min.js');
 const envolver = html => '<!doctype html><html lang="es"><head><meta charset="utf-8">' +
   '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>' + html + '</body></html>';
 
-// versión del juego guardada en git (para comprobar que los datos de versiones publicadas siguen abriendo)
-export function gitVersion(commit) {
-  return execFileSync('git', ['show', `${commit}:futbol/index.html`], { cwd: ROOT, maxBuffer: 64 << 20 }).toString('utf8');
+// archivo de una versión del juego guardada en git (para comprobar que los datos de versiones publicadas siguen abriendo)
+export function gitVersion(commit, archivo = 'index.html') {
+  return execFileSync('git', ['show', `${commit}:futbol/${archivo}`], { cwd: ROOT, maxBuffer: 64 << 20 });
 }
 
+const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.css': 'text/css' };
 // servidor mínimo: IndexedDB necesita un origen http real.
-// '/' es el juego actual; '/v/<commit>.html' sirve versiones anteriores desde git (mismo origen = mismos datos guardados).
+// '/' es el juego actual (y sus archivos, p. ej. '/js/motor.js'); '/v/<commit>/<archivo>' sirve una versión anterior
+// desde git (mismo origen = mismos datos guardados). La página principal se envuelve como en el artefacto.
 export function serve() {
   const cache = new Map();
   return new Promise(res => {
     const srv = http.createServer((req, rsp) => {
       try {
-        const u = req.url.split('?')[0];
-        let body = null;
-        if (u === '/' || u === '/index.html') body = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-        else if (/^\/v\/[0-9a-f]{7,40}\.html$/.test(u)) {
-          const c = u.slice(3, -5);
-          if (!cache.has(c)) cache.set(c, gitVersion(c));
-          body = cache.get(c);
+        let u = decodeURIComponent(req.url.split('?')[0]);
+        if (u === '/') u = '/index.html';
+        let body = null, archivo = u.slice(1);
+        const v = u.match(/^\/v\/([0-9a-f]{7,40})\/(.+)$/);
+        if (v) {
+          archivo = v[2];
+          const k = v[1] + ':' + archivo;
+          if (!cache.has(k)) { try { cache.set(k, gitVersion(v[1], archivo)); } catch (e) { cache.set(k, null); } }
+          body = cache.get(k);
+        } else if (!archivo.includes('..') && !archivo.startsWith('node_modules') && fs.existsSync(path.join(ROOT, archivo))) {
+          body = fs.readFileSync(path.join(ROOT, archivo));
         }
         if (body == null) { rsp.writeHead(404); rsp.end(); return; }
-        rsp.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
-        rsp.end(envolver(body));
+        const ext = path.extname(archivo);
+        rsp.writeHead(200, { 'content-type': TIPOS[ext] || 'application/octet-stream', 'cache-control': 'no-store' });
+        rsp.end(archivo.endsWith('index.html') ? envolver(body.toString('utf8')) : body);
       } catch (e) { rsp.writeHead(500); rsp.end(String(e)); }
     });
     srv.listen(0, '127.0.0.1', () => res({ url: `http://127.0.0.1:${srv.address().port}/`, close: () => new Promise(r => srv.close(r)) }));

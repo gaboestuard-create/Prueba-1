@@ -549,7 +549,7 @@ test('compatibilidad: los datos de cada versión publicada se abren en la actual
   const lista = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests/compat.json'), 'utf8'));
   for (const v of lista) {
     const ctx = await fresh();
-    const viejo = await openGame(ctx, srv.url + 'v/' + v.commit + '.html');
+    const viejo = await openGame(ctx, srv.url + 'v/' + v.commit + '/index.html');
     await viejo.page.evaluate(async () => { DATOS.ajustes.cam = 'lejos'; await registrarPartido(2, 1); });
     await viejo.page.close();
     const nuevo = await openGame(ctx, srv.url);
