@@ -1,3 +1,4 @@
 [
-  { "nombre": "0.1.0 (capa 1, primera publicada)", "commit": "60746c3" }
+  { "nombre": "0.1.0 (capa 1, primera publicada)", "commit": "60746c3" },
+  { "nombre": "0.2.0 (pases dirigidos y portero)", "commit": "9fc5b53" }
 ]
