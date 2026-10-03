@@ -32,6 +32,8 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
 - Las acciones de técnico están bloqueadas con una lista blanca (`JUG_OK`) y las vistas con `JUGV`. Si añades una
   acción o vista que también sirva en modo jugador, añádela ahí.
 - Las funciones que suponen que hay un club del usuario deben aguantar `w.userClub===-1` (usa `focusClub(w)`).
+- La vida fuera del campo (redes, vestuario, entrevistas, decisiones personales) está en la sección
+  "modo jugador: vida fuera del campo". Sus datos viven en `W.pc` y se crean al usarse: no requieren conversión.
 
 ## Pruebas
 

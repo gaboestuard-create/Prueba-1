@@ -379,6 +379,34 @@ test('modo jugador: negociar ofertas, hablar con el técnico y cambiar de posici
   await ctx.close();
 });
 
+test('modo jugador: vida fuera del campo (redes, vestuario, entrevistas y decisiones)', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { tal: 2 });
+  // cada decisión personal y cada entrevista que llegue se contesta con una opción al azar
+  const r = await page.evaluate(() => {
+    const seen = { pev: 0, pint: 0 }, s0 = W.season;
+    for (let i = 0; i < 400 && W.season === s0; i++) {
+      jugFixture(W); dayW(W); if (W.stop) W.stop = null;
+      for (const m of W.inbox) if (m.act && !m.act.done && (m.act.t === 'pev' || m.act.t === 'pint')) { seen[m.act.t]++; const n = m.act.t === 'pint' ? 3 : m.act.o.length; mactDo(m.id, String(Math.floor(Math.random() * n))); if (!m.act.done) return { bad: 'no se resolvió ' + m.act.t }; }
+    }
+    // todos los eventos se pueden generar y resolver
+    const p = W.players[W.me], ev = {};
+    for (const k of Object.keys(JUG_EV)) { const e = JUG_EV[k].gen(W, p); if (!e) { ev[k] = 'sin datos'; continue; } const a = Object.assign({ t: 'pev', e: k }, e); for (let i = 0; i < e.o.length; i++) JUG_EV[k].res(W, p, a, i); ev[k] = 'ok'; }
+    const p1 = jugPost(W, 'gracias'), p2 = jugPost(W, 'reto');
+    go('jlife'); const html = document.querySelector('#main').textContent;
+    return { seen, ev, earn: W.pc.earn, fol: W.pc.fol, feed: (W.pc.feed || []).length, rel: Object.keys(W.pc.rel || {}).length, p1: !!p1, p2: !!p2, html: /Vida y vestuario/.test(html) && /Seguidores/.test(html), ok: validateWorld(W).ok };
+  });
+  assert(!r.bad, r.bad);
+  assert(r.earn > 0 && r.fol > 0, 'no se acumulan ganancias o seguidores: ' + JSON.stringify(r));
+  assert(r.p1 && !r.p2, 'publicar no respeta la espera de una semana');
+  assert(r.html, 'la pantalla Vida y vestuario no se dibuja');
+  assert(Object.values(r.ev).every(x => x === 'ok' || x === 'sin datos'), 'algún evento falló: ' + JSON.stringify(r.ev));
+  assert(r.ok, 'la partida quedó dañada');
+  console.log(`      decisiones ${r.seen.pev}, entrevistas ${r.seen.pint}, ${r.feed} mensajes en redes, ${r.rel} compañeros con relación`);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 test('modo jugador: la retirada termina la carrera y la guarda en el salón de la fama', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
   await newPlayerCareer(page);
