@@ -3,15 +3,18 @@
    Abres sobres con jugadores de la base de datos, armas tu once (con química por liga, club y nacionalidad) y subes de
    división ganando a la computadora. Se guarda en DATOS.estrella (guardado principal).
    E = { monedas, cartas: [carta], once: [uid x11], formacion, nombre, camiseta, pantalon, division, temp: { pj, pts, g, e, p }, sig } */
+// prob: probabilidad de cada carta del sobre de ser [estrella, Figura, Leyenda]; el resto son jugadores de la base de datos
 const SOBRES = [
-  { id: 'bronce', t: 'Sobre bronce', precio: 750, n: 5, min: 55, max: 66, clase: 'bronce' },
-  { id: 'plata', t: 'Sobre plata', precio: 2000, n: 5, min: 65, max: 74, clase: 'plata' },
-  { id: 'oro', t: 'Sobre oro', precio: 5000, n: 5, min: 75, max: 99, clase: 'oro' },
-  { id: 'estrella', t: 'Sobre estrella', precio: 12000, n: 3, min: 83, max: 99, clase: 'oro' },
+  { id: 'bronce', t: 'Sobre bronce', precio: 750, n: 5, min: 55, max: 64, clase: 'bronce', prob: [0, 0, 0], d: '5 jugadores de bronce' },
+  { id: 'plata', t: 'Sobre plata', precio: 2000, n: 5, min: 65, max: 74, clase: 'plata', prob: [0, 0, 0], d: '5 jugadores de plata' },
+  { id: 'oro', t: 'Sobre oro', precio: 5000, n: 5, min: 75, max: 99, clase: 'oro', prob: [.12, .02, .006], d: '5 de oro · puede salir una estrella' },
+  { id: 'estrella', t: 'Sobre estrellas', precio: 15000, n: 3, min: 80, max: 99, clase: 'figura', prob: [.85, .11, .04], d: '3 estrellas conocidas · Figuras y Leyendas' },
+  { id: 'leyenda', t: 'Sobre leyenda', precio: 40000, n: 1, min: 86, max: 99, clase: 'leyenda', prob: [.3, .3, .4], d: '1 carta 86+ · 40 % Leyenda' },
 ];
 const PARTIDOS_DIVISION = 10;
 const claseCarta = m => m >= 75 ? 'oro' : m >= 65 ? 'plata' : 'bronce';
-const ventaRapida = c => Math.round(40 * Math.pow(1.13, c.med - 55) / 10) * 10 + 20;
+const ventaRapida = c => Math.round(40 * Math.pow(1.13, c.med - 55) * (c.tipo === 'leyenda' ? 2.5 : c.tipo === 'figura' ? 1.6 : c.s ? 1.2 : 1) / 10) * 10 + 20;
+const nombreCarta = c => c.completo || ((c.nombre1 ? c.nombre1 + ' ' : '') + c.nombre);
 const premioVictoria = div => 250 + (10 - div) * 120;
 
 function nuevaEstrella() {
@@ -31,16 +34,28 @@ function elegirJugadorCarta(min, max, pos) {
 function darCarta(E, j) {
   const M = APP.mundo, club = M.clubes[j.club];
   const c = { uid: E.sig++, j: j.id, nombre: j.nombre, nombre1: j.nombre1, pos: j.pos, med: j.med, nac: j.nac, club: club ? club.nombre : '', liga: club ? club.liga : '', at: { ...j.at }, piel: j.piel, pelo: j.pelo, num: j.num };
+  completarCarta(c);
   E.cartas.push(c);
   return c;
 }
+function darCartaEstrella(E, e) {
+  const c = { uid: E.sig++, ...cartaDeEstrella(e) };
+  E.cartas.push(c);
+  return c;
+}
+// una carta de la base de estrellas: las de media alta salen menos
+function elegirEstrella(tipo, min = 0) {
+  const L = CARTAS_ESTRELLA.filter(e => e.tipo === tipo && e.med >= min);
+  return elegirPorPeso(L.length ? L : CARTAS_ESTRELLA.filter(e => e.tipo === tipo), e => Math.pow(.88, e.med - 75));
+}
+const yaTiene = (E, x) => x.e ? E.cartas.some(c => c.s === x.e.clave) : E.cartas.some(c => c.j === x.j.id);
 const cartaPorUid = (E, uid) => E.cartas.find(c => c.uid === uid);
 // química: cada jugador del once suma por compartir liga, club o nacionalidad con sus compañeros
 function quimica(E) {
   const once = E.once.map(u => cartaPorUid(E, u)).filter(Boolean);
   if (!once.length) return 0;
   let s = 0;
-  for (const c of once) { let v = 0; for (const o of once) { if (o === c) continue; if (o.club === c.club) v += 2; else if (o.liga === c.liga) v += 1; if (o.nac === c.nac) v += 1; } s += Math.min(10, v); }
+  for (const c of once) { let v = 0; for (const o of once) { if (o === c) continue; if (o.club === c.club && c.liga !== 'leyenda') v += 2; else if (o.liga === c.liga || o.tipo === 'leyenda' || c.tipo === 'leyenda') v += 1; if (o.nac === c.nac) v += 1; } s += Math.min(10, v); }
   return Math.round(s / (once.length * 10) * 100);
 }
 function autoOnce(E) {
@@ -83,18 +98,21 @@ function equipoRivalEst(E, club) {
 const guardarEstrella = () => guardarAhora();
 
 function menuEstrella() {
-  if (!DATOS.estrella) { DATOS.estrella = nuevaEstrella(); guardarEstrella(); toast('¡Bienvenido! Recibes un equipo inicial y 5.000 monedas.', 5000); }
+  if (!DATOS.estrella) { DATOS.estrella = nuevaEstrella(); DATOS.estrella.regalo08 = true; DATOS.estrella.monedas += 15000; guardarEstrella(); toast('¡Bienvenido! Recibes un equipo inicial y 20.000 monedas: ¡abre un sobre de estrellas!', 6000); }
+  // regalo único al llegar las estrellas y leyendas (también para los equipos ya empezados)
+  else if (!DATOS.estrella.regalo08) { DATOS.estrella.regalo08 = true; DATOS.estrella.monedas += 15000; guardarEstrella(); toast('¡Llegaron las estrellas y las leyendas! Regalo: 15.000 monedas para un sobre de estrellas.', 6000); }
   hubEstrella(APP.pestEst || 'inicio');
 }
 function hubEstrella(p) {
   APP.pestEst = p;
   const E = DATOS.estrella;
-  const tabs = `<div class="chips">${[['inicio', 'Partidos'], ['equipo', 'Mi equipo'], ['sobres', 'Sobres'], ['club', 'Club']].map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}</button>`).join('')}</div>`;
-  const v = { inicio: vistaPartidosEst, equipo: vistaEquipoEst, sobres: vistaSobresEst, club: vistaClubEst }[p]();
+  const tabs = `<div class="chips">${[['inicio', 'Partidos'], ['equipo', 'Mi equipo'], ['sobres', 'Sobres'], ['album', 'Álbum'], ['club', 'Club']].map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}</button>`).join('')}</div>`;
+  const v = { inicio: vistaPartidosEst, equipo: vistaEquipoEst, sobres: vistaSobresEst, album: vistaAlbumEst, club: vistaClubEst }[p]();
   pantalla(tabs + v, { titulo: 'Equipo Estrella', atras: menuPrincipal, extra: `<span class="med m-oro">${E.monedas.toLocaleString('es')} monedas</span>`, acciones: ACC_EST });
 }
 const ACC_EST = {
   tab: d => hubEstrella(d.id),
+  alb: d => { APP.albumEst = d.id; hubEstrella('album'); },
   jugar: () => partidoEstrella(false), simular: () => partidoEstrella(true),
   sobre: d => abrirSobre(d.id),
   carta: d => fichaCarta(+d.uid),
@@ -105,9 +123,6 @@ const ACC_EST = {
   nombre: (d, el) => { DATOS.estrella.nombre = el.value.trim().slice(0, 28) || 'Mi Equipo Estrella'; guardarEstrella(); },
   reiniciar: () => confirmar('¿Empezar de cero en Equipo Estrella? Perderás tus cartas y monedas (queda una copia de seguridad).', () => { DATOS.estrella = null; bakCurrent('reemplazo').then(() => { menuEstrella(); }); }, () => hubEstrella('club')),
 };
-function cartaHTML(c, extra = '', sel = false) {
-  return `<button class="carta ${claseCarta(c.med)} ${sel ? 'sel' : ''}" data-acc="carta" data-uid="${c.uid}"><span class="c-med">${c.med}</span><span class="c-pos">${c.pos}</span>${fotoHTML({ nombre: c.nombre, nombre1: c.nombre1, piel: c.piel, foto: (APP.mundo.jug[c.j] || {}).foto }, 44)}<b>${esc(c.nombre)}</b><small>${esc(c.club)}</small><small>${NACIONES[c.nac] ? NACIONES[c.nac].nombre : ''}</small>${extra}</button>`;
-}
 function vistaPartidosEst() {
   const E = DATOS.estrella, t = E.temp;
   if (!APP.rivalEst) APP.rivalEst = rivalDivision(E).id;
@@ -125,7 +140,7 @@ function vistaEquipoEst() {
   return `<p class="nota">Media ${Math.round(fuerzaEstrella(E))} · química ${quimica(E)} (jugadores de la misma liga, club o país juntos rinden más).</p>
     <div class="etq">Formación</div><div class="seg">${Object.keys(FORMACIONES).map(f => `<button class="${E.formacion === f ? 'sel' : ''}" data-acc="form" data-f="${f}">${f}</button>`).join('')}</div>
     <div class="etq">Once (toca un puesto para cambiarlo)</div>
-    <div class="panel">${form.map((f, k) => { const c = cartaPorUid(E, E.once[k]); return `<button class="fila-j" data-acc="hueco" data-k="${k}"><span class="pos pos-${f.p}">${f.p}</span>${c ? `<span class="info"><b>${esc(c.nombre1 + ' ' + c.nombre)}</b><small>${c.pos} · ${esc(c.club)}</small></span>${mediaHTML(c.med)}` : '<span class="info"><b class="aviso-es">Vacío</b></span>'}</button>`; }).join('')}</div>
+    <div class="panel">${form.map((f, k) => { const c = cartaPorUid(E, E.once[k]); return `<button class="fila-j" data-acc="hueco" data-k="${k}"><span class="pos pos-${f.p}">${f.p}</span>${c ? `<span class="info"><b>${esc(nombreCarta(c))}</b><small>${c.pos} · ${esc(c.club)}</small></span>${mediaHTML(c.med)}` : '<span class="info"><b class="aviso-es">Vacío</b></span>'}</button>`; }).join('')}</div>
     <div class="acciones"><button class="btn" data-acc="auto">Once automático</button></div>
     <div class="etq">Todas tus cartas (${E.cartas.length})</div>
     <div class="tarjetas">${E.cartas.slice().sort((a, b) => b.med - a.med).map(c => cartaHTML(c, '', enOnce.has(c.uid))).join('')}</div>`;
@@ -133,7 +148,17 @@ function vistaEquipoEst() {
 function vistaSobresEst() {
   const E = DATOS.estrella;
   return `<p class="intro">Los sobres solo se compran con monedas del juego, que ganas jugando partidos.</p>
-    <div class="tarjetas">${SOBRES.map(s => `<button class="carta ${s.clase}" data-acc="sobre" data-id="${s.id}" ${E.monedas < s.precio ? 'disabled' : ''}><span class="c-med">${s.n}</span><b>${s.t}</b><small>${s.n} jugadores · media ${s.min}${s.max < 99 ? '–' + s.max : '+'}</small><b>${s.precio.toLocaleString('es')} monedas</b></button>`).join('')}</div>`;
+    <div class="sobres">${SOBRES.map(s => `<button class="sobre sb-${s.clase}" data-acc="sobre" data-id="${s.id}" ${E.monedas < s.precio ? 'disabled' : ''}><span class="sb-logo">${LOGO_SVG}</span><b>${s.t}</b><small>${s.d}</small><span class="sb-precio moneda">${s.precio.toLocaleString('es')}</span></button>`).join('')}</div>
+    <p class="nota">${CARTAS_ESTRELLA.filter(e => e.tipo === 'normal').length} estrellas actuales, ${CARTAS_ESTRELLA.filter(e => e.tipo === 'figura').length} Figuras y ${CARTAS_ESTRELLA.filter(e => e.tipo === 'leyenda').length} Leyendas por coleccionar.</p>`;
+}
+// álbum: todas las cartas de estrellas; las que no tienes se ven tapadas (solo media, puesto y país)
+function vistaAlbumEst() {
+  const E = DATOS.estrella, tipo = APP.albumEst || 'normal';
+  const mias = new Map(E.cartas.filter(c => c.s).map(c => [c.s, c]));
+  const L = CARTAS_ESTRELLA.filter(e => e.tipo === tipo).sort((a, b) => b.med - a.med);
+  const n = t => CARTAS_ESTRELLA.filter(e => e.tipo === t && mias.has(e.clave)).length + '/' + CARTAS_ESTRELLA.filter(e => e.tipo === t).length;
+  return `<div class="chips">${[['normal', 'Estrellas'], ['figura', 'Figuras'], ['leyenda', 'Leyendas']].map(([id, t]) => `<button class="chip ${id === tipo ? 'sel' : ''}" data-acc="alb" data-id="${id}">${t} ${n(id)}</button>`).join('')}</div>
+    <div class="tarjetas">${L.map(e => mias.has(e.clave) ? cartaHTML(mias.get(e.clave)) : `<div class="fc fc-oculta fc-${tipo === 'normal' ? 'oro' : tipo}"><span class="fc-brillo"></span><span class="fc-izq"><b class="fc-med">${e.med}</b><span class="fc-pos">${e.pos}</span>${banderaSVG(e.nac)}</span><span class="fc-int">?</span></div>`).join('')}</div>`;
 }
 function vistaClubEst() {
   const E = DATOS.estrella;
@@ -144,30 +169,67 @@ function vistaClubEst() {
     </div></div>
     <div class="acciones"><button class="btn" data-acc="reiniciar">Empezar de cero</button></div>`;
 }
+function sacarDelSobre(S) {
+  const r = AZ(), [pe, pf, pl] = S.prob;
+  if (r < pl) return { e: elegirEstrella('leyenda') };
+  if (r < pl + pf) return { e: elegirEstrella('figura') };
+  if (r < pl + pf + pe) return { e: elegirEstrella('normal', S.min) };
+  const max = S.id === 'oro' && AZ() > .12 ? 84 : S.max;
+  return { j: elegirJugadorCarta(S.min, max) };
+}
 function abrirSobre(id) {
   const E = DATOS.estrella, S = SOBRES.find(s => s.id === id);
   if (E.monedas < S.precio) return toast('No tienes monedas suficientes.');
   E.monedas -= S.precio;
   const nuevas = [];
   for (let i = 0; i < S.n; i++) {
-    const max = S.id === 'oro' && AZ() > .12 ? 84 : S.max;
-    const j = elegirJugadorCarta(S.min, max);
-    if (E.cartas.some(c => c.j === j.id)) { const v = ventaRapida({ med: j.med }); E.monedas += v; nuevas.push({ rep: true, j, v }); }
-    else nuevas.push({ c: darCarta(E, j) });
+    const x = sacarDelSobre(S);
+    if (yaTiene(E, x)) { const c = x.e ? cartaDeEstrella(x.e) : completarCarta({ ...x.j, uid: 0, at: { ...x.j.at }, club: '' }); const v = ventaRapida(c); E.monedas += v; nuevas.push({ rep: true, c, v }); }
+    else nuevas.push({ c: x.e ? darCartaEstrella(E, x.e) : darCarta(E, x.j) });
   }
   guardarEstrella();
-  pantalla(`<div class="tarjetas">${nuevas.map(n => n.c ? cartaHTML(n.c, '<small class="min">¡Nueva!</small>') : `<div class="carta">${mediaHTML(n.j.med)}<b>${esc(n.j.nombre)}</b><small>Repetida: +${n.v} monedas</small></div>`).join('')}</div>
-    <div class="acciones"><button class="btn prin" data-acc="ok">Seguir</button><button class="btn" data-acc="otro" ${E.monedas < S.precio ? 'disabled' : ''}>Abrir otro</button></div>`, {
-    titulo: S.t, extra: `<span class="med m-oro">${E.monedas.toLocaleString('es')} monedas</span>`, acciones: { ok: () => hubEstrella('equipo'), otro: () => abrirSobre(id), carta: d => fichaCarta(+d.uid) },
+  // la mejor carta del sobre, primero
+  nuevas.sort((a, b) => valorSorpresa(b.c) - valorSorpresa(a.c));
+  const mejor = nuevas[0].c, especial = mejor.tipo !== 'normal' || (mejor.s && mejor.med >= 85) || mejor.med >= 88;
+  const verSobre = () => pantalla(`<div class="tarjetas cartas-sobre">${nuevas.map((n, i) => n.rep ? `<div class="rep-carta">${cartaHTML({ ...n.c, uid: -1 }, `<span class="fc-marca rep">Repetida +${n.v}</span>`)}</div>` : `<div style="--i:${i}">${cartaHTML(n.c, '<span class="fc-marca">¡Nueva!</span>')}</div>`).join('')}</div>
+    <div class="acciones"><button class="btn prin" data-acc="ok">Seguir</button><button class="btn" data-acc="otro" ${E.monedas < S.precio ? 'disabled' : ''}>Abrir otro (${S.precio.toLocaleString('es')})</button></div>`, {
+    titulo: S.t, extra: `<span class="med m-oro">${E.monedas.toLocaleString('es')} monedas</span>`, acciones: { ok: () => hubEstrella('equipo'), otro: () => abrirSobre(id), carta: d => +d.uid > 0 && fichaCarta(+d.uid) },
   });
+  if (especial) presentarCarta(mejor, verSobre); else { SFX.aceptar(); verSobre(); }
+}
+// cuánto emociona una carta (para el orden y para la presentación)
+const valorSorpresa = c => c.med + (c.tipo === 'leyenda' ? 20 : c.tipo === 'figura' ? 12 : c.s ? 6 : 0);
+// presentación de una carta buena: bandera, puesto, club y la carta (toca para saltar)
+function presentarCarta(c, despues) {
+  const club = clubCarta(c.club), clase = claseDeCarta(c);
+  pantalla(`<div class="walk walk-${clase}">
+      <div class="walk-rayos"></div>
+      <div class="walk-paso w1">${banderaSVG(c.nac)}<span>${esc(nombrePais(c.nac))}</span></div>
+      <div class="walk-paso w2"><b>${c.pos}</b><span>${{ POR: 'Portero', DFC: 'Defensa central', LD: 'Lateral derecho', LI: 'Lateral izquierdo', MCD: 'Mediocentro defensivo', MC: 'Mediocentro', MCO: 'Mediapunta', MI: 'Interior izquierdo', MD: 'Interior derecho', EI: 'Extremo izquierdo', ED: 'Extremo derecho', DC: 'Delantero centro' }[c.pos] || ''}</span></div>
+      <div class="walk-paso w3">${escudoHTML(club, 96)}<span>${esc(club.nombre)}</span></div>
+      <div class="walk-carta">${cartaHTML({ ...c }, '', false, true)}<p class="walk-nombre">${esc(nombreCarta(c))}</p></div>
+      <button class="btn walk-saltar" data-acc="saltar">Saltar</button></div>`, { clase: 'pant-walk', sinBarra: true, acciones: { saltar: () => fin(), carta: () => fin() } });
+  let hecho = false; const tt = [];
+  const fin = () => { if (hecho) return; hecho = true; tt.forEach(clearTimeout); despues(); };
+  tt.push(setTimeout(() => SFX.ocasion(), 300), setTimeout(() => SFX.ocasion(), 1500), setTimeout(() => SFX.ocasion(), 2700));
+  tt.push(setTimeout(() => { if (c.tipo === 'leyenda' || c.med >= 90) SFX.gol(); else SFX.inicio(); }, 3900));
+  tt.push(setTimeout(() => { const b = document.querySelector('.walk-saltar'); if (b) b.textContent = 'Seguir'; }, 4400));
 }
 function fichaCarta(uid) {
   const E = DATOS.estrella, c = cartaPorUid(E, uid); if (!c) return;
-  const at = [['vel', 'Velocidad'], ['tir', 'Tiro'], ['pas', 'Pase'], ['reg', 'Regate'], ['def', 'Defensa'], ['par', 'Portería']];
-  pantalla(`<div class="tarjetas">${cartaHTML(c)}</div><div class="panel"><div class="kv">${at.map(([k, t]) => `<span>${t}</span><b>${c.at[k]}</b>`).join('')}</div></div>
-    <div class="acciones"><button class="btn" data-acc="vender" ${E.once.includes(uid) || E.cartas.length <= 11 ? 'disabled' : ''}>Vender por ${ventaRapida(c)} monedas</button></div>
+  completarCarta(c);
+  const S = c.pos === 'POR' ? STATS_POR : STATS_CAMPO, club = clubCarta(c.club);
+  const barra = v => `<span class="barra-at"><i style="width:${v}%;background:${v >= 85 ? '#2bc46a' : v >= 70 ? '#9fd84a' : v >= 55 ? '#f5c542' : '#ef7a3a'}"></i></span>`;
+  pantalla(`<div class="ficha-carta">${cartaHTML(c, '', false, true)}
+    <div class="panel"><h3>${esc(nombreCarta(c))}</h3>
+      <div class="kv"><span>País</span><b>${banderaSVG(c.nac)} ${esc(nombrePais(c.nac))}</b><span>Club</span><b>${esc(club.nombre)}</b><span>Puesto</span><b>${c.pos}</b>
+        <span>Pie bueno</span><b>${c.pie === 'I' ? 'Izquierdo' : 'Derecho'}</b><span>Habilidad</span><b class="estrellas">${estrellitas(c.hab)}</b><span>Pie malo</span><b class="estrellas">${estrellitas(c.pm)}</b>
+        ${TIPOS_CARTA[c.tipo] ? `<span>Carta</span><b>${TIPOS_CARTA[c.tipo]}</b>` : ''}</div>
+      <div class="ats">${S.map(([k, t]) => `<span>${t}</span><b>${c.st[k]}</b>${barra(c.st[k])}`).join('')}</div></div></div>
+    <div class="acciones"><button class="btn" data-acc="vender" ${E.once.includes(uid) || E.cartas.length <= 11 ? 'disabled' : ''}>Vender por ${ventaRapida(c).toLocaleString('es')} monedas</button></div>
     ${E.once.includes(uid) ? '<p class="nota">Está en tu once: sácalo antes de venderlo.</p>' : ''}`, {
-    titulo: esc(c.nombre1 + ' ' + c.nombre), atras: () => hubEstrella('equipo'), acciones: {
+    titulo: esc(nombreCarta(c)), atras: () => hubEstrella('equipo'), acciones: {
+      carta: () => { },
       vender: () => { E.cartas = E.cartas.filter(x => x.uid !== uid); E.monedas += ventaRapida(c); guardarEstrella(); toast('Carta vendida.'); hubEstrella('equipo'); },
     },
   });
@@ -175,7 +237,7 @@ function fichaCarta(uid) {
 function elegirCartaHueco(k) {
   const E = DATOS.estrella, form = FORMACIONES[E.formacion], puesto = form[k].p;
   const cs = E.cartas.slice().sort((a, b) => b.med * encaje(b.pos, puesto) - a.med * encaje(a.pos, puesto));
-  pantalla(`<div class="panel">${cs.map(c => { const en = E.once.indexOf(c.uid); return `<button class="fila-j" data-acc="poner" data-uid="${c.uid}"><span class="pos pos-${c.pos}">${c.pos}</span><span class="info"><b>${esc(c.nombre1 + ' ' + c.nombre)}</b><small>${esc(c.club)}${en >= 0 ? ' · ya juega de ' + form[en].p : ''}</small></span>${mediaHTML(Math.round(c.med * encaje(c.pos, puesto)))}</button>`; }).join('')}</div>`, {
+  pantalla(`<div class="panel">${cs.map(c => { const en = E.once.indexOf(c.uid); return `<button class="fila-j" data-acc="poner" data-uid="${c.uid}"><span class="pos pos-${c.pos}">${c.pos}</span><span class="info"><b>${esc(nombreCarta(c))}</b><small>${esc(c.club)}${en >= 0 ? ' · ya juega de ' + form[en].p : ''}</small></span>${mediaHTML(Math.round(c.med * encaje(c.pos, puesto)))}</button>`; }).join('')}</div>`, {
     titulo: 'Elegir ' + puesto, atras: () => hubEstrella('equipo'), acciones: {
       poner: d => { const uid = +d.uid, n = E.once.slice(), antes = n.indexOf(uid); if (antes >= 0) n[antes] = n[k]; n[k] = uid; E.once = n; guardarEstrella(); hubEstrella('equipo'); },
     },

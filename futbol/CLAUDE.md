@@ -19,7 +19,8 @@ Se publica como artefacto de claude.ai con su propio enlace (ver "Publicar"). To
 | `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
 | `js/carrera_dt.js` | Carrera de técnico (`CDT`) |
 | `js/carrera_jug.js` | Carrera de jugador (`CJ`) |
-| `js/estrella.js` | Equipo Estrella, el modo de cartas (`DATOS.estrella`) |
+| `js/cartas.js` | Base de estrellas y leyendas (`ESTRELLAS_TXT`, `LEYENDAS_TXT`), banderas, retratos, fórmula de atributos y dibujo de la carta (`cartaHTML`) |
+| `js/estrella.js` | Equipo Estrella, el modo de cartas (`DATOS.estrella`): sobres, presentación de cartas, álbum |
 | `js/editor.js` | Editor de la base de datos o de una carrera |
 | `js/arranque.js` | Arranque y bucle principal |
 
@@ -33,8 +34,10 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 ## Reglas del proyecto
 
 - Los **clubes** llevan su nombre real (lo pidió el usuario) pero sin escudos: la insignia es de colores y el usuario
-  puede subir el escudo en el editor. Los **jugadores** son inventados. Nunca usar "FIFA", "Ultimate Team" ni caras
-  reales. El modo de cartas se llama "Equipo Estrella" y solo usa monedas del juego (nunca dinero real).
+  puede subir el escudo en el editor. Los jugadores de las ligas son inventados. En Equipo Estrella hay además
+  estrellas actuales y leyendas con **nombres parecidos pero nunca idénticos** a los reales (también lo pidió el
+  usuario: "Messio", "Halland"...) y retratos dibujados, nunca fotos ni caras reales. Nunca usar "FIFA" ni
+  "Ultimate Team". El modo de cartas se llama "Equipo Estrella" y solo usa monedas del juego (nunca dinero real).
 - Jugadores realistas o de caricatura (ver "Modelos de jugadores"). Tiene que ir fluido en un celular de gama media: los 22 jugadores se dibujan
   con una malla por pieza del cuerpo (`InstancedMesh`), así son pocas llamadas de dibujo. No añadas una malla por
   jugador ni sombras en tiempo real sin medir antes.
@@ -73,7 +76,7 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 Hecho: motor jugable (física, IA, controles, medio tiempo), 8 ligas, menús, amistoso, torneos, carrera de técnico,
 carrera de jugador (controlas solo a tu jugador, puedes salir del banquillo a mitad de partido), Equipo Estrella y
 editor con fotos y escudos.
-Pendiente: saques con animación; repeticiones; mercado de cartas;
+Pendiente: saques con animación; repeticiones; mercado de cartas; más estrellas;
 copas nacionales dentro de las carreras.
 
 ## Regla número uno: no perder el progreso
@@ -149,6 +152,17 @@ se dibuja con menos de 80 llamadas de dibujo.
   queda en `G.todos` porque los gráficos usan ese orden. Los porteros no reciben tarjeta (no hacen entradas).
   `resultadoPartido` guarda `am` y `ro` por jugador; las carreras convierten la roja en un partido de sanción.
 - Faltas, amarillas y rojas están en `G.stats` y salen en la pantalla de resultado.
+
+## Cartas (0.9)
+
+- Una fila por jugador en `ESTRELLAS_TXT` / `LEYENDAS_TXT` (formato en el comentario). Para añadir una estrella basta
+  con una fila; la prueba "cartas" comprueba país con bandera, puesto, club, que la media cuadre y nombres únicos.
+- Los atributos de carta salen de `statsCarta(puesto, media, estilo)`: perfil del puesto (`PERFIL_CARTA`) + estilo
+  (`ARQUETIPOS`) + un poco de ruido fijo por nombre, y luego se ajustan para que la media según el puesto
+  (`PESOS_CARTA`) sea la de la carta. `atribMotor` los pasa a los atributos del partido.
+- Tipos: bronce/plata/oro por media, `figura` (azul, +3, para las filas con figura = 1) y `leyenda`.
+- Las cartas guardadas por versiones anteriores no tienen `st`, `look`, `hab`... `completarCarta` las rellena.
+- `presentarCarta` es la animación de bandera → puesto → club → carta para las cartas buenas de un sobre.
 
 ## Menús y sonido
 

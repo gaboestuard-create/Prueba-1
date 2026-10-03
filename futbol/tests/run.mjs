@@ -807,12 +807,55 @@ test('Equipo Estrella: equipo inicial, sobres con monedas del juego, partidos y 
     await colaGuardado;
     return { ini, trasSobre, sinDinero, motor, monedas: E.monedas, pj: E.temp.pj, division: E.division, guardado: (await KV.get('save')).includes('estrella') };
   });
-  assert(r.ini.cartas >= 11 && r.ini.once === 11 && r.ini.monedas === 5000, 'equipo inicial mal: ' + JSON.stringify(r.ini));
-  assert(r.trasSobre.monedas === 3000 && r.trasSobre.cartas > r.ini.cartas, 'el sobre no se cobró o no dio cartas: ' + JSON.stringify(r.trasSobre));
+  assert(r.ini.cartas >= 11 && r.ini.once === 11 && r.ini.monedas === 20000, 'equipo inicial mal: ' + JSON.stringify(r.ini));
+  assert(r.trasSobre.monedas === 18000 && r.trasSobre.cartas > r.ini.cartas, 'el sobre no se cobró o no dio cartas: ' + JSON.stringify(r.trasSobre));
   assert(r.sinDinero === r.trasSobre.cartas, 'se abrió un sobre sin monedas suficientes');
   assert(r.monedas > 0 && r.pj === 1, 'los partidos no dieron monedas o no contaron: ' + JSON.stringify(r));
   assert(r.motor.nombre === 'Mi Equipo Estrella' && r.motor.jug === 11, 'el partido no usa tus cartas');
   assert(r.guardado, 'Equipo Estrella no se guardó');
+  sinErrores(errors); await ctx.close();
+});
+
+test('cartas: base de estrellas y leyendas, atributos con fórmula, sobres especiales y cartas antiguas', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const malos = [];
+    const nombres = new Set();
+    for (const e of CARTAS_ESTRELLA) {
+      const c = cartaDeEstrella(e);
+      if (!PAISES[e.nac]) malos.push('país ' + e.nac + ' ' + e.corto);
+      if (!PERFIL_CARTA[e.pos]) malos.push('puesto ' + e.pos + ' ' + e.corto);
+      if (Math.abs(mediaCarta(e.pos, c.st) - e.med) > 1) malos.push('media ' + e.corto + ' ' + mediaCarta(e.pos, c.st) + '≠' + e.med);
+      if (Object.values(c.at).some(v => !(v >= 10 && v <= 99))) malos.push('atributos ' + e.corto);
+      if (!(e.hab >= 1 && e.hab <= 5 && e.pm >= 1 && e.pm <= 5)) malos.push('estrellas ' + e.corto);
+      const club = clubCarta(e.club); if (!club.corto || club.corto === '???') malos.push('club ' + e.club);
+      if (e.tipo !== 'figura') { if (nombres.has(e.nombre)) malos.push('repetido ' + e.nombre); nombres.add(e.nombre); }
+      if (!retratoSVG(c.look, 0xff0000).includes('<svg')) malos.push('retrato ' + e.corto);
+    }
+    const cuenta = t => CARTAS_ESTRELLA.filter(e => e.tipo === t).length;
+    // sobres especiales
+    menuEstrella(); const E = DATOS.estrella; E.monedas = 1e6;
+    const antes = E.cartas.length;
+    for (let i = 0; i < 6; i++) abrirSobre('estrella');
+    const nuevas = E.cartas.slice(antes), deEstrellas = nuevas.filter(c => c.s).length;
+    abrirSobre('leyenda');
+    const ultima = E.cartas[E.cartas.length - 1];
+    // una carta guardada por una versión anterior (sin atributos de carta ni aspecto) se completa sola
+    const vieja = { uid: 999, j: APP.mundo.jug[3].id, nombre: 'Viejo', nombre1: 'Un', pos: 'MC', med: 70, nac: 'ES', club: 'Real Madrid', liga: 'esp', at: { vel: 60, tir: 60, pas: 75, reg: 70, def: 62, par: 10 }, piel: 0xd9a27b, pelo: 0x1d1510, num: 8 };
+    const html = cartaHTML(vieja);
+    // el partido usa los atributos de las cartas de estrellas
+    autoOnce(E); const eq = equipoEstrella(E);
+    const okMotor = eq.jugadores.every(j => j && j.atrib && j.atrib.vel > 0 && j.piel != null);
+    hubEstrella('album'); const album = document.querySelectorAll('#capa .fc').length;
+    return { malos, n: { normal: cuenta('normal'), figura: cuenta('figura'), leyenda: cuenta('leyenda') }, deEstrellas, nuevas: nuevas.length, ultima: { s: ultima.s, med: ultima.med }, vieja: { st: !!vieja.st, look: !!vieja.look, hab: vieja.hab, html: html.includes('fc-plata') }, okMotor, album };
+  });
+  assert(!r.malos.length, 'problemas en la base de estrellas: ' + r.malos.slice(0, 10).join(', '));
+  assert(r.n.normal >= 100 && r.n.leyenda >= 50 && r.n.figura >= 20, 'pocas cartas: ' + JSON.stringify(r.n));
+  assert(r.deEstrellas >= 12, 'el sobre de estrellas debería dar estrellas conocidas: ' + r.deEstrellas + ' de ' + r.nuevas);
+  assert(r.ultima.s && r.ultima.med >= 86, 'el sobre leyenda debería dar una carta 86+: ' + JSON.stringify(r.ultima));
+  assert(r.vieja.st && r.vieja.look && r.vieja.hab >= 1 && r.vieja.html, 'una carta antigua no se completó: ' + JSON.stringify(r.vieja));
+  assert(r.okMotor, 'el once de cartas no llega bien al motor');
+  assert(r.album === r.n.normal, 'el álbum debería mostrar todas las estrellas: ' + r.album);
   sinErrores(errors); await ctx.close();
 });
 

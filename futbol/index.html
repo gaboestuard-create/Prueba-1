@@ -268,6 +268,78 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
   .mp-pie .pista{display:none}
 }
 @media (prefers-reduced-motion:reduce){.ini-pulsa span,.mp.entra *,.ini-logo{animation:none!important}.tile,.tile::after{transition:none}}
+/* ---------- cartas de Equipo Estrella ---------- */
+.tarjetas{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));justify-items:center}
+.fc{--fs:8.4px;font-size:var(--fs);position:relative;width:15em;height:21.5em;padding:0;border:0;flex:none;color:#3b2a06;font-family:var(--f-texto);
+  clip-path:polygon(50% 0,80% 2.5%,100% 7%,100% 87%,50% 100%,0 87%,0 7%,20% 2.5%);background:var(--fc-fondo);filter:drop-shadow(0 4px 6px rgba(0,0,0,.4));transition:transform .15s}
+.fc:hover,.fc.foco{transform:translateY(-3px) scale(1.03)}
+.fc.sel{outline:none;filter:drop-shadow(0 0 .5em var(--amarillo)) drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+.fc-brillo{position:absolute;inset:0;background:radial-gradient(70% 45% at 30% 15%,rgba(255,255,255,.55),rgba(255,255,255,0) 70%),repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 .6em,rgba(255,255,255,0) .6em 1.6em);pointer-events:none}
+.fc-oro{--fc-fondo:linear-gradient(165deg,#fff3b0 0%,#f2cf5c 30%,#d8a630 62%,#a8761a 100%);--fc-linea:#8a6212}
+.fc-plata{--fc-fondo:linear-gradient(165deg,#ffffff,#d9e0e6 35%,#a8b4bf 70%,#7e8a96);--fc-linea:#5d6873;color:#1e252b}
+.fc-bronce{--fc-fondo:linear-gradient(165deg,#f2c39a,#d18b56 40%,#9d5a2d 75%,#6e3b1b);--fc-linea:#5c2f12;color:#2b1405}
+.fc-figura{--fc-fondo:linear-gradient(165deg,#5fd3ff 0%,#1e5bd8 30%,#0c2a86 65%,#071649);--fc-linea:#8fe3ff;color:#fff}
+.fc-figura .fc-brillo{background:radial-gradient(60% 40% at 70% 20%,rgba(140,230,255,.55),rgba(255,255,255,0) 70%),repeating-linear-gradient(60deg,rgba(130,220,255,.12) 0 .4em,rgba(0,0,0,0) .4em 1.4em)}
+.fc-leyenda{--fc-fondo:linear-gradient(165deg,#ffffff 0%,#f6edd6 35%,#e2cc93 70%,#b8954a);--fc-linea:#a8862e;color:#3a2b08}
+.fc-leyenda .fc-brillo{background:radial-gradient(50% 35% at 50% 30%,rgba(255,255,255,.9),rgba(255,255,255,0) 70%),conic-gradient(from 0deg at 50% 32%,rgba(212,170,70,.18) 0 10deg,rgba(0,0,0,0) 10deg 20deg,rgba(212,170,70,.18) 20deg 30deg,rgba(0,0,0,0) 30deg 40deg,rgba(212,170,70,.18) 40deg 50deg,rgba(0,0,0,0) 50deg 60deg,rgba(212,170,70,.18) 60deg 70deg,rgba(0,0,0,0) 70deg 80deg,rgba(212,170,70,.18) 80deg 90deg,rgba(0,0,0,0) 90deg 360deg)}
+.fc-izq{position:absolute;left:1.5em;top:2.3em;width:3.2em;display:flex;flex-direction:column;align-items:center;gap:.35em;z-index:1}
+.fc-med{font-family:var(--f-titulo);font-weight:400;font-size:3.1em;line-height:.85}
+.fc-pos{font-weight:800;font-size:1.25em;line-height:1;letter-spacing:.02em}
+.fc-izq .bandera{width:2.6em;height:auto;border-radius:.15em;box-shadow:0 0 0 .08em rgba(0,0,0,.25)}
+.fc-izq .escudo{width:2.4em!important;height:2.4em!important;font-size:.7em!important}
+.fc-foto{position:absolute;left:4.3em;top:1.6em;width:10em;height:9.8em;overflow:hidden}
+.fc-foto .retrato,.fc-foto img{width:100%;height:100%;display:block;object-fit:cover}
+.fc-foto img{border-radius:.6em}
+.fc-tipo{position:absolute;right:1.4em;top:1.2em;font-size:.85em;font-weight:800;letter-spacing:.12em;text-transform:uppercase;z-index:1;opacity:.9}
+.fc-nom{position:absolute;left:.7em;right:.7em;top:7.6em;text-align:center;font-family:var(--f-titulo);font-size:1.5em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:.06em solid var(--fc-linea);padding-bottom:.1em}
+.fc-st{position:absolute;left:1.7em;right:1.5em;top:12.35em;display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(3,auto);gap:.05em 1em;font-size:1.08em;line-height:1.25}
+.fc-st span{white-space:nowrap;font-weight:700}
+.fc-st b{font-weight:800;display:inline-block;min-width:1.4em}
+.fc-pie{position:absolute;left:0;right:0;top:21.4em;display:flex;justify-content:center;gap:.6em;font-size:.82em;font-weight:800;opacity:.85}
+.fc-marca{position:absolute;left:50%;bottom:.3em;transform:translateX(-50%);font-size:1em;font-weight:800;background:#2bc46a;color:#fff;border-radius:1em;padding:.15em .7em;white-space:nowrap;z-index:2}
+.fc-marca.rep{background:#555;}
+.rep-carta .fc{filter:grayscale(.7) brightness(.8)}
+.fc-oculta{filter:grayscale(.85) brightness(.45);cursor:default}.fc-int{position:absolute;left:0;right:0;top:3.2em;text-align:center;font-family:var(--f-titulo);font-size:5em;opacity:.6}
+.fc-grande{--fs:clamp(12px,2.2vh,17px)}
+.estrellas i{opacity:.25;font-style:normal}
+.cartas-sobre>div{animation:aparece .5s ease-out both;animation-delay:calc(var(--i,0) * .12s)}
+.ficha-carta{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.ficha-carta .panel{flex:1;min-width:240px}
+.kv .bandera{width:20px;height:auto;vertical-align:-2px;border-radius:2px}
+.ats{display:grid;grid-template-columns:auto auto 1fr;gap:6px 10px;align-items:center;margin-top:12px;font-size:14px}
+.ats span:not(.barra-at){color:var(--gris);font-weight:800}
+.barra-at{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}.barra-at i{display:block;height:100%}
+.sobres{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sobre{position:relative;overflow:hidden;border:0;border-radius:14px;padding:16px 12px 14px;min-height:215px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;text-align:center;
+  background:var(--sb,linear-gradient(160deg,#f2cf5c,#a8761a));color:#2b1d02;box-shadow:0 6px 16px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.35);transition:transform .15s}
+.sobre:hover:not(:disabled),.sobre.foco{transform:translateY(-3px) rotate(-1deg)}
+.sobre:disabled{filter:grayscale(.8) brightness(.6);cursor:default}
+.sobre::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 10px,rgba(255,255,255,0) 10px 22px)}
+.sb-logo{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:52px}.sb-logo .emblema{width:100%;height:auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
+.sobre b{font-family:var(--f-titulo);font-weight:400;font-size:20px;position:relative}.sobre small{font-weight:800;font-size:12px;position:relative;opacity:.85}
+.sb-precio{position:relative;font-weight:800;background:rgba(0,0,0,.55);color:#fff;border-radius:999px;padding:4px 10px;margin-top:4px}
+.sb-bronce{--sb:linear-gradient(160deg,#e8b083,#8c4f26)}.sb-plata{--sb:linear-gradient(160deg,#ffffff,#8e9aa6);color:#1e252b}
+.sb-figura{--sb:linear-gradient(160deg,#5fd3ff,#1e5bd8 45%,#071649);color:#fff}.sb-leyenda{--sb:linear-gradient(160deg,#ffffff,#e9d9a8 50%,#9a7a2e)}
+/* presentación de una carta buena */
+.pant-walk{height:100%;padding:0!important;max-width:none!important;width:100%!important}
+.pant-walk .cuerpo{flex:1}
+.walk{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,#16324f,#050b14 70%)}
+.walk-figura{background:radial-gradient(circle at 50% 45%,#1a4fd0,#040a2a 70%)}.walk-leyenda{background:radial-gradient(circle at 50% 45%,#6e5a22,#0b0904 70%)}
+.walk-rayos{position:absolute;inset:-50%;background:conic-gradient(from 0deg,rgba(255,215,90,.16) 0 8deg,transparent 8deg 22deg,rgba(255,215,90,.16) 22deg 30deg,transparent 30deg 45deg,rgba(255,215,90,.16) 45deg 52deg,transparent 52deg 70deg,rgba(255,215,90,.16) 70deg 78deg,transparent 78deg 95deg,rgba(255,215,90,.16) 95deg 103deg,transparent 103deg 125deg,rgba(255,215,90,.16) 125deg 133deg,transparent 133deg 160deg,rgba(255,215,90,.16) 160deg 168deg,transparent 168deg 200deg,rgba(255,215,90,.16) 200deg 208deg,transparent 208deg 240deg,rgba(255,215,90,.16) 240deg 248deg,transparent 248deg 290deg,rgba(255,215,90,.16) 290deg 298deg,transparent 298deg 330deg,rgba(255,215,90,.16) 330deg 338deg,transparent 338deg);animation:gira 14s linear infinite;opacity:0;animation:gira 14s linear infinite,aparecer .6s 3.6s forwards}
+.walk-figura .walk-rayos{filter:hue-rotate(170deg) saturate(2)}
+@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes aparecer{to{opacity:1}}
+.walk-paso{position:absolute;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;font-family:var(--f-titulo);font-size:clamp(22px,5vw,40px);color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.6)}
+.walk-paso .bandera{width:clamp(120px,26vw,200px);height:auto;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.walk-paso b{font-weight:400;font-size:clamp(70px,16vw,130px);line-height:.9;color:var(--amarillo)}
+.w1{animation:paso 1.2s .2s both}.w2{animation:paso 1.2s 1.4s both}.w3{animation:paso 1.2s 2.6s both}
+@keyframes paso{0%{opacity:0;transform:scale(.6)}20%{opacity:1;transform:scale(1)}80%{opacity:1;transform:scale(1.04)}100%{opacity:0;transform:scale(1.25)}}
+.walk-carta{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;animation:revela .9s 3.8s cubic-bezier(.2,1.4,.4,1) both}
+.walk-carta .fc{--fs:clamp(13px,2.6vh,19px)}
+.walk-nombre{margin:0;font-family:var(--f-titulo);font-size:clamp(22px,4vw,34px);color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.6)}
+@keyframes revela{0%{opacity:0;transform:perspective(600px) rotateY(180deg) scale(.4)}100%{opacity:1;transform:none}}
+.walk-saltar{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+@media (prefers-reduced-motion:reduce){.walk-paso{display:none}.walk-carta{animation:none;opacity:1}.walk-rayos{animation:none;opacity:1}}
 @media (max-width:560px){.vs{grid-template-columns:1fr}.vs-x{text-align:center}.goles-final{font-size:40px}.marcador-final{padding:12px 8px}}
 @media (prefers-reduced-motion:reduce){#aviso,#toast,#potencia{transition:none}}
 </style>
@@ -309,6 +381,7 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
 <script src="js/temporada.js"></script>
 <script src="js/carrera_dt.js"></script>
 <script src="js/carrera_jug.js"></script>
+<script src="js/cartas.js"></script>
 <script src="js/estrella.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/arranque.js"></script>
