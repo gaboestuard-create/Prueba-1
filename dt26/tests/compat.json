@@ -25,6 +25,11 @@
       "commit": "a99891e",
       "guardado": 5,
       "descripcion": "Versión 15 del artefacto: vida fuera del campo en el modo jugador"
+    },
+    {
+      "commit": "192b63f",
+      "guardado": 5,
+      "descripcion": "Versión 16 del artefacto: rankings, premios mundiales y vitrina"
     }
   ]
 }
