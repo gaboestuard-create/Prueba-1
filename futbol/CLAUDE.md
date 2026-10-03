@@ -17,6 +17,13 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
   tres fuentes en `ENT` (estado), `BORDE` (recién pulsado) y `SUELTO` (recién soltado). Las pulsaciones rápidas se
   guardan en `PULSO` para no perderlas aunque el juego vaya a pocos fotogramas. Los botones cambian de función al
   defender (Pase→Cambiar, Pase largo→Presión, Tiro→Barrida); ver `controlUsuario` y `actualizarBotones`.
+- Ajustes de jugabilidad que se tocan a menudo:
+  - Asistencia de pase: `CONO_PASE` (cuánto se aleja de donde apuntas para buscar compañero), `GUIA_PASE` (cuánto
+    se curva el balón hacia el receptor) y la "recepción asistida" en `controlUsuario` (el receptor va al balón
+    aunque sigas empujando el control).
+  - Portero: `reaccionPortero` decide si llega al tiro (con algo de suerte) e `iaPortero` lo coloca y lo hace salir
+    en los mano a mano.
+  - Cambio de jugador y defensa: `puntuarDefensor`, `autoCambio` y `planEquipos` (quién presiona y quién cubre).
 - La simulación usa un paso fijo (`DT = 1/60`, función `paso`). La lógica del juego no depende de los fotogramas por
   segundo; el dibujo sí. El azar sale de `rng()` (con semilla) para que las pruebas se repitan igual.
 

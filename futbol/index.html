@@ -126,7 +126,7 @@ body.tactil #tactil{display:block}
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.1.0';
+const JUEGO_VERSION = '0.2.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -266,6 +266,12 @@ function pasoBalon(dt) {
     return;
   }
   const ox = b.x;
+  b.px = b.x; b.pz = b.z;
+  if (!Number.isFinite(b.x + b.y + b.z + b.vx + b.vy + b.vz)) { // red de seguridad: nunca dejar el balón con valores rotos
+    console.warn('balón con valores no válidos: se corrige');
+    Object.assign(b, { x: Number.isFinite(b.x) ? b.x : 0, y: BR, z: Number.isFinite(b.z) ? b.z : 0, vx: 0, vy: 0, vz: 0, tipo: null, destino: null });
+  }
+  if (b.destino && (b.tipo === 'pase' || (b.tipo === 'largo' && b.vy < 0))) guiarPase(b, dt);
   if (b.y > BR + .01 || b.vy > 0) {
     b.vy -= GRAV * dt; const k = Math.exp(-AIRE * dt); b.vx *= k; b.vz *= k;
   } else {
@@ -290,6 +296,19 @@ function pasoBalon(dt) {
   }
 }
 
+// asistencia: gira un poco la dirección del pase hacia el compañero (como en las consolas, sin que se note mucho)
+const GUIA_PASE = { pase: .9, largo: .45 };   // radianes por segundo que puede girar
+function guiarPase(b, dt) {
+  const m = b.destino, v = hyp(b.vx, b.vz);
+  if (v < 2) return;
+  const tx = m.x + m.vx * .15, tz = m.z + m.vz * .15, d = hyp(tx - b.x, tz - b.z);
+  if (d < 1.2) return;
+  const dif = angDif(Math.atan2(b.vz, b.vx), Math.atan2(tz - b.z, tx - b.x));
+  if (Math.abs(dif) > .7) return; // si el pase salió muy desviado, no se corrige
+  const g = clamp(dif, -GUIA_PASE[b.tipo] * dt, GUIA_PASE[b.tipo] * dt), a = Math.atan2(b.vz, b.vx) + g;
+  b.vx = Math.cos(a) * v; b.vz = Math.sin(a) * v;
+}
+
 // patear el balón
 function patear(p, vx, vy, vz, tipo, destino) {
   const b = G.balon;
@@ -308,13 +327,15 @@ function tomar(p) {
   b.dueno = p; b.tipo = null; b.ultimo = p; b.paraPor = null; b.batido = null;
   if (b.destino === p && b.pateador && b.pateador.eq === p.eq) G.stats.pasesOk[p.eq.i]++;
   b.destino = null; p.recibe = null; p.protegido = .4;
+  if (cambio && p.eq !== eqUsuario()) G.perdidaT = G.t;
   G.posesion = p.eq;
   if (p.por && enAreaPropia(p, b.x, b.z) && (cambio || b.pateador?.eq !== p.eq)) { p.retener = 1.1; b.y = 1.05; }
   if (esUsuarioEq(p.eq) && !p.por) controlar(p);
   // acción preparada antes de recibir (pase o tiro de primera)
   if (G.ctrl === p && G.buffer && G.t - G.buffer.t < .7) {
     const a = G.buffer; G.buffer = null;
-    if (a.a === 'shot') { if (!ENT.shot) disparar(p, a.pot, a.ax, a.az); else G.carga = { t: a.carga }; }
+    // tiro de primera: si ya soltaste el botón sale con la fuerza cargada (mínimo media); si no, sigue cargando
+    if (a.a === 'shot') { if (!ENT.shot) disparar(p, a.pot || .45, a.ax || 0, a.az || 0); else G.carga = { t: a.carga || 0 }; }
     else pasar(p, a.dx, a.dz, a.a === 'long' ? 'largo' : 'corto');
   } else if (G.ctrl === p) G.buffer = null;
 }
@@ -333,15 +354,19 @@ function lineaLibre(ax, az, bx, bz, rivales, vBalon = 0) {
   }
   return m;
 }
+// asistencia de pase: busca al compañero que mejor encaja con la dirección del control.
+// Gana sobre todo el que está más cerca de esa dirección (ángulo); la distancia y la línea libre desempatan.
+const CONO_PASE = 1.45;       // radianes (~83°) a cada lado de donde apuntas en los que se busca compañero
 function elegirReceptor(p, dx, dz, tipo) {
   let mejor = null, ms = -1e9;
   for (const m of p.eq.pl) {
     if (m === p || (m.por && tipo === 'largo')) continue;
-    const lx = m.x + m.vx * .5, lz = m.z + m.vz * .5, vx = lx - p.x, vz = lz - p.z, d = hyp(vx, vz);
-    if (d < 3 || d > (tipo === 'largo' ? 75 : 45)) continue;
-    const cos = (vx * dx + vz * dz) / d;
-    if (cos < .45) continue;
-    const s = cos * 3.2 - d * (tipo === 'largo' ? .012 : .03) + Math.min(3, lineaLibre(p.x, p.z, lx, lz, p.eq.rival, tipo === 'largo' ? 0 : 16)) * .3;
+    const lx = m.x + m.vx * .3, lz = m.z + m.vz * .3, vx = lx - p.x, vz = lz - p.z, d = hyp(vx, vz);
+    if (d < 2.5 || d > (tipo === 'largo' ? 75 : 48)) continue;
+    const ang = Math.acos(clamp((vx * dx + vz * dz) / d, -1, 1));
+    if (ang > CONO_PASE) continue;
+    const libre = Math.min(3, lineaLibre(p.x, p.z, lx, lz, p.eq.rival, tipo === 'largo' ? 0 : 16));
+    const s = -ang * 2.8 - d * (tipo === 'largo' ? .008 : .022) + libre * .22 - (m.por ? .8 : 0);
     if (s > ms) { ms = s; mejor = m; }
   }
   return mejor;
@@ -359,7 +384,8 @@ function pasar(p, dx, dz, tipo) {
 function pasarA(p, m, tipo) {
   // adelantar el pase a donde va a estar el compañero
   let ax = m.x, az = m.z, t = .5;
-  const adelanto = m.desmarque && tipo === 'largo' ? 1.15 : .85;
+  // adelanto pequeño: el pase va al pie, salvo el pase largo a un compañero que se desmarca
+  const adelanto = tipo === 'largo' ? (m.desmarque ? 1.05 : .8) : .45;
   for (let it = 0; it < 3; it++) {
     const d = hyp(ax - p.x, az - p.z);
     t = tipo === 'largo' ? .9 + d * .03 : Math.log((d * ROCE + llegada(p)) / llegada(p)) / ROCE;
@@ -383,7 +409,7 @@ function lanzarPase(p, tx, tz, tipo, m) {
     patear(p, Math.cos(ang) * v0, 0, Math.sin(ang) * v0, 'pase', m);
   }
   p.cara = ang;
-  if (m) { m.recibe = { x: tx, z: tz }; if (esUsuarioEq(p.eq)) controlar(m); }
+  if (m) { m.recibe = { x: tx, z: tz }; if (esUsuarioEq(p.eq)) { controlar(m); G.recepcion = G.t; } }
 }
 // potencia de 0 a 1; (ax, az) = dirección del control para apuntar (puede ser 0)
 function disparar(p, pot, ax, az) {
@@ -403,24 +429,38 @@ function disparar(p, pot, ax, az) {
   reaccionPortero(eq.rival);
 }
 // el portero decide si llega al tiro
+// Se calcula dónde pasa el balón por la altura del portero (no por la línea de gol) y si le da tiempo a llegar.
+// Siempre hay algo de suerte: a veces para uno imposible y a veces se le escapa uno fácil.
 function reaccionPortero(eq) {
-  const gk = eq.pl[0], b = G.balon, gx = porteriaPropiaX(eq);
-  let cruce = -1;
+  const gk = eq.pl[0], b = G.balon, s = Math.sign(porteriaPropiaX(eq));
   predecirBalon();
-  for (let i = 0; i < NP; i++) if (Math.abs(PX[i]) >= Math.abs(gx) - .05 && Math.sign(PX[i]) === Math.sign(gx)) { cruce = i; break; }
-  if (cruce < 0) return;
-  const zc = PZ[cruce], yc = PY[cruce], T = (cruce + 1) * PH;
-  if (Math.abs(zc) > GW2 + .2 || yc > GH + .2) return; // va fuera: no hace falta pararlo
+  let cg = -1, ck = -1;
+  for (let i = 0; i < NP; i++) {
+    if (ck < 0 && (PX[i] - gk.x) * s >= 0) ck = i;
+    if (PX[i] * s >= HL - .05) { cg = i; break; }
+  }
+  if (cg < 0) return;
+  if (Math.abs(PZ[cg]) > GW2 + .2 || PY[cg] > GH + .2) return; // va fuera: no hace falta pararlo
   G.stats.aPuerta[1 - eq.i]++;
-  const reac = .16 + (1 - gk.par) * .1;
-  const lat = Math.abs(zc - gk.z), alto = Math.max(0, yc - 1.8);
-  const alcance = Math.max(0, T - reac) * 7 + 1.1;
+  if (ck < 0) ck = cg;
+  const zk = PZ[ck], yk = PY[ck], Tk = (ck + 1) * PH;
+  const reac = .13 + (1 - gk.par) * .1 + rnd(0, .07);
+  const lat = Math.abs(zk - gk.z), cuerpo = .85;
+  // alcance = cuerpo + lo que se desplaza tras reaccionar + el estirón final de la estirada
+  const alcance = cuerpo + Math.max(0, Tk - reac) * 9 + (Tk > reac ? .8 : 0);
   const vel = hyp(b.vx, b.vz);
-  let prob = 0;
-  if (lat + alto < alcance) prob = .9 - (lat / alcance) * .45 - Math.max(0, vel - 20) * .012 - alto * .2 + (gk.par - .7) * .3 + dif(eq).parada;
-  const para = rng() < prob;
-  const llegaZ = para ? zc : gk.z + (zc - gk.z) * rnd(.45, .75);
-  gk.estirada = { z: clamp(llegaZ, -GW2 - .5, GW2 + .5), y: yc, t: 0, reac, T, lado: Math.sign(zc - gk.z) || 1, para };
+  let prob;
+  if (lat <= cuerpo && yk < 2.1) prob = .82;                                  // le pega casi al cuerpo
+  else if (lat <= alcance) prob = .74 - .42 * (lat - cuerpo) / Math.max(.1, alcance - cuerpo);
+  else prob = .06;                                                            // imposible... casi siempre
+  if (yk > 1.6 && lat > 1.3) prob -= .14;                                     // arriba, a la escuadra
+  if (yk < .45 && lat > 1.6) prob -= .06;                                     // raso y ajustado al palo
+  prob += -Math.max(0, vel - 22) * .012 + (gk.par - .7) * .35 + dif(eq).parada + rnd(-.1, .1);
+  const para = rng() < clamp(prob, .03, .93);
+  const lado = Math.sign(zk - gk.z) || 1;
+  let llegaZ = para ? zk : gk.z + (zk - gk.z) * rnd(.35, .7);
+  if (!para && lat <= cuerpo) llegaZ = gk.z - lado * rnd(.6, 1.2);          // se lanzó al otro lado
+  gk.estirada = { z: clamp(llegaZ, -GW2 - .6, GW2 + .6), y: yk, t: 0, reac, T: Tk, lado: Math.sign(llegaZ - gk.z) || lado, para };
   if (para) b.paraPor = gk; else b.batido = gk;
 }
 
@@ -539,7 +579,7 @@ function lineaDefensa(eq) {
 function planEquipos() {
   const b = G.balon;
   for (const eq of G.eqs) {
-    eq.persigue = null; eq.presiona = null; eq.cubre = null;
+    eq.persigue = null; eq.presiona = null; eq.presiona2 = null; eq.cubre = null;
     const tiene = b.dueno && b.dueno.eq === eq, rivalTiene = b.dueno && b.dueno.eq !== eq;
     if (tiene) continue;
     const campo = eq.pl.filter(p => !p.por && p.suelo <= 0);
@@ -560,9 +600,13 @@ function planEquipos() {
       if (esUsuarioEq(eq)) {
         const c = G.ctrl, dc = c ? hyp(c.x - b.x, c.z - b.z) : 99;
         const otros = orden.filter(p => p !== c);
-        if (G.presion || dc > 14) eq.presiona = otros[0];
-        eq.cubre = G.presion ? otros[1] : otros[0];
-      } else { eq.presiona = orden[0]; eq.cubre = orden[1]; }
+        if (G.presion || dc > 5) { eq.presiona = otros[0]; eq.cubre = otros[1]; }
+        else eq.cubre = otros[0];
+      } else {
+        eq.presiona = orden[0]; eq.cubre = orden[1];
+        // cerca de su portería, la computadora mete a un segundo jugador a presionar
+        if (hyp(porteriaPropiaX(eq) - b.x, b.z) < 30) { eq.presiona2 = orden[1]; eq.cubre = orden[2]; }
+      }
     }
   }
 }
@@ -574,9 +618,7 @@ function iaJugador(p, dt) {
   if (G.saque && G.saque.tomador === p) return [0, 0];
   if (!b.dueno && eq.persigue === p && G.fase === 'juego' && !G.saque && G.muerto <= 0) {
     const ip = p.ip || intercepcion(p);
-    tx = ip.x; tz = ip.z; prisa = true;
-    if (p.recibe && hyp(p.recibe.x - p.x, p.recibe.z - p.z) < 1.5 && hyp(b.x - p.x, b.z - p.z) > 3) { tx = p.recibe.x; tz = p.recibe.z; }
-    return moverHacia(p, tx, tz, prisa, false);
+    return moverHacia(p, ip.x, ip.z, true, b.destino === p);
   }
   if (b.dueno && b.dueno.eq === eq) { // atacando sin balón
     p.desT -= dt;
@@ -598,9 +640,10 @@ function iaJugador(p, dt) {
     if (d > 16 && p.cercano) { tx = (tx + b.dueno.x) / 2; tz = (tz + b.dueno.z) / 2; }
   } else if (b.dueno) { // defendiendo
     const o = b.dueno, gx = porteriaPropiaX(eq);
-    if (eq.presiona === p) {
-      const dg = hyp(gx - o.x, -o.z) || 1;
-      tx = o.x + (gx - o.x) / dg * .9 + o.vx * .2; tz = o.z + (-o.z) / dg * .9 + o.vz * .2; prisa = true;
+    if (eq.presiona === p || eq.presiona2 === p) {
+      // se pone entre el rival y la portería y le sigue el paso (el segundo cierra por el otro lado)
+      const dg = hyp(gx - o.x, -o.z) || 1, lado = eq.presiona2 === p ? 1.6 : 0;
+      tx = o.x + (gx - o.x) / dg * 1.1 + o.vx * .25 - (-o.z) / dg * lado; tz = o.z + (-o.z) / dg * 1.1 + o.vz * .25 + (gx - o.x) / dg * lado; prisa = true;
       const d = hyp(o.x - p.x, o.z - p.z);
       p.decT -= dt;
       if (d < 1.6 && p.decT <= 0 && !G.saque) {
@@ -692,18 +735,26 @@ function iaPortero(p, dt) {
   if (p.estirada) {
     const e = p.estirada; e.t += dt;
     if (e.t > 1.1 || b.dueno) { p.estirada = null; return [0, 0]; }
-    if (e.t < e.reac) return [0, 0];
-    const lineX = gx + eq.dir * .6;
-    const resto = Math.max(.05, e.T - e.t), dz = e.z - p.z;
-    const v = Math.max(7, Math.abs(dz) / resto);
-    const vz = Math.sign(dz) * Math.min(Math.abs(dz) / dt, v);
-    p.x += (lineX - p.x) * Math.min(1, dt * 6); p.vx = 0; p.vz = vz;
+    if (e.t < e.reac) { p.vx *= .8; p.vz *= .8; return null; }
+    const resto = Math.max(.04, e.T - e.t), dz = e.z - p.z;
+    const v = e.para ? Math.abs(dz) / resto : 7.5;
+    p.vx = 0; p.vz = Math.sign(dz) * Math.min(Math.abs(dz) / dt, v);
     return null; // movimiento propio de la estirada
   }
   if (!b.dueno && eq.persigue === p) { const ip = p.ip || intercepcion(p); return moverHacia(p, ip.x, ip.z, true, false); }
   // colocarse entre el balón y el centro de la portería
   const dx = b.x - gx, dz = b.z, d = hyp(dx, dz) || 1;
-  const dist = clamp(d * .09 + .8, .8, 5.5);
+  let dist = clamp(d * .09 + .8, .8, 5.5);
+  const o = b.dueno;
+  if (o && o.eq !== eq && d < 18 && Math.abs(dz) < 14) {
+    // mano a mano: sale a achicar el ángulo y, si lo tiene encima, se tira a sus pies
+    dist = clamp(d * .4, 1.2, 7);
+    p.decT -= dt;
+    if (hyp(b.x - p.x, b.z - p.z) < 1.7 && p.decT <= 0 && o.protegido <= 0) {
+      p.decT = .45;
+      if (rng() < .3 + (p.par - .7) * .5 + dif(eq).parada) { b.dueno = null; o.tropiezo = .5; tomar(p); p.retener = 1.2; aviso('¡Salida del portero!', '', 1, true); return [0, 0]; }
+    }
+  }
   const tx = gx + dx / d * dist, tz = clamp(dz / d * dist, -GW2 + .4, GW2 - .4);
   p.mirar = Math.atan2(b.z - p.z, b.x - p.x);
   return moverHacia(p, tx, tz, d < 30);
@@ -784,9 +835,15 @@ function consumirBordes() { for (const k of BOTONES) { BORDE[k] = false; SUELTO[
 
 // el jugador que controlas
 function controlar(p) { if (!p || p === G.ctrl || p.por) return; G.ctrl = p; G.cambioT = G.t; G.carga = null; actualizarQuien(); }
+// el mejor defensor para tomar el control: cerca del balón y, mejor aún, entre el balón y nuestra portería
+function puntuarDefensor(p) {
+  const b = G.balon, eq = p.eq, d = hyp(p.x - b.x, p.z - b.z);
+  const detras = (b.x - p.x) * eq.dir > -1;       // está más cerca de su portería que el balón
+  return d + (detras ? 0 : 6);
+}
+function ordenDefensores() { return eqUsuario().pl.filter(p => !p.por && p.suelo <= 0).sort((p, q) => puntuarDefensor(p) - puntuarDefensor(q)); }
 function cambiarJugador() {
-  const b = G.balon;
-  const orden = eqUsuario().pl.filter(p => !p.por).sort((p, q) => hyp(p.x - b.x, p.z - b.z) - hyp(q.x - b.x, q.z - b.z));
+  const orden = ordenDefensores();
   controlar(orden[0] === G.ctrl ? orden[1] : orden[0]);
 }
 function controlUsuario(p, dt) {
@@ -809,9 +866,10 @@ function controlUsuario(p, dt) {
     // preparar un pase o tiro de primera mientras llega el balón
     if (BORDE.pass) G.buffer = { a: 'pass', t: G.t, dx: ENT.mx, dz: ENT.mz };
     else if (BORDE.long) G.buffer = { a: 'long', t: G.t, dx: ENT.mx, dz: ENT.mz };
-    else if (BORDE.shot) G.buffer = { a: 'shot', t: G.t, ax: ENT.mx, az: ENT.mz, inicio: G.t };
+    else if (BORDE.shot) G.buffer = { a: 'shot', t: G.t, ax: ENT.mx, az: ENT.mz, inicio: G.t, carga: 0, pot: .45 };
     if (G.buffer && G.buffer.a === 'shot' && ENT.shot) { // mantener el tiro cargando mientras llega el balón
-      G.buffer.carga = G.t - G.buffer.inicio; G.buffer.pot = .2 + .8 * Math.min(1, G.buffer.carga / .85); G.buffer.t = G.t;
+      G.buffer.carga = G.t - G.buffer.inicio; G.buffer.pot = Math.max(.45, .2 + .8 * Math.min(1, G.buffer.carga / .85)); G.buffer.t = G.t;
+      G.buffer.ax = ENT.mx; G.buffer.az = ENT.mz;
     }
   } else if (!(b.dueno && b.dueno.eq === p.eq)) {
     if (BORDE.pass || BORDE.swap) cambiarJugador();
@@ -822,27 +880,38 @@ function controlUsuario(p, dt) {
   if (!(b.dueno && b.dueno.eq !== p.eq)) G.presion = false;
   if (G.ctrl !== p) return [0, 0];
   if (quieto) { if (mag > .2) p.mirar = Math.atan2(dz, dx); return [0, 0]; }
-  if (mag > .15) { const v = velMax(p, ENT.sprint) * Math.min(1, mag * 1.15); return [ENT.mx / mag * v, ENT.mz / mag * v]; }
-  // sin tocar el control: va solo a recibir el pase o al balón suelto
-  if (!b.dueno && (b.destino === p || p.eq.persigue === p) && G.fase === 'juego' && !G.saque) {
+  if (!b.dueno && b.destino === p && G.fase === 'juego' && !G.saque && hyp(b.x - p.x, b.z - p.z) > 1) {
+    // recepción asistida: va al encuentro del balón; el control solo corrige un poco
+    // (al recibir el pase sueles seguir empujando hacia donde pasaste: eso no debe alejarte del balón)
     const ip = p.ip || intercepcion(p);
-    const tx = b.destino === p && p.recibe && hyp(b.x - p.x, b.z - p.z) > 4 ? p.recibe.x : ip.x;
-    const tz = b.destino === p && p.recibe && hyp(b.x - p.x, b.z - p.z) > 4 ? p.recibe.z : ip.z;
-    return moverHacia(p, tx, tz, false, b.destino === p);
+    let [vx, vz] = moverHacia(p, ip.x, ip.z, hyp(ip.x - p.x, ip.z - p.z) > 4, true);
+    if (mag > .3 && G.t - (G.recepcion || 0) > .45) { const v = velMax(p, ENT.sprint) * Math.min(1, mag); vx = vx * .65 + ENT.mx / mag * v * .35; vz = vz * .65 + ENT.mz / mag * v * .35; }
+    return [vx, vz];
+  }
+  if (mag > .15) { const v = velMax(p, ENT.sprint) * Math.min(1, mag * 1.15); return [ENT.mx / mag * v, ENT.mz / mag * v]; }
+  // sin tocar el control: va solo al balón suelto si es el que llega antes
+  if (!b.dueno && p.eq.persigue === p && G.fase === 'juego' && !G.saque) {
+    const ip = p.ip || intercepcion(p);
+    return moverHacia(p, ip.x, ip.z, false, false);
   }
   return [0, 0];
 }
 function autoCambio() {
   const b = G.balon, eq = eqUsuario(), c = G.ctrl;
-  if (G.autoplay || !c || G.t - G.cambioT < .7 || hyp(ENT.mx, ENT.mz) > .3 && G.t - G.cambioT < 1.5) return;
+  if (G.autoplay || !c || c.entrada) return;
+  const desdeCambio = G.t - G.cambioT, moviendo = hyp(ENT.mx, ENT.mz) > .3;
   if (!b.dueno && !(b.destino && b.destino.eq === eq) && eq.persigue && eq.persigue !== c && !eq.persigue.por) {
+    // balón suelto: el que llega antes
+    if (desdeCambio < .7 || (moviendo && desdeCambio < 1.5)) return;
     const ic = c.ip || intercepcion(c), ip = eq.persigue.ip || intercepcion(eq.persigue);
     if (ic.t > ip.t + .45) controlar(eq.persigue);
   } else if (b.dueno && b.dueno.eq !== eq) {
-    const dc = hyp(c.x - b.x, c.z - b.z);
-    let m = null, md = 1e9;
-    for (const p of eq.pl) { if (p.por) continue; const d = hyp(p.x - b.x, p.z - b.z); if (d < md) { md = d; m = p; } }
-    if (m && dc > md + 8 && dc > 12) controlar(m);
+    // el rival tiene el balón: pasar al mejor defensor si el tuyo quedó lejos o mal colocado
+    const m = ordenDefensores()[0];
+    if (!m || m === c || desdeCambio < .3) return;
+    const dc = puntuarDefensor(c), dm = puntuarDefensor(m);
+    const recienPerdido = G.t - (G.perdidaT || 0) < .35;
+    if ((recienPerdido && dc > dm + 2) || (desdeCambio > 1.2 && dc > dm + 6 && dc > 9)) controlar(m);
   }
 }
 
@@ -968,12 +1037,15 @@ function posFormacionAlto(p) { const f = FORMACION[p.k], q = posFormacion(p.eq, 
 function contacto() {
   const b = G.balon;
   if (b.dueno || b.y > 2.4) return;
-  // parada del portero
+  // parada del portero: cuando el balón llega a su altura (ya se decidió en reaccionPortero que la para)
   const gk = b.paraPor;
-  if (gk && Math.abs(b.x - gk.x) < 1 && Math.abs(b.z - gk.z) < 1.6 && b.y < 2.7) {
+  const cruza = gk && b.px != null && (b.px - gk.x) * (b.x - gk.x) <= 0;
+  if (gk && (cruza || hyp(b.x - gk.x, b.z - gk.z) < 1) && b.y < 2.8) {
     const vel = hyp(b.vx, b.vz);
-    if (vel < 21 && b.y < 1.8 && rng() < .55) { b.dueno = null; tomar(gk); gk.retener = 1.2; aviso('¡Atrapada!', '', .9, true); }
-    else { b.vx = -b.vx * .3; b.vz = rnd(-7, 7); b.vy = rnd(2, 5); b.tipo = 'rechace'; b.paraPor = null; b.ultimo = gk; b.pateador = gk; b.id = ++G.idPatada; gk.patadaCD = .5; aviso('¡Paradón!', '', 1, true); }
+    gk.z = b.z - (gk.estirada ? gk.estirada.lado * .4 : 0);
+    if (vel < 21 && b.y < 1.8 && rng() < (Math.abs(b.z - (gk.estirada ? gk.estirada.z : gk.z)) < .9 ? .7 : .4)) { b.dueno = null; tomar(gk); gk.retener = 1.2; aviso('¡Atrapada!', '', .9, true); }
+    else { // rechace hacia un lado
+      const ld = Math.sign(b.z - gk.z) || (rng() < .5 ? -1 : 1); b.vx = -b.vx * rnd(.15, .35); b.vz = ld * rnd(3, 9); b.vy = rnd(2, 5); b.tipo = 'rechace'; b.paraPor = null; b.ultimo = gk; b.pateador = gk; b.id = ++G.idPatada; gk.patadaCD = .5; aviso('¡Paradón!', '', 1, true); }
     return;
   }
   let mejor = null, md = 1e9;
@@ -981,7 +1053,7 @@ function contacto() {
     if (p.suelo > 0 || p.patadaCD > 0 || p.entrada || p === b.batido) continue;
     const porArea = p.por && enAreaPropia(p, b.x, b.z);
     if (p.por && !porArea && b.y > 1.15) continue;
-    const alcance = porArea ? 1.3 : b.destino === p ? 1.1 : .85;
+    const alcance = porArea ? 1.3 : b.destino === p ? 1.3 : .85;
     const d = hyp(p.x - b.x, p.z - b.z);
     if (d > alcance || b.y > (porArea ? 2.4 : 1.15)) continue;
     if (d < md) { md = d; mejor = p; }

@@ -67,6 +67,75 @@ test('pase corto: llega al compañero y pasas a controlarlo', async () => {
   sinErrores(errors); await ctx.close();
 });
 
+test('asistencia de pase: apuntando algo desviado, el pase va al compañero y llega', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    let llegan = 0, aEl = 0;
+    for (let k = 0; k < 20; k++) {
+      nuevoPartido(40 + k); G.saque = null;
+      const p = G.eqs[0].pl[9];
+      G.todos.forEach((q, i) => { if (q !== p && !q.por) { q.x = -40 + (i % 11) * 2; q.z = q.eq.i ? 30 : -30; } q.vx = q.vz = 0; });
+      p.x = 0; p.z = 0; G.balon.dueno = null; tomar(p); p.protegido = 9; controlar(p);
+      const m = G.eqs[0].pl[7], dist = 10 + (k % 4) * 5, ang = (k % 2 ? 1 : -1) * .3;
+      m.x = Math.cos(ang) * dist; m.z = Math.sin(ang) * dist;
+      // el control apunta unos 30-40 grados al lado del compañero
+      const a = ang + (k % 2 ? -.6 : .6);
+      Object.assign(G.prueba, { activo: true, mx: Math.cos(a), mz: Math.sin(a), pass: true }); G.avanzar(1);
+      if (G.balon.destino === m) aEl++;
+      Object.assign(G.prueba, { pass: false }); // sigue empujando el control hacia el mismo lado
+      G.avanzar(150); G.prueba.activo = false;
+      if (G.balon.dueno === m) llegan++;
+    }
+    return { llegan, aEl };
+  });
+  assert(r.aEl === 20, `solo ${r.aEl} de 20 pases fueron dirigidos al compañero`);
+  assert(r.llegan >= 18, `solo ${r.llegan} de 20 pases llegaron (el receptor debe ir al balón aunque empujes el control)`);
+  await ctx.close();
+});
+
+test('portero: para algunos tiros, pero no todos', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    let aPuerta = 0, goles = 0;
+    for (let k = 0; k < 40; k++) {
+      nuevoPartido(700 + k); G.saque = null;
+      const p = G.eqs[0].pl[9];
+      G.todos.forEach((q, i) => { if (q !== p && !q.por) { q.x = -40 + (i % 11) * 2; q.z = q.eq.i ? 30 : -30; } });
+      const x = 32 + (k % 4) * 2, z = (k % 5) * 3 - 6;
+      p.x = x; p.z = z; p.cara = 0; G.balon.dueno = null; tomar(p); G.balon.x = x + .55; G.balon.z = z; p.protegido = 9; controlar(p);
+      G.avanzar(60);
+      const s0 = G.stats.aPuerta[0];
+      Object.assign(G.prueba, { activo: true, mx: 0, mz: (k % 3) - 1, shot: true }); G.avanzar(18 + (k % 3) * 6);
+      G.prueba.shot = false; G.avanzar(1); G.prueba.activo = false; G.avanzar(90);
+      if (G.stats.aPuerta[0] > s0) { aPuerta++; if (G.eqs[0].goles) goles++; }
+    }
+    return { aPuerta, goles };
+  });
+  const paradas = r.aPuerta - r.goles;
+  assert(r.aPuerta >= 20, 'muy pocos tiros a puerta: ' + JSON.stringify(r));
+  assert(paradas >= r.aPuerta * .25, `el portero casi no para: ${paradas} de ${r.aPuerta}`);
+  assert(r.goles >= r.aPuerta * .2, `el portero lo para todo: ${paradas} de ${r.aPuerta}`);
+  console.log(`      paradas: ${paradas} de ${r.aPuerta} tiros a puerta desde 16-22 m`);
+  await ctx.close();
+});
+
+test('al perder el balón pasas a controlar al mejor defensor', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    nuevoPartido(12); G.saque = null;
+    const lejos = G.eqs[0].pl[9]; lejos.x = 30; lejos.z = 0; G.balon.dueno = null; tomar(lejos); controlar(lejos);
+    G.avanzar(60);
+    const rival = G.eqs[1].pl[5]; rival.x = -5; rival.z = 5;
+    const def = G.eqs[0].pl[2]; def.x = -12; def.z = 4;           // entre el balón y nuestra portería
+    G.balon.dueno = null; G.balon.x = -5; G.balon.z = 5; tomar(rival);
+    G.avanzar(5);
+    const ctrl = G.ctrl;
+    return { cambio: ctrl !== lejos, cerca: hyp(ctrl.x - G.balon.x, ctrl.z - G.balon.z) < 12, detras: (G.balon.x - ctrl.x) > -1 };
+  });
+  assert(r.cambio && r.cerca && r.detras, 'no se cambió a un defensor cercano y entre el balón y la portería: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
 test('pase al primer toque: se prepara mientras llega el balón', async () => {
   const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
   await prepararJugada(page, { x: 0, z: 0 });

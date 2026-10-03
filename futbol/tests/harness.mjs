@@ -58,9 +58,12 @@ export async function openGame(ctx, url, { init } = {}) {
   await page.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     r => r.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(THREE) }));
   await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  await page.addInitScript(() => addEventListener('error', () => { window.__fallo = true; }));
   if (init) await page.addInitScript(init);
   await page.goto(url);
-  await page.waitForFunction(() => window.G && G.listo, null, { timeout: 30000 });
+  // si el código del juego tiene un error, falla al momento y lo dice (en vez de esperar 30 s)
+  await page.waitForFunction(() => (window.G && G.listo) || window.__fallo, null, { timeout: 30000 }).catch(() => { });
+  if (!(await page.evaluate(() => !!(window.G && G.listo)))) throw new Error('el juego no arrancó:\n' + errors.join('\n'));
   return { page, errors };
 }
 
