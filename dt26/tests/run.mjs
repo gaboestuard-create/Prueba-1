@@ -349,6 +349,36 @@ test('modo jugador: partido en 3D de principio a fin', async () => {
   await ctx.close();
 });
 
+test('modo jugador: negociar ofertas, hablar con el técnico y cambiar de posición', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { pos: 'ST' });
+  const r = await page.evaluate(() => {
+    const p = W.players[W.me], c = W.clubs[p.club];
+    // renovación: pedir más salario una sola vez
+    jugRenewOffer(W, p, c); const m = W.inbox.find(x => x.act && x.act.t === 'pren' && !x.act.done), w0 = m.act.wage;
+    mactDo(m.id, 'neg'); const w1 = m.act.wage, cnt = m.act.cnt; mactDo(m.id, 'neg'); const w2 = m.act.wage;
+    mactDo(m.id, 'acc'); const renewed = p.wage === w2 && p.ce > W.season;
+    // oferta de otro club: si se retira, no se puede firmar
+    const o = W.clubs.find(x => !x.national && x.id !== c.id);
+    mail(W, o.name, 'Prueba', '', '', { t: 'poff', c: o.id, fee: 0, wage: 5000, yrs: 2, role: 'Titular', exp: W.day + 7 });
+    const mo = W.inbox[0]; mactDo(mo.id, 'neg'); const after = { done: mo.act.done, cnt: mo.act.cnt, club: p.club };
+    if (!mo.act.done) mactDo(mo.id, 'rej');
+    // charla con el técnico: una vez cada 30 días
+    const n0 = W.inbox.length; jugAsk('tip'); const n1 = W.inbox.length; jugAsk('min'); const n2 = W.inbox.length;
+    // cambio de posición cuando ya domina otra
+    p.sec.AMC = 20; const b = document.createElement('button'); b.dataset.a = 'jpos'; b.dataset.v = 'AMC'; document.body.appendChild(b); b.click(); b.remove();
+    return { w0, w1, w2, cnt, renewed, after, c0: c.id, tip: n1 - n0, min: n2 - n1, pos: p.pos, secST: p.sec.ST, ok: validateWorld(W).ok };
+  });
+  assert(r.cnt === 1 && r.w2 === r.w1 && r.w1 >= r.w0, 'la negociación no funcionó una sola vez: ' + JSON.stringify(r));
+  assert(r.renewed, 'no se renovó con el salario negociado');
+  assert(r.after.club === r.c0, 'negociar una oferta movió al jugador de club');
+  assert(r.tip === 1 && r.min === 0, 'la charla con el técnico no respeta la espera de 30 días');
+  assert(r.pos === 'AMC' && r.secST === 20, 'no cambió de posición principal');
+  assert(r.ok, 'la partida quedó dañada');
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 test('modo jugador: la retirada termina la carrera y la guarda en el salón de la fama', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
   await newPlayerCareer(page);
@@ -364,6 +394,25 @@ test('modo jugador: la retirada termina la carrera y la guarda en el salón de l
   assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
   await ctx.close();
 });
+
+for (const v of compat.filter(v => v.guardado >= 5)) {
+  test(`modo jugador: carreras de la versión ${v.commit} se abren y siguen funcionando`, async () => {
+    const ctx = await fresh();
+    const old = await openGame(ctx, srv.url + `v/${v.commit}.html`);
+    await newPlayerCareer(old.page); await simDaysJug(old.page, 60);
+    const before = await old.page.evaluate(async () => { await saveNow(); const p = W.players[W.me]; return { s: W.season, d: W.day, me: W.me, club: p.club, ovr: p.ovr, n: W.players.length }; });
+    await old.page.close();
+    const cur = await openGame(ctx, srv.url);
+    await continueCareer(cur.page);
+    const after = await cur.page.evaluate(() => { const p = W.players[W.me]; return { s: W.season, d: W.day, me: W.me, club: p.club, ovr: p.ovr, n: W.players.length }; });
+    assert(JSON.stringify(before) === JSON.stringify(after), `la carrera cambió al abrirla:\n ${JSON.stringify(before)}\n ${JSON.stringify(after)}`);
+    await simDaysJug(cur.page, 60);
+    const ok = await cur.page.evaluate(async () => { for (const x of ['home', 'jme', 'jtrain', 'jcon', 'jclub']) go(x); return (await saveNow()) && validateWorld(W).ok; });
+    assert(ok, 'tras seguir jugando, la carrera no se pudo guardar');
+    assert(realErrors(cur.errors).length === 0, 'errores: ' + realErrors(cur.errors).join('\n'));
+    await ctx.close();
+  });
+}
 
 test('modo jugador: las versiones anteriores del juego la abren sin guardar encima', async () => {
   const ctx = await fresh(); const a = await openGame(ctx, srv.url);
