@@ -3,7 +3,8 @@
    carreras nuevas) o el mundo de una carrera en curso. Clubes: nombre, abreviatura, estadio, colores, reputación,
    presupuesto y escudo. Jugadores: nombre, edad, nacionalidad, posición, media, potencial, salario, forma, lesión,
    sanción, dorsal, foto y club. Las imágenes se reducen y se guardan dentro de los datos. */
-const ED = { destino: 'base', liga: null };
+// volver: a dónde regresa el editor cuando se abrió desde dentro de una carrera (null = desde el menú principal)
+const ED = { destino: 'base', liga: null, volver: null };
 function mundoEditado() { return ED.destino === 'dt' ? CDT && CDT.mundo : ED.destino === 'jug' ? CJ && CJ.mundo : APP.mundo; }
 let guardarEdT = null;
 function guardarEditor() {
@@ -15,6 +16,7 @@ function guardarEditor() {
   }, 500);
 }
 async function menuEditor() {
+  ED.volver = null;
   if (!CDT) { const r = await cargarRanura('dt'); CDT = r.datos; }
   if (!CJ) { const r = await cargarRanura('jug'); CJ = r.datos; }
   if ((ED.destino === 'dt' && !CDT) || (ED.destino === 'jug' && !CJ)) ED.destino = 'base';
@@ -73,7 +75,7 @@ function editarClub(id) {
       ${c.escudo ? '<div class="acciones"><button class="btn chico" data-acc="sinEscudo">Quitar escudo</button></div>' : ''}</div>
     <div class="etq">Plantilla (${js.length}) · toca un jugador para editarlo</div>
     <div class="panel">${js.map(j => `<button class="fila-j" data-acc="jug" data-id="${j.id}"><span class="pos pos-${j.pos}">${j.pos}</span>${fotoHTML(j, 30)}<span class="info"><b>${j.num} · ${esc(nombreCompleto(j))}</b><small>${j.edad} años${j.les > 0 ? ' · lesionado' : ''}${j.san > 0 ? ' · sancionado' : ''}</small></span>${mediaHTML(j.med)}</button>`).join('')}</div>`, {
-    titulo: 'Editar club', atras: menuEditor, acciones: {
+    titulo: 'Editar club', atras: () => ED.volver ? ED.volver() : menuEditor(), acciones: {
       campo: (d, el) => { let v = el.value; if (d.num) v = Math.round(clamp(+v || 0, +d.min, +d.max)); else v = v.trim() || c[d.k]; if (d.k === 'corto') v = String(v).toUpperCase(); c[d.k] = v; guardarEditor(); },
       color: (d, el) => { c[d.k] = parseInt(el.value.slice(1), 16); guardarEditor(); },
       escudo: (d, el) => leerImagen(el, 128, 'image/png', url => { c.escudo = url; guardarEditor(); editarClub(id); }),
@@ -124,4 +126,45 @@ function editarJugador(id) {
       perdonar: () => { j.san = 0; guardarEditor(); toast('Sanción retirada.'); editarJugador(id); },
     },
   });
+}
+
+/* ---------- editor dentro de una carrera (pestaña "Editor" de la carrera de técnico y de jugador) ----------
+   Edita solo el mundo de esa carrera. En las carreras no hay monedas: lo que se edita es el dinero del club (€),
+   los clubes y los jugadores, y hay atajos para lo más común. */
+function vistaEditorCarrera(tipo) {
+  const C = tipo === 'dt' ? CDT : CJ, M = C.mundo;
+  ED.destino = tipo; ED.liga = ED.liga && M.ligas.some(l => l.id === ED.liga) ? ED.liga : M.clubes[C.club].liga;
+  const club = M.clubes[C.club], clubes = clubesDeLiga(M, ED.liga).sort((a, b) => b.rep - a.rep);
+  const atajos = tipo === 'dt' ? `
+      <div class="form-grid">${campoNum('Presupuesto de ' + esc(club.nombre) + ' (M€)', 'presuM', Math.round(club.presupuesto / 1e5) / 10, 0, 2000).replace('data-cambio="campo"', 'data-cambio="edCampo" step="0.1"')}
+        <label class="campo-txt">Nombre del técnico<input value="${esc(C.tecnico)}" maxlength="30" data-cambio="edCampo" data-k="tecnico"></label></div>
+      <div class="acciones"><button class="btn chico" data-acc="edMiClub">Editar mi club y plantilla</button><button class="btn chico" data-acc="edCurar">Curar a todos mis jugadores</button>
+        <button class="btn chico" data-acc="edPerdonar">Quitar sanciones de mi equipo</button><button class="btn chico" data-acc="edForma">Forma al máximo</button></div>`
+    : `<div class="acciones"><button class="btn chico" data-acc="edYo">Editar mi jugador</button><button class="btn chico" data-acc="edMiClub">Editar mi club</button>
+        <button class="btn chico" data-acc="edCurar">Curar mi lesión</button><button class="btn chico" data-acc="edPerdonar">Quitar mi sanción</button></div>`;
+  return `<div class="panel"><h3>Editor de esta carrera</h3><p class="nota">Los cambios solo afectan a esta carrera (no a la base de datos ni a otros modos).</p>${atajos}</div>
+    <div class="panel"><h3>Clubes y jugadores</h3>
+      <div class="chips">${M.ligas.map(l => `<button class="chip ${l.id === ED.liga ? 'sel' : ''}" data-acc="edLiga" data-id="${l.id}">${esc(l.nombre)}</button>`).join('')}</div>
+      <div class="clubes">${clubes.map(c => `<button class="club" data-acc="edClub" data-id="${c.id}">${escudoHTML(c, 36)}<span><b>${esc(c.nombre)}</b><small>${dinero(c.presupuesto)} · media ${Math.round(fuerzaDe(M, c))}</small></span></button>`).join('')}</div></div>`;
+}
+// acciones de esa pestaña; refrescar() vuelve a pintar la pestaña del editor de la carrera
+function accionesEditorCarrera(tipo, refrescar) {
+  const C = () => tipo === 'dt' ? CDT : CJ, guardar = () => guardarRanura(tipo, C(), true);
+  const misJug = () => tipo === 'dt' ? plantillaDe(C().mundo, C().mundo.clubes[C().club]) : [C().mundo.jug[C().yo]];
+  const abrir = f => { ED.destino = tipo; ED.volver = refrescar; f(); };
+  return {
+    edLiga: d => { ED.liga = d.id; refrescar(); },
+    edClub: d => abrir(() => editarClub(+d.id)),
+    edMiClub: () => abrir(() => editarClub(C().club)),
+    edYo: () => abrir(() => editarJugador(C().yo)),
+    edCurar: () => { let n = 0; for (const j of misJug()) if (j.les > 0) { j.les = 0; n++; } guardar(); toast(n ? `Curados: ${n}.` : 'No había lesionados.'); refrescar(); },
+    edPerdonar: () => { let n = 0; for (const j of misJug()) if (j.san > 0) { j.san = 0; n++; } guardar(); toast(n ? `Sanciones quitadas: ${n}.` : 'No había sanciones.'); refrescar(); },
+    edForma: () => { for (const j of misJug()) j.forma = 100; guardar(); toast('Toda la plantilla en plena forma.'); refrescar(); },
+    edCampo: (d, el) => {
+      const c = C();
+      if (d.k === 'presuM') c.mundo.clubes[c.club].presupuesto = Math.round(clamp(+el.value || 0, 0, 2000) * 1e6);
+      if (d.k === 'tecnico') c.tecnico = el.value.trim().slice(0, 30) || c.tecnico;
+      guardar(); refrescar();
+    },
+  };
 }

@@ -3,7 +3,7 @@
    balón). Gana experiencia con su nota, mejora lo que entrenas y recibe ofertas. Ranura 'jug'.
    CJ = { mundo, yo, club, temporada, jornada, ligas, resultados, noticias, historial, ofertas, xp, foco, notas, pestana } */
 let CJ = null;
-const PESTANAS_JUG = [['inicio', 'Inicio'], ['yo', 'Mi jugador'], ['calendario', 'Calendario'], ['clasif', 'Clasificación'], ['ofertas', 'Ofertas'], ['historial', 'Trayectoria']];
+const PESTANAS_JUG = [['inicio', 'Inicio'], ['yo', 'Mi jugador'], ['calendario', 'Calendario'], ['clasif', 'Clasificación'], ['ofertas', 'Ofertas'], ['historial', 'Trayectoria'], ['editor', 'Editor']];
 const FOCOS = [['tir', 'Tiro'], ['pas', 'Pase'], ['reg', 'Regate'], ['vel', 'Velocidad'], ['def', 'Defensa']];
 
 async function menuCarreraJug() {
@@ -43,10 +43,11 @@ function hubJug(p = CJ.pestana || 'inicio') {
   CJ.pestana = p;
   const M = CJ.mundo, c = M.clubes[CJ.club], j = yoJ();
   const tabs = `<div class="chips">${PESTANAS_JUG.map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}${id === 'ofertas' && CJ.ofertas.length ? ' · ' + CJ.ofertas.length : ''}</button>`).join('')}</div>`;
-  const vistas = { inicio: vistaInicioJug, yo: vistaYoJug, calendario: () => calendarioHTML(CJ, CJ.club), clasif: () => clasificacionHTML(CJ, APP.verLiga || c.liga, CJ.club), ofertas: vistaOfertasJug, historial: vistaHistorialJug };
+  const vistas = { inicio: vistaInicioJug, yo: vistaYoJug, calendario: () => calendarioHTML(CJ, CJ.club), clasif: () => clasificacionHTML(CJ, APP.verLiga || c.liga, CJ.club), ofertas: vistaOfertasJug, historial: vistaHistorialJug, editor: () => vistaEditorCarrera('jug') };
   pantalla(tabs + vistas[p](), { titulo: esc(nombreCompleto(j)), atras: menuPrincipal, extra: `${mediaHTML(j.med)}${escudoHTML(c, 30)}`, acciones: ACC_JUG });
 }
 const ACC_JUG = {
+  ...accionesEditorCarrera('jug', () => hubJug('editor')),
   tab: d => { APP.verLiga = null; hubJug(d.id); },
   verliga: d => { APP.verLiga = d.id; hubJug('clasif'); },
   jugar: () => partidoJug(false), simular: () => partidoJug(true),

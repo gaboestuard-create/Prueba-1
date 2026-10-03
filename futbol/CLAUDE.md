@@ -18,11 +18,11 @@ Se publica como artefacto de claude.ai con su propio enlace y también se puede 
 | `js/portada.js` | Portada ("Pulsa cualquier botón"), menú principal por páginas y navegación con teclado y mando |
 | `js/torneos.js` | Liga, copa y Copa de Campeones |
 | `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
+| `js/editor.js` | Editor de la base de datos y pestaña "Editor" de las carreras (`vistaEditorCarrera`). Va antes de las carreras porque sus `ACC_*` usan `accionesEditorCarrera` al cargar |
 | `js/carrera_dt.js` | Carrera de técnico (`CDT`) |
 | `js/carrera_jug.js` | Carrera de jugador (`CJ`) |
 | `js/cartas.js` | Base de estrellas y leyendas (`ESTRELLAS_TXT`, `LEYENDAS_TXT`), banderas, retratos, fórmula de atributos y dibujo de la carta (`cartaHTML`) |
 | `js/estrella.js` | Equipo Estrella, el modo de cartas (`DATOS.estrella`): sobres, presentación de cartas, álbum |
-| `js/editor.js` | Editor de la base de datos o de una carrera |
 | `js/arranque.js` | Arranque y bucle principal |
 
 Los nombres globales no se pueden repetir entre archivos (por eso la carrera de técnico es `CDT` y no `DT`, que
@@ -118,6 +118,15 @@ pestañas) más la compatibilidad con cada versión publicada.
 
 Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) sustituye a los controles y
 `G.avanzar(n)` adelanta n pasos sin dibujar. `G.autoplay = true` hace que la computadora maneje a los dos equipos.
+
+## Editores dentro de los modos (0.12)
+
+- Carrera de técnico y de jugador: pestaña "Editor" (`vistaEditorCarrera`, `accionesEditorCarrera` en editor.js).
+  Edita solo el mundo de esa carrera (`ED.destino`) y al salir de un club vuelve a la pestaña (`ED.volver`). En las
+  carreras no hay monedas: se edita el dinero del club (€), clubes, jugadores y atajos (curar, quitar sanciones...).
+- Equipo Estrella: pestaña "Editor" (`vistaEditorEst`): monedas, división, puntos, buscar y añadir cualquier carta
+  (estrellas, especiales o jugadores de la base de datos). En la ficha de una carta se edita media (mueve todos los
+  atributos igual), habilidad, pie malo, posición y pie bueno, o se quita sin cobrar.
 
 ## Celular y app (0.11)
 

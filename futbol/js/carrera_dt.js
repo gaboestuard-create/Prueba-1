@@ -3,7 +3,7 @@
    (o simulas) los partidos. Se guarda en la ranura 'dt' con su propia copia del mundo (no toca la base de datos).
    C = { mundo, club, tecnico, temporada, jornada, ligas, resultados, noticias, historial, ofertas, objetivo, pestana } */
 let CDT = null;
-const PESTANAS_DT = [['inicio', 'Inicio'], ['plantilla', 'Plantilla'], ['tacticas', 'Tácticas'], ['calendario', 'Calendario'], ['clasif', 'Clasificación'], ['fichajes', 'Fichajes'], ['club', 'Club'], ['noticias', 'Noticias']];
+const PESTANAS_DT = [['inicio', 'Inicio'], ['plantilla', 'Plantilla'], ['tacticas', 'Tácticas'], ['calendario', 'Calendario'], ['clasif', 'Clasificación'], ['fichajes', 'Fichajes'], ['club', 'Club'], ['noticias', 'Noticias'], ['editor', 'Editor']];
 
 async function menuCarreraDT() {
   if (!CDT) { const r = await cargarRanura('dt'); CDT = r.datos; if (r.estado === 'recuperada') toast('Tu carrera estaba dañada: se recuperó la copia anterior.'); if (r.estado === 'perdida') toast('Tu carrera estaba dañada y no se pudo recuperar.'); }
@@ -46,10 +46,11 @@ function hubDT(p = CDT.pestana || 'inicio') {
   const M = CDT.mundo, c = miClub();
   const extra = `<span class="nota">${dinero(c.presupuesto)}</span>${escudoHTML(c, 30)}`;
   const tabs = `<div class="chips">${PESTANAS_DT.map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}${id === 'fichajes' && CDT.ofertas.length ? ' · ' + CDT.ofertas.length : ''}</button>`).join('')}</div>`;
-  const vistas = { inicio: vistaInicioDT, plantilla: vistaPlantillaDT, tacticas: vistaTacticasDT, calendario: () => calendarioHTML(CDT, CDT.club), clasif: () => clasificacionHTML(CDT, APP.verLiga || c.liga, CDT.club), fichajes: vistaFichajesDT, club: vistaClubDT, noticias: vistaNoticiasDT };
+  const vistas = { inicio: vistaInicioDT, plantilla: vistaPlantillaDT, tacticas: vistaTacticasDT, calendario: () => calendarioHTML(CDT, CDT.club), clasif: () => clasificacionHTML(CDT, APP.verLiga || c.liga, CDT.club), fichajes: vistaFichajesDT, club: vistaClubDT, noticias: vistaNoticiasDT, editor: () => vistaEditorCarrera('dt') };
   pantalla(tabs + vistas[p](), { titulo: c.nombre, atras: menuPrincipal, extra, acciones: ACC_DT });
 }
 const ACC_DT = {
+  ...accionesEditorCarrera('dt', () => hubDT('editor')),
   tab: d => { APP.verLiga = null; hubDT(d.id); },
   verliga: d => { APP.verLiga = d.id; hubDT('clasif'); },
   jugar: () => jugarPartidoDT(false),

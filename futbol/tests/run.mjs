@@ -956,6 +956,49 @@ test('plantilla en el campo: intercambiar, meter reservas y no repetir jugador',
   sinErrores(errors); await ctx.close();
 });
 
+test('editor dentro de cada modo: carrera de técnico, carrera de jugador y Equipo Estrella', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(async () => {
+    const clic = sel => { const b = document.querySelector('#capa ' + sel); if (!b) throw new Error('no está ' + sel); b.click(); };
+    const cambiar = (sel, v) => { const el = document.querySelector('#capa ' + sel); el.value = v; el.dispatchEvent(new Event('change', { bubbles: true })); };
+    // carrera de técnico
+    nuevaCarreraDT(0, 'Yo'); hubDT('editor');
+    const pestana = !!document.querySelector('#capa [data-acc="tab"][data-id="editor"].sel');
+    const mio = plantillaDe(CDT.mundo, CDT.mundo.clubes[0]); mio[2].les = 5; mio[3].san = 2;
+    clic('[data-acc="edCurar"]'); clic('[data-acc="edPerdonar"]');
+    cambiar('[data-k="presuM"]', '321.5');
+    const dt = { curado: mio[2].les === 0, perdonado: mio[3].san === 0, presu: CDT.mundo.clubes[0].presupuesto };
+    clic('[data-acc="edClub"][data-id="1"]'); const enClub = document.querySelector('.barra h2').textContent;
+    clic('[data-acc="__atras"]'); const vuelve = !!document.querySelector('#capa [data-acc="tab"][data-id="editor"].sel');
+    // cambiar un jugador de la carrera no toca la base de datos
+    const id = mio[0].id, antes = APP.mundo.jug[id].med; ED.destino = 'dt'; fijarMedia(CDT.mundo.jug[id], 99);
+    const baseIntacta = APP.mundo.jug[id].med === antes;
+    // carrera de jugador: editar tu jugador
+    nuevaCarreraJug({ n1: 'Gabo', n: 'Prueba', nac: 'MX', pos: 'DC' }, 3); hubJug('editor');
+    clic('[data-acc="edYo"]'); const editaYo = document.querySelector('.barra h2').textContent === 'Editar jugador';
+    cambiar('[data-k="med"]', '91'); const media = yoJ().med;
+    // Equipo Estrella: monedas, añadir una carta buscándola y editarla
+    menuEstrella(); hubEstrella('editor'); const E = DATOS.estrella;
+    cambiar('[data-cambio="edEst"][data-k="monedas"]', '777777');
+    clic('[data-acc="edMas"][data-n="5000"]');
+    cambiar('[data-cambio="edBuscar"]', 'messio');
+    const n0 = E.cartas.length; clic('[data-acc="edAnadir"][data-clave]');
+    const nueva = E.cartas[E.cartas.length - 1], st0 = { ...nueva.st }, med0 = nueva.med;
+    fichaCarta(nueva.uid); cambiar('[data-cambio="edCarta"][data-k="med"]', String(med0 - 2));
+    const subio = nueva.med === med0 - 2 && Object.keys(st0).every(k => nueva.st[k] === Math.max(15, st0[k] - 2));
+    await colaGuardado;
+    return { pestana, dt, enClub, vuelve, baseIntacta, editaYo, media, monedas: E.monedas, anadida: E.cartas.length === n0 + 1 && /Messio/.test(nueva.nombre), subio };
+  });
+  assert(r.pestana && r.vuelve, 'la pestaña Editor de la carrera de técnico no funciona: ' + JSON.stringify(r));
+  assert(r.dt.curado && r.dt.perdonado && r.dt.presu === 321500000, 'los atajos del editor de la carrera fallan: ' + JSON.stringify(r.dt));
+  assert(r.enClub === 'Editar club', 'no abre el club desde el editor de la carrera');
+  assert(r.baseIntacta, 'editar la carrera cambió la base de datos');
+  assert(r.editaYo && r.media === 91, 'no se edita tu jugador en la carrera de jugador: ' + JSON.stringify(r));
+  assert(r.monedas === 782777, 'las monedas no se editan bien: ' + r.monedas);
+  assert(r.anadida && r.subio, 'añadir o editar cartas falla: ' + JSON.stringify(r));
+  sinErrores(errors); await ctx.close();
+});
+
 test('editor: cambiar club y jugador, subir una foto, curar y se conserva al reabrir', async () => {
   const ctx = await fresh(); const a = await openGame(ctx, srv.url);
   await a.page.evaluate(() => menuEditor());
