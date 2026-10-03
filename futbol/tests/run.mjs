@@ -31,6 +31,30 @@ test('arranca sin errores, dibuja el campo y muestra la pantalla de inicio', asy
   sinErrores(errors); await ctx.close();
 });
 
+test('jugadores realistas y de caricatura: se cambia de uno a otro y se dibujan', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  const r = await page.evaluate(async () => {
+    const vis = () => ({ real: R.rTorso.visible, caric: R.torso.visible, balon: R.balon === R.balonR, sombras: R.sol.castShadow });
+    const a = vis();
+    document.querySelector('#bPausa').click();
+    document.getElementById('op-modelo-caricatura').click();
+    const b = vis();
+    document.getElementById('op-modelo-real').click();
+    DATOS.ajustes.calidad = 'baja'; ajustarTamano(); const c = vis();
+    // los números de la espalda corresponden a cada jugador
+    const nums = Array.from(R.rNum.geometry.attributes.aNum.array).join(',') === G.todos.map(p => p.num).join(',');
+    R.renderer.render(R.scene, R.cam);
+    return { a, b, c, nums, llamadas: R.renderer.info.render.calls };
+  });
+  assert(r.a.real && !r.a.caric && r.a.balon, 'al empezar deberían verse los jugadores realistas: ' + JSON.stringify(r.a));
+  assert(!r.b.real && r.b.caric && !r.b.balon && !r.b.sombras, 'no cambió a caricatura: ' + JSON.stringify(r.b));
+  assert(r.c.real && !r.c.sombras, 'con gráficos bajos no debería haber sombras de verdad: ' + JSON.stringify(r.c));
+  assert(r.nums, 'los números de la espalda no coinciden con los jugadores');
+  assert(r.llamadas < 80, 'demasiadas llamadas de dibujo para un celular: ' + r.llamadas);
+  sinErrores(errors); await ctx.close();
+});
+
 test('se ve bien en un teléfono en vertical y en horizontal', async () => {
   for (const viewport of [{ width: 844, height: 390 }, { width: 390, height: 844 }]) {
     const ctx = await fresh({ viewport, hasTouch: true, isMobile: true }); const { page, errors } = await openGame(ctx, srv.url);

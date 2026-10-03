@@ -10,7 +10,7 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 
 - Jugadores, equipos y marcas **inventados**. Nunca usar "FIFA", "Ultimate Team", ni nombres, caras o escudos reales.
   El futuro modo de cartas se llamará de otra forma y solo usará moneda del juego (nunca dinero real).
-- Estilo de pocos polígonos / caricatura. Tiene que ir fluido en un celular de gama media: los 22 jugadores se dibujan
+- Jugadores realistas o de caricatura (ver "Modelos de jugadores"). Tiene que ir fluido en un celular de gama media: los 22 jugadores se dibujan
   con una malla por pieza del cuerpo (`InstancedMesh`), así son pocas llamadas de dibujo. No añadas una malla por
   jugador ni sombras en tiempo real sin medir antes.
 - Controles: pantalla táctil, teclado y mando deben hacer lo mismo. Todo pasa por `leerControles()`, que mezcla las
@@ -77,6 +77,19 @@ Artefacto: https://claude.ai/artifact/PDaxHwKVqqYsViT7qjwQKU
 2. Publicar el artefacto con `futbol/index.html` (siempre el mismo enlace).
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprueban que sus datos
    guardados se siguen abriendo en todas las versiones futuras.
+
+## Modelos de jugadores
+
+Hay dos, se elige en Ajustes → Jugadores (`DATOS.ajustes.modelo`):
+- **Realistas** (por defecto): `construirReal` / `dibujarReal`. Proporciones humanas con articulaciones (hombro,
+  codo, cadera, rodilla, tobillo) que se mueven con un ciclo de carrera; número en la espalda (una textura con los
+  números y el atributo `aNum` por jugador); balón con pentágonos; sombras de verdad del sol que sigue a la cámara.
+  Se dibujan un 12 % más grandes que en la realidad para que se vean en el celular.
+- **Caricatura**: `construirJugadores` / `dibujarJugadores`, el modelo original de pocos polígonos.
+
+Las sombras de verdad solo están con el modelo realista y gráficos "Alta" o "Automático"; en automático se quitan
+primero si el juego va lento (`actualizarSombras`, `medirFps`). La prueba de modelos comprueba que el juego entero
+se dibuja con menos de 80 llamadas de dibujo.
 
 ## Estética
 
