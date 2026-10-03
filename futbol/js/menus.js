@@ -121,7 +121,10 @@ function mostrarResultado(res, { local, visita, titulo = 'Final del partido', ex
       <span>${Math.round(S.pos[0] / ((S.pos[0] + S.pos[1]) || 1) * 100)}%</span><span>Posesión</span><span>${Math.round(S.pos[1] / ((S.pos[0] + S.pos[1]) || 1) * 100)}%</span>
       <span>${S.tiros[0]}</span><span>Tiros</span><span>${S.tiros[1]}</span>
       <span>${S.aPuerta[0]}</span><span>A puerta</span><span>${S.aPuerta[1]}</span>
-      <span>${S.pasesOk[0]}/${S.pases[0]}</span><span>Pases buenos</span><span>${S.pasesOk[1]}/${S.pases[1]}</span></div>` : '<p class="nota">Partido simulado</p>';
+      <span>${S.pasesOk[0]}/${S.pases[0]}</span><span>Pases buenos</span><span>${S.pasesOk[1]}/${S.pases[1]}</span>
+      ${S.faltas ? `<span>${S.faltas[0]}</span><span>Faltas</span><span>${S.faltas[1]}</span>
+      <span>${S.amarillas[0]}</span><span>Amarillas</span><span>${S.amarillas[1]}</span>
+      <span>${S.rojas[0]}</span><span>Rojas</span><span>${S.rojas[1]}</span>` : ''}</div>` : '<p class="nota">Partido simulado</p>';
   pantalla(`<div class="marcador-final">
       <div class="lado">${escudoHTML(local, 64)}<b>${esc(local.nombre)}</b><ul>${res.goles.filter(g => g.lado === 0).map(linea).join('')}</ul></div>
       <div class="goles-final">${res.gl} - ${res.gv}</div>

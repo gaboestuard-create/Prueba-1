@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.7.0';
+const JUEGO_VERSION = '0.8.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -115,7 +115,7 @@ function nuevoPartido(cfg) {
   G.unJugador = cfg.jugadorId != null ? G.todos.find(p => p.id === cfg.jugadorId && p.eq.i === G.usuario) || null : null;
   G.balon = nuevoBalon();
   G.reloj = 0; G.t = 0; G.fase = 'juego'; G.parte = 1; G.buffer = null; G.carga = null; G.pidePase = 0; G.goles = [];
-  G.stats = { tiros: [0, 0], aPuerta: [0, 0], pos: [0, 0], pases: [0, 0], pasesOk: [0, 0] };
+  G.stats = { tiros: [0, 0], aPuerta: [0, 0], pos: [0, 0], pases: [0, 0], pasesOk: [0, 0], faltas: [0, 0], amarillas: [0, 0], rojas: [0, 0] };
   G.ctrl = null;
   saqueInicial(G.eqs[0]);
   // empezar a mitad de partido (p. ej. sales del banquillo): { min, gl, gv, goles }
@@ -136,7 +136,7 @@ function resultadoPartido(simulado) {
     return Math.round(clamp(n, 3, 10) * 10) / 10;
   };
   const jug = {};
-  for (const p of G.todos) if (p.id != null) jug[p.id] = { g: p.st.g, a: p.st.a, nota: nota(p, p.eq), lado: p.eq.i };
+  for (const p of G.todos) if (p.id != null) jug[p.id] = { g: p.st.g, a: p.st.a, nota: nota(p, p.eq), lado: p.eq.i, am: p.am || 0, ro: p.exp ? 1 : 0 };
   return { gl: G.eqs[0].goles, gv: G.eqs[1].goles, goles: G.goles.slice(), stats: JSON.parse(JSON.stringify(G.stats)), jug, simulado: !!simulado };
 }
 const eqUsuario = () => G.eqs[G.usuario];
@@ -495,6 +495,7 @@ function separar() {
   const T = G.todos;
   for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) {
     const a = T[i], b = T[j], dx = b.x - a.x, dz = b.z - a.z, d = hyp(dx, dz);
+    if (a.exp || b.exp) continue;
     if (d > 0 && d < .75) { const e = (.75 - d) / 2 / d; a.x -= dx * e; a.z -= dz * e; b.x += dx * e; b.z += dz * e; }
   }
 }
@@ -601,7 +602,13 @@ function pasoEntrada(p, dt) {
       } else if (o.eq !== p.eq && !(o.por && o.retener > 0) && o.protegido <= 0) {
         const f = dif(p.eq).entrada;
         const prob = (barr ? .72 + p.def * .22 - o.reg * .2 : .5 + p.def * .35 - o.reg * .25) * f;
-        if (rng() < prob) {
+        const gana = rng() < prob;
+        // ¿falta? Por detrás es casi siempre falta; la barrida fallida también; una entrada limpia casi nunca
+        const ax = o.x - p.x, az = o.z - p.z, ll = hyp(ax, az) || 1, detras = (Math.cos(o.cara) * ax + Math.sin(o.cara) * az) / ll > .5;
+        let pf = detras ? (barr ? .85 : gana ? .3 : .65) : barr ? (gana ? .1 : .55) : (gana ? .025 : .2);
+        pf *= (1.2 - p.def * .4) * 1.6;
+        if (G.muerto <= 0 && G.fase === 'juego' && rng() < pf) { cometerFalta(p, o, barr, detras); return; }
+        if (gana) {
           o.tropiezo = .45; G.carga = G.ctrl === o ? null : G.carga; p.st.rob++;
           if (!barr && rng() < .55) { b.dueno = null; tomar(p); }
           else { b.dueno = null; patear(p, Math.cos(p.cara) * rnd(4, 7), .3, Math.sin(p.cara) * rnd(4, 7), 'rechace'); p.patadaCD = .35; }
@@ -610,6 +617,55 @@ function pasoEntrada(p, dt) {
     }
   }
   if (p.entT >= dur) { p.entrada = null; if (barr) p.suelo = .5; }
+}
+
+/* ---------- faltas, tarjetas y expulsiones ---------- */
+const TARJ = { am: '<i class="tarj"></i>', ro: '<i class="tarj rj"></i>' };
+// p derriba a o: el árbitro pita, quizá saca tarjeta y se cobra tiro libre (o penalti si fue en el área)
+function cometerFalta(p, o, barr, detras) {
+  G.stats.faltas[p.eq.i]++;
+  o.tropiezo = .6; p.entrada = null; p.suelo = Math.max(p.suelo, barr ? .5 : 0);
+  G.carga = G.ctrl === o ? null : G.carga;
+  const penalti = enAreaPropia(p, o.x, o.z);
+  const grave = detras && barr ? 1 : detras || barr ? .5 : .15;
+  const r = rng();
+  let tarjeta = null;
+  if (r < grave * .04) tarjeta = 'ro'; else if (r < grave * .04 + grave * .5 + .05) tarjeta = 'am';
+  const x = clamp(o.x, -HL + .5, HL - .5), z = clamp(o.z, -HW + .5, HW - .5);
+  fueraDeJuego(penalti ? 'penalti' : 'falta', o.eq, x, z, penalti ? 'Penalti' : 'Falta');
+  G.muerto = tarjeta ? 2.4 : 1.5;
+  if (tarjeta) sacarTarjeta(p, tarjeta);
+}
+function sacarTarjeta(p, tarjeta) {
+  const nom = `${p.num} · ${p.nombre}`;
+  if (tarjeta === 'am') { p.am = (p.am || 0) + 1; G.stats.amarillas[p.eq.i]++; }
+  if (tarjeta === 'ro' || p.am >= 2) {
+    if (tarjeta !== 'ro') G.stats.amarillas[p.eq.i]--; // la segunda amarilla cuenta como roja
+    G.stats.rojas[p.eq.i]++;
+    aviso(TARJ.ro + 'Tarjeta roja', (tarjeta === 'ro' ? '' : 'Doble amarilla · ') + nom, 2.2);
+    expulsar(p);
+  } else aviso(TARJ.am + 'Tarjeta amarilla', nom, 1.8);
+  suena('silbato', 'corto');
+}
+// el expulsado se va del campo: sale de la plantilla en juego pero sigue en G.todos (para los gráficos y las estadísticas)
+function expulsar(p) {
+  p.exp = true; p.golpe = null; p.entrada = null;
+  const eq = p.eq, i = eq.pl.indexOf(p);
+  if (i >= 0) eq.pl.splice(i, 1);
+  if (G.ctrl === p && !G.unJugador) {
+    const b = G.balon, c = eq.pl.filter(q => !q.por).sort((q, w) => hyp(q.x - b.x, q.z - b.z) - hyp(w.x - b.x, w.z - b.z))[0];
+    if (c) { G.ctrl = null; controlar(c); }
+  }
+}
+// barrera y cobrador de un tiro libre; se colocan al reanudar
+function prepararFalta(t, eq, x, z) {
+  const gx = eq.dir * HL, d = hyp(gx - x, -z);
+  if (d > 34 || (x - gx) * eq.dir > -3) return null;
+  const n = d < 20 ? 4 : d < 28 ? 3 : 2, ux = (gx - x) / d, uz = -z / d;
+  const rival = eq.rival, cand = rival.pl.filter(q => !q.por).sort((q, w) => hyp(q.x - x - ux * 9.4, q.z - z - uz * 9.4) - hyp(w.x - x - ux * 9.4, w.z - z - uz * 9.4)).slice(0, n);
+  const muro = cand.map((q, k) => ({ p: q, x: x + ux * 9.4 - uz * ((k - (n - 1) / 2) * .78), z: z + uz * 9.4 + ux * ((k - (n - 1) / 2) * .78) }));
+  for (const m of muro) { m.p.x = m.x; m.p.z = m.z; m.p.vx = m.p.vz = 0; m.p.cara = Math.atan2(-uz, -ux); }
+  return muro;
 }
 
 /* ---------- inteligencia artificial ---------- */
@@ -685,10 +741,12 @@ function planEquipos() {
 }
 function iaJugador(p, dt) {
   const b = G.balon, eq = p.eq;
+  if (p.por && G.saque && G.saque.tipo === 'penalti' && G.saque.tomador.eq !== p.eq) return moverHacia(p, porteriaPropiaX(p.eq) + p.eq.dir * .5, clamp(b.z * .1, -1, 1), false);
   if (p.por) return iaPortero(p, dt);
   if (b.dueno === p) return iaConBalon(p, dt);
   let [tx, tz] = puestoEnBloque(p), prisa = false;
   if (G.saque && G.saque.tomador === p) return [0, 0];
+  if (G.saque && G.saque.muro) { const m = G.saque.muro.find(w => w.p === p); if (m) return moverHacia(p, m.x, m.z, true); }
   if (!b.dueno && eq.persigue === p && G.fase === 'juego' && !G.saque && G.muerto <= 0) {
     const ip = p.ip || intercepcion(p);
     return moverHacia(p, ip.x, ip.z, true, b.destino === p);
@@ -733,9 +791,13 @@ function iaJugador(p, dt) {
     }
   }
   if (G.saque) { // los rivales guardan distancia en los saques
-    const r = G.saque.tipo === 'inicial' ? 9.3 : 7;
+    const r = G.saque.tipo === 'inicial' || G.saque.tipo === 'falta' ? 9.3 : 7;
     if (G.saque.tomador.eq !== eq) { const d = hyp(tx - b.x, tz - b.z); if (d < r) { const k = r / (d || 1); tx = b.x + (tx - b.x) * k; tz = b.z + (tz - b.z) * k; } }
     if (G.saque.tipo === 'inicial') tx = eq.dir > 0 ? Math.min(tx, -.5) : Math.max(tx, .5);
+  }
+  if (G.saque && G.saque.tipo === 'penalti' && G.saque.tomador !== p) { // todos fuera del área menos el portero y el que tira
+    const dir = G.saque.tomador.eq.dir, lim = dir * (HL - AREA_D - 2);
+    if (Math.abs(tz) < AREA_W2 + 2 && tx * dir > lim * dir) tx = lim;
   }
   return moverHacia(p, tx, tz, prisa);
 }
@@ -743,7 +805,17 @@ function iaConBalon(p, dt) {
   const eq = p.eq, b = G.balon, gx = eq.dir * HL;
   if (G.saque && G.saque.tomador === p) {
     p.mirar = Math.atan2(-p.z, eq.dir * 10);
-    if (G.saque.t > 1.1) {
+    const tl = G.saque.tipo === 'falta', pn = G.saque.tipo === 'penalti';
+    if ((pn || tl) && G.saque.plan == null) {
+      const dg = hyp(gx - p.x, p.z);
+      G.saque.plan = pn || (G.saque.muro && rng() < (dg < 24 ? .8 : .45)) ? 'tiro' : 'pase';
+    }
+    if (G.saque.t > (pn ? 1.7 : tl ? 2 : 1.1)) {
+      if (G.saque.plan === 'tiro') {
+        const az = (rng() < .5 ? -1 : 1) * rnd(.55, 1), pot = pn ? rnd(.6, .9) : rnd(.55, .85);
+        golpear(p, () => disparar(p, pot, 0, az));
+        return [0, 0];
+      }
       const m = mejorPase(p, true);
       golpear(p, () => { if (m) pasarA(p, m.p, m.tipo); else pasar(p, eq.dir, 0, 'largo'); });
     }
@@ -947,7 +1019,8 @@ function controlUsuario(p, dt) {
       G.carga.t += dt;
       if (!ENT.shot || G.carga.t >= .95) {
         const pot = .2 + .8 * Math.min(1, G.carga.t / .85); G.carga = null;
-        if (G.saque) golpear(p, () => pasar(p, mx, mz, 'largo')); else golpear(p, () => disparar(p, pot, mx, mz));
+        const tiroSaque = G.saque && (G.saque.tipo === 'penalti' || (G.saque.tipo === 'falta' && G.saque.muro));
+        if (G.saque && !tiroSaque) golpear(p, () => pasar(p, mx, mz, 'largo')); else golpear(p, () => disparar(p, pot, mx, mz));
       }
     }
   } else if (!b.dueno && b.destino === p) {
@@ -1029,10 +1102,34 @@ function fueraDeJuego(tipo, eq, x, z, texto) {
   aviso(texto, '', 1.2, true);
 }
 function reanudar() {
-  const { tipo, eq, x, z } = G.pendiente; G.pendiente = null;
+  let { tipo, eq, x, z } = G.pendiente; G.pendiente = null;
   const b = G.balon;
-  let t;
+  let t, muro = null;
+  if (tipo === 'penalti') {
+    const gx = eq.dir * HL; x = gx - eq.dir * 11; z = 0;
+    t = eq.pl.filter(q => !q.por).sort((q, w) => w.tir - q.tir)[0];
+    const gk = eq.rival.pl[0]; gk.x = gx - eq.dir * .5; gk.z = 0; gk.vx = gk.vz = 0;
+    t.x = x - eq.dir * .5; t.z = 0; t.vx = t.vz = 0; t.cara = eq.dir > 0 ? 0 : Math.PI;
+    Object.assign(b, { x, y: BR, z, vx: 0, vy: 0, vz: 0 });
+    tomar(t); t.protegido = 2;
+    G.saque = { tipo, tomador: t, t: 0 };
+    if (esUsuarioEq(eq)) { controlar(t); aviso('Penalti', 'Mantén Tiro y suelta para chutar', 1.6, true); }
+    return;
+  }
   if (tipo === 'puerta') t = eq.pl[0];
+  else if (tipo === 'falta') {
+    // el que cobra: de los cuatro más cercanos, el que mejor tira si está a tiro; si no, el más cercano
+    const gx = eq.dir * HL, cerca = eq.pl.filter(q => !q.por).sort((q, w) => hyp(q.x - x, q.z - z) - hyp(w.x - x, w.z - z)).slice(0, 4);
+    t = hyp(gx - x, z) < 34 ? cerca.sort((q, w) => w.tir - q.tir)[0] : cerca[0];
+    muro = prepararFalta(t, eq, x, z);
+    t.x = x - eq.dir * .42; t.z = z;
+    t.vx = t.vz = 0; t.cara = Math.atan2(-z, gx - x);
+    Object.assign(b, { x, y: BR, z, vx: 0, vy: 0, vz: 0 });
+    tomar(t); t.protegido = 2;
+    G.saque = { tipo, tomador: t, t: 0, muro };
+    if (esUsuarioEq(eq)) { controlar(t); aviso('Tiro libre', muro ? 'Mantén Tiro y suelta para chutar' : '', 1.6, true); }
+    return;
+  }
   else { let md = 1e9; for (const p of eq.pl) { if (p.por) continue; const d = hyp(p.x - x, p.z - z); if (d < md) { md = d; t = p; } } }
   const px = tipo === 'puerta' ? -eq.dir * (HL - 5) : x, pz = tipo === 'puerta' ? 0 : z;
   t.x = px + (tipo === 'corner' ? Math.sign(px) * .4 : 0); t.z = pz + (tipo === 'banda' || tipo === 'corner' ? Math.sign(pz) * .4 : 0);
@@ -1115,6 +1212,9 @@ function paso(dt) {
   planEquipos();
   autoCambio();
   for (const p of G.todos) {
+    if (p.exp) { // el expulsado camina fuera del campo
+      const v = moverHacia(p, p.x * .9, Math.sign(p.z || 1) * (HW + 7), false); moverJugador(p, v[0], v[1], dt); continue;
+    }
     p.entCD -= dt; p.suelo -= dt; p.tropiezo -= dt; p.protegido -= dt; p.patadaCD -= dt; p.patadaT -= dt; p.celebra -= dt; p.toqueT -= dt;
     if (p.golpe && G.fase === 'juego' && G.muerto <= 0) pasoGolpe(p, dt);
     let v;
@@ -1158,7 +1258,7 @@ function contacto() {
   }
   let mejor = null, md = 1e9;
   for (const p of G.todos) {
-    if (p.suelo > 0 || p.patadaCD > 0 || p.entrada || p === b.batido) continue;
+    if (p.exp || p.suelo > 0 || p.patadaCD > 0 || p.entrada || p === b.batido) continue;
     const porArea = p.por && enAreaPropia(p, b.x, b.z);
     if (p.por && !porArea && b.y > 1.15) continue;
     const alcance = porArea ? 1.3 : b.destino === p ? 1.3 : .85;

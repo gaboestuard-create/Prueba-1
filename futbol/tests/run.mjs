@@ -84,16 +84,16 @@ test('menú principal: páginas, teclado, mando y volver', async () => {
   await page.keyboard.press('ArrowRight');
   const f1 = await page.evaluate(() => document.activeElement.className);
   assert(/tile/.test(f1), 'la flecha no enfoca una baldosa: ' + f1);
-  await page.keyboard.press('KeyE'); await page.waitForTimeout(500);
+  await page.keyboard.press('KeyE'); await page.waitForTimeout(1000);
   assert(await pag() === 1, 'E no pasa a la página de Carreras');
   const f2 = await page.evaluate(() => document.activeElement.dataset.id);
   assert(f2 === 'dt', 'en Carreras debería enfocarse la carrera de técnico: ' + f2);
-  await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(500);
+  await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(1000);
   assert(await pag() === 2, 'la flecha desde el borde no pasa a la página siguiente');
-  await page.keyboard.press('KeyQ'); await page.keyboard.press('KeyQ'); await page.waitForTimeout(500);
+  await page.keyboard.press('KeyQ'); await page.keyboard.press('KeyQ'); await page.waitForTimeout(1000);
   assert(await pag() === 0, 'Q no vuelve a la primera página');
   // las pestañas también cambian de página, y la página se ve
-  await page.click('.mp-tab[data-i="3"]'); await page.waitForTimeout(600);
+  await page.click('.mp-tab[data-i="3"]'); await page.waitForTimeout(1000);
   const vis = await page.evaluate(() => { const r = document.querySelector('[data-acc="ajustes"]').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; });
   assert(vis && await pag() === 3, 'la pestaña Más no muestra su página');
   // Intro elige y Esc vuelve
@@ -110,12 +110,76 @@ test('menú principal: páginas, teclado, mando y volver', async () => {
     navigator.getGamepads = () => [window.__pad];
   });
   const pulsa = async i => { await page.evaluate(i => { __pad.buttons[i].pressed = true; }, i); await page.waitForTimeout(80); await page.evaluate(i => { __pad.buttons[i].pressed = false; }, i); await page.waitForTimeout(80); };
-  await pulsa(4); await page.waitForTimeout(400);
+  await pulsa(4); await page.waitForTimeout(900);
   assert(await pag() === 2, 'LB no cambia de página');
   await pulsa(0);
   assert(await page.evaluate(() => !$('mpPags') && !!DATOS.estrella), 'A no abre la baldosa enfocada (Equipo Estrella)');
   await pulsa(1);
   assert(await page.evaluate(() => !!$('mpPags')), 'B no vuelve al menú principal');
+  sinErrores(errors); await ctx.close();
+});
+
+/* ---------- reglas: faltas, tiros libres, penaltis y tarjetas ---------- */
+test('faltas: tiro libre con barrera, penalti, tarjetas y expulsión', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const out = { libre: [], penalti: [] };
+    const falta = (usuario, semilla, x, z, dentro) => {
+      nuevoPartido({ semilla, usuario }); G.pausa = false; G.avanzar(400); G.saque = null;
+      const A = G.eqs[0], D = G.eqs[1], o = A.pl[9], p = D.pl[5];
+      o.x = dentro ? 40 : x; o.z = dentro ? 3 : z; o.cara = 0; p.x = o.x - 1; p.z = o.z; G.balon.dueno = null; tomar(o);
+      cometerFalta(p, o, true, true);
+      let w = 0; while (G.pendiente && w++ < 400) G.avanzar(1);
+      G.avanzar(3);
+      const sq = G.saque, info = { tipo: sq && sq.tipo, muro: sq && sq.muro ? sq.muro.length : 0, dist: 99, goles0: A.goles };
+      if (sq && sq.muro) info.dist = Math.min(...sq.muro.map(m => hyp(m.p.x - G.balon.x, m.p.z - G.balon.z)));
+      if (usuario === 0) { Object.assign(G.prueba, { activo: true, shot: true }); G.avanzar(40); Object.assign(G.prueba, { shot: false }); }
+      let i = 0; while (i < 900 && G.saque === sq && G.fase === 'juego') { G.avanzar(10); i += 10; }
+      info.salio = G.saque !== sq; info.tiros = G.stats.tiros[0]; info.pend = !!G.pendiente;
+      return info;
+    };
+    for (let s = 1; s <= 4; s++) { out.libre.push(falta(s % 2 ? 0 : -1, s, 30, 6, false)); out.penalti.push(falta(s % 2 ? 0 : -1, s, 0, 0, true)); }
+    // tarjetas: amarilla, doble amarilla = roja, y el expulsado sale del campo
+    nuevoPartido({ semilla: 9, usuario: 0 }); G.pausa = false; G.avanzar(300);
+    const d = G.eqs[1].pl[4], c0 = G.ctrl; d.id = 9001; G.ctrl.id = 9002;
+    sacarTarjeta(d, 'am'); const tras1 = { am: d.am, exp: !!d.exp, n: G.eqs[1].pl.length };
+    sacarTarjeta(d, 'am'); const tras2 = { exp: !!d.exp, n: G.eqs[1].pl.length, todos: G.todos.length, rojas: G.stats.rojas[1], amar: G.stats.amarillas[1] };
+    // el jugador que manejas es expulsado: pasas a manejar a otro
+    const mio = G.ctrl; sacarTarjeta(mio, 'ro'); const ctrlNuevo = G.ctrl && G.ctrl !== mio && !G.ctrl.exp;
+    G.avanzar(60 * 20);
+    const sale = Math.abs(d.z) > 36;
+    const res = resultadoPartido();
+    return { out, tras1, tras2, ctrlNuevo, sale, rojasRes: Object.values(res.jug).filter(j => j.ro).length, n0: G.eqs[0].pl.length, fase: G.fase };
+  });
+  for (const k of ['libre', 'penalti']) for (const i of r.out[k]) {
+    assert(i.tipo === (k === 'libre' ? 'falta' : 'penalti'), `${k}: debería haber ${k} y hay ${i.tipo}`);
+    assert(i.salio, `${k}: se quedó parado sin cobrarse: ${JSON.stringify(i)}`);
+    if (k === 'penalti') assert(i.tiros >= 1, `penalti: debería terminar en tiro: ${JSON.stringify(i)}`);
+  }
+  assert(r.out.libre.filter(i => i.tiros >= 1).length >= 3, 'el tiro libre a tiro debería chutarse casi siempre: ' + JSON.stringify(r.out.libre));
+  assert(r.out.libre.every(i => i.muro >= 2 && i.dist > 8.5), 'el tiro libre a tiro debe tener barrera a más de 9 pasos: ' + JSON.stringify(r.out.libre));
+  assert(r.tras1.am === 1 && !r.tras1.exp && r.tras1.n === 11, 'una amarilla no expulsa: ' + JSON.stringify(r.tras1));
+  assert(r.tras2.exp && r.tras2.n === 10 && r.tras2.todos === 22 && r.tras2.rojas === 1 && r.tras2.amar === 1, 'la doble amarilla debería expulsar: ' + JSON.stringify(r.tras2));
+  assert(r.ctrlNuevo, 'al expulsar al jugador que manejas debería pasar a otro');
+  assert(r.sale, 'el expulsado debería salir del campo');
+  assert(r.rojasRes === 2 && r.n0 === 10, 'el resultado debe recordar las rojas: ' + JSON.stringify({ rojasRes: r.rojasRes, n0: r.n0 }));
+  sinErrores(errors); await ctx.close();
+});
+
+test('faltas en un partido entero: se pitan pero no demasiadas, y el partido termina', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    let f = 0, am = 0, ro = 0, term = 0;
+    for (let s = 1; s <= 4; s++) {
+      nuevoPartido({ semilla: 20 + s, usuario: -1 }); G.autoplay = true; G.pausa = false;
+      for (let i = 0; i < 6 * 60 * 60 && G.fase !== 'fin'; i += 60) G.avanzar(60);
+      f += G.stats.faltas[0] + G.stats.faltas[1]; am += G.stats.amarillas[0] + G.stats.amarillas[1]; ro += G.stats.rojas[0] + G.stats.rojas[1]; term += G.fase === 'fin' ? 1 : 0;
+    }
+    return { f, am, ro, term };
+  });
+  assert(r.term === 4, 'los partidos con faltas deben terminar: ' + JSON.stringify(r));
+  assert(r.f >= 8 && r.f <= 140, 'cantidad rara de faltas en 4 partidos: ' + r.f);
+  assert(r.ro <= 5, 'demasiadas rojas: ' + r.ro);
   sinErrores(errors); await ctx.close();
 });
 

@@ -73,7 +73,7 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 Hecho: motor jugable (física, IA, controles, medio tiempo), 8 ligas, menús, amistoso, torneos, carrera de técnico,
 carrera de jugador (controlas solo a tu jugador, puedes salir del banquillo a mitad de partido), Equipo Estrella y
 editor con fotos y escudos.
-Pendiente: faltas, penaltis en juego, fuera de juego y saques con animación; repeticiones; mercado de cartas;
+Pendiente: saques con animación; repeticiones; mercado de cartas;
 copas nacionales dentro de las carreras.
 
 ## Regla número uno: no perder el progreso
@@ -137,6 +137,18 @@ Hay dos, se elige en Ajustes → Jugadores (`DATOS.ajustes.modelo`):
 Las sombras de verdad solo están con el modelo realista y gráficos "Alta" o "Automático"; en automático se quitan
 primero si el juego va lento (`actualizarSombras`, `medirFps`). La prueba de modelos comprueba que el juego entero
 se dibuja con menos de 80 llamadas de dibujo.
+
+## Reglas del partido (0.8)
+
+- Faltas: en `pasoEntrada`, al tocar al rival con balón se decide si es falta (más probable por detrás o con barrida
+  fallida). `cometerFalta` pita, a veces saca tarjeta (`sacarTarjeta`) y pone un `G.pendiente` de tipo `falta` o
+  `penalti` (si fue en el área del que defiende); `reanudar` coloca el balón, al cobrador (el que mejor tira entre los
+  más cercanos) y la barrera (`prepararFalta`, a 9,4 m, 2-4 jugadores según la distancia).
+- El usuario cobra con Tiro (mantener y soltar); la computadora decide una vez (`G.saque.plan`) si tira o pasa.
+- Tarjetas: `p.am` amarillas; la segunda o una roja directa llama a `expulsar`: sale de `eq.pl` (no juega) pero se
+  queda en `G.todos` porque los gráficos usan ese orden. Los porteros no reciben tarjeta (no hacen entradas).
+  `resultadoPartido` guarda `am` y `ro` por jugador; las carreras convierten la roja en un partido de sanción.
+- Faltas, amarillas y rojas están en `G.stats` y salen en la pantalla de resultado.
 
 ## Menús y sonido
 

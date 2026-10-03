@@ -206,8 +206,9 @@ function aplicarResultado(M, idL, idV, res) {
       const j = M.jug[id]; if (!j || j.club !== cid) continue;
       j.st.pj++; j.st.g += r.g; j.st.a += r.a;
       j.forma = Math.round(clamp(j.forma * .7 + (40 + r.nota * 6) * .3 + (gf > gc ? 2 : gf < gc ? -2 : 0), 20, 100));
+      if (r.ro) { j.san = 1; nov.push({ tipo: 'roja', j: j.id }); }
       if (AZ() < .018) { j.les = 1 + Math.floor(AZ() * AZ() * 8); nov.push({ tipo: 'lesion', j: j.id, n: j.les }); }
-      else if (AZ() < .006) { j.san = 1; nov.push({ tipo: 'roja', j: j.id }); }
+      else if (!r.ro && !res.stats && AZ() < .006) { j.san = 1; nov.push({ tipo: 'roja', j: j.id }); }
     }
   }
   return nov;
