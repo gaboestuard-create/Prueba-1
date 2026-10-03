@@ -63,6 +63,12 @@
       "guardado": 5,
       "huecos": 2,
       "descripcion": "v22: diseño compacto para teléfono"
+    },
+    {
+      "commit": "b3374d0",
+      "guardado": 5,
+      "huecos": 2,
+      "descripcion": "v23: instalable como aplicación"
     }
   ]
 }
