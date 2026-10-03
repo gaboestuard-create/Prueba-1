@@ -51,6 +51,12 @@
       "guardado": 5,
       "huecos": 2,
       "descripcion": "Versión 20 del artefacto: un guardado para cada carrera"
+    },
+    {
+      "commit": "406848c",
+      "guardado": 5,
+      "huecos": 2,
+      "descripcion": "v21: clubes y jugadores reales, edad editable"
     }
   ]
 }
