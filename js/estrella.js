@@ -121,13 +121,28 @@ function menuEstrella() {
 function hubEstrella(p) {
   APP.pestEst = p;
   const E = DATOS.estrella;
-  const tabs = `<div class="chips">${[['inicio', 'Partidos'], ['equipo', 'Mi equipo'], ['sobres', 'Sobres'], ['album', 'Álbum'], ['club', 'Club']].map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}</button>`).join('')}</div>`;
-  const v = { inicio: vistaPartidosEst, equipo: vistaEquipoEst, sobres: vistaSobresEst, album: vistaAlbumEst, club: vistaClubEst }[p]();
+  const tabs = `<div class="chips">${[['inicio', 'Partidos'], ['equipo', 'Mi equipo'], ['sobres', 'Sobres'], ['album', 'Álbum'], ['club', 'Club'], ['editor', 'Editor']].map(([id, t]) => `<button class="chip ${id === p ? 'sel' : ''}" data-acc="tab" data-id="${id}">${t}</button>`).join('')}</div>`;
+  const v = { inicio: vistaPartidosEst, equipo: vistaEquipoEst, sobres: vistaSobresEst, album: vistaAlbumEst, club: vistaClubEst, editor: vistaEditorEst }[p]();
   pantalla(tabs + v, { titulo: 'Equipo Estrella', atras: menuPrincipal, extra: `<span class="med m-oro">${E.monedas.toLocaleString('es')} monedas</span>`, acciones: ACC_EST });
 }
 const ACC_EST = {
   tab: d => hubEstrella(d.id),
   alb: d => { APP.albumEst = d.id; hubEstrella('album'); },
+  // editor de Equipo Estrella (aquí sí hay monedas)
+  edEst: (d, el) => {
+    const E = DATOS.estrella, v = Math.round(clamp(+el.value || 0, +d.min, +d.max));
+    if (d.k === 'monedas') E.monedas = v; if (d.k === 'division') E.division = v; if (d.k === 'pts') E.temp.pts = v;
+    guardarEstrella(); hubEstrella('editor');
+  },
+  edMas: d => { DATOS.estrella.monedas += +d.n; guardarEstrella(); toast('+' + (+d.n).toLocaleString('es') + ' monedas'); hubEstrella('editor'); },
+  edTemp: () => { DATOS.estrella.temp = { pj: 0, pts: 0, g: 0, e: 0, p: 0 }; guardarEstrella(); toast('Temporada reiniciada.'); hubEstrella('editor'); },
+  edBuscar: (d, el) => { APP.edBusca = el.value.trim(); hubEstrella('editor'); },
+  edTipo: d => { APP.edTipo = d.id; hubEstrella('editor'); },
+  edAnadir: d => {
+    const E = DATOS.estrella;
+    const c = d.clave ? darCartaEstrella(E, CARTAS_ESTRELLA.find(e => e.clave === d.clave)) : darCarta(E, APP.mundo.jug[+d.j]);
+    guardarEstrella(); toast('Añadida: ' + nombreCarta(c)); hubEstrella('editor');
+  },
   jugar: () => partidoEstrella(false), simular: () => partidoEstrella(true),
   sobre: d => abrirSobre(d.id),
   carta: d => fichaCarta(+d.uid),
@@ -208,6 +223,25 @@ function vistaAlbumEst() {
   return `<div class="chips">${[['normal', 'Estrellas'], ['figura', 'Figuras'], ['promesa', 'Promesas'], ['flashback', 'Flashback'], ['leyenda', 'Leyendas'], ['cumbre', 'Cumbre']].map(([id, t]) => `<button class="chip ${id === tipo ? 'sel' : ''}" data-acc="alb" data-id="${id}">${t} ${n(id)}</button>`).join('')}</div>
     <div class="tarjetas">${L.map(e => mias.has(e.clave) ? cartaHTML(mias.get(e.clave)) : `<div class="fc fc-oculta fc-${tipo === 'normal' ? 'oro' : tipo}"><span class="fc-brillo"></span><span class="fc-izq"><b class="fc-med">${e.med}</b><span class="fc-pos">${e.pos}</span>${banderaSVG(e.nac)}</span><span class="fc-int">?</span></div>`).join('')}</div>`;
 }
+const sinAcentos = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// editor: monedas, división y temporada; buscar cualquier carta (estrellas, especiales o jugadores de la base de datos) y añadirla
+function vistaEditorEst() {
+  const E = DATOS.estrella, q = sinAcentos(APP.edBusca || ''), tipo = APP.edTipo || 'todas';
+  const tiene = new Set(E.cartas.map(c => c.s).filter(Boolean)), tieneJ = new Set(E.cartas.map(c => c.j).filter(x => x != null));
+  let estrellas = CARTAS_ESTRELLA.filter(e => (tipo === 'todas' || e.tipo === tipo) && (!q || sinAcentos(e.corto + ' ' + e.nombre + ' ' + e.club).includes(q)));
+  estrellas = estrellas.sort((a, b) => b.med - a.med).slice(0, 24);
+  const base = q.length >= 3 && (tipo === 'todas' || tipo === 'base') ? APP.mundo.jug.filter(j => j.club >= 0 && sinAcentos(nombreCompleto(j)).includes(q)).slice(0, 12) : [];
+  const num = (t, k, v, min, max) => `<label class="campo-txt">${t}<input type="number" inputmode="numeric" value="${v}" min="${min}" max="${max}" data-cambio="edEst" data-k="${k}" data-min="${min}" data-max="${max}"></label>`;
+  const tipos = [['todas', 'Todas'], ['normal', 'Estrellas'], ['figura', 'Figuras'], ['promesa', 'Promesas'], ['flashback', 'Flashback'], ['leyenda', 'Leyendas'], ['cumbre', 'Cumbre'], ['base', 'Base de datos']];
+  return `<div class="panel"><h3>Monedas y temporada</h3><div class="form-grid">${num('Monedas', 'monedas', E.monedas, 0, 99999999)}${num('División (1 la mejor, 10 la última)', 'division', E.division, 1, 10)}${num('Puntos de esta temporada', 'pts', E.temp.pts, 0, 30)}</div>
+      <div class="acciones">${[5000, 50000, 500000].map(n => `<button class="btn chico" data-acc="edMas" data-n="${n}">+${n.toLocaleString('es')}</button>`).join('')}<button class="btn chico" data-acc="edTemp">Reiniciar temporada</button></div></div>
+    <div class="panel"><h3>Añadir cartas</h3><p class="nota">Busca por nombre o club y toca "Añadir". Para cambiar una carta que ya tienes (media, habilidad…) ábrela en Mi equipo.</p>
+      <label class="campo-txt">Buscar<input type="search" value="${esc(APP.edBusca || '')}" placeholder="Ej.: Messio, Real Madrid, Pelié…" data-cambio="edBuscar" enterkeyhint="search"></label>
+      <div class="chips">${tipos.map(([id, t]) => `<button class="chip ${id === tipo ? 'sel' : ''}" data-acc="edTipo" data-id="${id}">${t}</button>`).join('')}</div></div>
+    <div class="tarjetas">${tipo !== 'base' ? estrellas.map(e => { const c = { uid: 0, ...cartaDeEstrella(e) }; return cartaHTML(c, `<span class="fc-marca ${tiene.has(e.clave) ? 'rep' : ''}">${tiene.has(e.clave) ? 'Ya la tienes · ' : ''}Añadir</span>`, false, false, `data-acc="edAnadir" data-clave="${e.clave}"`); }).join('') : ''}
+      ${base.map(j => { const club = APP.mundo.clubes[j.club]; const c = completarCarta({ uid: 0, j: j.id, nombre: j.nombre, nombre1: j.nombre1, pos: j.pos, med: j.med, nac: j.nac, club: club.nombre, liga: club.liga, at: { ...j.at }, piel: j.piel, pelo: j.pelo }); return cartaHTML(c, `<span class="fc-marca ${tieneJ.has(j.id) ? 'rep' : ''}">${tieneJ.has(j.id) ? 'Ya la tienes · ' : ''}Añadir</span>`, false, false, `data-acc="edAnadir" data-j="${j.id}"`); }).join('')}</div>
+    ${!estrellas.length && !base.length ? '<p class="nota">No hay cartas con esa búsqueda.</p>' : ''}`;
+}
 function vistaClubEst() {
   const E = DATOS.estrella;
   return `<div class="panel"><div class="form-grid">
@@ -273,9 +307,28 @@ function fichaCarta(uid) {
         ${TIPOS_CARTA[c.tipo] ? `<span>Carta</span><b>${TIPOS_CARTA[c.tipo]}</b>` : ''}</div>
       <div class="ats">${S.map(([k, t]) => `<span>${t}</span><b>${c.st[k]}</b>${barra(c.st[k])}`).join('')}</div></div></div>
     <div class="acciones"><button class="btn" data-acc="vender" ${E.once.includes(uid) || E.cartas.length <= 11 ? 'disabled' : ''}>Vender por ${ventaRapida(c).toLocaleString('es')} monedas</button></div>
-    ${E.once.includes(uid) ? '<p class="nota">Está en tu once: sácalo antes de venderlo.</p>' : ''}`, {
+    ${E.once.includes(uid) ? '<p class="nota">Está en tu once: sácalo antes de venderlo.</p>' : ''}
+    <div class="panel"><h3>Editar esta carta</h3><p class="nota">Al cambiar la media, todos los atributos suben o bajan lo mismo.</p><div class="form-grid">
+      ${[['Media', 'med', c.med, 40, 99], ['Habilidad (estrellas)', 'hab', c.hab, 1, 5], ['Pie malo (estrellas)', 'pm', c.pm, 1, 5]].map(([t, k, v, mn, mx]) => `<label class="campo-txt">${t}<input type="number" inputmode="numeric" value="${v}" min="${mn}" max="${mx}" data-cambio="edCarta" data-k="${k}" data-min="${mn}" data-max="${mx}"></label>`).join('')}
+      <label class="campo-txt">Posición<select data-cambio="edPos">${PUESTOS.map(p => `<option value="${p}" ${p === c.pos ? 'selected' : ''}>${p}</option>`).join('')}</select></label>
+      <label class="campo-txt">Pie bueno<select data-cambio="edPie"><option value="D" ${c.pie !== 'I' ? 'selected' : ''}>Derecho</option><option value="I" ${c.pie === 'I' ? 'selected' : ''}>Izquierdo</option></select></label></div>
+      <div class="acciones"><button class="btn chico" data-acc="quitar" ${E.once.includes(uid) || E.cartas.length <= 11 ? 'disabled' : ''}>Quitar carta (sin monedas)</button></div></div>`, {
     titulo: esc(nombreCarta(c)), atras: () => hubEstrella('equipo'), acciones: {
       carta: () => { },
+      edCarta: (d, el) => {
+        const v = Math.round(clamp(+el.value || 0, +d.min, +d.max));
+        if (d.k === 'med') { const dif = v - c.med; for (const k in c.st) c.st[k] = Math.round(clamp(c.st[k] + dif, 15, 99)); c.med = v; c.at = atribMotor(c.pos, c.st); }
+        else c[d.k] = v;
+        guardarEstrella(); fichaCarta(uid);
+      },
+      edPos: (d, el) => {
+        const nueva = el.value; if (nueva === c.pos) return;
+        // de portero a jugador de campo (o al revés) los atributos se rehacen con la fórmula
+        if ((nueva === 'POR') !== (c.pos === 'POR')) c.st = statsCarta(nueva, c.med, '', c.nombre);
+        c.pos = nueva; c.med = mediaCarta(nueva, c.st); c.at = atribMotor(nueva, c.st); guardarEstrella(); fichaCarta(uid);
+      },
+      edPie: (d, el) => { c.pie = el.value; guardarEstrella(); fichaCarta(uid); },
+      quitar: () => confirmar('¿Quitar ' + nombreCarta(c) + ' de tu club? No recibes monedas.', () => { E.cartas = E.cartas.filter(x => x.uid !== uid); guardarEstrella(); toast('Carta quitada.'); hubEstrella('equipo'); }, () => fichaCarta(uid)),
       vender: () => { E.cartas = E.cartas.filter(x => x.uid !== uid); E.monedas += ventaRapida(c); guardarEstrella(); toast('Carta vendida.'); hubEstrella('equipo'); },
     },
   });
