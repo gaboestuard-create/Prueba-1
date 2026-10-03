@@ -611,7 +611,7 @@ test('dos carreras: empezar una de jugador no toca la de técnico (y al revés)'
 
 test('dos carreras: si una carrera de jugador sustituyó a la de técnico, se recuperan las dos', async () => {
   // así guardaban las versiones 13 a 19: un solo hueco, y la de técnico quedaba como copia «Antes de empezar una partida nueva»
-  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat[compat.length - 1].commit}.html`);
+  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat.filter(v => v.guardado >= 5 && !v.huecos).pop().commit}.html`);
   await newCareer(old.page); await simDays(old.page, 30);
   const dt = await old.page.evaluate(async () => { for (let i = 0; i < 50 && !(await saveNow()); i++) await new Promise(r => setTimeout(r, 100)); return { cr: W.created, d: W.day, club: W.clubs[W.userClub].name }; });
   await old.page.evaluate(() => exitToMenu());
@@ -633,7 +633,7 @@ test('dos carreras: si una carrera de jugador sustituyó a la de técnico, se re
 });
 
 test('dos carreras: si ya restauraste la de técnico, la de jugador también vuelve', async () => {
-  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat[compat.length - 1].commit}.html`);
+  const ctx = await fresh(); const old = await openGame(ctx, srv.url + `v/${compat.filter(v => v.guardado >= 5 && !v.huecos).pop().commit}.html`);
   await newCareer(old.page); await simDays(old.page, 20);
   const dt = await old.page.evaluate(async () => { for (let i = 0; i < 50 && !(await saveNow()); i++) await new Promise(r => setTimeout(r, 100)); return W.created; });
   await old.page.evaluate(() => exitToMenu());

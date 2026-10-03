@@ -45,6 +45,12 @@
       "commit": "3b97ac2",
       "guardado": 5,
       "descripcion": "Versión 19 del artefacto: capitanía y editor en el modo jugador"
+    },
+    {
+      "commit": "0f859c7",
+      "guardado": 5,
+      "huecos": 2,
+      "descripcion": "Versión 20 del artefacto: un guardado para cada carrera"
     }
   ]
 }
