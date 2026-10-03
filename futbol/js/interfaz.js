@@ -12,9 +12,10 @@ function toast(t, ms = 3500) { const a = $('toast'); a.textContent = t; a.classL
 function vibrar(p) { try { if (DATOS.ajustes.vibrar && navigator.vibrate) navigator.vibrate(p); } catch (e) { } }
 function actualizarMarcador() {
   $('nomL').textContent = G.eqs[0].id; $('nomV').textContent = G.eqs[1].id;
+  for (const [el, eq] of [[$('nomL'), G.eqs[0]], [$('nomV'), G.eqs[1]]]) { el.style.background = colorCss(eq.camiseta); el.style.color = difColor(eq.camiseta, 0xffffff) < 200 ? '#111' : '#fff'; }
   $('goles').textContent = G.eqs[0].goles + ' - ' + G.eqs[1].goles;
 }
-function actualizarQuien() { const c = G.ctrl; $('quien').textContent = c && !G.autoplay ? c.num + ' · ' + c.nombre : ''; }
+function actualizarQuien() { const c = G.ctrl; $('quien').textContent = c && !G.autoplay ? (G.unJugador ? 'Tú · ' : '') + c.num + ' · ' + c.nombre : ''; }
 function alCambiarEquipos() { if (R) { colorearJugadores(); colorearReal(); } actualizarMarcador(); actualizarQuien(); }
 let ultimoContexto = null;
 function actualizarBotones() {
@@ -126,8 +127,8 @@ function htmlAyuda() {
     <b>Defendiendo</b><span>Pase cambia de jugador · Entrada para robar · Tiro hace una barrida · Pase largo (mantener) manda a un compañero a presionar</span>
   </div>`;
 }
-function htmlAjustes() {
-  return OPCIONES.map(op => `<div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div>`).join('');
+function htmlAjustes(solo) {
+  return OPCIONES.filter(op => !solo || solo.includes(op.k)).map(op => `<div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div>`).join('');
 }
 function enlazarAjustes(capa) {
   capa.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
@@ -148,27 +149,23 @@ function htmlProgreso() {
 }
 function abrirCapa(html) { const c = $('capa'); c.innerHTML = html; c.hidden = false; return c; }
 function cerrarCapa() { $('capa').hidden = true; $('cv').focus({ preventScroll: true }); }
-function mostrarInicio() {
-  G.pausa = true;
-  const c = abrirCapa(`<div class="hoja"><h1>Pelo<span>tazo</span></h1>
-    <p>${G.eqs[0].nombre} contra ${G.eqs[1].nombre}. Juegas con los de azul y atacas hacia la derecha.</p>
-    ${htmlAyuda()}
-    <div class="acciones"><button class="btn prin" id="bJugar">Jugar</button><button class="btn" id="bAjustesIni">Ajustes</button></div></div>`);
-  $('bJugar').onclick = () => { pantallaCompleta(); cerrarCapa(); G.pausa = false; aviso('¡A jugar!', 'Saque inicial', 1.4); };
-  $('bAjustesIni').onclick = () => abrirPausa(true);
-}
+function mostrarInicio() { menuPrincipal(); }
 function abrirPausa(desdeInicio) {
-  if (G.fase === 'fin' || G.autoplay) return;
+  if (G.fase === 'fin' || document.body.classList.contains('en-menu')) return;
   G.pausa = true;
-  const c = abrirCapa(`<div class="hoja"><h2>${desdeInicio === true ? 'Ajustes' : 'Pausa'}</h2>
-    <div class="acciones"><button class="btn prin" id="bSeguir">${desdeInicio === true ? 'Jugar' : 'Seguir jugando'}</button>${desdeInicio === true ? '' : '<button class="btn" id="bReiniciar">Reiniciar partido</button>'}</div>
+  const modo = G.cfg && G.cfg.alTerminar;
+  const c = abrirCapa(`<div class="hoja"><h2>Pausa</h2>
+    <div class="acciones"><button class="btn prin" id="bSeguir">Seguir jugando</button>
+      ${modo ? '<button class="btn" id="bSimular">Simular el resto</button>' : '<button class="btn" id="bReiniciar">Reiniciar partido</button>'}
+      ${!modo || G.cfg.modo === 'amistoso' ? '<button class="btn" id="bMenu">Salir al menú</button>' : ''}</div>
     ${htmlAjustes()}${htmlProgreso()}
-    <div class="acciones"><button class="btn" id="bCopias">Copias de seguridad</button><button class="btn" id="bAyuda">Controles</button></div>
+    <div class="acciones"><button class="btn" id="bAyuda">Controles</button></div>
     <p style="font-size:12px">Pelotazo ${JUEGO_VERSION} · guardado versión ${SAVE_VERSION}</p></div>`);
   enlazarAjustes(c);
-  $('bSeguir').onclick = () => { if (desdeInicio === true) pantallaCompleta(); reanudarJuego(); };
+  $('bSeguir').onclick = () => reanudarJuego();
+  if ($('bSimular')) $('bSimular').onclick = () => { cerrarCapa(); simularResto(); };
   if ($('bReiniciar')) $('bReiniciar').onclick = () => { nuevoPartido(Date.now() % 1e9); reanudarJuego(); aviso('Partido nuevo', '', 1.2); };
-  $('bCopias').onclick = mostrarCopias;
+  if ($('bMenu')) $('bMenu').onclick = () => { APP.enPartido = false; APP.fondo = false; menuPrincipal(); };
   $('bAyuda').onclick = () => abrirCapa(`<div class="hoja"><h2>Controles</h2>${htmlAyuda()}<div class="acciones"><button class="btn prin" id="bVolver">Volver</button></div></div>`).querySelector('#bVolver').onclick = () => abrirPausa(desdeInicio);
 }
 function reanudarJuego() { cerrarCapa(); G.pausa = false; guardarPronto(); }
@@ -196,7 +193,8 @@ function mostrarFinal() {
       <span>${S.pasesOk[0]}/${S.pases[0]}</span><span>Pases buenos</span><span>${S.pasesOk[1]}/${S.pases[1]}</span>
     </div>
     ${htmlProgreso()}
-    <div class="acciones"><button class="btn prin" id="bOtra">Jugar otra vez</button></div></div>`);
+    <div class="acciones"><button class="btn prin" id="bOtra">Jugar otra vez</button><button class="btn" id="bMenuF">Menú principal</button></div></div>`);
+  $('bMenuF').onclick = () => { APP.fondo = false; menuPrincipal(); };
   $('bOtra').onclick = () => { nuevoPartido(Date.now() % 1e9); cerrarCapa(); G.pausa = false; aviso('¡A jugar!', 'Saque inicial', 1.4); };
 }
 function mostrarError(t) { abrirCapa(`<div class="hoja"><h2>No se pudo empezar</h2><p>${t}</p></div>`); }

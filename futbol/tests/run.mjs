@@ -448,6 +448,110 @@ test('defendiendo: "Pase" cambia al compañero más cercano al balón', async ()
   await ctx.close();
 });
 
+/* ---------- 3b. mundo, motor configurable y menús ---------- */
+test('base de datos: 8 ligas con sus clubes reales y plantillas completas', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const M = APP.mundo;
+    return { ligas: M.ligas.map(l => l.nombre + ':' + l.clubes.length), plantillas: M.clubes.every(c => c.plantilla.length >= 23 && c.plantilla.filter(id => M.jug[id].pos === 'POR').length >= 2),
+      nombres: ['Real Madrid', 'Manchester City', 'Paris Saint-Germain', 'Juventus', 'Ajax', 'Benfica', 'América', 'Bayern München'].every(n => M.clubes.some(c => c.nombre === n)),
+      fuerte: fuerzaDe(M, M.clubes.find(c => c.nombre === 'Real Madrid')), debil: fuerzaDe(M, M.clubes.find(c => c.nombre === 'Alverca')), valido: validarMundo(M) };
+  });
+  assert(r.ligas.length === 8, 'deberían ser 8 ligas: ' + r.ligas);
+  assert(r.nombres, 'faltan clubes conocidos');
+  assert(r.plantillas, 'hay plantillas incompletas o sin porteros');
+  assert(r.fuerte > r.debil + 8, `poca diferencia entre un grande y un pequeño (${r.fuerte} / ${r.debil})`);
+  assert(!r.valido.length, 'mundo no válido: ' + r.valido);
+  sinErrores(errors); await ctx.close();
+});
+
+test('motor: todas las formaciones juegan un partido completo sin errores', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const M = APP.mundo, out = [];
+    for (const f of Object.keys(FORMACIONES)) {
+      const a = M.clubes[0], b = M.clubes[25]; a.formacion = f; b.formacion = f === '3-5-2' ? '5-3-2' : '4-4-2';
+      let fin = null;
+      G.pausa = true; nuevoPartido({ semilla: 9, local: equipoParaPartido(M, a.id), visita: equipoParaPartido(M, b.id), usuario: -1, alTerminar: res => { fin = res; } });
+      DATOS.ajustes.dur = 3; let n = 0, parte2 = false;
+      while (!fin && n < 20000) { G.avanzar(100); n += 100; if (G.parte === 2) parte2 = true; }
+      out.push({ f, fin: !!fin, parte2, dir: G.eqs[0].dir, pases: fin && fin.stats.pases[0], jug: fin && Object.keys(fin.jug).length });
+      a.formacion = b.formacion = '4-3-3';
+    }
+    G.autoplay = false;
+    return out;
+  });
+  for (const x of r) {
+    assert(x.fin && x.jug === 22, `${x.f}: el partido no terminó bien: ` + JSON.stringify(x));
+    assert(x.parte2 && x.dir === -1, `${x.f}: no hubo cambio de campo en el descanso: ` + JSON.stringify(x));
+    assert(x.pases > 10, `${x.f}: casi no hubo pases`);
+  }
+  sinErrores(errors); await ctx.close();
+});
+
+test('un solo jugador (carrera de jugador): solo controlas al tuyo y puedes pedir el balón', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const M = APP.mundo, c = M.clubes[3], once = alineacionDe(M, c), yo = once[9];
+    G.pausa = true; nuevoPartido({ semilla: 4, local: equipoParaPartido(M, c.id, once), visita: equipoParaPartido(M, 40), usuario: 0, jugadorId: yo, alTerminar() { } });
+    const p = G.unJugador; G.saque = null;
+    const mate = G.eqs[0].pl.find(q => q !== p && !q.por);
+    G.balon.dueno = null; tomar(mate); mate.protegido = 9;
+    const ctrl1 = G.ctrl === p;
+    p.x = mate.x + 12; p.z = mate.z;
+    Object.assign(G.prueba, { activo: true, pass: true }); G.avanzar(1); G.prueba.pass = false;
+    let recibe = false; for (let i = 0; i < 180 && !recibe; i++) { G.avanzar(1); if (G.balon.dueno === p) recibe = true; }
+    // al perderla no cambia a otro jugador
+    const rival = G.eqs[1].pl[5]; G.balon.dueno = null; G.balon.x = rival.x; G.balon.z = rival.z; tomar(rival); G.avanzar(60);
+    G.prueba.activo = false;
+    return { hay: !!p, ctrl1, recibe, sigue: G.ctrl === p };
+  });
+  assert(r.hay && r.ctrl1, 'no se controla al jugador de la carrera');
+  assert(r.recibe, 'pedir el balón no hizo que te lo pasaran');
+  assert(r.sigue, 'el control pasó a otro jugador');
+  await ctx.close();
+});
+
+test('amistoso desde el menú: elegir equipos, jugar, simular el resto y ver el resultado', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await page.click('[data-acc="modo"][data-id="amistoso"]');
+  await page.click('[data-acc="elegir"][data-cual="visita"]');
+  await page.click('.chip:has-text("Liga MX")');
+  await page.click('.club:has-text("Toluca")');
+  const txt = await page.textContent('.vs');
+  assert(txt.includes('Toluca') && txt.includes('Real Madrid'), 'no se eligió el equipo: ' + txt);
+  await page.click('[data-acc="jugar"]');
+  await page.waitForFunction(() => !G.pausa && APP.enPartido);
+  const r1 = await page.evaluate(() => ({ nombres: G.eqs.map(e => e.nombre), hud: document.getElementById('nomV').textContent }));
+  assert(r1.nombres[1] === 'Toluca' && r1.hud === 'TOL', 'el partido no es con los equipos elegidos: ' + JSON.stringify(r1));
+  await page.click('#bPausa'); await page.click('#bSimular');
+  await page.waitForFunction(() => document.querySelector('.marcador-final'));
+  const r2 = await page.evaluate(() => ({ txt: document.querySelector('.marcador-final').textContent, jugados: DATOS.estad.jugados }));
+  assert(r2.txt.includes('Toluca') && r2.jugados === 1, 'no se mostró o registró el resultado: ' + JSON.stringify(r2));
+  sinErrores(errors); await ctx.close();
+});
+
+test('ranuras de guardado: se guardan comprimidas, se recuperan de la copia y no se escriben si están dañadas', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(async () => {
+    const M = generarMundo(1);
+    const ok1 = await guardarRanura('mundo', M, true);
+    M.clubes[0].nombre = 'Club Cambiado'; const ok2 = await guardarRanura('mundo', M, true);
+    const raw = await KV.get('r_mundo');
+    const malo = JSON.parse(JSON.stringify(M)); malo.jug = null; const ok3 = await guardarRanura('mundo', malo, true);
+    const sigue = (await cargarRanura('mundo')).datos.clubes[0].nombre;
+    await KV.set('r_mundo', 'gz:basura');
+    const rec = await cargarRanura('mundo');
+    return { ok1, ok2, ok3, comprimida: raw.startsWith('gz:') && raw.length < 600000, sigue, estado: rec.estado, nombre: rec.datos && rec.datos.clubes[0].nombre, danado: (await KV.keys()).some(k => k.startsWith('danado_r_mundo')) };
+  });
+  assert(r.ok1 && r.ok2 && r.ok3 === false, 'guardar ranura: ' + JSON.stringify(r));
+  assert(r.comprimida, 'la ranura no está comprimida');
+  assert(r.sigue === 'Club Cambiado', 'los datos dañados sustituyeron a los buenos');
+  assert(r.estado === 'recuperada' && r.nombre === 'Real Madrid', 'no se recuperó de la copia anterior: ' + JSON.stringify(r));
+  assert(r.danado, 'no se apartó la ranura dañada');
+  await ctx.close();
+});
+
 /* ---------- 4. guardado protegido ---------- */
 const leer = (page, k) => page.evaluate(k => KV.get(k), k);
 const escribir = (page, k, v) => page.evaluate(([k, v]) => KV.set(k, v), [k, v]);
@@ -462,14 +566,14 @@ test('guardado: ajustes y resultados se conservan al cerrar y volver a abrir', a
   assert(r.e.jugados === 2 && r.e.ganados === 1 && r.e.empatados === 1 && r.e.gf === 3 && r.e.gc === 1, 'las estadísticas no se conservaron: ' + JSON.stringify(r.e));
   assert(r.h === 2 && r.estado === 'ok', 'historial o estado mal: ' + JSON.stringify(r));
   const meta = await leer(b.page, 'save_meta');
-  assert(meta && meta.v === 1, 'falta la versión del guardado');
+  assert(meta && meta.v === 2, 'falta la versión del guardado');
   sinErrores(b.errors); await ctx.close();
 });
 
 test('guardado: al terminar un partido se guarda y se crea una copia de seguridad', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
   await empezar(page);
-  await page.evaluate(async () => { G.pausa = true; G.eqs[0].goles = 2; G.reloj = 5399.9; G.saque = null; G.avanzar(5); await colaGuardado; });
+  await page.evaluate(async () => { G.pausa = true; G.eqs[0].goles = 2; G.parte = 2; G.reloj = 5399.9; G.saque = null; G.avanzar(5); await colaGuardado; });
   const r = await page.evaluate(async () => ({ e: DATOS.estad, copias: (await bakList()).map(b => b.tipo), final: !$('capa').hidden && $('capa').textContent.includes('Final del partido') }));
   assert(r.final, 'no se muestra la pantalla final');
   assert(r.e.jugados === 1 && r.e.ganados === 1, 'no se registró el partido: ' + JSON.stringify(r.e));
@@ -518,7 +622,7 @@ test('guardado sin número de versión (formato antiguo): se convierte y se abre
   await a.page.close();
   const b = await openGame(ctx, srv.url);
   const r = await b.page.evaluate(() => ({ estado: SAVE.estado, v: DATOS.v, cam: DATOS.ajustes.cam, j: DATOS.estad.jugados }));
-  assert(r.estado === 'ok' && r.v === 1 && r.cam === 'arriba' && r.j === 1, 'no se convirtió bien: ' + JSON.stringify(r));
+  assert(r.estado === 'ok' && r.v === 2 && r.cam === 'arriba' && r.j === 1, 'no se convirtió bien: ' + JSON.stringify(r));
   await ctx.close();
 });
 

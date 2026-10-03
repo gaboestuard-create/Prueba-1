@@ -5,15 +5,19 @@
    - 'save': los datos (texto 'js:' + JSON). 'save_meta': versión y fecha.
    - 'bak_index' y 'bak_*': copias de seguridad. 'danado_*': datos dañados apartados.
    - Si cambia la forma de DATOS: subir SAVE_VERSION y añadir MIGR[nueva].
+   - Las carreras y la base de datos editada van aparte, en "ranuras" (ver más abajo), para que un problema en una
+     no afecte a las demás.
    ===================================================================== */
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 const AJUSTES_DEF = { cam: 'diag', modelo: 'real', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
 const ESTAD_CLAVES = ['jugados', 'ganados', 'empatados', 'perdidos', 'gf', 'gc'];
 const MIGR = {
   // 1: datos sin número de versión (versión 0) → 1
   1: d => { d.v = 1; return d; },
+  // 2: modos de juego (Equipo Estrella y torneo en curso)
+  2: d => { d.v = 2; d.estrella = d.estrella || null; d.torneo = d.torneo || null; return d; },
 };
-function datosNuevos() { return { v: SAVE_VERSION, creado: Date.now(), guardado: 0, ajustes: { ...AJUSTES_DEF }, estad: { jugados: 0, ganados: 0, empatados: 0, perdidos: 0, gf: 0, gc: 0 }, historial: [] }; }
+function datosNuevos() { return { v: SAVE_VERSION, creado: Date.now(), guardado: 0, ajustes: { ...AJUSTES_DEF }, estad: { jugados: 0, ganados: 0, empatados: 0, perdidos: 0, gf: 0, gc: 0 }, historial: [], estrella: null, torneo: null }; }
 let DATOS = datosNuevos();
 // completa lo que falte y corrige ajustes con valores que no existen
 function arreglarDatos(d) {
@@ -24,6 +28,8 @@ function arreglarDatos(d) {
   }
   if (!Array.isArray(d.historial)) d.historial = [];
   if (!d.creado) d.creado = Date.now();
+  if (d.estrella === undefined) d.estrella = null;
+  if (d.torneo === undefined) d.torneo = null;
   return d;
 }
 function validarDatos(d) {
@@ -38,6 +44,12 @@ function validarDatos(d) {
   if (!d.ajustes || typeof d.ajustes !== 'object') grave.push('faltan los ajustes');
   if (!Array.isArray(d.historial)) grave.push('historial dañado');
   else if (d.historial.some(h => !h || !Number.isInteger(h.gf) || !Number.isInteger(h.gc))) grave.push('partido del historial dañado');
+  if (d.estrella) {
+    const e = d.estrella;
+    if (!Number.isInteger(e.monedas) || e.monedas < 0) grave.push('monedas de Equipo Estrella dañadas');
+    if (!Array.isArray(e.cartas)) grave.push('cartas de Equipo Estrella dañadas');
+  }
+  if (d.torneo && (!Array.isArray(d.torneo.equipos) || !d.torneo.mundo)) grave.push('torneo dañado');
   return { ok: grave.length === 0, grave, aviso };
 }
 // almacenamiento: IndexedDB; si no se puede, localStorage; si tampoco, solo en memoria
@@ -177,3 +189,81 @@ function vigilarPestanas() {
     SAVE.canal = bc;
   } catch (e) { }
 }
+
+/* =====================================================================
+   ranuras: carreras y base de datos editada
+   Cada ranura (p. ej. 'dt', 'jug', 'mundo') se guarda en 'r_<nombre>' comprimida ('gz:' + base64, o 'js:' + JSON si el
+   navegador no sabe comprimir), con sus 3 últimas copias en 'r_<nombre>_c<n>'. Contenido: { v, tipo, guardado, datos }.
+   Antes de escribir se valida con la función de la ranura; si falla, no se escribe. Al abrir, si la ranura está dañada
+   se aparta en 'danado_r_<nombre>_<fecha>' y se usa la copia buena más reciente.
+   ===================================================================== */
+const RANURA_VERSION = 1;
+const VALIDAR_RANURA = {
+  mundo: d => validarMundo(d),
+  dt: d => [...validarMundo(d && d.mundo), ...(d && Number.isInteger(d.club) && d.mundo && d.mundo.clubes[d.club] ? [] : ['club del técnico'])],
+  jug: d => [...validarMundo(d && d.mundo), ...(d && d.mundo && d.mundo.jug[d.yo] ? [] : ['jugador de la carrera'])],
+};
+async function comprimir(texto) {
+  try {
+    if (typeof CompressionStream === 'undefined') throw 0;
+    const buf = await new Response(new Blob([texto]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    let bin = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    return 'gz:' + btoa(bin);
+  } catch (e) { return 'js:' + texto; }
+}
+async function descomprimir(raw) {
+  if (typeof raw !== 'string') throw new Error('formato desconocido');
+  if (raw.startsWith('js:')) return raw.slice(3);
+  if (!raw.startsWith('gz:')) throw new Error('formato desconocido');
+  const bin = atob(raw.slice(3)), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+async function leerRanuraTexto(raw, nombre) {
+  const r = JSON.parse(await descomprimir(raw));
+  if (!r || typeof r !== 'object' || !r.datos) throw new Error('ranura vacía');
+  if (r.v > RANURA_VERSION) { const e = new Error('versión futura'); e.futuro = true; throw e; }
+  const fallos = (VALIDAR_RANURA[nombre] || (() => []))(r.datos);
+  if (fallos.length) throw new Error('dañada: ' + fallos.join(', '));
+  return r;
+}
+// devuelve { datos, estado: 'ok' | 'vacia' | 'recuperada' | 'futuro' | 'perdida' }
+async function cargarRanura(nombre) {
+  let raw; try { raw = await KV.get('r_' + nombre); } catch (e) { raw = undefined; }
+  if (raw == null) return { datos: null, estado: 'vacia' };
+  try { const r = await leerRanuraTexto(raw, nombre); if (nombre === 'mundo' || r.datos.mundo) arreglarMundo(nombre === 'mundo' ? r.datos : r.datos.mundo); return { datos: r.datos, estado: 'ok' }; }
+  catch (e) {
+    if (e.futuro) return { datos: null, estado: 'futuro' };
+    try { await KV.set('danado_r_' + nombre + '_' + Date.now(), raw); } catch (er) { }
+    for (let n = 0; n < 3; n++) {
+      try { const c = await KV.get('r_' + nombre + '_c' + n); if (c == null) continue; const r = await leerRanuraTexto(c, nombre); await KV.set('r_' + nombre, c); return { datos: r.datos, estado: 'recuperada' }; } catch (er) { }
+    }
+    return { datos: null, estado: 'perdida' };
+  }
+}
+// guarda una ranura; con copia = true también rota sus copias de seguridad
+function guardarRanura(nombre, datos, copia = false) {
+  return enCola(async () => {
+    if (SAVE.soloLectura || !SAVE.dueno) return false;
+    const fallos = (VALIDAR_RANURA[nombre] || (() => []))(datos);
+    if (fallos.length) { console.warn('No se guarda la ranura ' + nombre + ':', fallos); return false; }
+    try {
+      const texto = await comprimir(JSON.stringify({ v: RANURA_VERSION, tipo: nombre, guardado: Date.now(), datos }));
+      if (copia) {
+        const viejo = await KV.get('r_' + nombre);
+        if (viejo != null) { for (let n = 2; n > 0; n--) { const c = await KV.get('r_' + nombre + '_c' + (n - 1)); if (c != null) await KV.set('r_' + nombre + '_c' + n, c); } await KV.set('r_' + nombre + '_c0', viejo); }
+      }
+      await KV.set('r_' + nombre, texto);
+      return true;
+    } catch (e) { console.warn('Error al guardar la ranura ' + nombre, e); return false; }
+  });
+}
+// borra una ranura (empezar de nuevo): antes guarda lo que había como copia
+function borrarRanura(nombre) {
+  return enCola(async () => {
+    const viejo = await KV.get('r_' + nombre);
+    if (viejo != null) await KV.set('r_' + nombre + '_c0', viejo);
+    await KV.del('r_' + nombre);
+    return true;
+  });
+}
+async function hayRanura(nombre) { try { return (await KV.get('r_' + nombre)) != null; } catch (e) { return false; } }

@@ -29,12 +29,17 @@ async function arrancar() {
   if (SAVE.estado === 'reiniciado') setTimeout(() => toast('Tus datos estaban dañados y no había copias: se empezó de cero.', 6000), 300);
   if (SAVE.estado === 'futuro') setTimeout(() => toast('Tus datos son de una versión más nueva del juego: esta versión no los modificará.', 6000), 300);
   if (typeof THREE === 'undefined') { mostrarError('No se pudo cargar la biblioteca de gráficos. Revisa tu conexión y recarga la página.'); return; }
+  // base de datos: la editada por el usuario si existe; si no, la de fábrica
+  const rm = await cargarRanura('mundo');
+  APP.mundo = rm.datos || generarMundo();
+  if (rm.estado === 'recuperada') setTimeout(() => toast('Tu base de datos editada estaba dañada: se recuperó de una copia.', 6000), 400);
+  if (rm.estado === 'perdida') setTimeout(() => toast('Tu base de datos editada estaba dañada y no tenía copias: se usa la de fábrica.', 6000), 400);
   if (!iniciarGraficos()) return;
   nuevoPartido();
   iniciarTactil(); iniciarTeclado(); aplicarTactil();
   addEventListener('resize', ajustarTamano);
   addEventListener('gamepadconnected', () => toast('Mando conectado'));
-  document.addEventListener('visibilitychange', () => { if (document.hidden && !G.pausa && G.fase === 'juego') abrirPausa(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && !G.pausa && G.fase === 'juego' && !document.body.classList.contains('en-menu')) abrirPausa(); });
   $('bPausa').addEventListener('click', () => abrirPausa());
   if (SAVE.estado === 'nuevo') guardarAhora();
   G.listo = true;

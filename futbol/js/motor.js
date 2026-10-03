@@ -34,38 +34,61 @@ const EQUIPOS = [
   { id: 'HAL', nombre: 'Halcones del Norte', camiseta: 0x2f7bff, pantalon: 0xf2f4f8, medias: 0x2f7bff, portero: 0x2bc46a },
   { id: 'TOR', nombre: 'Toros del Valle', camiseta: 0xe8463a, pantalon: 0x20222b, medias: 0xe8463a, portero: 0xffc928 },
 ];
-// 4-3-3. fx: de la portería propia (0) a la rival (1); fz: de una banda (-1) a la otra (1)
-const FORMACION = [
-  { r: 'POR', fx: .03, fz: 0, n: 1 },
-  { r: 'DEF', fx: .2, fz: -.72, n: 3 }, { r: 'DEF', fx: .17, fz: -.26, n: 4 }, { r: 'DEF', fx: .17, fz: .26, n: 5 }, { r: 'DEF', fx: .2, fz: .72, n: 2 },
-  { r: 'MED', fx: .35, fz: 0, n: 6 }, { r: 'MED', fx: .42, fz: -.45, n: 8 }, { r: 'MED', fx: .42, fz: .45, n: 10 },
-  { r: 'DEL', fx: .6, fz: -.7, n: 11 }, { r: 'DEL', fx: .66, fz: 0, n: 9 }, { r: 'DEL', fx: .6, fz: .7, n: 7 },
-];
+// Formaciones. fx: de la portería propia (0) a la rival (1); fz: de una banda (-1) a la otra (1).
+// p = puesto (para elegir jugadores): POR, LI, DFC, LD, MCD, MC, MCO, MI, MD, EI, DC, ED. El orden es siempre
+// portero, defensas, medios, delanteros; el delantero más adelantado saca de centro.
+const ROL_DE_PUESTO = { POR: 'POR', LI: 'DEF', DFC: 'DEF', LD: 'DEF', MCD: 'MED', MC: 'MED', MCO: 'MED', MI: 'MED', MD: 'MED', EI: 'DEL', DC: 'DEL', ED: 'DEL' };
+const F = (p, fx, fz, n) => ({ p, r: ROL_DE_PUESTO[p], fx, fz, n });
+const FORMACIONES = {
+  '4-3-3': [F('POR', .03, 0, 1), F('LI', .2, -.72, 3), F('DFC', .17, -.26, 4), F('DFC', .17, .26, 5), F('LD', .2, .72, 2),
+    F('MCD', .35, 0, 6), F('MC', .42, -.45, 8), F('MC', .42, .45, 10), F('EI', .6, -.7, 11), F('DC', .66, 0, 9), F('ED', .6, .7, 7)],
+  '4-4-2': [F('POR', .03, 0, 1), F('LI', .2, -.72, 3), F('DFC', .17, -.26, 4), F('DFC', .17, .26, 5), F('LD', .2, .72, 2),
+    F('MI', .4, -.74, 11), F('MC', .37, -.24, 8), F('MC', .37, .24, 6), F('MD', .4, .74, 7), F('DC', .63, -.2, 9), F('DC', .63, .2, 10)],
+  '4-2-3-1': [F('POR', .03, 0, 1), F('LI', .2, -.72, 3), F('DFC', .17, -.26, 4), F('DFC', .17, .26, 5), F('LD', .2, .72, 2),
+    F('MCD', .33, -.22, 6), F('MCD', .33, .22, 8), F('EI', .52, -.68, 11), F('MCO', .52, 0, 10), F('ED', .52, .68, 7), F('DC', .66, 0, 9)],
+  '3-5-2': [F('POR', .03, 0, 1), F('DFC', .18, -.5, 4), F('DFC', .16, 0, 5), F('DFC', .18, .5, 2),
+    F('MI', .4, -.8, 3), F('MC', .35, -.28, 6), F('MCO', .46, 0, 10), F('MC', .35, .28, 8), F('MD', .4, .8, 7), F('DC', .64, -.2, 9), F('DC', .64, .2, 11)],
+  '5-3-2': [F('POR', .03, 0, 1), F('LI', .24, -.82, 3), F('DFC', .17, -.42, 4), F('DFC', .15, 0, 5), F('DFC', .17, .42, 6), F('LD', .24, .82, 2),
+    F('MC', .4, -.45, 8), F('MCD', .36, 0, 16), F('MC', .4, .45, 10), F('DC', .62, -.2, 9), F('DC', .62, .2, 11)],
+};
+const FORMACION = FORMACIONES['4-3-3'];
+// estilo de juego del equipo: presión (0 baja, 1 media, 2 alta), línea defensiva (0 baja, 1 media, 2 alta) y
+// ritmo (0 posesión, 1 mixto, 2 directo). Lo leen puestoEnBloque, planEquipos y mejorPase.
+const ESTILO_DEF = { presion: 1, linea: 1, ritmo: 1 };
 const PIEL = [0xf1c9a5, 0xd9a27b, 0xb47a4f, 0x8a5636, 0x5e3a24, 0xe8b894];
 const PELO = [0x1d1510, 0x3b2516, 0x6b4423, 0xc99b4d, 0x0f0f12, 0x8a2f1a, 0xd8d0c0];
 
-function crearEquipo(i) {
-  const E = EQUIPOS[i];
-  const eq = { i, ...E, dir: i === 0 ? 1 : -1, pl: [], goles: 0 };
-  FORMACION.forEach((f, k) => {
+// def (opcional): { id, nombre, corto, camiseta, pantalon, medias, portero, formacion, estilo, jugadores: [11] }
+// cada jugador: { id, nombre, nombre1, num, atrib: { vel, pas, tir, def, reg, par } (1-99), piel, pelo, forma }
+function crearEquipo(i, def) {
+  const E = def ? { id: def.corto || 'EQU', nombre: def.nombre, camiseta: def.camiseta, pantalon: def.pantalon, medias: def.medias, portero: def.portero } : EQUIPOS[i];
+  const form = (def && FORMACIONES[def.formacion]) || FORMACION;
+  const eq = { i, ...E, dir: i === 0 ? 1 : -1, pl: [], goles: 0, formacion: (def && FORMACIONES[def.formacion]) ? def.formacion : '4-3-3', estilo: { ...ESTILO_DEF, ...(def && def.estilo) }, ref: def || null };
+  form.forEach((f, k) => {
     const st = r => clamp(r + rnd(-.12, .12), .3, .98);
+    const d = def && def.jugadores && def.jugadores[k];
+    const at = d && d.atrib, fm = d ? .95 + clamp(d.forma == null ? 50 : d.forma, 0, 100) * .001 : 1;
+    const v = (k2, base) => at ? clamp(at[k2] / 100 * fm, .25, .99) : st(base);
     const p = {
-      eq, k, rol: f.r, num: f.n, por: f.r === 'POR',
-      nombre: APELLIDOS[Math.floor(rng() * APELLIDOS.length)], nombre1: NOMBRES[Math.floor(rng() * NOMBRES.length)],
-      vel: st(f.r === 'DEL' ? .78 : f.r === 'DEF' ? .62 : .68), pas: st(f.r === 'MED' ? .8 : .66), tir: st(f.r === 'DEL' ? .78 : f.r === 'MED' ? .64 : .45),
-      def: st(f.r === 'DEF' ? .8 : f.r === 'MED' ? .64 : .45), reg: st(f.r === 'DEL' ? .75 : .62), par: st(.72),
+      eq, k, rol: f.r, puesto: f.p, num: d ? d.num : f.n, por: f.r === 'POR', id: d ? d.id : null,
+      nombre: d ? d.nombre : APELLIDOS[Math.floor(rng() * APELLIDOS.length)], nombre1: d ? (d.nombre1 || '') : NOMBRES[Math.floor(rng() * NOMBRES.length)],
+      vel: v('vel', f.r === 'DEL' ? .78 : f.r === 'DEF' ? .62 : .68), pas: v('pas', f.r === 'MED' ? .8 : .66), tir: v('tir', f.r === 'DEL' ? .78 : f.r === 'MED' ? .64 : .45),
+      def: v('def', f.r === 'DEF' ? .8 : f.r === 'MED' ? .64 : .45), reg: v('reg', f.r === 'DEL' ? .75 : .62), par: v('par', .72),
+      st: { g: 0, a: 0, tiros: 0, pases: 0, pasesOk: 0, rob: 0 }, pasador: null,
       base: f, x: 0, z: 0, vx: 0, vz: 0, cara: 0, fase: rng() * 6,
       tx: 0, tz: 0, prisa: false,
       entrada: null, entT: 0, entCD: 0, entHecha: false, suelo: 0, tropiezo: 0, protegido: 0, patadaCD: 0, patadaT: 0,
       golpe: null, pie: 1, toqueT: 0, toqueCD: 0, inclLat: 0, frenado: 0, dvx: 0, dvz: 0,
       decT: rng() * .4, desT: rng() * 2, desX: 0, desZ: 0, desmarque: false, retener: 0, estirada: null, celebra: 0,
-      piel: PIEL[Math.floor(rng() * PIEL.length)], pelo: PELO[Math.floor(rng() * PELO.length)],
+      piel: d && d.piel != null ? d.piel : PIEL[Math.floor(rng() * PIEL.length)], pelo: d && d.pelo != null ? d.pelo : PELO[Math.floor(rng() * PELO.length)],
     };
     eq.pl.push(p);
   });
   return eq;
 }
 function posFormacion(eq, fx, fz) { return { x: eq.dir * (-HL + fx * PL), z: fz * HW * .82 * eq.dir }; }
+// diferencia entre dos colores (0-441): para cambiar a la segunda equipación si se parecen
+function difColor(a, b) { const c = x => [(x >> 16) & 255, (x >> 8) & 255, x & 255], p = c(a), q = c(b); return hyp(p[0] - q[0], p[1] - q[1], p[2] - q[2]); }
 
 /* ---------- estado del partido ---------- */
 const G = {
@@ -75,19 +98,44 @@ const G = {
 };
 function nuevoBalon() { return { x: 0, y: BR, z: 0, vx: 0, vy: 0, vz: 0, dueno: null, tipo: null, destino: null, ultimo: null, pateador: null, id: 0, paraPor: null, batido: null, rotX: 0, rotZ: 0 }; }
 
-function nuevoPartido(semillaNueva) {
-  if (semillaNueva != null) semilla = semillaNueva;
-  G.eqs = [crearEquipo(0), crearEquipo(1)];
+/* nuevoPartido(cfg): prepara un partido. cfg puede ser solo una semilla (número) o:
+   { semilla, local, visita (definiciones de crearEquipo), usuario: 0 local | 1 visita | -1 nadie (la computadora juega sola),
+     jugadorId: id del único jugador que controlas (carrera de jugador), dur (minutos reales), alTerminar(resultado), titulo } */
+function nuevoPartido(cfg) {
+  if (typeof cfg !== 'object' || cfg === null) cfg = { semilla: cfg };
+  if (cfg.semilla != null) semilla = cfg.semilla;
+  G.cfg = cfg;
+  if ('usuario' in cfg) { G.autoplay = cfg.usuario < 0; G.usuario = cfg.usuario < 0 ? 0 : cfg.usuario; }
+  G.eqs = [crearEquipo(0, cfg.local), crearEquipo(1, cfg.visita)];
+  const [a, v] = G.eqs; // si las camisetas se parecen, el visitante usa su segunda equipación
+  if (difColor(a.camiseta, v.camiseta) < 120 && cfg.visita && cfg.visita.camiseta2 != null) { v.camiseta = cfg.visita.camiseta2; v.pantalon = cfg.visita.pantalon2 ?? v.pantalon; v.medias = cfg.visita.camiseta2; }
+  if (difColor(a.camiseta, v.camiseta) < 90) { v.camiseta = difColor(a.camiseta, 0xf4f4f4) > 160 ? 0xf4f4f4 : 0x1b1d24; v.medias = v.camiseta; }
   G.eqs[0].rival = G.eqs[1]; G.eqs[1].rival = G.eqs[0];
   G.todos = [...G.eqs[0].pl, ...G.eqs[1].pl];
+  G.unJugador = cfg.jugadorId != null ? G.todos.find(p => p.id === cfg.jugadorId && p.eq.i === G.usuario) || null : null;
   G.balon = nuevoBalon();
-  G.reloj = 0; G.t = 0; G.fase = 'juego'; G.buffer = null; G.carga = null;
+  G.reloj = 0; G.t = 0; G.fase = 'juego'; G.parte = 1; G.buffer = null; G.carga = null; G.pidePase = 0; G.goles = [];
   G.stats = { tiros: [0, 0], aPuerta: [0, 0], pos: [0, 0], pases: [0, 0], pasesOk: [0, 0] };
   G.ctrl = null;
   saqueInicial(G.eqs[0]);
   if (typeof alCambiarEquipos === 'function') alCambiarEquipos();
 }
+const minutoActual = () => Math.min(90, Math.floor(G.reloj / 60) + 1);
+// resultado del partido para los modos de juego
+function resultadoPartido(simulado) {
+  const nota = (p, eq) => {
+    const s = p.st, gf = eq.goles, gc = eq.rival.goles;
+    let n = 6 + s.g * 1.1 + s.a * .7 + s.pasesOk * .025 - (s.pases - s.pasesOk) * .07 + s.rob * .18 + s.tiros * .05 + (gf > gc ? .5 : gf < gc ? -.4 : 0);
+    if (p.por) n += .5 - gc * .35 + G.stats.aPuerta[1 - eq.i] * .1;
+    return Math.round(clamp(n, 3, 10) * 10) / 10;
+  };
+  const jug = {};
+  for (const p of G.todos) if (p.id != null) jug[p.id] = { g: p.st.g, a: p.st.a, nota: nota(p, p.eq), lado: p.eq.i };
+  return { gl: G.eqs[0].goles, gv: G.eqs[1].goles, goles: G.goles.slice(), stats: JSON.parse(JSON.stringify(G.stats)), jug, simulado: !!simulado };
+}
 const eqUsuario = () => G.eqs[G.usuario];
+// el delantero más adelantado (saca de centro y es el primero que controlas)
+const delanteroDe = eq => eq.pl.reduce((m, p) => (!m || p.base.fx > m.base.fx ? p : m), null);
 const esUsuario = p => !G.autoplay && p.eq.i === G.usuario;
 const porteriaPropiaX = eq => -eq.dir * HL;
 const enAreaPropia = (p, x, z) => Math.abs(z) < AREA_W2 && x * p.eq.dir < -HL + AREA_D + .5 && x * p.eq.dir > -HL - 1;
@@ -199,7 +247,9 @@ function tomar(p) {
   const b = G.balon;
   const cambio = G.posesion !== p.eq;
   b.dueno = p; b.tipo = null; b.ultimo = p; b.paraPor = null; b.batido = null;
-  if (b.destino === p && b.pateador && b.pateador.eq === p.eq) G.stats.pasesOk[p.eq.i]++;
+  if (b.destino === p && b.pateador && b.pateador.eq === p.eq) { G.stats.pasesOk[p.eq.i]++; b.pateador.st.pasesOk++; }
+  if (b.pateador && b.pateador.eq === p.eq && b.pateador !== p && (b.tipo === 'pase' || b.tipo === 'largo')) { p.pasador = b.pateador; p.pasadorT = G.t; }
+  else if (b.pateador !== p) p.pasador = null;
   b.destino = null; p.recibe = null; p.protegido = .4;
   if (hyp(b.x - p.x, b.z - p.z) > 1.2) { b.x = p.x + Math.cos(p.cara) * .45; b.z = p.z + Math.sin(p.cara) * .45; b.vx = b.vz = 0; } // por si se le da el balón a distancia
   p.toqueCD = .12;
@@ -275,7 +325,7 @@ function lanzarPase(p, tx, tz, tipo, m) {
   const b = G.balon, d = hyp(tx - b.x, tz - b.z);
   const err = (.015 + (1 - p.pas) * .06) * dif(p.eq).errPase * (hyp(p.vx, p.vz) > 7 ? 1.4 : 1);
   const ang = Math.atan2(tz - b.z, tx - b.x) + gauss() * err;
-  G.stats.pases[p.eq.i]++;
+  G.stats.pases[p.eq.i]++; p.st.pases++;
   if (tipo === 'largo') {
     const T = .9 + d * .03, dd = d * (1 + gauss() * err * .5);
     const vh = dd / T * (1 + AIRE * T * .5);
@@ -301,7 +351,7 @@ function disparar(p, pot, ax, az) {
   const vy = (yt - BR) / T + GRAV * T / 2, c = 1 + AIRE * T * .5;
   p.cara = Math.atan2(zt - b.z, gx - b.x);
   patear(p, (gx - b.x) / T * c, vy, (zt - b.z) / T * c, 'tiro', null);
-  G.stats.tiros[eq.i]++;
+  G.stats.tiros[eq.i]++; p.st.tiros++;
   reaccionPortero(eq.rival);
 }
 // el portero decide si llega al tiro
@@ -516,7 +566,7 @@ function pasoEntrada(p, dt) {
         const f = dif(p.eq).entrada;
         const prob = (barr ? .72 + p.def * .22 - o.reg * .2 : .5 + p.def * .35 - o.reg * .25) * f;
         if (rng() < prob) {
-          o.tropiezo = .45; G.carga = G.ctrl === o ? null : G.carga;
+          o.tropiezo = .45; G.carga = G.ctrl === o ? null : G.carga; p.st.rob++;
           if (!barr && rng() < .55) { b.dueno = null; tomar(p); }
           else { b.dueno = null; patear(p, Math.cos(p.cara) * rnd(4, 7), .3, Math.sin(p.cara) * rnd(4, 7), 'rechace'); p.patadaCD = .35; }
         }
@@ -531,7 +581,8 @@ function pasoEntrada(p, dt) {
 function puestoEnBloque(p) {
   const eq = p.eq, propio = G.posesion === eq, b = G.balon;
   const bx = (eq.dir * b.x + HL) / PL;
-  let fx = p.base.fx + (bx - .5) * .6 + (propio ? .1 : -.04);
+  const es = eq.estilo || ESTILO_DEF;
+  let fx = p.base.fx + (bx - .5) * .6 + (propio ? .1 : -.04) + (es.linea - 1) * .05;
   if (!propio && p.rol !== 'DEL') fx = Math.min(fx, bx - .05);
   if (!propio && p.rol === 'DEL') fx = Math.max(fx, .4);
   if (propio && p.rol === 'DEF') fx = Math.min(fx, bx + .02);
@@ -587,9 +638,11 @@ function planEquipos() {
         if (G.presion || dc > 5) { eq.presiona = otros[0]; eq.cubre = otros[1]; }
         else eq.cubre = otros[0];
       } else {
-        eq.presiona = orden[0]; eq.cubre = orden[1];
-        // cerca de su portería, la computadora mete a un segundo jugador a presionar
-        if (hyp(porteriaPropiaX(eq) - b.x, b.z) < 30) { eq.presiona2 = orden[1]; eq.cubre = orden[2]; }
+        // presión según el estilo: baja = espera en su campo; alta = dos jugadores presionan casi en todo el campo
+        const es = eq.estilo || ESTILO_DEF, dg = hyp(porteriaPropiaX(eq) - b.x, b.z);
+        if (es.presion > 0 || dg < 55) eq.presiona = orden[0];
+        eq.cubre = orden[1];
+        if (dg < [22, 30, 60][es.presion]) { eq.presiona2 = orden[1]; eq.cubre = orden[2]; }
       }
     }
   }
@@ -663,6 +716,10 @@ function iaConBalon(p, dt) {
   const dGol = hyp(gx - p.x, -p.z);
   let presion = 99;
   for (const o of eq.rival.pl) { const d = hyp(o.x - p.x, o.z - p.z); if (d < presion) presion = d; }
+  const yo = G.unJugador;
+  if (yo && yo.eq === eq && yo !== p && G.t - (G.pidePase || 0) < 1.2 && !p.golpe && hyp(yo.x - p.x, yo.z - p.z) < 45) {
+    G.pidePase = 0; golpear(p, () => pasarA(p, yo, hyp(yo.x - p.x, yo.z - p.z) > 26 ? 'largo' : 'corto')); return [p.vx, p.vz];
+  }
   p.decT -= dt;
   if (p.decT <= 0) {
     p.decT = dif(eq).decision * rnd(.7, 1.3) * (dGol < 30 ? .6 : 1); // cerca del área decide más rápido
@@ -707,7 +764,8 @@ function mejorPase(p, seguro) {
     const avance = (m.x - p.x) * eq.dir, libre = lineaLibre(p.x, p.z, m.x, m.z, eq.rival, 16);
     let cerca = 8; for (const o of eq.rival.pl) { const e = hyp(o.x - m.x, o.z - m.z); if (e < cerca) cerca = e; }
     const tipo = d > 28 || (libre < .8 && d > 14) ? 'largo' : 'corto';
-    let s = avance * .06 - (avance < -6 ? .3 : 0) + Math.min(libre, 3) * .35 + Math.min(cerca, 6) * .15 - (d > 30 ? (d - 30) * .04 : 0) + (m.desmarque ? .4 : 0) + rnd(-.25, .25);
+    const ritmo = (eq.estilo || ESTILO_DEF).ritmo;
+    let s = avance * [.04, .06, .085][ritmo] - (avance < -6 ? .3 : 0) + Math.min(libre, 3) * [.45, .35, .28][ritmo] + (tipo === 'largo' && ritmo === 2 ? .25 : 0) + Math.min(cerca, 6) * .15 - (d > 30 ? (d - 30) * .04 : 0) + (m.desmarque ? .4 : 0) + rnd(-.25, .25);
     if (tipo === 'corto' && libre < .8) s -= 2.5;
     if (tipo === 'largo' && cerca < 2.5) s -= 1.5;
     if (seguro) s += avance < 0 ? .2 : 0;
@@ -825,7 +883,7 @@ function leerControles() {
 function consumirBordes() { for (const k of BOTONES) { BORDE[k] = false; SUELTO[k] = false; } }
 
 // el jugador que controlas
-function controlar(p) { if (!p || p === G.ctrl || p.por) return; G.ctrl = p; G.cambioT = G.t; G.carga = null; actualizarQuien(); }
+function controlar(p) { if (!p || p === G.ctrl || p.por || (G.unJugador && p !== G.unJugador)) return; G.ctrl = p; G.cambioT = G.t; G.carga = null; actualizarQuien(); }
 // el mejor defensor para tomar el control: cerca del balón y, mejor aún, entre el balón y nuestra portería
 function puntuarDefensor(p) {
   const b = G.balon, eq = p.eq, d = hyp(p.x - b.x, p.z - b.z);
@@ -834,6 +892,7 @@ function puntuarDefensor(p) {
 }
 function ordenDefensores() { return eqUsuario().pl.filter(p => !p.por && p.suelo <= 0).sort((p, q) => puntuarDefensor(p) - puntuarDefensor(q)); }
 function cambiarJugador() {
+  if (G.unJugador) return;
   const orden = ordenDefensores();
   controlar(orden[0] === G.ctrl ? orden[1] : orden[0]);
 }
@@ -869,7 +928,8 @@ function controlUsuario(p, dt) {
     if (BORDE.tackle) hacerEntrada(p, 'pie');
     if (BORDE.shot) hacerEntrada(p, 'barrida');
     G.presion = ENT.long;
-  } else if (BORDE.swap) cambiarJugador();
+  } else if (G.unJugador && (BORDE.pass || BORDE.long)) { G.pidePase = G.t; aviso('¡Pásala!', '', .8, true); } // pedir el balón
+  else if (BORDE.swap) cambiarJugador();
   if (!(b.dueno && b.dueno.eq !== p.eq)) G.presion = false;
   if (G.ctrl !== p) return [0, 0];
   if (quieto) { if (mag > .2) p.mirar = Math.atan2(dz, dx); return [0, 0]; }
@@ -891,7 +951,7 @@ function controlUsuario(p, dt) {
 }
 function autoCambio() {
   const b = G.balon, eq = eqUsuario(), c = G.ctrl;
-  if (G.autoplay || !c || c.entrada) return;
+  if (G.autoplay || !c || c.entrada || G.unJugador) return;
   const desdeCambio = G.t - G.cambioT, moviendo = hyp(ENT.mx, ENT.mz) > .3;
   if (!b.dueno && !(b.destino && b.destino.eq === eq) && eq.persigue && eq.persigue !== c && !eq.persigue.por) {
     // balón suelto: el que llega antes
@@ -911,18 +971,18 @@ function autoCambio() {
 /* ---------- reglas básicas: saques, gol y final ---------- */
 function saqueInicial(eq) {
   G.fase = 'juego'; G.muerto = 0; G.golT = 0;
-  for (const e of G.eqs) e.pl.forEach((p, k) => {
-    const f = FORMACION[k], pos = posFormacion(e, Math.min(f.fx, .45), f.fz);
+  for (const e of G.eqs) e.pl.forEach(p => {
+    const f = p.base, pos = posFormacion(e, Math.min(f.fx, .45), f.fz);
     Object.assign(p, { x: pos.x, z: pos.z, vx: 0, vz: 0, cara: e.dir > 0 ? 0 : Math.PI, entrada: null, suelo: 0, tropiezo: 0, estirada: null, celebra: 0, retener: 0, recibe: null, desmarque: false, desX: 0, desZ: 0, golpe: null, toqueT: 0, inclLat: 0, frenado: 0 });
   });
-  const t = eq.pl[9], comp = eq.pl[7];
+  const t = delanteroDe(eq), comp = eq.pl.filter(p => p !== t && !p.por).sort((p, q) => q.base.fx - p.base.fx)[0];
   t.x = -eq.dir * .4; t.z = 0; comp.x = -eq.dir * 6; comp.z = -eq.dir * 5;
   const b = G.balon; Object.assign(b, nuevoBalon());
   b.x = 0; b.z = 0;
   G.posesion = eq; tomar(t);
   t.protegido = 0;
   G.saque = { tipo: 'inicial', tomador: t, t: 0 };
-  if (!G.autoplay) controlar(eq.i === G.usuario ? t : G.eqs[G.usuario].pl[9]);
+  if (!G.autoplay) controlar(G.unJugador || (eq.i === G.usuario ? t : delanteroDe(G.eqs[G.usuario])));
 }
 function fueraDeJuego(tipo, eq, x, z, texto) {
   // el balón salió: pequeña pausa y se reanuda con el equipo que corresponde
@@ -970,12 +1030,24 @@ function gol(eq) {
   if (b.dueno) { b.dueno = null; }
   const propia = autor && autor.eq !== eq;
   if (autor && !propia) autor.celebra = 3;
+  const asist = autor && !propia && autor.pasador && autor.pasador !== autor && autor.pasador.eq === eq && G.t - autor.pasadorT < 12 ? autor.pasador : null;
+  if (autor && !propia) autor.st.g++;
+  if (asist) asist.st.a++;
+  G.goles.push({ lado: eq.i, id: autor && !propia ? autor.id : null, nombre: autor ? autor.nombre : '', propia: !!propia, asist: asist ? asist.id : null, min: minutoActual() });
   aviso('¡GOOOL!', autor ? (propia ? 'En propia puerta de ' + autor.nombre : autor.num + ' · ' + autor.nombre1 + ' ' + autor.nombre) : '', 2.6);
   actualizarMarcador();
   vibrar([30, 40, 30]);
 }
+// medio tiempo: los equipos cambian de campo y saca el visitante
+function descanso() {
+  G.parte = 2; G.reloj = 2700;
+  for (const e of G.eqs) e.dir *= -1;
+  saqueInicial(G.eqs[1]);
+  aviso('Descanso', 'Cambio de campo · empieza la segunda parte', 2.2);
+}
 function finPartido() {
   G.fase = 'fin'; G.carga = null;
+  if (G.cfg && G.cfg.alTerminar) { G.cfg.alTerminar(resultadoPartido()); return; }
   const [a, b] = [G.eqs[0].goles, G.eqs[1].goles];
   const u = G.usuario, gf = u === 0 ? a : b, gc = u === 0 ? b : a;
   if (!G.autoplay) registrarPartido(gf, gc);
@@ -990,6 +1062,7 @@ function paso(dt) {
   if (G.fase === 'juego' && G.muerto <= 0 && !G.saque) { // el reloj se para mientras se prepara un saque
     G.reloj += dt * 5400 / (Math.max(1, DATOS.ajustes.dur) * 60);
     if (G.posesion) G.stats.pos[G.posesion.i] += dt;
+    if (G.reloj >= 2700 && G.parte === 1) { descanso(); return; }
     if (G.reloj >= 5400) { G.reloj = 5400; finPartido(); return; }
   }
   if (G.saque) G.saque.t += dt;
@@ -1026,7 +1099,7 @@ function paso(dt) {
 function golRecibido() { // saca el equipo que recibió el último gol
   const b = G.balon; return b.x > 0 ? G.eqs.find(e => e.dir === -1) : G.eqs.find(e => e.dir === 1);
 }
-function posFormacionAlto(p) { const f = FORMACION[p.k], q = posFormacion(p.eq, Math.min(f.fx, .45), f.fz); return [q.x, q.z]; }
+function posFormacionAlto(p) { const f = p.base, q = posFormacion(p.eq, Math.min(f.fx, .45), f.fz); return [q.x, q.z]; }
 // quién toca el balón suelto
 function contacto() {
   const b = G.balon;
@@ -1463,6 +1536,11 @@ function actualizarSombras() {
 // cámara: sigue al balón
 function moverCamara(dt) {
   const b = G.balon, cam = R.cam, modo = DATOS.ajustes.cam;
+  if (document.body.classList.contains('en-menu')) {
+    const a = G.frames * .0012;
+    cam.fov = 40; cam.position.set(Math.sin(a) * 62, 26, Math.cos(a) * 46); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
+    R.camX = 0; R.camZ = 0; return;
+  }
   const aspecto = window.innerWidth / Math.max(1, window.innerHeight);
   const vertical = aspecto < 1;
   const lead = G.autoplay ? 0 : eqUsuario().dir * 4;
