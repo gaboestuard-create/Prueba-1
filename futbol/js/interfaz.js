@@ -43,6 +43,8 @@ function dibujarRadar() {
   x.fillStyle = '#fff'; x.beginPath(); x.arc(sx(G.balon.x), sz(G.balon.z), 2.2, 0, 7); x.fill();
 }
 function actualizarHud(dt) {
+  const c = G.ctrl, en = $('energia');
+  if (en) { const e = c && !G.autoplay ? c.energia : null; en.hidden = e == null; if (e != null && (G.frames & 7) === 0) { en.firstElementChild.style.width = Math.round(e * 100) + '%'; en.classList.toggle('baja', e < .3); } }
   const min = Math.min(90, Math.floor(G.reloj / 60));
   const txt = min + "'"; if ($('reloj').textContent !== txt) $('reloj').textContent = txt;
   if (avisoT > 0) { avisoT -= dt; if (avisoT <= 0) $('aviso').classList.remove('ver'); }

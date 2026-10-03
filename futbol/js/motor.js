@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.5.0';
+const JUEGO_VERSION = '0.6.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -78,7 +78,7 @@ function crearEquipo(i, def) {
       base: f, x: 0, z: 0, vx: 0, vz: 0, cara: 0, fase: rng() * 6,
       tx: 0, tz: 0, prisa: false,
       entrada: null, entT: 0, entCD: 0, entHecha: false, suelo: 0, tropiezo: 0, protegido: 0, patadaCD: 0, patadaT: 0,
-      golpe: null, pie: 1, toqueT: 0, toqueCD: 0, inclLat: 0, frenado: 0, dvx: 0, dvz: 0,
+      golpe: null, pie: 1, toqueT: 0, toqueCD: 0, inclLat: 0, frenado: 0, dvx: 0, dvz: 0, qx: 0, qz: 0, energia: 1,
       decT: rng() * .4, desT: rng() * 2, desX: 0, desZ: 0, desmarque: false, retener: 0, estirada: null, celebra: 0,
       piel: d && d.piel != null ? d.piel : PIEL[Math.floor(rng() * PIEL.length)], pelo: d && d.pelo != null ? d.pelo : PELO[Math.floor(rng() * PELO.length)],
     };
@@ -258,6 +258,11 @@ function tomar(p) {
   else if (b.pateador !== p) p.pasador = null;
   b.destino = null; p.recibe = null; p.protegido = .4;
   if (hyp(b.x - p.x, b.z - p.z) > 1.2) { b.x = p.x + Math.cos(p.cara) * .45; b.z = p.z + Math.sin(p.cara) * .45; b.vx = b.vz = 0; } // por si se le da el balón a distancia
+  else { // primer toque: amortigua el balón; queda algo de su velocidad (más si llega fuerte o el jugador controla peor)
+    const rvx = b.vx - p.vx, rvz = b.vz - p.vz, llega = hyp(rvx, rvz);
+    const resto = clamp(.22 - p.reg * .18 + llega / 90, .03, .3);
+    b.vx = p.vx + rvx * resto; b.vz = p.vz + rvz * resto; b.vy = 0; if (b.y > BR) b.y = BR;
+  }
   p.toqueCD = .12;
   if (cambio && p.eq !== eqUsuario()) G.perdidaT = G.t;
   G.posesion = p.eq;
@@ -397,7 +402,11 @@ function reaccionPortero(eq) {
 }
 
 /* ---------- jugadores: movimiento ---------- */
-function velMax(p, sprint) { return (5.6 + p.vel * 1.6) * (sprint ? 1.3 : 1) * (G.balon && G.balon.dueno === p ? .9 : 1) * (p.tropiezo > 0 ? .5 : 1); }
+// velocidad máxima: el sprint depende de la energía que le quede (resistencia: ver moverJugador)
+function velMax(p, sprint) {
+  const e = p.energia == null ? 1 : p.energia;
+  return (5.6 + p.vel * 1.6) * (sprint ? 1 + .3 * (.35 + .65 * e) : 1) * (G.balon && G.balon.dueno === p ? .9 : 1) * (p.tropiezo > 0 ? .5 : 1);
+}
 function moverHacia(p, tx, tz, sprint, frenar = true) {
   const dx = tx - p.x, dz = tz - p.z, d = hyp(dx, dz);
   if (d < .25) return [0, 0];
@@ -412,6 +421,9 @@ function moverJugador(p, dvx, dvz, dt) {
   else {
     const b = G.balon, conduce = b.dueno === p && !(p.por && p.retener > 0) && !(G.saque && G.saque.tomador === p);
     let ds = hyp(dvx, dvz);
+    // hacia dónde QUIERE ir el jugador (el control o la IA). Se guarda aparte porque abajo la dirección de carrera
+    // puede desviarse para ir a buscar el balón; el toque siguiente tiene que ir hacia aquí (ver conducir)
+    p.qx = dvx; p.qz = dvz;
     if (conduce && ds > .3 && hyp(b.x - p.x, b.z - p.z) > .9) {
       // el balón se le adelantó: va a buscarlo colocándose detrás de él respecto a donde quiere ir
       // (si lo tiene al alcance del pie no hace falta: el toque lo lleva hacia el nuevo lado, ver conducir)
@@ -435,7 +447,16 @@ function moverJugador(p, dvx, dvz, dt) {
       const giroMax = 13 / (1 + sp * .32) * (conduce ? .85 : 1) * dt;
       // media vuelta corriendo: primero clava los pies y frena en línea recta, luego gira
       const g = Math.abs(dif) > 2.2 && sp > 2.5 ? 0 : clamp(dif, -giroMax, giroMax);
-      const objetivo = ds * clamp(1 - (Math.abs(dif) - .5) / 1.6, .12, 1);
+      let objetivo = ds * clamp(1 - (Math.abs(dif) - .5) / 1.6, .12, 1);
+      if (conduce) { // con el balón, un giro cerrado obliga a frenar para tocarlo hacia el nuevo lado...
+        const difQ = Math.abs(angDif(ang, Math.atan2(p.qz, p.qx))), db = hyp(b.x - p.x, b.z - p.z);
+        // ...pero solo cuando ya casi lo toca: si el balón se le adelantó, primero corre más que él para alcanzarlo
+        if (difQ > .45) {
+          const alcance = .75 + sp * .045, vb = b.vx * Math.cos(ang) + b.vz * Math.sin(ang);
+          const frenar = ds * clamp(1 - (difQ - .45) / 1.7, .32, 1);
+          objetivo = Math.min(objetivo, db < alcance ? frenar : Math.max(frenar, vb + 1.6));
+        }
+      }
       // acelerar cuesta más cerca de la velocidad máxima (el sprint se nota como un cambio de ritmo)
       // frenar también cuesta: más cuanto más rápido va (unos 0,4 s para pararse desde el sprint)
       const vmax = velMax(p, true), acel = objetivo > sp ? 6 + 16 * Math.max(0, 1 - sp / vmax) : 30 - 13 * Math.min(1, sp / vmax);
@@ -462,6 +483,10 @@ function moverJugador(p, dvx, dvz, dt) {
   }
   p.mirar = null;
   p.fase += sp * dt * 2.1;
+  // resistencia: esprintar gasta energía y trotar o estar quieto la recupera
+  const trote = 5.6 + p.vel * 1.6;
+  if (p.energia == null) p.energia = 1;
+  p.energia = clamp(p.energia + (sp > trote * 1.04 ? -.055 * (1.3 - p.vel * .4) : sp > trote * .7 ? .02 : .05) * dt, 0, 1);
 }
 function separar() {
   const T = G.todos;
@@ -483,24 +508,26 @@ function conducir(b, o, dt) {
   const sp = hyp(o.vx, o.vz), fx = Math.cos(o.cara), fz = Math.sin(o.cara);
   const rx = b.x - o.x, rz = b.z - o.z, dist = hyp(rx, rz);
   o.toqueCD -= dt;
-  const quieto = sp < .9 && hyp(o.dvx, o.dvz) < .5;
+  const quieto = sp < .9 && hyp(o.qx, o.qz) < .5;
   if (quieto || (G.saque && G.saque.tomador === o)) {
     // parado: lo sujeta con la suela delante del pie
     b.vx = (o.x + fx * .42 - b.x) * 8; b.vz = (o.z + fz * .42 - b.z) * 8;
   } else {
-    const dd = hyp(o.dvx, o.dvz);
-    let ux = dd > .1 ? o.dvx / dd : fx, uz = dd > .1 ? o.dvz / dd : fz;
+    const dd = hyp(o.qx, o.qz);
+    let ux = dd > .1 ? o.qx / dd : fx, uz = dd > .1 ? o.qz / dd : fz;
     // cerca de las líneas el toque se da hacia dentro para no regalar el balón (salvo que vaya hacia la portería)
     if (Math.abs(b.z) > HW - 6 && uz * Math.sign(b.z) > 0) { uz *= clamp((HW - 1.5 - Math.abs(b.z)) / 4.5, 0, 1); const l = hyp(ux, uz) || 1; ux /= l; uz /= l; }
     if (Math.abs(b.x) > HL - 6 && ux * Math.sign(b.x) > 0 && Math.abs(b.z) > GW2 + 2) { ux *= clamp((HL - 1.5 - Math.abs(b.x)) / 4.5, 0, 1); const l = hyp(ux, uz) || 1; ux /= l; uz /= l; }
     const bv = hyp(b.vx, b.vz), mismaDir = bv < .3 ? -1 : (b.vx * ux + b.vz * uz) / bv;
     const delante = rx * ux + rz * uz;
     const hace = (b.vx * ux + b.vz * uz) < sp * 1.02 || delante < .3 || mismaDir < .8;
-    if (dist < .72 + sp * .03 && o.toqueCD <= 0 && hace) {
+    if (dist < .75 + sp * .045 && o.toqueCD <= 0 && hace) {
       // toque para cambiar de dirección: el balón iba hacia otro lado, o está quieto pero no delante (arrastre con la suela)
       const giro = bv > .3 ? mismaDir < .7 : delante < .2;
       const sprint = sp > velMax(o, false) * 1.05;
-      const v = giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.3 : 1.15) + .45;
+      // media vuelta corriendo: pisa el balón para frenarlo y se da la vuelta con él (no lo manda lejos hacia atrás)
+      const pisa = giro && sp > 3.2 && (bv > .3 ? mismaDir < -.2 : delante < -.2);
+      const v = pisa ? .8 : giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.3 : 1.15) + .45;
       b.vx = ux * v; b.vz = uz * v;
       o.toqueCD = giro ? .26 : clamp(.36 - sp * .02, .18, .36);
       o.toqueT = .2; o.pie = ladoBalon(o); b.toque = (b.toque || 0) + 1;
@@ -1047,7 +1074,7 @@ function gol(eq) {
 // medio tiempo: los equipos cambian de campo y saca el visitante
 function descanso() {
   G.parte = 2; G.reloj = 2700;
-  for (const e of G.eqs) e.dir *= -1;
+  for (const e of G.eqs) { e.dir *= -1; for (const p of e.pl) p.energia = Math.min(1, (p.energia ?? 1) + .5); }
   saqueInicial(G.eqs[1]);
   aviso('Descanso', 'Cambio de campo · empieza la segunda parte', 2.2);
 }

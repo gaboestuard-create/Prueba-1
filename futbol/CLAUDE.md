@@ -54,6 +54,13 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
   - `conducir`: con el balón, este rueda de verdad y el jugador lo empuja con toques (cortos al trote, largos al
     esprintar, de giro para cambiar de dirección o arrastre con la suela). Si el balón se aleja más de 3,5 m se pierde;
     `robarToque` deja que un rival se meta en un toque largo. Cerca de las líneas el toque va hacia dentro.
+  - Dirección deseada: `p.qx/p.qz` guarda hacia dónde QUIERE ir el jugador (control o IA); `p.dvx/p.dvz` es hacia
+    dónde corre, que puede desviarse para ir a buscar el balón. Los toques de `conducir` usan siempre `qx/qz` (si no,
+    los giros con el balón al esprintar se quedaban trabados). Para un giro cerrado con balón frena solo cuando el
+    balón está al alcance del pie; antes corre más que el balón para alcanzarlo. En una media vuelta corriendo pisa
+    el balón (`pisa`). Al recibir, `tomar` amortigua el balón (primer toque) según el regate y la fuerza del pase.
+  - Resistencia: `p.energia` (0-1) baja al esprintar y sube al trotar; con poca energía el sprint es más lento
+    (`velMax`). En el descanso se recupera la mitad. La barra aparece bajo el nombre del jugador controlado.
   - `golpear`: pases y tiros no salen al instante: la pierna se prepara (`PREPARA_GOLPE`, ~0,08 s) y el balón sale
     cuando el pie llega a él, con el pie del lado del balón (`p.pie`). Usa siempre `golpear` para golpeos nuevos.
 - La simulación usa un paso fijo (`DT = 1/60`, función `paso`). La lógica del juego no depende de los fotogramas por

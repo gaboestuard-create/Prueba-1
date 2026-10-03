@@ -225,6 +225,67 @@ test('giro con el balón: cambia de sentido sin perderlo', async () => {
   await ctx.close();
 });
 
+test('giros con el balón al esprintar: se completan sin trabarse ni perder el balón', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const out = [];
+    for (const grados of [45, 90, 135, 180]) {
+      nuevoPartido(3); G.saque = null;
+      const p = G.eqs[0].pl[9]; G.todos.forEach(q => { if (q !== p) { q.x = q.eq.i ? 48 : -48; q.z = q.k * 3 - 15; } });
+      p.x = -10; p.z = 0; p.cara = 0; G.balon.dueno = null; tomar(p); p.protegido = 99; controlar(p);
+      Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, sprint: true }); G.avanzar(90);
+      const a = grados * Math.PI / 180, ux = Math.cos(a), uz = Math.sin(a);
+      Object.assign(G.prueba, { mx: ux, mz: uz });
+      let t = 0, ok = false;
+      for (; t < 180 && G.balon.dueno === p; t++) {
+        G.avanzar(1);
+        const sp = hyp(p.vx, p.vz), cos = sp > .5 ? (p.vx * ux + p.vz * uz) / sp : 0;
+        if (cos > .94 && sp > 3 && ((G.balon.x - p.x) * ux + (G.balon.z - p.z) * uz) > 0) { ok = true; break; }
+      }
+      out.push({ grados, ok, s: +(t / 60).toFixed(2), conBalon: G.balon.dueno === p });
+    }
+    G.prueba.activo = false;
+    return out;
+  });
+  for (const x of r) assert(x.ok && x.conBalon, `giro de ${x.grados}° con el balón: no se completó en 3 s o perdió el balón: ` + JSON.stringify(x));
+  assert(r[0].s < r[3].s, 'un giro suave debería ser más rápido que una media vuelta: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
+test('primer toque: un pase fuerte se controla y no se escapa', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    nuevoPartido(5); G.saque = null;
+    const p = G.eqs[0].pl[9]; G.todos.forEach(q => { if (q !== p) { q.x = q.eq.i ? 48 : -48; q.z = q.k * 3 - 15; } });
+    p.x = 0; p.z = 0; p.vx = p.vz = 0; controlar(p);
+    Object.assign(G.balon, { dueno: null, x: -12, y: BR, z: 0, vx: 18, vy: 0, vz: 0, tipo: 'pase', destino: p, pateador: G.eqs[0].pl[5], id: 99 });
+    G.avanzar(90);
+    return { dueno: G.balon.dueno === p, dist: hyp(G.balon.x - p.x, G.balon.z - p.z) };
+  });
+  assert(r.dueno && r.dist < 2, 'el pase fuerte no se controló: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
+test('resistencia: esprintar sin parar cansa y baja la velocidad punta; trotar recupera', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    nuevoPartido(6); G.saque = null;
+    const p = G.eqs[0].pl[5], gk = G.eqs[0].pl[0]; G.balon.dueno = null; G.balon.x = gk.x; G.balon.z = gk.z; tomar(gk); gk.retener = 999;
+    G.todos.forEach(q => { if (q !== p && !q.por) { q.x = q.eq.i ? 48 : -48; q.z = q.k * 3 - 15; } });
+    p.x = -40; p.z = -20; controlar(p);
+    Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, sprint: true }); G.avanzar(60);
+    const v1 = hyp(p.vx, p.vz), e1 = p.energia;
+    Object.assign(G.prueba, { mx: 0, mz: 1 }); G.avanzar(300); Object.assign(G.prueba, { mx: 0, mz: -1 }); G.avanzar(300); // 10 s más esprintando
+    const v2 = hyp(p.vx, p.vz), e2 = p.energia;
+    Object.assign(G.prueba, { mx: 0, mz: 0, sprint: false }); G.avanzar(600);
+    G.prueba.activo = false;
+    return { v1, e1, v2, e2, e3: p.energia };
+  });
+  assert(r.e2 < .6 && r.v2 < r.v1 - .3, 'esprintar no cansa: ' + JSON.stringify(r));
+  assert(r.e3 > r.e2 + .3, 'no se recupera al descansar: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
 test('golpeo: el balón sale cuando el pie llega, con el pie del lado del balón', async () => {
   const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
   const r = await page.evaluate(() => {
