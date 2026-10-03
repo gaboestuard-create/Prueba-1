@@ -9,7 +9,7 @@
      no afecte a las demás.
    ===================================================================== */
 const SAVE_VERSION = 2;
-const AJUSTES_DEF = { cam: 'diag', modelo: 'real', sonido: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
+const AJUSTES_DEF = { cam: 'diag', modelo: 'real', sonido: 'si', completa: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
 const ESTAD_CLAVES = ['jugados', 'ganados', 'empatados', 'perdidos', 'gf', 'gc'];
 const MIGR = {
   // 1: datos sin número de versión (versión 0) → 1
@@ -276,3 +276,39 @@ function borrarRanura(nombre) {
   });
 }
 async function hayRanura(nombre) { try { return (await KV.get('r_' + nombre)) != null; } catch (e) { return false; } }
+
+/* ---------- exportar / importar la partida en un archivo ----------
+   Cada sitio (el enlace de Claude, la app instalada, otro navegador) guarda por separado. Con un archivo se lleva
+   todo el progreso de uno a otro: datos principales y las tres ranuras, tal cual están guardados. */
+const RANURAS = ['dt', 'jug', 'mundo'];
+async function exportarPartida() {
+  await colaGuardado;
+  const save = await KV.get('save'), ranuras = {};
+  for (const n of RANURAS) { const r = await KV.get('r_' + n); if (r != null) ranuras[n] = r; }
+  return JSON.stringify({ app: 'pelotazo', formato: 1, juego: JUEGO_VERSION, fecha: Date.now(), save, ranuras });
+}
+// comprueba el archivo entero antes de tocar nada; si todo está bien, sustituye el progreso (guardando copia)
+async function importarPartida(texto) {
+  let f;
+  try { f = JSON.parse(texto); } catch (e) { return { ok: false, error: 'El archivo no es una partida de Pelotazo.' }; }
+  if (!f || f.app !== 'pelotazo' || typeof f.save !== 'string') return { ok: false, error: 'El archivo no es una partida de Pelotazo.' };
+  let d;
+  try { d = prepararDatos(f.save); } catch (e) { return { ok: false, error: e.futuro ? 'La partida es de una versión más nueva del juego: actualiza primero.' : 'La partida del archivo está dañada.' }; }
+  const ranuras = f.ranuras || {};
+  for (const n of RANURAS) {
+    if (ranuras[n] == null) continue;
+    try { await leerRanuraTexto(ranuras[n], n); } catch (e) { return { ok: false, error: e.futuro ? 'La partida es de una versión más nueva del juego.' : 'Una parte de la partida (' + n + ') está dañada.' }; }
+  }
+  if (SAVE.soloLectura || !SAVE.dueno) return { ok: false, error: 'Esta pestaña no puede guardar ahora (hay otra abierta).' };
+  return enCola(async () => {
+    await bakCurrent('reemplazo');
+    for (const n of RANURAS) {
+      const viejo = await KV.get('r_' + n);
+      if (viejo != null) await KV.set('r_' + n + '_c0', viejo);
+      if (ranuras[n] != null) await KV.set('r_' + n, ranuras[n]); else await KV.del('r_' + n);
+    }
+    DATOS = d;
+    await KV.set('save', 'js:' + JSON.stringify(DATOS));
+    return { ok: true };
+  });
+}

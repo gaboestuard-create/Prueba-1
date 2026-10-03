@@ -43,7 +43,7 @@ async function arrancar() {
   if (rm.estado === 'perdida') setTimeout(() => toast('Tu base de datos editada estaba dañada y no tenía copias: se usa la de fábrica.', 6000), 400);
   if (!iniciarGraficos()) return;
   nuevoPartido();
-  iniciarTactil(); iniciarTeclado(); iniciarNavegacion(); aplicarTactil();
+  iniciarTactil(); iniciarTeclado(); iniciarNavegacion(); aplicarTactil(); iniciarApp();
   addEventListener('resize', ajustarTamano);
   addEventListener('gamepadconnected', () => toast('Mando conectado'));
   document.addEventListener('visibilitychange', () => { if (document.hidden && !G.pausa && G.fase === 'juego' && !document.body.classList.contains('en-menu')) abrirPausa(); });

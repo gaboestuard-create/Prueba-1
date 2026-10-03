@@ -117,6 +117,7 @@ function iniciarTeclado() {
 const OPCIONES = [
   { k: 'cam', t: 'Cámara', o: [['diag', 'Diagonal'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
   { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
+  { k: 'completa', t: 'Pantalla completa al empezar (celular)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },
   { k: 'estilo', t: 'Estilo', o: [['dia', 'Día'], ['tarde', 'Atardecer'], ['noche', 'Noche']] },
   { k: 'calidad', t: 'Gráficos', o: [['auto', 'Automático'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']] },
@@ -135,7 +136,7 @@ function htmlAyuda() {
   </div>`;
 }
 function htmlAjustes(solo) {
-  return OPCIONES.filter(op => !solo || solo.includes(op.k)).map(op => `<div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div>`).join('');
+  return '<div class="ops">' + OPCIONES.filter(op => !solo || solo.includes(op.k)).map(op => `<div class="op"><div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div></div>`).join('') + '</div>';
 }
 function enlazarAjustes(capa) {
   capa.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
@@ -165,15 +166,16 @@ function abrirPausa(desdeInicio) {
   const c = abrirCapa(`<div class="hoja"><h2>Pausa</h2>
     <div class="acciones"><button class="btn prin" id="bSeguir">Seguir jugando</button>
       ${modo ? '<button class="btn" id="bSimular">Simular el resto</button>' : '<button class="btn" id="bReiniciar">Reiniciar partido</button>'}
-      ${!modo || G.cfg.modo === 'amistoso' ? '<button class="btn" id="bMenu">Salir al menú</button>' : ''}</div>
+      ${!modo || G.cfg.modo === 'amistoso' ? '<button class="btn" id="bMenu">Salir al menú</button>' : ''}
+      <button class="btn" id="bAyuda">Controles</button>${enApp() ? '' : '<button class="btn" id="bCompleta">Pantalla completa</button>'}</div>
     ${htmlAjustes()}${htmlProgreso()}
-    <div class="acciones"><button class="btn" id="bAyuda">Controles</button></div>
     <p style="font-size:12px">Pelotazo ${JUEGO_VERSION} · guardado versión ${SAVE_VERSION}</p></div>`);
   enlazarAjustes(c);
   $('bSeguir').onclick = () => reanudarJuego();
   if ($('bSimular')) $('bSimular').onclick = () => { cerrarCapa(); simularResto(); };
   if ($('bReiniciar')) $('bReiniciar').onclick = () => { nuevoPartido(Date.now() % 1e9); reanudarJuego(); aviso('Partido nuevo', '', 1.2); };
   if ($('bMenu')) $('bMenu').onclick = () => { APP.enPartido = false; APP.fondo = false; menuPrincipal(); };
+  if ($('bCompleta')) $('bCompleta').onclick = () => pantallaCompleta();
   $('bAyuda').onclick = () => abrirCapa(`<div class="hoja"><h2>Controles</h2>${htmlAyuda()}<div class="acciones"><button class="btn prin" id="bVolver">Volver</button></div></div>`).querySelector('#bVolver').onclick = () => abrirPausa(desdeInicio);
 }
 function reanudarJuego() { cerrarCapa(); G.pausa = false; guardarPronto(); }
@@ -210,4 +212,28 @@ function pantallaCompleta() {
   if (!document.body.classList.contains('tactil')) return;
   try { const el = document.documentElement; const r = el.requestFullscreen ? el.requestFullscreen() : null; if (r && r.catch) r.catch(() => { }); } catch (e) { }
   try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { }); } catch (e) { }
+}
+
+/* ---------- pantalla completa y app instalada ---------- */
+const ICONO_COMPLETA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+// ¿abierto como app instalada (sin barra del navegador)?
+const enApp = () => { try { return matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+// pone (o quita) la pantalla completa y gira a horizontal. silencioso: sin avisos si el navegador no deja
+function pantallaCompleta(silencioso) {
+  const d = document, el = d.documentElement;
+  if (d.fullscreenElement || d.webkitFullscreenElement) { if (!silencioso) (d.exitFullscreen || d.webkitExitFullscreen).call(d); return; }
+  const pedir = el.requestFullscreen || el.webkitRequestFullscreen;
+  const fallo = () => { if (!silencioso) toast('Aquí no se puede poner pantalla completa. Abre el juego en Chrome o instálalo como app.', 5000); };
+  if (!pedir) return fallo();
+  try {
+    Promise.resolve(pedir.call(el, { navigationUI: 'hide' }))
+      .then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(fallo);
+  } catch (e) { fallo(); }
+}
+function iniciarApp() {
+  document.body.classList.toggle('app', enApp());
+  // como app instalada: guarda los archivos para jugar sin conexión (no dentro de Claude, que va en un marco)
+  try {
+    if ('serviceWorker' in navigator && location.protocol === 'https:' && window.top === window) navigator.serviceWorker.register('sw.js').catch(() => { });
+  } catch (e) { }
 }

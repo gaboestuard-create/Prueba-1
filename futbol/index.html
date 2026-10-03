@@ -1,3 +1,14 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Pelotazo</title>
 <meta name="theme-color" content="#0d1f16">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -371,10 +382,64 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
 .pl-datos{display:flex;gap:8px}.pl-datos span{flex:1;background:var(--panel);border:1px solid var(--borde);border-radius:12px;padding:8px;text-align:center;font-size:12px;font-weight:800;color:var(--gris);display:flex;flex-direction:column}
 .pl-datos b{font-family:var(--f-titulo);font-weight:400;font-size:26px;color:var(--tiza)}
 .pl-ayuda{line-height:1.8}
+/* ---------- modo compacto: las pantallas caben sin bajar ----------
+   La pantalla ocupa el alto exacto; solo se desplaza el contenido (no la barra). En horizontal las pestañas de los
+   modos pasan a una columna a la izquierda y los paneles se ponen lado a lado. */
+body.en-menu #capa{overflow:hidden}
+body.en-menu .pant{height:100%;min-height:0}
+body.en-menu .cuerpo{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:16px;margin:0 -4px;padding-left:4px;padding-right:4px}
+body.en-menu .barra{position:relative}
+body.en-menu .cuerpo>*,.contenido>*{flex-shrink:0}
+.cuerpo.con-rail{display:flex;flex-direction:column;overflow:hidden;padding-bottom:0}
+.con-rail>.chips{flex:none}
+.contenido{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;gap:14px;padding-bottom:16px}
+.ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:0 18px}
+.b-completa{width:34px;height:34px;border-radius:10px;border:1px solid var(--borde);background:rgba(0,0,0,.45);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.b-completa svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round}
+body.app .b-completa{display:none}
+@media (min-aspect-ratio:1/1) and (max-height:620px),(min-aspect-ratio:1/1) and (min-width:900px){
+  .cuerpo.con-rail{flex-direction:row;gap:12px}
+  .con-rail>.chips{flex-direction:column;overflow-y:auto;overflow-x:hidden;width:150px;padding:0 0 12px;gap:6px;scrollbar-width:none}
+  .con-rail>.chips .chip{text-align:left;white-space:normal;border-radius:12px}
+  .contenido{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));align-content:start;align-items:start}
+  .contenido>*{grid-column:1/-1;min-width:0}
+  .contenido>.panel{grid-column:auto}
+  .cuerpo:has(>.marcador-final){display:grid;grid-template-columns:1.15fr 1fr;align-items:start;align-content:start}
+  .cuerpo:has(>.marcador-final)>:not(.marcador-final):not(.cifras){grid-column:1/-1}
+  .hoja{width:min(900px,100%)}
+  .pl-izq{max-width:calc((100dvh - 110px) * .81)}
+}
+@media (max-height:520px){
+  .barra{min-height:38px;padding:2px 16px 6px}.barra h2{font-size:19px}.b-atras{width:34px;height:34px;font-size:22px;border-radius:10px}
+  .cuerpo,.contenido{gap:8px}
+  .panel{padding:9px 12px;border-radius:12px}.panel h3{font-size:17px;margin:0 0 4px}
+  .btn{padding:8px 13px;font-size:14px}.btn.prin{font-size:18px;padding:8px 18px}.btn.grande{font-size:19px;padding:9px 22px}
+  .chip{padding:6px 11px;font-size:12px}
+  .acciones{margin-top:6px;gap:8px}
+  .intro,.nota,.hoja p{font-size:12.5px;line-height:1.35}
+  .etq{margin:6px 0 3px;font-size:10px}
+  .seg button{padding:5px 10px;font-size:12px}
+  table.t{font-size:12px}table.t td{padding:4px 6px}table.t th{padding:5px 6px}
+  .fila-j{padding:4px 8px}
+  .modo{min-height:60px;padding:9px 12px}.modo b{font-size:17px}.modo span{font-size:12px}
+  .club{padding:6px 10px}.clubes{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+  .sobres{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}.sobre{min-height:128px;padding:10px 8px}.sb-logo{width:36px;top:8px}.sobre b{font-size:16px}.sobre small{font-size:11px}
+  .marcador-final{padding:8px}.goles-final{font-size:36px}.cifras{font-size:12.5px}
+  .hoja{padding:12px 14px;border-radius:14px}.hoja h2{font-size:22px}
+  .kv{font-size:13px}.campo-txt input,.campo-txt select{padding:6px 8px}
+  .pl-datos b{font-size:20px}
+  .tarjetas{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}.tarjetas .fc{--fs:7.4px}
+}
+@media (max-height:520px),(max-width:560px){
+  .equipo-vs{display:grid;grid-template-columns:auto 1fr;grid-auto-flow:row;column-gap:10px;row-gap:0;align-items:center;justify-items:start;text-align:left;padding:6px 10px;border-radius:14px}
+  .equipo-vs>.escudo{grid-row:1/span 3;width:46px!important;height:46px!important;font-size:12px!important}
+  .equipo-vs b{font-size:16px;text-align:left}.vs-x{font-size:20px}
+}
 @media (max-width:560px){.vs{grid-template-columns:1fr}.vs-x{text-align:center}.goles-final{font-size:40px}.marcador-final{padding:12px 8px}}
 @media (prefers-reduced-motion:reduce){#aviso,#toast,#potencia{transition:none}}
 </style>
-
+</head>
+<body>
 <canvas id="cv" tabindex="0" aria-label="Campo de juego"></canvas>
 <div id="hud">
   <div id="marcador"><span class="eq l" id="nomL">HAL</span><span class="gol" id="goles">0 - 0</span><span class="eq v" id="nomV">TOR</span><span class="reloj" id="reloj">0'</span></div>
@@ -416,3 +481,5 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
 <script src="js/estrella.js"></script>
 <script src="js/editor.js"></script>
 <script src="js/arranque.js"></script>
+</body>
+</html>

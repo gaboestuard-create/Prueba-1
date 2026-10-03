@@ -51,6 +51,8 @@ function salirPortada() {
   if (!APP.enPortada) return;
   APP.enPortada = false;
   SFX.desbloquear().then(() => SFX.inicio());
+  // en el celular, al tocar la portada el juego se pone a pantalla completa y en horizontal
+  if (esTactil() && !enApp() && DATOS.ajustes.completa !== 'no') pantallaCompleta(true);
   menuPrincipal(true);
 }
 
@@ -95,14 +97,14 @@ function menuPrincipal(entrada) {
     mas: tile({ acc: 'modo', id: 'editor', k: 'editor', t: 'Editor', sub: 'Base de datos', info: 'Clubes, jugadores, escudos y fotos' })
       + tile({ acc: 'ajustes', k: 'ajustes', t: 'Ajustes', sub: 'Opciones', info: 'Sonido, gráficos, cámara, dificultad' })
       + tile({ acc: 'ayuda', k: 'ayuda', t: 'Cómo se juega', sub: 'Controles', info: 'Táctil, teclado y mando' })
-      + tile({ acc: 'copias', k: 'copias', t: 'Copias de seguridad', sub: 'Tu progreso', info: 'Restaura una copia guardada' }),
+      + tile({ acc: 'copias', k: 'copias', t: 'Copias y partida', sub: 'Tu progreso', info: 'Exportar, importar y restaurar' }),
   };
   const pag = APP.pagMenu || 0;
   const c = pantalla(`<div class="mp${entrada ? ' entra' : ''}">
     <header class="mp-top">
       <div class="mp-logo">${LOGO_SVG}<span class="titulo-juego">PELO<span>TAZO</span></span></div>
       <nav class="mp-tabs" role="tablist"><kbd class="atajo">${esTactil() ? '' : 'Q'}</kbd>${PAGINAS.map((p, i) => `<button class="mp-tab${i === pag ? ' sel' : ''}" role="tab" data-acc="pag" data-i="${i}">${p.t}</button>`).join('')}<kbd class="atajo">${esTactil() ? '' : 'E'}</kbd></nav>
-      <div class="mp-datos">${E ? `<span class="moneda">${E.monedas.toLocaleString('es')}</span>` : ''}<span>${s.jugados} PJ · ${s.ganados} G</span></div>
+      <div class="mp-datos"><button class="b-completa" data-acc="completa" aria-label="Pantalla completa" title="Pantalla completa">${ICONO_COMPLETA}</button>${E ? `<span class="moneda">${E.monedas.toLocaleString('es')}</span>` : ''}<span>${s.jugados} PJ · ${s.ganados} G</span></div>
     </header>
     <div class="mp-pags" id="mpPags">${PAGINAS.map((p, i) => `<section class="mp-pag pg-${p.id}" data-i="${i}" aria-label="${p.t}">${pags[p.id]}</section>`).join('')}</div>
     <footer class="mp-pie"><div class="puntos">${PAGINAS.map((p, i) => `<i class="${i === pag ? 'sel' : ''}"></i>`).join('')}</div>
@@ -116,6 +118,7 @@ function menuPrincipal(entrada) {
       ajustes: () => menuAjustes(menuPrincipal),
       ayuda: () => pantalla(htmlAyuda(), { titulo: 'Cómo se juega', atras: menuPrincipal }),
       copias: () => menuCopias(),
+      completa: () => pantallaCompleta(),
     },
   });
   const P = $('mpPags');

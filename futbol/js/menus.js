@@ -14,6 +14,14 @@ function pantalla(html, { titulo = '', atras = null, extra = '', acciones = {}, 
     <div class="barra">${atras ? '<button class="b-atras" data-acc="__atras" aria-label="Volver">‹</button>' : ''}<h2>${titulo}</h2><div class="barra-extra">${extra}</div></div>`}
     <div class="cuerpo">${html}</div></div>`;
   c.hidden = false; c.scrollTop = 0;
+  // si la pantalla empieza con pestañas (chips), el resto va en un contenedor propio: así en horizontal las pestañas
+  // quedan en una columna a la izquierda y solo se desplaza el contenido
+  const cu = c.querySelector('.cuerpo');
+  if (cu && cu.firstElementChild && cu.firstElementChild.classList.contains('chips') && cu.children.length > 1) {
+    const w = document.createElement('div'); w.className = 'contenido';
+    while (cu.children.length > 1) w.appendChild(cu.children[1]);
+    cu.appendChild(w); cu.classList.add('con-rail');
+  }
   c.onclick = e => {
     const b = e.target.closest('[data-acc]'); if (!b || b.disabled) return;
     const a = b.dataset.acc;
@@ -55,12 +63,39 @@ function menuAjustes(volver) {
 }
 async function menuCopias() {
   const L = await bakList();
-  const tipo = { auto: 'automática', partido: 'tras un partido', reemplazo: 'antes de restaurar' };
-  pantalla(`<p class="intro">Copias de tus ajustes, resultados, Equipo Estrella y torneo. Las carreras guardan sus propias copias automáticamente.</p>
-    <div class="lista">${L.length ? L.map(b => `<div><span>${new Date(b.t).toLocaleString('es')} · ${tipo[b.tipo] || b.tipo} · ${b.jugados} partidos</span><button class="btn chico" data-acc="rest" data-k="${b.k}">Restaurar</button></div>`).join('') : '<div><span>Todavía no hay copias.</span></div>'}</div>`, {
-    titulo: 'Copias de seguridad', atras: menuPrincipal,
-    acciones: { rest: async d => { const ok = await bakRestore(d.k); toast(ok ? 'Progreso restaurado.' : 'Esa copia está dañada y no se puede usar.'); menuCopias(); } },
+  const tipo = { auto: 'automática', partido: 'tras un partido', reemplazo: 'antes de restaurar o importar' };
+  pantalla(`<div class="panel"><h3>Llevar tu partida a otro sitio</h3>
+      <p class="nota">Cada sitio guarda por separado (el enlace de Claude, la app instalada, otro navegador o teléfono). Exporta aquí y luego importa el archivo en el otro sitio: se pasan tus ajustes, resultados, Equipo Estrella, torneo, carreras y la base de datos editada.</p>
+      <div class="acciones"><button class="btn prin" data-acc="exportar">Exportar partida</button>
+        <label class="btn" id="bImportar">Importar partida<input type="file" accept=".json,application/json" data-cambio="importar" hidden></label></div></div>
+    <div class="panel"><h3>Copias automáticas</h3><p class="nota">Copias de tus ajustes, resultados, Equipo Estrella y torneo. Las carreras guardan sus propias copias.</p>
+    <div class="lista">${L.length ? L.map(b => `<div><span>${new Date(b.t).toLocaleString('es')} · ${tipo[b.tipo] || b.tipo} · ${b.jugados} partidos</span><button class="btn chico" data-acc="rest" data-k="${b.k}">Restaurar</button></div>`).join('') : '<div><span>Todavía no hay copias.</span></div>'}</div></div>`, {
+    titulo: 'Copias y partida', atras: menuPrincipal,
+    acciones: {
+      rest: async d => { const ok = await bakRestore(d.k); toast(ok ? 'Progreso restaurado.' : 'Esa copia está dañada y no se puede usar.'); menuCopias(); },
+      exportar: async () => {
+        const texto = await exportarPartida(), f = new Date().toISOString().slice(0, 10);
+        if (descargarArchivo('pelotazo-partida-' + f + '.json', texto, 'application/json')) toast('Partida exportada: busca el archivo en tus descargas.', 5000);
+      },
+      importar: async (d, el) => {
+        const file = el.files && el.files[0]; if (!file) return;
+        const texto = await file.text(); el.value = '';
+        confirmar('¿Cambiar tu progreso actual por el del archivo? Lo de ahora queda en una copia de seguridad.', async () => {
+          const r = await importarPartida(texto);
+          if (!r.ok) { toast(r.error, 6000); return menuCopias(); }
+          toast('Partida importada. Abriendo…'); setTimeout(() => location.reload(), 700);
+        }, () => menuCopias());
+      },
+    },
   });
+}
+// descarga un archivo hecho en el juego (devuelve false si el navegador no lo permite)
+function descargarArchivo(nombre, texto, tipo) {
+  try {
+    const url = URL.createObjectURL(new Blob([texto], { type: tipo })), a = document.createElement('a');
+    a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000); return true;
+  } catch (e) { toast('Este navegador no deja descargar archivos aquí. Abre el juego en Chrome.', 6000); return false; }
 }
 // de fondo: el estadio con dos equipos de verdad y la cámara girando despacio
 function fondoMenu() {

@@ -1,0 +1,13 @@
+# Publicación de Pelotazo en Netlify (gratis): el juego es solo archivos, no hay que compilar nada.
+[build]
+  base = "futbol"
+  publish = "."
+  command = "echo 'Pelotazo listo'"
+
+[build.environment]
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

@@ -1,7 +1,8 @@
 # Pelotazo · fútbol de acción en 3D
 
 Juego de fútbol de acción: `index.html` (estilos y estructura) más los scripts de `js/` (three.js r128 desde cdnjs).
-Se publica como artefacto de claude.ai con su propio enlace (ver "Publicar"). Todo el texto del juego está en español.
+Se publica como artefacto de claude.ai con su propio enlace y también se puede instalar como app (ver "Publicar" y
+"Celular y app"). Todo el texto del juego está en español.
 
 ## Archivos (se cargan en este orden; todos comparten el ámbito global)
 
@@ -118,13 +119,29 @@ pestañas) más la compatibilidad con cada versión publicada.
 Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) sustituye a los controles y
 `G.avanzar(n)` adelanta n pasos sin dibujar. `G.autoplay = true` hace que la computadora maneje a los dos equipos.
 
+## Celular y app (0.11)
+
+- Las pantallas de menú ocupan el alto exacto: la barra queda fija y solo se desplaza `.cuerpo`. Si una pantalla
+  empieza con pestañas (`.chips`), `pantalla()` mete el resto en `.contenido`; en horizontal las pestañas van en
+  columna a la izquierda y los `.panel` se ponen lado a lado. Hay un bloque `@media (max-height:520px)` que compacta
+  todo para celulares en horizontal. La prueba "celular en horizontal" comprueba que las pantallas principales caben.
+- Pantalla completa: `pantallaCompleta()` (botón en el menú principal y en la pausa; en el celular se pone sola al
+  tocar la portada si el ajuste "Pantalla completa al empezar" está en Sí) e intenta girar a horizontal.
+- App instalable (PWA): `manifest.webmanifest`, `icons/` y `sw.js` (guarda los archivos para jugar sin conexión;
+  red primero para que lleguen las versiones nuevas). **Si añades un archivo a `js/`, añádelo también en `ARCHIVOS`
+  de `sw.js`** (lo comprueba la prueba "instalable"). El registro solo se hace fuera de Claude (no en un marco).
+- Exportar/importar partida (`exportarPartida`, `importarPartida`, en Copias y partida): un archivo con el guardado
+  principal y las ranuras tal cual. Sirve para pasar el progreso entre el enlace de Claude, la app y otros equipos.
+- Publicación en Netlify: `netlify.toml` en la raíz del repositorio (carpeta `futbol`, sin compilar).
+
 ## Publicar
 
 Artefacto: https://claude.ai/artifact/PDaxHwKVqqYsViT7qjwQKU
 
 1. `npm test` en verde.
-2. Publicar el artefacto con `futbol/index.html` y **todos** los archivos de `js/` (parámetro `files`, con la misma
-   ruta `js/...`), siempre en el mismo enlace.
+2. Publicar el artefacto con `futbol/index.html` y **todos** los archivos de `js/` más `manifest.webmanifest`,
+   `sw.js` e `icons/` (parámetro `files`, con la misma ruta), siempre en el mismo enlace. Si el usuario tiene la app
+   en Netlify conectada a GitHub, se actualiza sola con cada `git push`.
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprueban que sus datos
    guardados se siguen abriendo en todas las versiones futuras.
 

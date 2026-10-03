@@ -183,6 +183,66 @@ test('faltas en un partido entero: se pitan pero no demasiadas, y el partido ter
   sinErrores(errors); await ctx.close();
 });
 
+test('celular en horizontal: los menús caben en la pantalla y las pestañas van en una columna', async () => {
+  const ctx = await fresh({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }); const { page, errors } = await openGame(ctx, srv.url);
+  const pant = {
+    'menú principal': 'menuPrincipal()', amistoso: 'menuAmistoso()', ajustes: 'menuAjustes(menuPrincipal)', copias: 'menuCopias()', torneos: 'menuTorneos()',
+    'Equipo Estrella': "menuEstrella(); hubEstrella('inicio')", 'carrera de técnico': "nuevaCarreraDT(0, 'Yo'); hubDT('inicio')",
+  };
+  const malos = [];
+  for (const [n, js] of Object.entries(pant)) {
+    const r = await page.evaluate(js => { eval(js); return new Promise(ok => setTimeout(() => {
+      const capa = $('capa'), barra = capa.querySelector('.barra'), cu = capa.querySelector('.contenido') || capa.querySelector('.cuerpo');
+      const rail = capa.querySelector('.con-rail > .chips');
+      ok({ capaScroll: capa.scrollHeight - capa.clientHeight, pagina: document.documentElement.scrollHeight - innerHeight, ancho: document.documentElement.scrollWidth - innerWidth,
+        barra: !barra || barra.getBoundingClientRect().top >= 0, rail: rail ? getComputedStyle(rail).flexDirection : null, cuerpo: cu ? cu.scrollHeight - cu.clientHeight : 0 });
+    }, 250)); }, js);
+    if (r.capaScroll > 2 || r.pagina > 2 || r.ancho > 2 || !r.barra) malos.push(n + ': ' + JSON.stringify(r));
+    if (n === 'Equipo Estrella' && r.rail !== 'column') malos.push('las pestañas de Equipo Estrella deberían ir en columna: ' + r.rail);
+    if (['amistoso', 'ajustes', 'copias', 'torneos', 'Equipo Estrella', 'menú principal'].includes(n) && r.cuerpo > 2) malos.push(n + ' no cabe sin bajar (' + r.cuerpo + ' px)');
+  }
+  assert(!malos.length, 'pantallas que no caben: \n' + malos.join('\n'));
+  sinErrores(errors); await ctx.close();
+});
+
+test('exportar e importar la partida a otro sitio', async () => {
+  const a = await fresh(); const A = await openGame(a, srv.url);
+  const archivo = await A.page.evaluate(async () => {
+    menuEstrella(); DATOS.estrella.monedas = 123456; DATOS.estad.jugados = 7; await guardarAhora();
+    nuevaCarreraDT(3, 'Exportador'); await guardarDT(true);
+    return exportarPartida();
+  });
+  await a.close();
+  // otro navegador (sin nada guardado): primero un archivo malo, luego el bueno
+  const b = await fresh(); const B = await openGame(b, srv.url);
+  const r = await B.page.evaluate(async t => {
+    const malo = await importarPartida('{"hola":1}');
+    const roto = await importarPartida(JSON.stringify({ ...JSON.parse(t), save: 'js:{rotos' }));
+    const antes = DATOS.estad.jugados;
+    const bueno = await importarPartida(t);
+    return { malo: malo.ok, roto: roto.ok, antes, bueno: bueno.ok };
+  }, archivo);
+  assert(!r.malo && !r.roto && r.antes === 0, 'debería rechazar archivos malos sin tocar nada: ' + JSON.stringify(r));
+  assert(r.bueno, 'no importó la partida buena');
+  await B.page.close();
+  const C = await openGame(b, srv.url);
+  const d = await C.page.evaluate(async () => { const r = await cargarRanura('dt'); return { jugados: DATOS.estad.jugados, monedas: DATOS.estrella && DATOS.estrella.monedas, tecnico: r.datos && r.datos.tecnico, copias: (await bakList()).length }; });
+  assert(d.jugados === 7 && d.monedas === 123456 && d.tecnico === 'Exportador', 'al reabrir no está la partida importada: ' + JSON.stringify(d));
+  sinErrores([...B.errors, ...C.errors]); await b.close();
+});
+
+test('instalable como app: manifiesto, iconos y lista de archivos sin conexión', async () => {
+  const man = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.webmanifest'), 'utf8'));
+  assert(man.display === 'fullscreen' && man.orientation === 'landscape' && man.icons.length >= 3, 'manifiesto incompleto');
+  for (const ic of man.icons) assert(fs.existsSync(path.join(ROOT, ic.src)), 'falta el icono ' + ic.src);
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), sw = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert(html.includes('rel="manifest"') && html.includes('name="viewport"'), 'index.html sin manifiesto o sin viewport');
+  const scripts = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map(m => m[1]);
+  const faltan = scripts.filter(f => !sw.includes("'" + f + "'"));
+  assert(!faltan.length, 'sw.js no guarda para jugar sin conexión: ' + faltan.join(', '));
+  new Function(sw.replace(/self\./g, 'void 0&&self.'));
+});
+
 /* ---------- 2. jugadas ---------- */
 test('pase corto: llega al compañero y pasas a controlarlo', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
