@@ -1,0 +1,12 @@
+{
+  "name": "pelotazo",
+  "private": true,
+  "description": "Pelotazo: juego de fútbol de acción en 3D. Pruebas automáticas del juego",
+  "scripts": {
+    "test": "node tests/run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "three": "0.128.0"
+  }
+}
