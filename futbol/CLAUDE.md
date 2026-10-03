@@ -1,15 +1,38 @@
 # Pelotazo · fútbol de acción en 3D
 
-Juego de fútbol arcade en un solo archivo: `index.html` (three.js r128 desde cdnjs). Se publica como artefacto
-de claude.ai con su propio enlace (ver "Publicar"). Todo el texto del juego está en español.
+Juego de fútbol de acción: `index.html` (estilos y estructura) más los scripts de `js/` (three.js r128 desde cdnjs).
+Se publica como artefacto de claude.ai con su propio enlace (ver "Publicar"). Todo el texto del juego está en español.
+
+## Archivos (se cargan en este orden; todos comparten el ámbito global)
+
+| Archivo | Qué hay |
+| --- | --- |
+| `js/motor.js` | El partido: física, IA, controles, reglas, gráficos 3D. `nuevoPartido(cfg)` y `resultadoPartido()` |
+| `js/datos.js` | Las 8 ligas con sus clubes (nombres reales, colores, estadios) y los nombres para inventar jugadores |
+| `js/mundo.js` | Generar el mundo, alineaciones, `equipoParaPartido`, `simularPartido`, calendarios, tablas, evolución |
+| `js/interfaz.js` | Marcador, controles táctiles, pausa, ajustes |
+| `js/guardado.js` | Guardado protegido y ranuras |
+| `js/menus.js` | Sistema de pantallas (`pantalla()`), menú principal, selector de clubes, amistoso, resultado |
+| `js/torneos.js` | Liga, copa y Copa de Campeones |
+| `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
+| `js/carrera_dt.js` | Carrera de técnico (`CDT`) |
+| `js/carrera_jug.js` | Carrera de jugador (`CJ`) |
+| `js/estrella.js` | Equipo Estrella, el modo de cartas (`DATOS.estrella`) |
+| `js/editor.js` | Editor de la base de datos o de una carrera |
+| `js/arranque.js` | Arranque y bucle principal |
+
+Los nombres globales no se pueden repetir entre archivos (por eso la carrera de técnico es `CDT` y no `DT`, que
+es el paso del motor). Los modos **nunca** tocan el motor por dentro: le piden un partido con
+`jugarPartido({ local, visita, usuario, jugadorId, inicio, alTerminar })` y reciben el resultado.
 
 **Es un proyecto aparte de DT26.** No toques nada de `dt26/` ni compartas código, datos guardados o nombres de
 almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 
 ## Reglas del proyecto
 
-- Jugadores, equipos y marcas **inventados**. Nunca usar "FIFA", "Ultimate Team", ni nombres, caras o escudos reales.
-  El futuro modo de cartas se llamará de otra forma y solo usará moneda del juego (nunca dinero real).
+- Los **clubes** llevan su nombre real (lo pidió el usuario) pero sin escudos: la insignia es de colores y el usuario
+  puede subir el escudo en el editor. Los **jugadores** son inventados. Nunca usar "FIFA", "Ultimate Team" ni caras
+  reales. El modo de cartas se llama "Equipo Estrella" y solo usa monedas del juego (nunca dinero real).
 - Jugadores realistas o de caricatura (ver "Modelos de jugadores"). Tiene que ir fluido en un celular de gama media: los 22 jugadores se dibujan
   con una malla por pieza del cuerpo (`InstancedMesh`), así son pocas llamadas de dibujo. No añadas una malla por
   jugador ni sombras en tiempo real sin medir antes.
@@ -36,18 +59,21 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 - La simulación usa un paso fijo (`DT = 1/60`, función `paso`). La lógica del juego no depende de los fotogramas por
   segundo; el dibujo sí. El azar sale de `rng()` (con semilla) para que las pruebas se repitan igual.
 
-## Plan por capas
+## Estado y pendientes
 
-1. **Prototipo jugable** (hecho): cancha, balón, 11 contra 11, controles, pase, pase largo, tiro, entradas, gol,
-   marcador, tiempo. Saques de banda, córner y de puerta en versión simple (el jugador saca con el pie).
-2. Reglas completas: saques con su animación, faltas, penaltis, fuera de juego, medio tiempo y repeticiones.
-3. Mejores animaciones, cámara y sonido.
-4. Partido rápido y torneos.
-5. Modo carrera de jugador.
-6. Modo de cartas sin conexión (monedas y sobres del juego, contra la computadora).
+Hecho: motor jugable (física, IA, controles, medio tiempo), 8 ligas, menús, amistoso, torneos, carrera de técnico,
+carrera de jugador (controlas solo a tu jugador, puedes salir del banquillo a mitad de partido), Equipo Estrella y
+editor con fotos y escudos.
+Pendiente: faltas, penaltis en juego, fuera de juego y saques con animación; sonido; repeticiones; mercado de cartas;
+copas nacionales dentro de las carreras.
 
 ## Regla número uno: no perder el progreso
 
+- Las carreras y la base de datos editada van en **ranuras** separadas (`guardarRanura` / `cargarRanura`):
+  `r_dt`, `r_jug`, `r_mundo`, comprimidas (`gz:`) con 3 copias cada una (`r_<n>_c0..2`) y validadas con
+  `VALIDAR_RANURA` antes de escribir. Si una ranura está dañada al abrir se aparta (`danado_r_*`) y se usa la copia.
+  Si cambias la forma de un mundo, sube `MUNDO_VERSION`/`RANURA_VERSION` y completa lo que falte en `arreglarMundo`.
+- Cada carrera tiene su propia copia del mundo: editar la base de datos no cambia las carreras empezadas.
 - Los datos (`DATOS`: ajustes, estadísticas, historial) se guardan en IndexedDB con la clave `save`, como texto
   `js:` + JSON. Si no hay IndexedDB se usa localStorage, y si tampoco, solo memoria. No cambies ese formato.
 - Junto a ella: `save_meta` (versión y fecha), `bak_index` y las copias `bak_*` (5 por tipo: `auto`, `partido`,
@@ -66,14 +92,16 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 ```
 cd futbol
 npm install
-npm test                 # todas (alrededor de 1 minuto)
+npm test                 # todas (unos 3 minutos)
 npm test -- guardado     # solo las que contienen "guardado" en el nombre
 ```
 
 Abren el juego en Chromium sin pantalla y comprueban: arranque y dibujo, diseño en teléfono (vertical y
 horizontal), pases, pase al primer toque, tiros y goles, saques, entradas, un partido entero entre la computadora,
-teclado, pantalla táctil, mando, cambio de jugador, y todo el guardado (reabrir, copias, datos dañados, versión
-nueva, formato antiguo, restaurar, dos pestañas) más la compatibilidad con cada versión publicada.
+teclado, pantalla táctil, mando, cambio de jugador, la base de datos, todas las formaciones, el modo de un solo
+jugador, el amistoso desde el menú, torneos, las dos carreras, Equipo Estrella, el editor (con subida de imágenes),
+las ranuras y todo el guardado (reabrir, copias, datos dañados, versión nueva, formato antiguo, restaurar, dos
+pestañas) más la compatibilidad con cada versión publicada.
 
 Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) sustituye a los controles y
 `G.avanzar(n)` adelanta n pasos sin dibujar. `G.autoplay = true` hace que la computadora maneje a los dos equipos.
@@ -83,7 +111,8 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
 Artefacto: https://claude.ai/artifact/PDaxHwKVqqYsViT7qjwQKU
 
 1. `npm test` en verde.
-2. Publicar el artefacto con `futbol/index.html` (siempre el mismo enlace).
+2. Publicar el artefacto con `futbol/index.html` y **todos** los archivos de `js/` (parámetro `files`, con la misma
+   ruta `js/...`), siempre en el mismo enlace.
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprueban que sus datos
    guardados se siguen abriendo en todas las versiones futuras.
 

@@ -552,6 +552,121 @@ test('ranuras de guardado: se guardan comprimidas, se recuperan de la copia y no
   await ctx.close();
 });
 
+/* ---------- 3c. modos de juego ---------- */
+test('torneos: liga, copa y Copa de Campeones llegan a un campeón y se guardan', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(async () => {
+    const M = APP.mundo, out = {};
+    for (const [tipo, eq] of [['liga', ligaDe(M, 'por').clubes], ['copa', mejoresClubes(M, 16)], ['campeones', mejoresClubes(M, 16)]]) {
+      const T = crearTorneo(tipo, eq, eq[2], tipo); let n = 0;
+      while (!T.terminado && n++ < 100) { simularResto_T(T); cerrarJornada(T); }
+      out[tipo] = { terminado: T.terminado, campeon: eq.includes(T.campeon), goleadores: Object.keys(T.goleadores).length, rondas: T.rondas ? T.rondas.length : 0 };
+    }
+    APP.torneo = crearTorneo('copa', mejoresClubes(M, 8), mejoresClubes(M, 8)[0], 'Copa de 8'); await guardarTorneo();
+    hubTorneo();
+    return { out, guardado: !!(await KV.get('save')), hub: !!document.querySelector('[data-acc="jugar"]') };
+  });
+  for (const t of ['liga', 'copa', 'campeones']) assert(r.out[t].terminado && r.out[t].campeon && r.out[t].goleadores > 3, t + ': ' + JSON.stringify(r.out[t]));
+  assert(r.out.copa.rondas === 4 && r.out.campeones.rondas === 3, 'rondas de eliminatoria mal: ' + JSON.stringify(r.out));
+  assert(r.hub, 'el torneo no ofrece jugar el partido del usuario');
+  sinErrores(errors); await ctx.close();
+});
+
+test('carrera de técnico: temporada completa, fichaje, alineación y se reabre igual', async () => {
+  const ctx = await fresh(); const a = await openGame(ctx, srv.url);
+  const r1 = await a.page.evaluate(async () => {
+    nuevaCarreraDT(APP.mundo.clubes.find(c => c.nombre === 'Sevilla').id, 'Prueba');
+    const M = CDT.mundo, c = miClub(); c.presupuesto = 2e8;
+    // fichar a un jugador de otro club
+    const objetivo = M.jug.filter(j => j.club >= 0 && j.club !== CDT.club && j.pos === 'DC').sort((x, y) => y.med - x.med)[5];
+    hacerOferta(objetivo.id); document.querySelectorAll('[data-acc="ofrecer"]')[5].click();
+    const fichado = objetivo.club === CDT.club;
+    c.formacion = '4-4-2'; c.alineacion = null;
+    let n = 0; while (!temporadaTerminada(CDT) && n++ < 50) jugarPartidoDT(true);
+    const pj = Object.values(CDT.ligas[c.liga].tabla).find(f => f.id === CDT.club).pj;
+    finTemporadaDT();
+    await guardarDT(true);
+    return { fichado, pj, temp: CDT.temporada, hist: CDT.historial.length, club: CDT.club, n: CDT.noticias.length, valido: validarMundo(CDT.mundo) };
+  });
+  assert(r1.fichado, 'no se pudo fichar con presupuesto de sobra');
+  assert(r1.pj === 38 && r1.temp === 2026 && r1.hist === 1, 'la temporada no se completó bien: ' + JSON.stringify(r1));
+  assert(!r1.valido.length, 'el mundo de la carrera quedó dañado: ' + r1.valido);
+  await a.page.close();
+  const b = await openGame(ctx, srv.url);
+  const r2 = await b.page.evaluate(async () => { await menuCarreraDT(); return { club: CDT.club, temp: CDT.temporada, hist: CDT.historial.length, form: miClub().formacion, hub: !!document.querySelector('[data-acc="jugar"]') }; });
+  assert(r2.club === r1.club && r2.temp === 2026 && r2.hist === 1 && r2.form === '4-4-2' && r2.hub, 'la carrera no se reabrió igual: ' + JSON.stringify(r2));
+  sinErrores(a.errors); sinErrores(b.errors); await ctx.close();
+});
+
+test('carrera de jugador: crear jugador, jugar controlándolo, progresar y cambiar de club', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(async () => {
+    nuevaCarreraJug({ n1: 'Gabo', n: 'Prueba', nac: 'MX', pos: 'DC' }, APP.mundo.clubes.find(c => c.nombre === 'Toluca').id);
+    const yo = yoJ(); fijarMedia(yo, 88); yo.pot = 95;
+    partidoJug(false);
+    const enPartido = { solo: G.unJugador && G.unJugador.id === CJ.yo, ctrl: G.ctrl === G.unJugador, nombre: G.unJugador && G.unJugador.nombre };
+    G.pausa = true; simularResto();
+    const tras = { pj: yoJ().st.pj, notas: CJ.notas.length };
+    let n = 0; while (!temporadaTerminada(CJ) && n++ < 50) partidoJug(true);
+    finTemporadaJug();
+    const ofertas = CJ.ofertas.length;
+    if (ofertas) responderOfertaJug(0, true);
+    await guardarJug(true);
+    return { enPartido, tras, ofertas, club: CJ.club, edad: yoJ().edad, hist: CJ.historial.length, valido: validarMundo(CJ.mundo) };
+  });
+  assert(r.enPartido.solo && r.enPartido.ctrl && r.enPartido.nombre === 'Prueba', 'en el partido no controlas a tu jugador: ' + JSON.stringify(r.enPartido));
+  assert(r.tras.pj === 1 && r.tras.notas === 1, 'el partido jugado no contó: ' + JSON.stringify(r.tras));
+  assert(r.edad === 18 && r.hist === 1, 'no avanzó la temporada: ' + JSON.stringify(r));
+  assert(r.ofertas > 0, 'un jugador de media 88 debería recibir ofertas');
+  assert(!r.valido.length, 'mundo dañado: ' + r.valido);
+  sinErrores(errors); await ctx.close();
+});
+
+test('Equipo Estrella: equipo inicial, sobres con monedas del juego, partidos y divisiones', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(async () => {
+    menuEstrella(); const E = DATOS.estrella;
+    const ini = { cartas: E.cartas.length, once: E.once.filter(u => cartaPorUid(E, u)).length, monedas: E.monedas };
+    abrirSobre('plata'); const trasSobre = { cartas: E.cartas.length, monedas: E.monedas };
+    E.monedas = 0; abrirSobre('oro'); const sinDinero = E.cartas.length;
+    for (let i = 0; i < PARTIDOS_DIVISION; i++) partidoEstrella(true);
+    // un partido de verdad con las cartas
+    partidoEstrella(false); const motor = { nombre: G.eqs[0].nombre, jug: G.eqs[0].pl.length };
+    G.pausa = true; simularResto();
+    await colaGuardado;
+    return { ini, trasSobre, sinDinero, motor, monedas: E.monedas, pj: E.temp.pj, division: E.division, guardado: (await KV.get('save')).includes('estrella') };
+  });
+  assert(r.ini.cartas >= 11 && r.ini.once === 11 && r.ini.monedas === 5000, 'equipo inicial mal: ' + JSON.stringify(r.ini));
+  assert(r.trasSobre.monedas === 3000 && r.trasSobre.cartas > r.ini.cartas, 'el sobre no se cobró o no dio cartas: ' + JSON.stringify(r.trasSobre));
+  assert(r.sinDinero === r.trasSobre.cartas, 'se abrió un sobre sin monedas suficientes');
+  assert(r.monedas > 0 && r.pj === 1, 'los partidos no dieron monedas o no contaron: ' + JSON.stringify(r));
+  assert(r.motor.nombre === 'Mi Equipo Estrella' && r.motor.jug === 11, 'el partido no usa tus cartas');
+  assert(r.guardado, 'Equipo Estrella no se guardó');
+  sinErrores(errors); await ctx.close();
+});
+
+test('editor: cambiar club y jugador, subir una foto, curar y se conserva al reabrir', async () => {
+  const ctx = await fresh(); const a = await openGame(ctx, srv.url);
+  await a.page.evaluate(() => menuEditor());
+  await a.page.click('.club:has-text("Real Madrid")');
+  await a.page.fill('[data-k="estadio"]', 'Estadio de Prueba'); await a.page.press('[data-k="estadio"]', 'Tab');
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFUlEQVR42mP8z8Dwn4EIwMg0EjQCAMN+A/3yZxuNAAAAAElFTkSuQmCC', 'base64');
+  await a.page.setInputFiles('[data-cambio="escudo"]', { name: 'escudo.png', mimeType: 'image/png', buffer: png });
+  await a.page.waitForFunction(() => APP.mundo.clubes[0].escudo);
+  const jid = await a.page.evaluate(() => { const j = APP.mundo.jug[APP.mundo.clubes[0].plantilla[3]]; j.les = 4; editarJugador(j.id); return j.id; });
+  await a.page.fill('[data-k="med"]', '95'); await a.page.press('[data-k="med"]', 'Tab');
+  await a.page.click('[data-acc="curar"]');
+  await a.page.setInputFiles('[data-cambio="foto"]', { name: 'foto.png', mimeType: 'image/png', buffer: png });
+  await a.page.waitForFunction(id => APP.mundo.jug[id].foto, jid);
+  await a.page.waitForTimeout(700); await a.page.evaluate(() => colaGuardado);
+  await a.page.close();
+  const b = await openGame(ctx, srv.url);
+  const r = await b.page.evaluate(id => { const c = APP.mundo.clubes[0], j = APP.mundo.jug[id]; return { estadio: c.estadio, escudo: (c.escudo || '').slice(0, 15), med: j.med, les: j.les, foto: !!j.foto }; }, jid);
+  assert(r.estadio === 'Estadio de Prueba' && r.escudo.startsWith('data:image/png'), 'no se guardó el club: ' + JSON.stringify(r));
+  assert(r.med === 95 && r.les === 0 && r.foto, 'no se guardó el jugador: ' + JSON.stringify(r));
+  sinErrores(a.errors); sinErrores(b.errors); await ctx.close();
+});
+
 /* ---------- 4. guardado protegido ---------- */
 const leer = (page, k) => page.evaluate(k => KV.get(k), k);
 const escribir = (page, k, v) => page.evaluate(([k, v]) => KV.set(k, v), [k, v]);

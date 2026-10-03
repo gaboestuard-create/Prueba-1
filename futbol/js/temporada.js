@@ -48,7 +48,7 @@ function cerrarTemporada(C) {
     const pichichi = Object.entries(C.ligas[L.id].goles).sort((a, b) => b[1] - a[1])[0];
     if (L.id === ligaDelClub(C) && pichichi) resumen.pichichi = { id: +pichichi[0], g: pichichi[1] };
   }
-  C.historial.push({ temporada: C.temporada, club: C.club, pos: resumen.pos, campeon: resumen.campeones[ligaDelClub(C)] });
+  resumen.temporada = C.temporada;
   const retirados = evolucionarJugadores(M);
   fichajesComputadora(C);
   prepararTemporada(C);

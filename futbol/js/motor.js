@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.4.0';
+const JUEGO_VERSION = '0.5.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -118,6 +118,12 @@ function nuevoPartido(cfg) {
   G.stats = { tiros: [0, 0], aPuerta: [0, 0], pos: [0, 0], pases: [0, 0], pasesOk: [0, 0] };
   G.ctrl = null;
   saqueInicial(G.eqs[0]);
+  // empezar a mitad de partido (p. ej. sales del banquillo): { min, gl, gv, goles }
+  if (cfg.inicio) {
+    const I = cfg.inicio;
+    if (I.min >= 45) { G.parte = 2; for (const e of G.eqs) e.dir *= -1; saqueInicial(G.eqs[1]); }
+    G.reloj = I.min * 60; G.eqs[0].goles = I.gl || 0; G.eqs[1].goles = I.gv || 0; G.goles = (I.goles || []).slice();
+  }
   if (typeof alCambiarEquipos === 'function') alCambiarEquipos();
 }
 const minutoActual = () => Math.min(90, Math.floor(G.reloj / 60) + 1);
@@ -1544,8 +1550,10 @@ function moverCamara(dt) {
   const aspecto = window.innerWidth / Math.max(1, window.innerHeight);
   const vertical = aspecto < 1;
   const lead = G.autoplay ? 0 : eqUsuario().dir * 4;
-  const objX = clamp(b.x + lead, -HL + (modo === 'arriba' ? 10 : 14), HL - (modo === 'arriba' ? 10 : 14));
-  const objZ = clamp(b.z * .7, -HW + 10, HW - 8);
+  // en la carrera de jugador la cámara mira entre el balón y tu jugador
+  const yo = G.unJugador, fx = yo ? b.x * .6 + yo.x * .4 : b.x, fz = yo ? b.z * .6 + yo.z * .4 : b.z;
+  const objX = clamp(fx + lead, -HL + (modo === 'arriba' ? 10 : 14), HL - (modo === 'arriba' ? 10 : 14));
+  const objZ = clamp(fz * .7, -HW + 10, HW - 8);
   const k = 1 - Math.exp(-dt * 4.5);
   R.camX += (objX - R.camX) * k; R.camZ += (objZ - R.camZ) * k;
   let h, d, fov;

@@ -19,13 +19,15 @@ function actualizarQuien() { const c = G.ctrl; $('quien').textContent = c && !G.
 function alCambiarEquipos() { if (R) { colorearJugadores(); colorearReal(); } actualizarMarcador(); actualizarQuien(); }
 let ultimoContexto = null;
 function actualizarBotones() {
-  const at = atacando() || !G.balon.dueno && G.posesion === eqUsuario() && G.saque;
-  if (at === ultimoContexto) return; ultimoContexto = at;
+  const b = G.balon, at = atacando() || !b.dueno && G.posesion === eqUsuario() && G.saque;
+  const pedir = !!(G.unJugador && b.dueno && b.dueno !== G.unJugador && b.dueno.eq === eqUsuario());
+  const ctx = pedir ? 'pedir' : at ? 'ataque' : 'defensa';
+  if (ctx === ultimoContexto) return; ultimoContexto = ctx;
   const B = k => document.querySelector('.b[data-b="' + k + '"]');
-  B('pass').textContent = at ? 'Pase' : 'Cambiar';
-  B('long').innerHTML = at ? 'Pase<br>largo' : 'Presión';
-  B('shot').textContent = at ? 'Tiro' : 'Barrida';
-  B('tackle').classList.toggle('apagado', at);
+  B('pass').textContent = pedir ? 'Pedir' : at ? 'Pase' : (G.unJugador ? 'Pase' : 'Cambiar');
+  B('long').innerHTML = pedir ? 'Pedir' : at ? 'Pase<br>largo' : 'Presión';
+  B('shot').textContent = at || pedir ? 'Tiro' : 'Barrida';
+  B('tackle').classList.toggle('apagado', at || pedir);
 }
 function dibujarRadar() {
   const c = $('radar'), x = c.getContext('2d'), w = c.width, h = c.height;

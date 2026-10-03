@@ -199,7 +199,7 @@ function precioPedido(M, j) {
 }
 function hacerOferta(id) {
   const M = CDT.mundo, j = M.jug[id], c = miClub(), pedido = precioPedido(M, j);
-  const opciones = [.8, .9, 1, 1.1, 1.25].map(f => Math.round(j.val * f / 50000) * 50000);
+  const opciones = [.8, .9, 1, 1.1, 1.25, 1.5].map(f => Math.round(j.val * f / 50000) * 50000);
   pantalla(`<div class="panel"><div class="fila-j" style="border:0">${fotoHTML(j, 50)}<span class="info"><b>${esc(nombreCompleto(j))}</b><small>${esc(M.clubes[j.club].nombre)} · valor ${dinero(j.val)} · salario ${dinero(j.sal)}/sem.</small></span>${mediaHTML(j.med)}</div>
     <p>Tu presupuesto: <b>${dinero(c.presupuesto)}</b>. Elige cuánto ofreces:</p>
     <div class="seg">${opciones.map(v => `<button data-acc="ofrecer" data-v="${v}" ${v > c.presupuesto ? 'disabled' : ''}>${dinero(v)}</button>`).join('')}</div></div>`, {
@@ -269,6 +269,7 @@ function vistaNoticiasDT() {
 function finTemporadaDT() {
   const M = CDT.mundo, c = miClub(), L = ligaDe(M, c.liga);
   const r = cerrarTemporada(CDT);
+  CDT.historial.push({ temporada: r.temporada, club: CDT.club, pos: r.pos, campeon: r.campeones[c.liga] });
   const cumplido = r.pos <= CDT.objetivo.pos;
   const premio = Math.round((L.clubes.length - r.pos + 1) * 1.5e6 * L.riqueza / 1e5) * 1e5;
   c.presupuesto += premio;
