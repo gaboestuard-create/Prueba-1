@@ -40,7 +40,7 @@ function salarioDe(j, riqueza = 1) { return Math.round(700 * Math.pow(1.125, j.m
 function valorDe(j) {
   const edad = j.edad < 21 ? 1.6 : j.edad < 24 ? 1.35 : j.edad < 28 ? 1.1 : j.edad < 31 ? .8 : .45;
   const pot = 1 + Math.max(0, j.pot - j.med) * .025;
-  return Math.round(80000 * Math.pow(1.16, j.med - 55) * edad * pot / 50000) * 50000;
+  return Math.round(60000 * Math.pow(1.19, j.med - 55) * edad * pot / 50000) * 50000;
 }
 function nombreCompleto(j) { return (j.nombre1 ? j.nombre1 + ' ' : '') + j.nombre; }
 function crearJugador(M, { nac, pos, med, edad, club, num, az = AZ, riqueza = 1 }) {
@@ -87,7 +87,7 @@ function generarMundo(sem = 2025) {
         vistos[pos] = (vistos[pos] || 0) + 1;
         const titular = vistos[pos] <= ({ DFC: 2, MC: 2 }[pos] || 1);
         const edad = 18 + Math.floor(Math.pow(az(), 1.2) * 16);
-        const med = clamp(media + ga() * 3.3 + (titular ? 3 : -3.5) - (edad < 21 ? 4 : 0), 42, 93);
+        const med = clamp(media + ga() * 2.9 + (titular ? 3 : -3.5) - (edad < 21 ? 4 : 0), 42, 91);
         const nac = az() < .62 ? L.nac : extranjeros[Math.floor(az() * extranjeros.length)];
         const j = crearJugador(M, { nac, pos, med, edad, club: club.id, num: numeroLibre(M, club, pos), az, riqueza: L.riqueza });
         club.plantilla.push(j.id);
@@ -174,7 +174,7 @@ function simularPartido(M, idL, idV, { neutral = false, onceL, onceV } = {}) {
   const cl = M.clubes[idL], cv = M.clubes[idV];
   onceL = onceL || alineacionDe(M, cl); onceV = onceV || alineacionDe(M, cv);
   const fl = fuerzaDe(M, cl, onceL) + (neutral ? 0 : 2), fv = fuerzaDe(M, cv, onceV);
-  const gl = poisson(1.4 * Math.exp((fl - fv) / 10)), gv = poisson(1.1 * Math.exp((fv - fl) / 10));
+  const gl = poisson(clamp(1.4 * Math.exp((fl - fv) / 12), .3, 3.4)), gv = poisson(clamp(1.1 * Math.exp((fv - fl) / 12), .25, 3));
   const goles = [], jug = {};
   const prep = (once, lado) => once.filter(id => id != null).forEach(id => { jug[id] = { g: 0, a: 0, nota: 0, lado }; });
   prep(onceL, 0); prep(onceV, 1);

@@ -49,7 +49,7 @@ function validarDatos(d) {
     if (!Number.isInteger(e.monedas) || e.monedas < 0) grave.push('monedas de Equipo Estrella dañadas');
     if (!Array.isArray(e.cartas)) grave.push('cartas de Equipo Estrella dañadas');
   }
-  if (d.torneo && (!Array.isArray(d.torneo.equipos) || !d.torneo.mundo)) grave.push('torneo dañado');
+  if (d.torneo && (!Array.isArray(d.torneo.equipos) || !['liga', 'copa', 'campeones'].includes(d.torneo.tipo))) grave.push('torneo dañado');
   return { ok: grave.length === 0, grave, aviso };
 }
 // almacenamiento: IndexedDB; si no se puede, localStorage; si tampoco, solo en memoria
@@ -240,9 +240,17 @@ async function cargarRanura(nombre) {
     return { datos: null, estado: 'perdida' };
   }
 }
-// guarda una ranura; con copia = true también rota sus copias de seguridad
+// guarda una ranura; con copia = true también rota sus copias de seguridad.
+// Si ya hay un guardado de la misma ranura esperando en la fila, se junta con él (se guarda el estado más reciente).
+const RANURA_EN_FILA = {};
 function guardarRanura(nombre, datos, copia = false) {
-  return enCola(async () => {
+  const p = RANURA_EN_FILA[nombre];
+  if (p && !p.empezado) { p.datos = datos; p.copia = p.copia || copia; return p.promesa; }
+  const t = { datos, copia, empezado: false };
+  RANURA_EN_FILA[nombre] = t;
+  t.promesa = enCola(async () => {
+    t.empezado = true; if (RANURA_EN_FILA[nombre] === t) delete RANURA_EN_FILA[nombre];
+    const { datos, copia } = t;
     if (SAVE.soloLectura || !SAVE.dueno) return false;
     const fallos = (VALIDAR_RANURA[nombre] || (() => []))(datos);
     if (fallos.length) { console.warn('No se guarda la ranura ' + nombre + ':', fallos); return false; }
@@ -256,6 +264,7 @@ function guardarRanura(nombre, datos, copia = false) {
       return true;
     } catch (e) { console.warn('Error al guardar la ranura ' + nombre, e); return false; }
   });
+  return t.promesa;
 }
 // borra una ranura (empezar de nuevo): antes guarda lo que había como copia
 function borrarRanura(nombre) {
