@@ -64,7 +64,7 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
 
 ## Publicar
 
-Artefacto: https://claude.ai/code/artifact/ (ver el enlace en `tests/compat.json` y en el historial del chat).
+Artefacto: https://claude.ai/artifact/PDaxHwKVqqYsViT7qjwQKU
 
 1. `npm test` en verde.
 2. Publicar el artefacto con `futbol/index.html` (siempre el mismo enlace).
