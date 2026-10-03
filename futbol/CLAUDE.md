@@ -132,7 +132,9 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
   de `sw.js`** (lo comprueba la prueba "instalable"). El registro solo se hace fuera de Claude (no en un marco).
 - Exportar/importar partida (`exportarPartida`, `importarPartida`, en Copias y partida): un archivo con el guardado
   principal y las ranuras tal cual. Sirve para pasar el progreso entre el enlace de Claude, la app y otros equipos.
-- Publicación en Netlify: `netlify.toml` en la raíz del repositorio (carpeta `futbol`, sin compilar).
+- **GitHub Pages** (lo que usa el usuario para instalar la app): la rama `gh-pages` tiene solo los archivos del
+  juego; se ve en https://gaboestuard-create.github.io/Prueba-1/. Se actualiza con `sh futbol/publicar-pages.sh "mensaje"`
+  (el usuario lo autorizó). También queda `netlify.toml` por si prefiere Netlify.
 
 ## Publicar
 
@@ -140,8 +142,8 @@ Artefacto: https://claude.ai/artifact/PDaxHwKVqqYsViT7qjwQKU
 
 1. `npm test` en verde.
 2. Publicar el artefacto con `futbol/index.html` y **todos** los archivos de `js/` más `manifest.webmanifest`,
-   `sw.js` e `icons/` (parámetro `files`, con la misma ruta), siempre en el mismo enlace. Si el usuario tiene la app
-   en Netlify conectada a GitHub, se actualiza sola con cada `git push`.
+   `sw.js` e `icons/` (parámetro `files`, con la misma ruta), siempre en el mismo enlace. Y actualizar la app:
+   `sh futbol/publicar-pages.sh "Pelotazo x.y.z"`.
 3. Hacer commit y añadir ese commit a `tests/compat.json`: desde entonces las pruebas comprueban que sus datos
    guardados se siguen abriendo en todas las versiones futuras.
 
