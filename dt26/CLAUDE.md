@@ -36,6 +36,8 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
   "modo jugador: vida fuera del campo". Sus datos viven en `W.pc` y se crean al usarse: no requieren conversión.
 - Rankings (vista `rank`, en los dos modos) y premios mundiales (`worldAwards`, se llama desde `seasonAwards`).
   Vitrina del jugador: `jugVitCheck` guarda cada título, premio y logro con su texto en `W.pc.vit`.
+- Selección del jugador: `jugNatCall` (al sortear torneos), `jugIntl` (parones de octubre, noviembre y marzo) y
+  `jugNatMatch` (cada partido). `natSquad` ordena por `jugNtOvr`: la confianza del seleccionador pesa en su caso.
 
 ## Pruebas
 

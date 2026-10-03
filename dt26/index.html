@@ -5785,6 +5785,7 @@ function intlBreak(w){
   const me=w.clubs[w.userClub]||{id:-2}, calls=[], hurt=[];
   for(const c of w.clubs){ const top=c.pids.map(id=>w.players[id]).filter(p=>p.inj<=0).sort((a,b)=>b.ovr-a.ovr).slice(0,3); for(const p of top){ p.cnd=Math.max(45,p.cnd-8); if(c.id===me.id) calls.push(p);
       if(rc(.035)){ p.inj=ri(10,40); p.injT=rp(INJ); fixLineup(w,c); if(c.id===me.id) hurt.push(p); else if(p.ovr>=76) news(w,`${pname(p)} vuelve lesionado de la selección`,`${c.name} lamenta la baja de ${pname(p)}: ${p.injT.toLowerCase()}.`,'inj',c.lg,{p:p.id}); } else if(c.id!==me.id) p.mor=clamp(p.mor+2,5,100); } }
+  if(isJug(w)) try{ jugIntl(w); }catch(e){ console.error('selección',e); }
   if(calls.length) mail(w,'Prensa','Convocados por sus selecciones',`${calls.map(p=>pname(p)).join(', ')} se incorporan a sus selecciones durante el parón.${hurt.length?`\n\nMala noticia: ${hurt.map(p=>`${pname(p)} regresa con ${p.injT.toLowerCase()} (${Math.ceil(p.inj/7)} semanas)`).join('; ')}.`:'\nDeseamos que vuelvan sanos.'}`,hurt.length?'bad':'');
 }
 function evInvest(w){ const c=rp(w.clubs); if(c.id===w.userClub) return; const kind=rp(['inv','spon','stad','debt']), lf=w.leagues[c.lg].lf;
@@ -6589,7 +6590,7 @@ const TOURN={wc:{name:'Mundial',y:2,groups:4,ko:[9,12,16],stages:['Fase de grupo
  nl:{name:'Liga de Naciones',y:3,nats:['ESP','ENG','ITA','GER','FRA','POR','NED','CRO'],groups:2,ko:[9,12],stages:TS3}};
 function natStrength(w,nat){ const l=w.players.filter(p=>p.nat===nat&&!p.ret&&p.club>=0&&!p.yth).map(p=>p.ovr).sort((a,b)=>b-a).slice(0,14); return l.length?l.reduce((a,b)=>a+b,0)/l.length:0; }
 function natSquad(w,nat){
-  const ps=w.players.filter(p=>p.nat===nat&&!p.ret&&p.club>=0&&!p.yth&&p.inj<=28).sort((a,b)=>b.ovr-a.ovr), pick=[];
+  const ps=w.players.filter(p=>p.nat===nat&&!p.ret&&p.club>=0&&!p.yth&&p.inj<=28).sort((a,b)=>jugNtOvr(w,b)-jugNtOvr(w,a)), pick=[];
   const take=(f,n)=>{ for(const p of ps){ if(n<=0) break; if(!pick.includes(p)&&f(p)){ pick.push(p); n--; } } };
   take(p=>p.pos==='GK',3); take(p=>PGRP[p.pos]==='d',7); take(p=>PGRP[p.pos]==='m',7); take(p=>PGRP[p.pos]==='a',5); take(()=>true,23-pick.length); return pick; }
 function natTeam(w,T,nat){
@@ -6607,7 +6608,7 @@ function tourSetup(w){
     const T={k,name:`${D.name} ${dOf(w,S).getUTCFullYear()}`,s:w.season,teams:nats,groups,fx:[],stage:0,done:false,champ:null,S,sq:{},str,koDays:D.ko.map(x=>S+x)};
     groups.forEach((g,gi)=>{ const rr=roundRobin(g.map((_,i)=>i)); rr.forEach((rd,r)=>rd.forEach(([a,b])=>T.fx.push({id:T.fx.length,st:0,g:gi,rd:r,d:S+r*3,h:g[a],a:g[b],r:null}))); });
     nats.forEach(n=>{ T.sq[n]=natSquad(w,n).map(p=>p.id); });
-    w.tours.push(T); news(w,`Sorteo: ${T.name}`,`Los ${nats.length} participantes ya conocen sus grupos. El torneo arranca el ${fDate(w,S,1)}.`,'gen',-1);
+    w.tours.push(T); if(isJug(w)) try{ jugNatCall(w,T); }catch(e){ console.error('selección',e); } news(w,`Sorteo: ${T.name}`,`Los ${nats.length} participantes ya conocen sus grupos. El torneo arranca el ${fDate(w,S,1)}.`,'gen',-1);
     const mine=[]; nats.forEach(n=>T.sq[n].forEach(id=>{ const p=w.players[id]; if(p&&p.club===w.userClub) mine.push(p); }));
     if(w.userClub>=0&&mine.length) mail(w,'Prensa',`Convocados para el ${T.name}`,`Tus jugadores convocados: ${mine.map(p=>`${pname(p)} (${NAT[p.nat][0]})`).join(', ')}.\n\nVolverán algo cansados, con riesgo de lesión, pero si su selección triunfa llegarán con la moral por las nubes.`,''); }
 }
@@ -6623,6 +6624,7 @@ function tourPlay(w,T,f){
       if(m.inj){ p.inj=m.inj; p.injT=rp(INJ); const c=w.clubs[p.club]; if(c){ fixLineup(w,c);
         if(c.id===w.userClub) mail(w,'Servicios médicos','Lesión con la selección: '+pname(p),`${pname(p)} se lesiona con ${NAT[p.nat][0]}: ${p.injT.toLowerCase()}. Baja estimada: ${Math.ceil(p.inj/7)} semana(s).`,'bad');
         else if(p.ovr>=78) news(w,`${pname(p)} se lesiona con su selección`,`${c.name} pierde a su jugador tras el partido de ${NAT[p.nat][0]}.`,'inj',c.lg,{p:p.id}); } } } }
+  if(isJug(w)) try{ const me=w.players[w.me]; if(me&&(f.h===me.nat||f.a===me.nat)) jugNatMatch(w,T.name+(f.st>0?' · '+TOURN[T.k].stages[f.st]:''),M,f.h===me.nat?0:1); }catch(e){ console.error('selección',e); }
 }
 function tourNews(w,T,f){
   const r=f.r, D=TOURN[T.k], A_=NAT[f.h][0], B_=NAT[f.a][0], res=`${A_} ${r.hg}-${r.ag} ${B_}${r.pens?` (pen. ${r.pens[0]}-${r.pens[1]})`:''}`;
@@ -7462,7 +7464,7 @@ function stPress(n,P,C){ const k=ST_PRESS[n.k]?n.k:'gen', J=pressOf(W), i0=hashI
 const JUG_TAL=[['Promesa','Buen nivel para empezar, techo de jugador de primera',47,[76,82]],['Gran promesa','Llamas la atención de los ojeadores',51,[82,88]],['Elegido','Talento generacional, todos esperan mucho de ti',55,[88,94]]];
 const JUG_FOCUS=[['bal','Equilibrado','Un poco de todo'],['tec','Técnica','Toque, pase, regate y remate'],['men','Mental','Visión, decisiones y colocación'],['fis','Físico','Velocidad, fuerza y resistencia'],['pos','Nueva posición','Aprender a jugar en otro puesto']];
 const JUG_INT=[['suave','Suave','Menos mejora, sin riesgo'],['normal','Normal','Ritmo habitual del club'],['alta','Alta','Más mejora, riesgo de lesión']];
-const JUGV=new Set(['home','world','inbox','cal','fixtures','story','player','team','comp','sel','trophy','settings','jme','jtrain','jcon','jclub','jlife','jvit','rank']);
+const JUGV=new Set(['home','world','inbox','cal','fixtures','story','player','team','comp','sel','trophy','settings','jme','jtrain','jcon','jclub','jlife','jvit','rank','jnat']);
 const JUG_OK=new Set(['adv','bakdl','bakopen','bakrestore','bakrestorego','calgo','calm','calmode','calsel','caltoday','cctab','chron','cl','close','cloudgo','cloudload','cloudsave','compcc','complg','comprd','comptab','comptier','cont','copyexp','copystory','exit','export','go','ibclear','ibf','import','mact','mas','more','msg','mx','pal','palgo','pastego','pastejson','pl','play3d','readall','real','report','save','selk','selsq','seltab','set','simstop','sndset','sndtest','sqf','sqsort','stback','story','tabhere','teamsq','theme','trtab','tuthide','wf','wl','wtab','wipe','wipego','stadfull','stadclose','upimg','rmimg','noticeok']);
 const isJug=w=>!!(w&&w.mode==='jug');
 const isMe=(w,p)=>!!(p&&w&&w.mode==='jug'&&p.id===w.me);
@@ -7913,14 +7915,83 @@ function jugSurgery(w,p){ const pc=w.pc, h=p.ih&&p.ih[p.ih.length-1], key=h?h.s*
   mail(w,'Servicios médicos','Lesión larga: hay que decidir',`${p.injT||'La lesión'} te tendrá fuera unas ${Math.ceil(p.inj/7)} semanas. Hay dos caminos.`,'bad',{t:'pev',e:'surg',exp:w.day+4,o:[['Operarme','Más tiempo de baja, pero vuelves al cien por cien.'],['Infiltrarme y volver antes','Vuelves en la mitad de tiempo, con riesgo de perder velocidad.']]}); }
 JUG_EV.surg={t:'Lesión larga',gen:()=>null,res:(w,p,a,i)=>{ if(p.inj<=0) return ['Ya estás recuperado.','']; if(i===0){ p.inj+=14; return ['Operación con éxito. Toca paciencia.','good']; } p.inj=Math.max(3,Math.ceil(p.inj*.5)); if(rc(.5)) return ['Vuelves antes, pero la lesión deja huella'+jugAttr(p,{pac:-1,acc:-1})+'.','bad']; return ['Vuelves antes y sin secuelas. Buena suerte.','good']; }};
 
+/* ---------- modo jugador: selección nacional ---------- */
+// convocatorias con aviso, partidos en los parones, confianza del seleccionador y la pantalla «Mi selección»
+function jugNtBonus(w){ return ((w.pc&&w.pc.ntTr!=null?w.pc.ntTr:50)-50)/8; }
+function jugNtOvr(w,p){ return p.ovr+(isMe(w,p)?jugNtBonus(w):0); }
+function jugNtCoach(w,nat){ const pc=w.pc; if(!pc.ntC||pc.ntC.nat!==nat){ const n=genName(nat); pc.ntC={nat,n:n[0]+' '+n[1]}; } return pc.ntC.n; }
+function jugNtPool(w,p){ return w.players.filter(q=>q.nat===p.nat&&!q.ret&&q.club>=0&&!q.yth&&PGRP[q.pos]===PGRP[p.pos]).sort((a,b)=>jugNtOvr(w,b)-jugNtOvr(w,a)); }
+const JUG_NT_SLOTS={g:3,d:7,m:7,a:5};
+// al sortear un torneo: ¿estás en la lista?
+function jugNatCall(w,T){
+  const p=w.players[w.me], pc=w.pc; if(!p||pc.done||p.ret||!T.teams.includes(p.nat)) return;
+  const sq=T.sq[p.nat]||[], coach=jugNtCoach(w,p.nat);
+  if(sq.includes(p.id)){ mail(w,`Selección de ${NAT[p.nat][0]}`,`¡Convocado para el ${T.name}!`,`${coach}, seleccionador de ${NAT[p.nat][0]}, te incluye en la lista de ${sq.length} jugadores para el ${T.name}. El torneo empieza el ${fDate(w,T.S,1)}.\n\nCada partido que juegues cuenta para tu carrera internacional.`,'good'); jugLog(w,`Convocado para el ${T.name}`); jugFeed(w,`¡${sname(p)} va al ${T.name}! Orgullo nacional.`,'good'); }
+  else { const r=jugNtPool(w,p).indexOf(p); if((pc.ntAp||0)>0||(r>=0&&r<JUG_NT_SLOTS[PGRP[p.pos]]+3)) mail(w,`Selección de ${NAT[p.nat][0]}`,`Fuera de la lista del ${T.name}`,`${coach} no te incluye en la convocatoria del ${T.name}. Eres el ${r+1}º en su lista de ${GNAME[PGRP[p.pos]]}s.\n\nTus partidos con el club son la mejor forma de convencerle.`,'bad'); }
+}
+// parones internacionales: un partido de tu selección (amistoso o eliminatoria)
+function jugIntl(w){
+  const p=w.players[w.me], pc=w.pc; if(!p||pc.done||p.ret||p.club<0) return;
+  const cnt={}; for(const q of w.players) if(!q.ret&&q.club>=0&&!q.yth) cnt[q.nat]=(cnt[q.nat]||0)+1; if((cnt[p.nat]||0)<16) return;
+  const sq=natSquad(w,p.nat).map(q=>q.id), coach=jugNtCoach(w,p.nat);
+  if(!sq.includes(p.id)){ const r=jugNtPool(w,p).indexOf(p); if(pc.ntIn||(r>=0&&r<JUG_NT_SLOTS[PGRP[p.pos]]+2)) mail(w,`Selección de ${NAT[p.nat][0]}`,'Fuera de la convocatoria',`${coach} no cuenta contigo para este parón. Eres el ${r+1}º de los ${GNAME[PGRP[p.pos]]}s en su lista.`,'bad'); pc.ntIn=0; return; }
+  const cont=contOf(p.nat), opps=Object.keys(NAT).filter(n=>n!==p.nat&&(cnt[n]||0)>=16), near=opps.filter(n=>contOf(n)===cont), o=rp(near.length&&rc(.7)?near:opps); if(!o) return;
+  const wcSoon=[1,2].some(k=>TOURN.wc.y===(w.season+k)%4)||TOURN.wc.y===w.season%4, label=wcSoon&&contOf(o)===cont?'Eliminatoria mundialista':'Amistoso internacional';
+  const T={sq:{[p.nat]:sq,[o]:natSquad(w,o).map(q=>q.id)}}, home=rc(.5), H=natTeam(w,T,home?p.nat:o), Aw=natTeam(w,T,home?o:p.nat), M=simQuick(w,H,Aw,{cup:false,wx:{k:'sol',t:20}});
+  for(let si=0;si<2;si++) for(const m of M.s[si].pl.concat(M.s[si].bench)){ if(m.min0<0) continue; const q=m.p, nt=q.nt||(q.nt={ap:0,g:0}); nt.ap++; nt.g+=m.g; q.cnd=Math.max(30,Math.round(m.cnd));
+    if(m.inj){ q.inj=m.inj; q.injT=rp(INJ); const c=w.clubs[q.club]; if(c) fixLineup(w,c); } }
+  pc.ntIn=1; const us=home?0:1, S=M.s[us], O=M.s[1-us];
+  if(Math.abs(S.g-O.g)>=3||(S.g!==O.g&&rc(.3))) news(w,`${label}: ${NAT[H.short][0]} ${M.s[0].g}-${M.s[1].g} ${NAT[Aw.short][0]}`,`${S.g>O.g?NAT[p.nat][0]+' gana':S.g<O.g?NAT[p.nat][0]+' pierde':'Reparto de puntos'} en el parón internacional.`,'res',-1);
+  jugNatMatch(w,label,M,us);
+}
+// tu partido con la selección: nota, correo, confianza del seleccionador e historial
+function jugNatMatch(w,label,M,us){
+  const p=w.players[w.me], pc=w.pc; let m=null; for(const x of M.s[us].pl.concat(M.s[us].bench)) if(x.id===p.id) m=x;
+  if(!m){ if(M.s[us].c.pids.length&&(p.sus>0||p.inj>0)) mail(w,`Selección de ${NAT[p.nat][0]}`,`${label}: no pudiste jugar`,`Estabas en la lista, pero ${p.inj>0?'la lesión':'la sanción que arrastras'} te dejó fuera del partido ante ${NAT[M.s[1-us].c.short]?NAT[M.s[1-us].c.short][0]:M.s[1-us].c.short}.`,''); return; }
+  const S=M.s[us], O=M.s[1-us], oN=O.c.short, coach=jugNtCoach(w,p.nat);
+  if(m.min0<0){ pc.ntTr=clamp((pc.ntTr??50)-.5,0,100); return; }
+  const min=Math.max(1,(m.min1>=0?m.min1:90)-m.min0), rt=Math.round(m.rt*10)/10, res=S.g>O.g?'Victoria':S.g<O.g?'Derrota':'Empate';
+  pc.ntTr=clamp((pc.ntTr??50)+(rt>=7.5?5:rt>=7?3:rt>=6.4?1:rt<5.8?-4:-1)+(m.g?2:0),0,100);
+  pc.fame=clamp((pc.fame||0)+(rt>=7.5?.6:.2)+m.g*.5,0,100); jugFolAdd(w,.006+m.g*.012);
+  if(!pc.ntDeb){ pc.ntDeb={s:w.season,d:w.day,o:oN}; jugLog(w,`Debut con ${NAT[p.nat][0]} ante ${NAT[oN]?NAT[oN][0]:oN}`); }
+  if(m.g&&!pc.ntG1){ pc.ntG1={s:w.season,d:w.day}; jugLog(w,`Primer gol con ${NAT[p.nat][0]}`); }
+  const L=pc.nml||(pc.nml=[]); L.push({s:w.season,d:w.day,c:label,o:oN,gf:S.g,ga:O.g,rt,g:m.g,as:m.as,min}); if(L.length>30) L.shift();
+  const bits=[`${min} minutos${m.min0>0?' (desde el banquillo)':''}`]; if(m.g) bits.push(m.g===1?'1 gol':m.g+' goles'); if(m.as) bits.push(m.as===1?'1 asistencia':m.as+' asistencias');
+  mail(w,`Selección de ${NAT[p.nat][0]}`,`${res} ${S.c.short} ${S.g}-${O.g} ${oN}: tu nota ${rt.toFixed(1)}`,`${label}. ${bits.join(', ')}.\n\n${rt>=7.5?`${coach}: "Así se defiende esta camiseta."`:rt>=6.8?`${coach} queda satisfecho con tu partido.`:rt>=6.2?'Partido correcto con la selección.':`${coach} esperaba más de ti.`}`,rt>=7?'good':rt<6?'bad':'');
+  if(m.g) jugFeed(w,`¡Gol de ${sname(p)} con ${NAT[p.nat][0]}! Que suene el himno.`,'good');
+}
+VIEWS.jnat=()=>{
+  const p=jugMe(), pc=W.pc, nat=p.nat, nt=p.nt||{ap:0,g:0}, coach=jugNtCoach(W,nat), pool=jugNtPool(W,p), r=pool.indexOf(p), slots=JUG_NT_SLOTS[PGRP[p.pos]];
+  const tour=(W.tours||[]).find(T=>T.teams.includes(nat)&&T.s===W.season), inT=tour&&(tour.sq[nat]||[]).includes(p.id);
+  const st=inT&&!tour.done?['Convocado','good']:pc.ntIn?['En la última lista','good']:r>=0&&r<slots?['En la órbita del seleccionador','']:['Fuera de la lista','bad'];
+  const tr=Math.round(pc.ntTr??50);
+  const hier=pool.slice(0,Math.max(slots+2,Math.min(r+1,12))).map((q,i)=>`<tr class="${q.id===p.id?'me':''}" data-a="pl" data-id="${q.id}"><td class="c">${i+1}</td><td class="stick"><span class="pn">${avatar(q)}<b>${esc(pname(q))}</b></span></td><td>${posChip(q.pos)}</td><td class="c">${q.age}</td><td>${q.club>=0?`<span class="row" style="gap:6px">${crestSVG(W.clubs[q.club],16)}${esc(W.clubs[q.club].short)}</span>`:''}</td><td class="c">${q.ovr}</td><td class="c">${(q.nt&&q.nt.ap)||0}</td>${i===slots-1?'':''}</tr>${i===slots-1?`<tr><td colspan="7" class="muted" style="font-size:12.5px;text-align:center;border-bottom:2px dashed var(--line)">Hasta aquí entran normalmente en la lista</td></tr>`:''}`).join('');
+  let trn='';
+  if(tour){ const g=tour.groups.findIndex(x=>x.includes(nat)), fx=tour.fx.filter(f=>f.h===nat||f.a===nat).sort((a,b)=>a.d-b.d);
+    trn=`<div class="card"><h3>${esc(tour.name)}${tour.done&&tour.champ?`<span class="sp"></span><span class="chip ${tour.champ===nat?'good':''}">Campeón: ${esc(NAT[tour.champ][0])}</span>`:''}</h3>
+    ${g>=0?`<div class="tw"><table class="t"><thead><tr><th>Grupo ${'ABCD'[g]}</th><th class="c">PJ</th><th class="c">DG</th><th class="c">Pts</th></tr></thead><tbody>${tourTable(tour,g).map(x=>`<tr class="${x.n===nat?'me':''}"><td><span class="row" style="gap:7px">${flagSVG(x.n)}${esc(NAT[x.n][0])}</span></td><td class="c">${x.p}</td><td class="c">${x.gf-x.ga}</td><td class="c"><b>${x.pts}</b></td></tr>`).join('')}</tbody></table></div>`:''}
+    ${fx.map(f=>`<div class="row" style="justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span class="muted" style="min-width:110px">${f.st>0?esc(TOURN[tour.k].stages[f.st]):'Grupos'} · ${fDate(W,f.d)}</span><span>${esc(NAT[f.h][0])}</span><b>${f.r?`${f.r.hg}-${f.r.ag}${f.r.pens?` (p. ${f.r.pens[0]}-${f.r.pens[1]})`:''}`:'vs'}</b><span>${esc(NAT[f.a][0])}</span></div>`).join('')}
+    <div style="margin-top:10px"><button class="btn sm" data-a="go" data-v="sel">Ver el torneo completo</button></div></div>`; }
+  const L=(pc.nml||[]).slice().reverse().slice(0,10);
+  const log=L.length?`<div class="tw"><table class="t"><thead><tr><th>Fecha</th><th>Partido</th><th>Rival</th><th class="c">Res.</th><th class="c">Min</th><th class="c">G</th><th class="c">Nota</th></tr></thead><tbody>${L.map(e=>`<tr><td>${fDate({season:e.s},e.d)}</td><td class="muted">${esc(e.c)}</td><td><span class="row" style="gap:6px">${NAT[e.o]?flagSVG(e.o):''}${esc(NAT[e.o]?NAT[e.o][0]:e.o)}</span></td><td class="c"><b>${e.gf}-${e.ga}</b></td><td class="c">${e.min}</td><td class="c">${e.g||''}</td><td class="c">${rtChip(e.rt)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Todavía no has jugado con la selección.</p>';
+  return `<div class="head"><div class="row" style="gap:12px">${flagSVG(nat).replace('<svg','<svg width="44" height="30"')}<div><h2>${esc(NAT[nat][0])}</h2><div class="muted">Seleccionador: ${esc(coach)}</div></div></div><div class="sp"></div><span class="chip ${st[1]}">${st[0]}</span></div>
+  <div class="g2"><div class="col">
+   <div class="card"><h3>Tu carrera internacional</h3><div class="kv"><dt>Partidos</dt><dd>${nt.ap}</dd><dt>Goles</dt><dd>${nt.g}</dd>${pc.ntDeb?`<dt>Debut</dt><dd>${fDate({season:pc.ntDeb.s},pc.ntDeb.d,1)}</dd>`:''}<dt>Confianza del seleccionador</dt><dd>${tr}%</dd></div>${jugBar(tr,100,tr>60?'var(--good)':tr>35?'#d9a526':'var(--bad)')}
+    <p class="snote">Juegan tus partidos con el club y, sobre todo, cómo rindes cuando te llaman. Parones internacionales: octubre, noviembre y marzo. Próximo gran torneo: ${esc(nextTourText(W))}.</p></div>
+   ${trn}
+   <div class="card"><h3>Tus partidos con la selección</h3>${log}</div></div>
+  <div class="col"><div class="card"><h3>La pelea por tu puesto<span class="sp"></span><span class="muted" style="font-size:14px;font-weight:500">${r>=0?`Eres el ${r+1}º`:'—'}</span></h3><p class="muted" style="margin:0 0 8px;font-size:13px">${esc(NAT[nat][0])} lleva unos ${slots} ${GNAME[PGRP[p.pos]]}s a cada convocatoria.</p>
+    <div class="tw"><table class="t"><thead><tr><th class="c">#</th><th class="stick">Jugador</th><th>Pos</th><th class="c">Edad</th><th>Club</th><th class="c">Media</th><th class="c">Int.</th></tr></thead><tbody>${hier}</tbody></table></div></div></div></div>`;
+};
+
 /* ---------- interfaz del modo jugador ---------- */
 const NAVJ=[
  ['Oficina',[['home','Inicio','home'],['world','Mundo','world'],['inbox','Bandeja','inbox'],['cal','Calendario','cal']]],
- ['Mi carrera',[['jme','Mi jugador','mgr'],['jtrain','Entrenamiento','tactics'],['jcon','Contrato y ofertas','market'],['jlife','Vida y vestuario','rumor'],['jvit','Vitrina','trophy']]],
+ ['Mi carrera',[['jme','Mi jugador','mgr'],['jtrain','Entrenamiento','tactics'],['jcon','Contrato y ofertas','market'],['jlife','Vida y vestuario','rumor'],['jvit','Vitrina','trophy'],['jnat','Mi selección','flag']]],
  ['Fútbol',[['jclub','Mi club','club'],['rank','Rankings','star'],['comp','Competiciones','comp'],['sel','Selecciones','flag'],['trophy','Palmarés','trophy']]],
  ['Herramientas',[['settings','Ajustes','settings']]]
 ];
-Object.assign(NAVDESC,{jme:'Tu ficha, atributos y trayectoria',jtrain:'Qué trabajas cada mes',jcon:'Salario, ofertas y retirada',jclub:'Tu equipo y tus compañeros',jlife:'Redes, prensa y compañeros',jvit:'Trofeos, premios y logros'});
+Object.assign(NAVDESC,{jme:'Tu ficha, atributos y trayectoria',jtrain:'Qué trabajas cada mes',jcon:'Salario, ofertas y retirada',jclub:'Tu equipo y tus compañeros',jlife:'Redes, prensa y compañeros',jvit:'Trofeos, premios y logros',jnat:'Convocatorias y partidos internacionales'});
 function navGroups(){ return isJug(W)?NAVJ:NAVG; }
 function jugTop(){
   const p=jugMe(), c=p.club>=0?W.clubs[p.club]:null, cc=c||W.clubs[jugClub(W)], f=jugFixture(W), wx=wxAt(W,W.leagues[cc.lg].nat,W.day), done=!!W.pc.done;

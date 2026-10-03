@@ -106,14 +106,14 @@ export function realErrors(errors, allow = []) {
 }
 
 // crea una carrera de jugador (modo jugador) en la liga indicada, con el club de reputación media
-export async function newPlayerCareer(page, { lg = 0, pos = 'ST', tal = 1, fn = 'Prueba', ln = 'Jugador', top = false } = {}) {
-  await page.evaluate(async ({ lg, pos, tal, fn, ln, top }) => {
+export async function newPlayerCareer(page, { lg = 0, pos = 'ST', tal = 1, fn = 'Prueba', ln = 'Jugador', top = false, nat = 'MEX' } = {}) {
+  await page.evaluate(async ({ lg, pos, tal, fn, ln, top, nat }) => {
     menuNew('jug');
     await new Promise(r => { const t = setInterval(() => { if (!APP.gen && APP.pick.step === 1) { clearInterval(t); r(); } }, 50); });
     const L = W.leagues[lg], cs = L.clubs.slice().sort((a, b) => W.clubs[b].rep - W.clubs[a].rep);
-    Object.assign(APP.pick, { lg: L.id, club: top ? cs[0] : cs[Math.floor(cs.length / 2)], pos, tal, fn, ln, step: 2 });
+    Object.assign(APP.pick, { lg: L.id, club: top ? cs[0] : cs[Math.floor(cs.length / 2)], pos, tal, fn, ln, nat, face: null, step: 2 });
     await menuStartJug();
-  }, { lg, pos, tal, fn, ln, top });
+  }, { lg, pos, tal, fn, ln, top, nat });
   await page.waitForFunction(() => APP.mode === 'game' && W.mode === 'jug' && W.userClub >= 0);
 }
 

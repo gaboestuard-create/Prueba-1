@@ -457,6 +457,33 @@ test('modo jugador: rankings, premios mundiales, vitrina y decisiones que cambia
   await ctx.close(); await ctx2.close();
 });
 
+test('modo jugador: selección nacional (parones, convocatorias y pantalla)', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { nat: 'ESP', lg: 1, tal: 2 });
+  // un jugador de nivel mundial: el seleccionador tiene que llamarlo
+  await page.evaluate(() => { const p = W.players[W.me]; for (let i = 0; i < NA; i++) p.a[i] = Math.max(p.a[i], 18); upd(p); p.pa = Math.max(p.pa, p.ovr); });
+  const r1 = await page.evaluate(() => { const s0 = W.season, me = W.players[W.me]; while (W.day < dayOn(W, 9, 8, 0) + 7 && W.season === s0) { if (dOf(W).getUTCMonth() === 9 && dOf(W).getUTCDate() <= 6) { me.sus = 0; me.inj = 0; } jugFixture(W); dayW(W); if (W.stop) W.stop = null; }
+    const p = W.players[W.me]; return { nat: p.nat, ap: (p.nt && p.nt.ap) || 0, nml: (W.pc.nml || []).length, mail: W.inbox.some(m => /^Selección de España/.test(m.from) && /tu nota/.test(m.subj)), tr: W.pc.ntTr }; });
+  assert(r1.nat === 'ESP', 'no se respetó la nacionalidad elegida');
+  assert(r1.ap >= 1 && r1.nml >= 1 && r1.mail, 'no jugó con la selección en el parón de octubre: ' + JSON.stringify(r1));
+  // siguiente temporada: torneo con España (Liga de Naciones o el que toque) y aviso de convocatoria
+  const s0 = await page.evaluate(() => W.season);
+  for (let k = 0; k < 40; k++) { const x = await simDaysJug(page, 15); if (x.season > s0) break; }
+  const r2 = await page.evaluate(() => { const T = (W.tours || []).find(T => T.teams.includes('ESP'));
+    const called = W.inbox.some(m => /^¡Convocado para el /.test(m.subj)), out = W.inbox.some(m => /^Fuera de la lista del /.test(m.subj)), hurt = W.players[W.me].inj > 28; go('jnat'); const html = document.querySelector('#main').textContent;
+    return { T: !!T, inSq: T ? T.sq.ESP.includes(W.me) : null, called, out, hurt, html: /La pelea por tu puesto/.test(html) && /España/.test(html), ok: validateWorld(W).ok, club: W.players[W.me].club === W.userClub }; });
+  if (r2.T) assert(r2.inSq ? r2.called : (r2.out || r2.hurt), 'el aviso de la convocatoria no cuadra con la lista: ' + JSON.stringify(r2));
+  if (r2.T && !r2.inSq) console.log('      (no entró en la lista del torneo: ' + (r2.hurt ? 'lesionado' : 'otros eran mejores') + ')');
+  assert(r2.html, 'la pantalla Mi selección no se dibuja');
+  assert(r2.ok && r2.club, 'la partida quedó dañada o el jugador cambió de club');
+  // y el torneo: juega sus partidos con la selección
+  const r3 = await page.evaluate(() => { for (let i = 0; i < 40; i++) { jugFixture(W); dayW(W); if (W.stop) W.stop = null; } return { n: (W.pc.nml || []).filter(e => e.s === W.season).length, T: (W.tours || []).some(T => T.teams.includes('ESP')) }; });
+  if (r3.T && r2.inSq) assert(r3.n >= 1, 'no jugó ningún partido del torneo');
+  console.log(`      parón: ${r1.ap} partido(s); torneo este verano: ${r2.T ? 'sí, ' + r3.n + ' partido(s)' : 'no le toca a España'}`);
+  assert(realErrors(errors).length === 0, 'errores: ' + realErrors(errors).join('\n'));
+  await ctx.close();
+});
+
 test('modo jugador: la retirada termina la carrera y la guarda en el salón de la fama', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
   await newPlayerCareer(page);
