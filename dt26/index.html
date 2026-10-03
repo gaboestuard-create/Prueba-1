@@ -2222,7 +2222,7 @@ function icon(n){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentCo
 const NAVG=[
  ['Oficina',[['home','Inicio','home'],['world','Mundo','world'],['inbox','Bandeja','inbox'],['cal','Calendario','cal']]],
  ['Equipo',[['squad','Plantilla','squad'],['locker','Vestuario','club'],['cantera','Cantera','seed'],['tactics','Tácticas','tactics']]],
- ['Competición',[['comp','Competiciones','comp'],['sel','Selecciones','flag'],['trophy','Palmarés','trophy']]],
+ ['Competición',[['comp','Competiciones','comp'],['rank','Rankings','star'],['sel','Selecciones','flag'],['trophy','Palmarés','trophy']]],
  ['Club',[['market','Mercado','market'],['club','Club','club'],['museum','Museo','trophy'],['staff','Cuerpo técnico','clip'],['scout','Ojeo','search'],['mgr','Mánager','mgr']]],
  ['Herramientas',[['ai','Asistente IA','ai'],['editor','Editor','editor'],['settings','Ajustes','settings']]]
 ];
@@ -5347,7 +5347,7 @@ function pendingActs(){ if(!W||!W.inbox) return []; return W.inbox.filter(m=>m.a
 function actLabel(a){ return {offer:'Oferta',talk:'Charla',talk2:'Charla',renew:'Renovación',job:'Oferta de trabajo',spon:'Patrocinio',evt:'Evento',njob:'Selección',poff:'Oferta de fichaje',pren:'Renovación',pev:'Decisión',pint:'Entrevista'}[a&&a.t]||'Aviso'; }
 const MACT={
   pev:m=>{ const a=m.act, bs='white-space:normal;text-align:left;flex-direction:column;align-items:flex-start;gap:2px', q=a.q!=null?W.players[a.q]:null;
-    return `${q?`<div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center">${avatar(q)}<div style="flex:1"><b>${esc(pname(q))}</b><div class="muted">${PNAME[q.pos]}, ${q.age} años</div></div></div>`:''}<div class="col" style="margin-top:12px;gap:8px">${(a.o||[]).map((o,i)=>`<button class="btn" style="${bs}" data-a="mact" data-r="${i}" data-id="${m.id}"><b>${esc(o[0])}</b><small style="font:500 13px Barlow,sans-serif;opacity:.75">${esc(o[1])}</small></button>`).join('')}</div>`; },
+    return `${q?`<div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center">${avatar(q)}<div style="flex:1"><b>${esc(pname(q))}</b><div class="muted">${PNAME[q.pos]}, ${q.age} años</div></div></div>`:''}<div class="col" style="margin-top:12px;gap:8px">${(a.o||[]).map((o,i)=>`<button class="btn" style="${bs}" data-a="mact" data-r="${i}" data-id="${m.id}" ${o[2]&&o[2]>jugSav(W)?'disabled':''}><b>${esc(o[0])}${o[2]?` · ${money(o[2])}`:''}</b><small style="font:500 13px Barlow,sans-serif;opacity:.75">${esc(o[1])}</small></button>`).join('')}</div>${(a.o||[]).some(o=>o[2])?`<p class="muted" style="margin:8px 0 0;font-size:12.5px">Tus ahorros: ${money(jugSav(W))}.</p>`:''}`; },
   pint:m=>{ const a=m.act, bs='white-space:normal;text-align:left;flex-direction:column;align-items:flex-start;gap:2px';
     return `<div class="col" style="margin-top:12px;gap:8px">${JUG_IV[a.k].map((o,i)=>`<button class="btn" style="${bs}" data-a="mact" data-r="${i}" data-id="${m.id}"><b>${esc(o[1])}</b><small style="font:500 13px Barlow,sans-serif;opacity:.75">${esc(o[0])}. ${esc(o[2])}</small></button>`).join('')}</div><p class="muted" style="margin:10px 0 0;font-size:12.5px">Si no contestas antes del ${fDate(W,a.exp,1)}, te vas sin hablar.</p>`; },
   poff:m=>{ const a=m.act, c=W.clubs[a.c]; return `<div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center">${crestSVG(c,44)}<div style="flex:1"><b>${esc(c.name)}</b><div class="muted">${esc(W.leagues[c.lg].name)}. Nivel del once ${starsHTML(avgOvr(W,c))}. Papel: ${esc(a.role.toLowerCase())}.</div></div></div>
@@ -5659,6 +5659,7 @@ function seasonAwards(w,summary){
   const sc=p=>avg(p)*10+p.st.g*.35+p.st.as*.2+p.ovr*.15+tt(p)*2+w.clubs[p.club].rep*.05;
   const bd=all.sort((a,b)=>sc(b)-sc(a))[0];
   if(bd){ add(bd,'Balón Dorado DT26',-1); news(w,`${pname(bd)} gana el Balón Dorado`,`El jugador de ${w.clubs[bd.club].name} es elegido el mejor del mundo en ${seasonLabel(w)}.`,'tit',-1); if(bd.club===w.userClub) soc(w,`¡${sname(bd)} BALÓN DORADO! Lo sabíamos.`,'good'); }
+  try{ worldAwards(w,add,summary); }catch(e){ console.error('premios mundiales',e); }
   w.awards.push(...out); if(w.awards.length>1600) w.awards.splice(0,w.awards.length-1600);
 }
 
@@ -7449,7 +7450,7 @@ function stPress(n,P,C){ const k=ST_PRESS[n.k]?n.k:'gen', J=pressOf(W), i0=hashI
 const JUG_TAL=[['Promesa','Buen nivel para empezar, techo de jugador de primera',47,[76,82]],['Gran promesa','Llamas la atención de los ojeadores',51,[82,88]],['Elegido','Talento generacional, todos esperan mucho de ti',55,[88,94]]];
 const JUG_FOCUS=[['bal','Equilibrado','Un poco de todo'],['tec','Técnica','Toque, pase, regate y remate'],['men','Mental','Visión, decisiones y colocación'],['fis','Físico','Velocidad, fuerza y resistencia'],['pos','Nueva posición','Aprender a jugar en otro puesto']];
 const JUG_INT=[['suave','Suave','Menos mejora, sin riesgo'],['normal','Normal','Ritmo habitual del club'],['alta','Alta','Más mejora, riesgo de lesión']];
-const JUGV=new Set(['home','world','inbox','cal','fixtures','story','player','team','comp','sel','trophy','settings','jme','jtrain','jcon','jclub','jlife']);
+const JUGV=new Set(['home','world','inbox','cal','fixtures','story','player','team','comp','sel','trophy','settings','jme','jtrain','jcon','jclub','jlife','jvit','rank']);
 const JUG_OK=new Set(['adv','bakdl','bakopen','bakrestore','bakrestorego','calgo','calm','calmode','calsel','caltoday','cctab','chron','cl','close','cloudgo','cloudload','cloudsave','compcc','complg','comprd','comptab','comptier','cont','copyexp','copystory','exit','export','go','ibclear','ibf','import','mact','mas','more','msg','mx','pal','palgo','pastego','pastejson','pl','play3d','readall','real','report','save','selk','selsq','seltab','set','simstop','sndset','sndtest','sqf','sqsort','stback','story','tabhere','teamsq','theme','trtab','tuthide','wf','wl','wtab','wipe','wipego','stadfull','stadclose','upimg','rmimg','noticeok']);
 const isJug=w=>!!(w&&w.mode==='jug');
 const isMe=(w,p)=>!!(p&&w&&w.mode==='jug'&&p.id===w.me);
@@ -7495,7 +7496,8 @@ function jugAfterMatch(w,f,M){
   const res=S.g>O.g?'Victoria':S.g<O.g?'Derrota':'Empate', nat=S.c.national;
   const bits=[`${min} minutos${m.min0>0?' (entraste desde el banquillo)':''}`]; if(m.g) bits.push(m.g===1?'1 gol':m.g+' goles'); if(m.as) bits.push(m.as===1?'1 asistencia':m.as+' asistencias'); if(m.yc) bits.push('tarjeta amarilla'); if(m.rc) bits.push('expulsado');
   const mom=M.mom&&(M.mom.p===p||M.mom.id===p.id);
-  if(m.g>=3) jugLog(w,`Hat-trick ante ${O.c.name}`);
+  if(m.g>=3){ jugLog(w,`Hat-trick ante ${O.c.name}`); pc.hat=(pc.hat||0)+1; }
+  if(M.mom&&(M.mom.p===p||M.mom.id===p.id)) pc.mom=(pc.mom||0)+1;
   if(nat&&!pc.ntDeb){ pc.ntDeb=1; jugLog(w,`Debut con ${NAT[p.nat][0]}`); }
   if(!pc.deb&&!nat){ pc.deb=1; jugLog(w,`Debut oficial con ${S.c.name}`); }
   const k=w.rep&&w.rep[repKey(w,f)]?repKey(w,f):null;
@@ -7513,7 +7515,7 @@ function jugDay(w){
   if(d.getUTCDate()===1) jugMonth(w,p,mo);
   if(p.nt&&p.nt.ap>(pc.ntAp||0)){ if(!pc.ntAp) mail(w,NAT[p.nat][0],'¡Internacional!',`Ya has debutado con ${NAT[p.nat][0]}. Un día que no olvidarás.`,'good'); pc.ntAp=p.nt.ap; }
   jugOffers(w,p); jugRenew(w,p,mo);
-  try{ jugLifeDay(w,p); }catch(e){ console.error('vida',e); }
+  try{ jugLifeDay(w,p); if(p.inj>0) jugSurgery(w,p); jugVitCheck(w); }catch(e){ console.error('vida',e); }
 }
 function jugMonth(w,p,mo){
   const pc=w.pc, T=pc.tr||(pc.tr={f:'bal',i:'normal'}), I={suave:[.18,0,1],normal:[.32,.012,1],alta:[.42,.05,2]}[T.i]||[.32,.012,1];
@@ -7576,7 +7578,7 @@ function jugMact(m,r){
     if(p.loan){ toast('Estás cedido: no puedes cambiar de club ahora','bad'); render(); return; }
     const from=p.club>=0?W.clubs[p.club]:null;
     jugMove(W,()=>transfer(W,p,c,a.fee,a.wage,a.yrs));
-    W.pc.lc=c.id; W.userClub=c.id; W.pc.mv=W.season*400+W.day; W.pc.wantOut=0; W.pc.trust=50; W.pc.noRen=0; p.tr=0;
+    W.pc.lc=c.id; W.userClub=c.id; W.pc.mv=W.season*400+W.day; W.pc.maxFee=Math.max(W.pc.maxFee||0,a.fee||0); W.pc.wantOut=0; W.pc.trust=50; W.pc.noRen=0; p.tr=0;
     for(const x of W.inbox) if(x.act&&!x.act.done&&(x.act.t==='poff'||x.act.t==='pren')) x.act.done=true;
     news(W,`${pname(p)} ficha por ${c.name}`,`${from?`${c.name} paga ${money(a.fee)} a ${from.name}`:`Llega como agente libre`}. Firma hasta ${p.ce}.`,'fich',c.lg,{p:p.id});
     jugLog(W,`Ficha por ${c.name}${a.fee?` (${money(a.fee)})`:''}`); jugSetObj(W);
@@ -7621,6 +7623,7 @@ function jugSeasonEnd(w){
   else lines.push('\nAhora mismo no tienes club: las ofertas llegarán a tu bandeja. Puedes firmar en cualquier momento.');
   if(p.age>=30) lines.push('Desde Contrato y ofertas puedes anunciar tu retirada cuando quieras.');
   mail(w,'Tu agente',`Balance de la temporada ${s}/${String(s+1).slice(2)}`,lines.join('\n'),ok?'good':'');
+  try{ jugVitCheck(w); }catch(e){ console.error('vitrina',e); }
 }
 function jugRetire(w,why){
   const p=w.players[w.me], pc=w.pc; if(!p||pc.done) return; const c=w.clubs[p.club];
@@ -7661,8 +7664,8 @@ function jugLifeMatch(w,f,M,m,S,O){
   else if(rt<5.8) jugFeed(w,pick([`${n} hoy desaparecido. Así no.`,`Mal partido de ${n}. Le pesa la camiseta.`,`¿Alguien ha visto a ${n} ante ${o}?`,`${n} tiene que dar un paso adelante ya.`]),'bad');
   // compañeros: ganar juntos une
   if(win) for(const x of S.pl.concat(S.bench)) if(x.min0>=0&&x.id!==p.id&&rc(.25)) jugRel(w,x.id,1);
-  const notable=rt>=8||m.g>=2||(loss&&rt<5.6)||(S.c.national&&m.g);
-  if(notable&&w.day-(pc.ivT??-99)>=14&&!jugPend(w,'pint')){ pc.ivT=w.day; const k=rt>=7?'good':'bad';
+  const notable=rt>=8.3||m.g>=2||(loss&&rt<5.4)||(S.c.national&&m.g);
+  if(notable&&w.day-(pc.ivT??-99)>=21&&!jugPend(w,'pint')){ pc.ivT=w.day; const k=rt>=7?'good':'bad';
     mail(w,'Prensa',k==='good'?`Entrevista: ${sname(p)}, protagonista`:`Entrevista: noche difícil para ${sname(p)}`,
       k==='good'?`Los periodistas te esperan en la zona mixta tras tu partido ante ${O.c.name} (nota ${rt.toFixed(1)}${m.g?`, ${m.g} gol${m.g>1?'es':''}`:''}).`:`Tras la derrota ante ${O.c.name}, la prensa quiere saber qué pasó. Tu nota: ${rt.toFixed(1)}.`,
       '',{t:'pint',k,exp:w.day+3}); }
@@ -7714,7 +7717,7 @@ function jugLifeDay(w,p){
   if(d.getUTCDay()===1){ pc.earn=(pc.earn||0)+(p.club>=0?p.wage:0)+(pc.spon&&pc.spon.until>=w.season?pc.spon.amt:0); if(pc.spon&&pc.spon.until<w.season) pc.spon=null; jugFolAdd(w,(pc.fame||0)/5000); }
   if(d.getUTCDate()===15){ const ch=jugChem(w); pc.trust=clamp(pc.trust+ch/40,0,100); p.mor=clamp(p.mor+ch/25,5,100); }
   if(pc.mentor&&w.day>=pc.mentor.until) pc.mentor=null;
-  if(p.club<0||w.day-(pc.evT??-99)<24||jugPend(w,'pev')||!rc(.06)) return;
+  if(p.club<0||w.day-(pc.evT??-99)<25||jugPend(w,'pev')||!rc(.05)) return;
   const keys=Object.keys(JUG_EV); for(let t=0;t<4;t++){ const k=rp(keys), e=JUG_EV[k].gen(w,p); if(!e) continue;
     pc.evT=w.day; mail(w,'Vida personal',JUG_EV[k].t,e.b,'',Object.assign({t:'pev',e:k,exp:w.day+5},e,{b:undefined})); return; }
 }
@@ -7739,7 +7742,7 @@ VIEWS.jlife=()=>{
   const feed=(pc.feed||[]).slice(0,12).map(s=>`<div class="soc ${s.tone}"><b>${esc(s.u)}</b> <small>· ${fDate({season:s.s},s.d)}</small><div>${esc(s.t)}</div></div>`).join('')||'<p class="muted" style="margin:0">Todavía nadie habla de ti. Ya llegará.</p>';
   return `<div class="head"><div><h2>Vida y vestuario</h2><div class="muted">Lo que pasa fuera del campo también cuenta: el vestuario, la prensa y tus seguidores.</div></div></div>
   <div class="g2"><div class="col">
-   <div class="card"><h3>Tus redes</h3><div class="kv"><dt>Seguidores</dt><dd><b>${jugFol(pc.fol)}</b></dd><dt>Fama</dt><dd>${jugFame(pc.fame)}</dd>${pc.spon&&pc.spon.until>=W.season?`<dt>Patrocinio</dt><dd>${esc(pc.spon.n)}, ${money(pc.spon.amt)}/sem</dd>`:''}<dt>Ganancias de tu carrera</dt><dd>${money(pc.earn||0)}</dd></div>
+   <div class="card"><h3>Tus redes</h3><div class="kv"><dt>Seguidores</dt><dd><b>${jugFol(pc.fol)}</b></dd><dt>Fama</dt><dd>${jugFame(pc.fame)}</dd>${pc.spon&&pc.spon.until>=W.season?`<dt>Patrocinio</dt><dd>${esc(pc.spon.n)}, ${money(pc.spon.amt)}/sem</dd>`:''}<dt>Ganancias de tu carrera</dt><dd>${money(pc.earn||0)}</dd><dt>Ahorros</dt><dd>${money(jugSav(W))}</dd></div>
     <h4 style="margin:12px 0 6px">Publicar${cd?' <span class="muted" style="font-weight:500;font-size:13px">(una vez por semana)</span>':''}</h4><div class="row wrap" style="gap:6px">${posts.map(([k,l])=>`<button class="btn sm" data-a="jpost" data-v="${k}" ${cd?'disabled':''}>${l}</button>`).join('')}</div></div>
    <div class="card"><h3>Lo que dicen de ti</h3>${feed}</div></div>
   <div class="col"><div class="card"><h3>Vestuario${c?` de ${esc(c.short)}`:''}<span class="sp"></span>${c?`<span class="chip ${chL[1]}">${chL[0]}</span>`:''}</h3>${c?(people||'<p class="muted" style="margin:0">Todavía estás conociendo a tus compañeros.</p>'):'<p class="muted" style="margin:0">Sin club no hay vestuario.</p>'}
@@ -7747,14 +7750,164 @@ VIEWS.jlife=()=>{
    <p class="snote">Llevarte bien con el grupo sube tu moral y la confianza del técnico cada mes. Ganar partidos juntos también une.</p></div></div></div>`;
 };
 
+/* ---------- rankings mundiales (los dos modos) ---------- */
+// continentes por nacionalidad para los premios continentales
+const CONT={EU:['ESP','ENG','ITA','GER','FRA','POR','NED','CRO'],AM:['MEX','ARG','BRA','COL','URU','USA','CAN','CRC','JAM'],AF:['NGA','SEN','GHA','MAR','CIV','CMR','ALG','EGY'],AS:['JPN','KOR','AUS','IRN','KSA','QAT']};
+const CONTN={EU:'Europa',AM:'América',AF:'África',AS:'Asia y Oceanía'};
+const contOf=nat=>Object.keys(CONT).find(k=>CONT[k].includes(nat))||null;
+// puntuación de la carrera al Balón Dorado: la misma fórmula del premio de fin de temporada
+function bdScore(w,p){ const ap=p.st.ap; if(!ap||p.club<0) return 0; const S=w.season, avg=p.st.rt/ap, tt=(p.tro||[]).filter(t=>t.s===S).length;
+  return avg*10+p.st.g*.35+p.st.as*.2+p.ovr*.15+tt*2+w.clubs[p.club].rep*.05; }
+function bdPool(w,minAp){ return w.players.filter(p=>!p.ret&&p.club>=0&&!w.clubs[p.club].national&&p.st.ap>=minAp); }
+function bdMinAp(w){ let mx=0; for(const p of w.players) if(!p.ret&&p.st.ap>mx) mx=p.st.ap; return Math.max(3,Math.round(mx*.4)); }
+// premios mundiales nuevos (se llama al final de seasonAwards)
+function worldAwards(w,add,summary){
+  const S=w.season, all=bdPool(w,15), sc=p=>bdScore(w,p);
+  const top=all.slice().sort((a,b)=>sc(b)-sc(a));
+  (w.bdr||(w.bdr=[])).push({s:S,top:top.slice(0,10).map(p=>[p.id,Math.round(sc(p)*10)/10])}); if(w.bdr.length>40) w.bdr.shift();
+  const gs=w.players.filter(p=>!p.ret&&p.club>=0&&p.st.g>0).sort((a,b)=>b.st.g-a.st.g||b.st.as-a.st.as)[0];
+  if(gs){ add(gs,'Bota de Oro',-1); news(w,`${pname(gs)}, Bota de Oro`,`${gs.st.g} goles en ${seasonLabel(w)}: nadie marcó más en todo el mundo.`,'tit',-1,{p:gs.id}); }
+  for(const k of Object.keys(CONT)){ const b=top.find(p=>contOf(p.nat)===k); if(b) add(b,'Mejor jugador de '+CONTN[k],-1); }
+  const yg=top.find(p=>p.age<=21); if(yg){ add(yg,'Trofeo Promesa',-1); news(w,`${pname(yg)} gana el Trofeo Promesa`,`El mejor jugador joven del mundo tiene ${yg.age} años y juega en ${w.clubs[yg.club].name}.`,'tit',-1,{p:yg.id}); }
+}
+const RK_TABS=[['bd','Balón Dorado'],['EU','Europa'],['AM','América'],['AF','África'],['AS','Asia y Oceanía'],['gol','Goleadores'],['ast','Asistencias'],['val','Valor de mercado'],['ovr','Mejor media'],['young','Jóvenes'],['hist','Historial']];
+function rkList(w,t){
+  const minAp=bdMinAp(w), sc=p=>bdScore(w,p);
+  if(t==='bd'||CONT[t]||t==='young'){ let l=bdPool(w,minAp); if(CONT[t]) l=l.filter(p=>contOf(p.nat)===t); if(t==='young') l=l.filter(p=>p.age<=21); return {l:l.sort((a,b)=>sc(b)-sc(a)),v:p=>sc(p).toFixed(1),h:'Puntos',min:minAp}; }
+  const live=w.players.filter(p=>!p.ret&&p.club>=0);
+  if(t==='gol') return {l:live.filter(p=>p.st.g>0).sort((a,b)=>b.st.g-a.st.g||b.st.as-a.st.as),v:p=>p.st.g,h:'Goles'};
+  if(t==='ast') return {l:live.filter(p=>p.st.as>0).sort((a,b)=>b.st.as-a.st.as||b.st.g-a.st.g),v:p=>p.st.as,h:'Asist.'};
+  if(t==='val') return {l:live.slice().sort((a,b)=>b.val-a.val),v:p=>money(p.val),h:'Valor'};
+  return {l:live.slice().sort((a,b)=>b.ovr-a.ovr||b.pa-a.pa),v:p=>p.ovr,h:'Media'};
+}
+function rkMine(p){ return isJug(W)?p.id===W.me:p.club===W.userClub; }
+VIEWS.rank=()=>{
+  const t=UI.rkT||'bd', tabs=RK_TABS.map(([k,l])=>`<button class="${t===k?'on':''}" data-a="rktab" data-v="${k}">${l}</button>`).join('');
+  const head=`<div class="head"><div><h2>Rankings</h2><div class="muted">Temporada ${seasonLabel(W)}. Se actualizan con cada jornada; los premios se entregan al final de la temporada.</div></div></div><div class="seg wrapseg" style="margin-bottom:14px;flex-wrap:wrap">${tabs}</div>`;
+  const me=jugMe();
+  if(t==='hist'){ const A=(W.awards||[]).filter(a=>a.lg===-1&&a.p!=null).slice().reverse(), by={}; for(const a of A) (by[a.s]||(by[a.s]=[])).push(a);
+    const ss=Object.keys(by).map(Number).sort((a,b)=>b-a).slice(0,15);
+    return head+(ss.length?ss.map(s=>`<div class="card" style="margin-bottom:10px"><h3>${seasonOf(s)}</h3>${by[s].map(a=>{ const p=W.players[a.p]; if(!p) return ''; return `<div class="row" style="gap:10px;padding:5px 0;border-bottom:1px solid var(--line);cursor:pointer${rkMine(p)?';background:var(--accSoft,rgba(242,178,58,.12))':''}" data-a="pl" data-id="${p.id}">${awardSVG(a.n).replace('<svg','<svg width="26" height="26"')}<span style="flex:1"><b>${esc(a.n)}</b></span><span class="pn">${avatar(p)}${esc(pname(p))}</span></div>`; }).join('')}</div>`).join(''):'<div class="empty">El historial se escribirá al terminar la primera temporada.</div>'); }
+  const R=rkList(W,t), L=R.l, mi=me?L.indexOf(me):-1;
+  const mine=me?`<div class="card" style="margin-bottom:12px;display:flex;gap:12px;align-items:center">${avatar(me)}<div style="flex:1"><b>${esc(pname(me))}</b><div class="muted">${mi>=0?`Vas <b>${mi+1}º</b> de ${L.length} en este ranking (${R.v(me)}).`:R.min&&me.st.ap<R.min?`Necesitas al menos ${R.min} partidos esta temporada para entrar.`:'No apareces en este ranking.'}</div></div></div>`:'';
+  const rows=L.slice(0,30).map((p,i)=>`<tr class="${rkMine(p)?'me':''}" data-a="pl" data-id="${p.id}"><td class="c">${i+1}</td><td class="stick"><span class="pn">${avatar(p)}<b>${esc(pname(p))}</b></span></td><td><span class="row" style="gap:6px">${crestSVG(W.clubs[p.club],16)}${esc(W.clubs[p.club].short)}</span></td><td class="c">${flagSVG(p.nat)}</td><td>${posChip(p.pos)}</td><td class="c">${p.age}</td><td class="c">${p.st.ap}</td><td class="c">${p.st.ap?rtChip(p.st.rt/p.st.ap):'—'}</td><td class="r"><b>${R.v(p)}</b></td></tr>`).join('');
+  const extra=mi>=30?`<tr class="me" data-a="pl" data-id="${me.id}"><td class="c">${mi+1}</td><td class="stick"><span class="pn">${avatar(me)}<b>${esc(pname(me))}</b></span></td><td colspan="6"></td><td class="r"><b>${R.v(me)}</b></td></tr>`:'';
+  return head+mine+(R.min?`<p class="muted" style="margin:0 0 8px;font-size:13px">Cuentan los jugadores con ${R.min} partidos o más esta temporada.</p>`:'')+`<div class="tw"><table class="t"><thead><tr><th class="c">#</th><th class="stick">Jugador</th><th>Club</th><th class="c">Nac</th><th>Pos</th><th class="c">Edad</th><th class="c">PJ</th><th class="c">Nota</th><th class="r">${R.h}</th></tr></thead><tbody>${rows||'<tr><td colspan="9" class="empty">Todavía no hay datos esta temporada</td></tr>'}${extra}</tbody></table></div>`;
+};
+Object.assign(ACT,{ rktab:(el)=>{ UI.rkT=el.dataset.v; render(); } });
+NAVDESC.rank='Balón Dorado, goleadores y valor de mercado';
+
+/* ---------- modo jugador: vitrina de logros ---------- */
+const JUG_PRESS=['"Un jugador de época", escribe un columnista.','La prensa abre con tu foto en portada.','"No hay techo para {n}", repiten en la radio.','"{n} ya es historia viva de {c}", titula un diario.','Los comentaristas no se ponen de acuerdo en un adjetivo para describirte.','"Lo de {n} no se enseña", dice un exentrenador en televisión.'];
+const JUG_FANSV=['La afición corea tu nombre durante días.','Las redes se llenan de vídeos de tus mejores jugadas.','En {city} ya hay un mural con tu cara.','Los niños piden tu camiseta por todas partes.','La grada te despidió en pie en el último partido.','Tu celebración se ha vuelto viral.'];
+function jugPickS(a,key){ let h=7; for(const ch of String(key)) h=(h*31+ch.charCodeAt(0))>>>0; return a[h%a.length]; }
+function jugSeasonSt(w,p,s){ if(s===w.season) return {ap:p.st.ap,g:p.st.g,as:p.st.as,rt:p.st.ap?p.st.rt/p.st.ap:0}; const r=p.car.filter(x=>x.s===s); const ap=r.reduce((a,x)=>a+x.ap,0); return {ap,g:r.reduce((a,x)=>a+x.g,0),as:r.reduce((a,x)=>a+x.as,0),rt:ap?r.reduce((a,x)=>a+x.rt*x.ap,0)/ap:0}; }
+function jugVitText(w,p,k,n,s,c){
+  const st=jugSeasonSt(w,p,s), cl=w.clubs[c], key=n+s, fill=t=>t.replace(/\{n\}/g,sname(p)).replace(/\{c\}/g,cl?cl.name:'tu club').replace(/\{city\}/g,cl?cl.city:'tu ciudad');
+  const stats=st.ap?`${st.ap} partidos, ${st.g} goles y ${st.as} asistencias${st.rt?`, nota media ${st.rt.toFixed(2)}`:''}.`:'';
+  let lead;
+  if(n==='Bota de Oro') lead=`Nadie marcó más goles en el mundo en ${seasonOf(s)}: ${st.g} con ${cl?cl.name:'tu club'}.`;
+  else if(/Balón Dorado/.test(n)) lead=`Elegido el mejor jugador del mundo de la temporada ${seasonOf(s)}.`;
+  else if(/^Mejor jugador de (Europa|América|África|Asia)/.test(n)) lead=`${n} en ${seasonOf(s)}: el mejor de todo el continente.`;
+  else if(n==='Trofeo Promesa') lead=`El mejor jugador joven del mundo en ${seasonOf(s)}, con ${p.age-(w.season-s)} años.`;
+  else if(/del mes/.test(n)) lead=`${n}. Un mes para enmarcar.`;
+  else if(k==='aw') lead=`${n}, temporada ${seasonOf(s)}.`;
+  else lead=`Campeón de ${n} ${seasonOf(s)}${cl?` con ${cl.name}`:''}.`;
+  return `${lead} ${stats} ${fill(jugPickS(JUG_PRESS,key))} ${fill(jugPickS(JUG_FANSV,key+'f'))}`.replace(/\s+/g,' ').trim();
+}
+// logros personales: se comprueban cada día y al final de la temporada
+const JUG_ACHV=[
+ ['deb','Debut profesional',1,(w,p,t)=>w.pc.deb,'Tu primer partido oficial. Nadie olvida ese día.'],
+ ['g1','Primer gol',1,(w,p,t)=>t.g>=1,'El primero de muchos. La celebración la recordarás siempre.'],
+ ['g50','50 goles',2,(w,p,t)=>t.g>=50,'Cincuenta goles como profesional.'],
+ ['g100','100 goles',3,(w,p,t)=>t.g>=100,'Club de los cien. Solo los elegidos llegan aquí.'],
+ ['g200','200 goles',3,(w,p,t)=>t.g>=200,'Doscientos goles: cifras de leyenda.'],
+ ['ap100','100 partidos',1,(w,p,t)=>t.ap>=100,'Cien partidos oficiales. Ya eres un veterano.'],
+ ['ap300','300 partidos',2,(w,p,t)=>t.ap>=300,'Trescientos partidos. Una carrera larga y sólida.'],
+ ['ap500','500 partidos',3,(w,p,t)=>t.ap>=500,'Quinientos partidos. Muy pocos lo consiguen.'],
+ ['hat','Hat-trick',2,(w,p,t)=>(w.pc.hat||0)>=1,'Tres goles en un partido. El balón es tuyo.'],
+ ['mom10','10 veces el mejor del partido',2,(w,p,t)=>(w.pc.mom||0)>=10,'Diez veces elegido jugador del partido.'],
+ ['nt','Internacional',2,(w,p,t)=>(w.pc.ntAp||0)>=1,'Has vestido la camiseta de tu selección.'],
+ ['nt30','30 partidos con la selección',3,(w,p,t)=>(w.pc.ntAp||0)>=30,'Fijo en la selección durante años.'],
+ ['o80','Media 80',2,(w,p,t)=>p.ovr>=80,'Ya eres un jugador de primer nivel mundial.'],
+ ['o90','Clase mundial',3,(w,p,t)=>p.ovr>=90,'Media 90: estás entre los mejores del planeta.'],
+ ['f100k','100 mil seguidores',1,(w,p,t)=>(w.pc.fol||0)>=1e5,'Cien mil personas siguen todo lo que haces.'],
+ ['f1m','Un millón de seguidores',3,(w,p,t)=>(w.pc.fol||0)>=1e6,'Un millón de seguidores. Eres un fenómeno.'],
+ ['fee','Fichaje millonario',2,(w,p,t)=>(w.pc.maxFee||0)>=2e7,'Un club pagó más de 20 millones por ti.']
+];
+function jugVitAdd(w,e){ const pc=w.pc, K=pc.vitK||(pc.vitK={}), key=e.k+'|'+e.n+'|'+e.s; if(K[key]) return false; K[key]=1; (pc.vit||(pc.vit=[])).push(e); if(pc.vit.length>200) pc.vit.shift(); return true; }
+function jugVitCheck(w){
+  const p=w.players[w.me], pc=w.pc; if(!p) return;
+  for(const t of (p.tro||[]).slice(-6)) if(jugVitAdd(w,{k:t.k||'lg',n:t.n,s:t.s,c:t.c,d:w.day,x:jugVitText(w,p,t.k||'lg',t.n,t.s,t.c)})) jugFeed(w,`¡${sname(p)} campeón de ${t.n}!`,'good');
+  for(const a of (p.aw||[]).slice(-8)) jugVitAdd(w,{k:'aw',n:a.n,s:a.s,c:p.club>=0?p.club:pc.lc,d:w.day,x:jugVitText(w,p,'aw',a.n,a.s,p.club>=0?p.club:pc.lc)});
+  const t=jugTotals(w); for(const [id,n,tier,ok,x] of JUG_ACHV) if(!(pc.ach&&pc.ach[id])&&ok(w,p,t)){
+    (pc.ach||(pc.ach={}))[id]=w.season; const c=w.clubs[p.club]; jugVitAdd(w,{k:'ach',id,n,s:w.season,c:p.club,d:w.day,tier,x:`${x} Lo conseguiste el ${fDate(w,w.day,1)}${c?` con ${c.name}`:''}.`}); jugLog(w,'Logro: '+n);
+    mail(w,'Vitrina','Nuevo logro: '+n,`${x}\n\nYa está en tu vitrina.`,'good'); }
+}
+// iconos propios de los grandes premios individuales
+function awardSVG(n,k){
+  if(n==='Bota de Oro') return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 8h11v14l10 4c4 1.6 6 4 6 7v3H8l2-6 4-2z" fill="#e2b33c"/><path d="M8 36h33v4H8z" fill="#9a7420"/><path d="M14 13h11M14 18h11" stroke="#9a7420" stroke-width="1.6"/><g fill="#9a7420"><circle cx="13" cy="42" r="1.6"/><circle cx="21" cy="42" r="1.6"/><circle cx="29" cy="42" r="1.6"/><circle cx="37" cy="42" r="1.6"/></g></svg>`;
+  if(/Balón Dorado/.test(n)) return `<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="21" r="15" fill="#e2b33c"/><path d="M24 13l6 4.4-2.3 7H20.3L18 17.4z" fill="#9a7420"/><path d="M24 13V6M30 17.4l6.7-2.2M27.7 24.4l4.1 5.8M20.3 24.4l-4.1 5.8M18 17.4l-6.7-2.2" stroke="#9a7420" stroke-width="1.5"/><path d="M17 38h14l-2-3H19z" fill="#9a7420"/><rect x="14" y="38" width="20" height="5" rx="1.5" fill="#e2b33c"/></svg>`;
+  if(n==='Trofeo Promesa') return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l5 10 11 1.6-8 7.8 1.9 11L24 29.2l-9.9 5.2 1.9-11-8-7.8L19 14z" fill="#cfd4da" stroke="#7d8793" stroke-width="1.5"/><rect x="15" y="38" width="18" height="5" rx="1.5" fill="#7d8793"/><rect x="22" y="33" width="4" height="5" fill="#7d8793"/></svg>`;
+  return trophySVG(k||'aw',n);
+}
+function medalSVG(tier){ const c=tier>=3?['#e2b33c','#9a7420']:tier===2?['#cfd4da','#7d8793']:['#d08a4f','#8a5328'];
+  return `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M15 3h7l4 12h-7zM33 3h-7l-4 12h7z" fill="#2f7dd1"/><circle cx="24" cy="30" r="13" fill="${c[0]}"/><circle cx="24" cy="30" r="9.5" fill="none" stroke="${c[1]}" stroke-width="1.6"/><path d="M24 23.5l2 4.1 4.5.6-3.3 3.1.8 4.5-4-2.1-4 2.1.8-4.5-3.3-3.1 4.5-.6z" fill="${c[1]}"/></svg>`; }
+function jugVitList(){ const p=jugMe(), pc=W.pc, L=(pc.vit||[]).slice(), K=pc.vitK||{};
+  // títulos y premios anteriores a la vitrina (partidas de versiones anteriores)
+  for(const t of (p.tro||[])) if(!K[(t.k||'lg')+'|'+t.n+'|'+t.s]) L.push({k:t.k||'lg',n:t.n,s:t.s,c:t.c,x:jugVitText(W,p,t.k||'lg',t.n,t.s,t.c)});
+  for(const a of (p.aw||[])) if(!K['aw|'+a.n+'|'+a.s]) L.push({k:'aw',n:a.n,s:a.s,c:pc.lc,x:jugVitText(W,p,'aw',a.n,a.s,pc.lc)});
+  return L; }
+VIEWS.jvit=()=>{
+  const L=jugVitList(), ico=e=>e.k==='ach'?medalSVG(e.tier||1):e.k==='aw'?awardSVG(e.n):trophySVG(e.k,e.n);
+  const grp=[['Títulos con tus equipos',L.filter(e=>!['aw','ach'].includes(e.k))],['Premios individuales',L.filter(e=>e.k==='aw'&&!/del mes/.test(e.n))],['Jugador del mes',L.filter(e=>e.k==='aw'&&/del mes/.test(e.n))],['Logros',L.filter(e=>e.k==='ach')]];
+  const box=(title,list)=>`<div class="card" style="margin-bottom:12px"><h3>${title}<span class="sp"></span><span class="muted" style="font-size:14px;font-weight:500">${list.length}</span></h3>${list.length?`<div class="vit">${list.map(e=>{ const i=L.indexOf(e); return `<button class="tro" data-a="jvit" data-i="${i}" style="cursor:pointer;background:none;border:0;color:inherit;font:inherit">${ico(e)}<b>${esc(e.n)}</b><small>${seasonOf(e.s)}</small></button>`; }).join('')}</div>`:'<p class="muted" style="margin:0">Aún nada por aquí. Todo llegará.</p>'}</div>`;
+  const pend=JUG_ACHV.filter(a=>!(W.pc.ach&&W.pc.ach[a[0]]));
+  return `<div class="head"><div><h2>Vitrina</h2><div class="muted">Toca cualquier trofeo, premio o medalla para ver su historia.</div></div></div>
+  ${grp.map(([t,l])=>box(t,l)).join('')}
+  ${pend.length?`<div class="card"><h3>Logros por conseguir</h3><div class="row wrap" style="gap:6px">${pend.map(a=>`<span class="chip" title="${esc(a[4])}" style="opacity:.75">${esc(a[1])}</span>`).join('')}</div></div>`:''}`;
+};
+function jugVitOpen(i){ const e=jugVitList()[i]; if(!e) return; const c=W.clubs[e.c], big=(e.k==='ach'?medalSVG(e.tier||1):e.k==='aw'?awardSVG(e.n):trophySVG(e.k,e.n)).replace('<svg','<svg width="132" height="132"');
+  modal(`<header><h3>${esc(e.n)}</h3><button class="x" data-a="close" aria-label="Cerrar">×</button></header>
+  <div style="text-align:center;margin:4px 0 10px">${big}</div>
+  <div class="row wrap" style="gap:6px;justify-content:center;margin-bottom:12px"><span class="chip">${seasonOf(e.s)}</span>${c?`<span class="chip">${crestSVG(c,16)} ${esc(c.name)}</span>`:''}<span class="chip">${e.k==='ach'?'Logro':e.k==='aw'?'Premio individual':'Título'}</span></div>
+  <p style="margin:0;line-height:1.5">${esc(e.x||'')}</p>`); }
+Object.assign(ACT,{ jvit:(el)=>jugVitOpen(+el.dataset.i) });
+
+/* ---------- modo jugador: decisiones que cambian tu juego ---------- */
+function jugSav(w){ return Math.max(0,(w.pc.earn||0)-(w.pc.spent||0)); }
+function jugAttr(p,d){ const out=[]; for(const k in d){ const i=A[k], v=p.a[i]; p.a[i]=clamp(v+d[k],1,20); const real=p.a[i]-v; if(real) out.push(`${real>0?'+':'−'}${Math.abs(real)} ${AN[k]}`); } upd(p); p.val=calcValue(p); return out.length?' ('+out.join(', ')+')':''; }
+function jugPay(w,c){ if(jugSav(w)<c) return false; w.pc.spent=(w.pc.spent||0)+c; return true; }
+const JUG_SPEC={g:['Entrenador de porteros',{ref:2,one:1}],d:['Especialista defensivo',{tck:2,mar:1}],m:['Entrenador de pase',{pas:2,vis:1}],a:['Entrenador de remate',{fin:2,lon:1}]};
+Object.assign(JUG_EV,{
+  nutri:{t:'Nutricionista personal',gen:(w,p)=>{ const cost=roundMoney(Math.max(3000,p.wage*6)); return {cost,b:`Un nutricionista de élite te ofrece un plan personalizado de alimentación y descanso. Cuesta ${money(cost)}.`,o:[['Contratarlo','Más resistencia y mejor recuperación.',cost],['No, gracias','Sigues como hasta ahora.']]}; },
+    res:(w,p,a,i)=>{ if(i===0){ if(!jugPay(w,a.cost)) return ['No tienes ahorros suficientes.','bad']; return ['Cambias tus hábitos y el cuerpo lo agradece'+jugAttr(p,{sta:1,nat:1})+'.','good']; } return ['Sigues con tu rutina de siempre.','']; } },
+  spec:{t:'Entrenamiento especializado',gen:(w,p)=>{ const S=JUG_SPEC[PGRP[p.pos]]||JUG_SPEC.m, cost=roundMoney(Math.max(4000,p.wage*8)); return {cost,b:`Un ${S[0].toLowerCase()} de prestigio te propone sesiones privadas durante el verano. Cuesta ${money(cost)}.`,o:[['Contratar las sesiones','Mejora directa en lo más importante de tu puesto.',cost],['Prefiero descansar','Llegas más fresco a la temporada.']]}; },
+    res:(w,p,a,i)=>{ const S=JUG_SPEC[PGRP[p.pos]]||JUG_SPEC.m; if(i===0){ if(!jugPay(w,a.cost)) return ['No tienes ahorros suficientes.','bad']; return ['Semanas de trabajo duro que se notan'+jugAttr(p,S[1])+'.','good']; } p.cnd=100; p.mor=clamp(p.mor+4,5,100); return ['Descansas y vuelves con energía.','']; } },
+  gym:{t:'Programa de musculación',gen:(w,p)=>p.pos==='GK'?null:({b:'El preparador físico propone un plan para ganar masa muscular. Serás más fuerte, pero quizá pierdas algo de chispa.',o:[['Ganar músculo','Más fuerza y salto, algo menos de aceleración.'],['Seguir ágil','Mantienes tu físico actual.']]}),
+    res:(w,p,a,i)=>{ if(i===0) return ['El cambio físico es evidente'+jugAttr(p,{str:2,jum:1,acc:-1,agi:-1})+'.','']; return ['Mantienes tu estilo.','']; } },
+  psych:{t:'Psicólogo deportivo',gen:(w,p)=>{ const cost=roundMoney(Math.max(2000,p.wage*4)); return {cost,b:`Varios compañeros trabajan con un psicólogo deportivo. Te ofrece sesiones por ${money(cost)}.`,o:[['Empezar las sesiones','Más calma y concentración en los momentos clave.',cost],['No lo necesito','Confías en tu cabeza.']]}; },
+    res:(w,p,a,i)=>{ if(i===0){ if(!jugPay(w,a.cost)) return ['No tienes ahorros suficientes.','bad']; return ['Aprendes a controlar la presión'+jugAttr(p,{cmp:2,cnt:1})+'.','good']; } return ['Sigues a tu manera.','']; } },
+  video:{t:'Sesiones de vídeo',gen:(w,p)=>({b:'El analista del club se ofrece a repasar contigo tus partidos después de entrenar. Son horas extra cada semana.',o:[['Quedarme a verlos','Entiendes mejor el juego.'],['Prefiero desconectar','Tu tiempo libre es tuyo.']]}),
+    res:(w,p,a,i)=>{ if(i===0){ w.pc.trust=clamp(w.pc.trust+2,0,100); return ['El técnico valora tu compromiso'+jugAttr(p,{ant:1,dec:1,psn:1})+'.','good']; } return ['Desconectas y recargas pilas.','']; } },
+  shot:{t:'Cambiar tu forma de golpear',gen:(w,p)=>PGRP[p.pos]==='a'||p.pos==='AMC'?{b:'Un exdelantero famoso te dice que tu técnica de golpeo tiene un defecto y te propone corregirla. Es arriesgado cambiar algo que funciona.',o:[['Corregirlo','Puede salir muy bien… o no.'],['No tocar nada','Lo que funciona no se cambia.']]}:null,
+    res:(w,p,a,i)=>{ if(i!==0) return ['Sigues golpeando como siempre.','']; if(rc(.6)) return ['El cambio funciona: el balón sale como un cañón'+jugAttr(p,{fin:2,tec:1})+'.','good']; return ['No terminas de adaptarte'+jugAttr(p,{fin:-1})+'.','bad']; } },
+  night:{t:'La fama tienta',gen:(w,p)=>(w.pc.fame||0)>=20?{b:'Ahora todo el mundo quiere invitarte: fiestas, eventos, viajes. Tu agente te pregunta qué vida quieres llevar.',o:[['Vida tranquila','Casa, familia y descanso.'],['Disfrutar de la fama','Eventos, noches y muchos seguidores.']]}:null,
+    res:(w,p,a,i)=>{ if(i===0) return ['Eliges el camino de los grandes profesionales'+jugAttr(p,{det:1})+'.','good']; jugFolAdd(w,.08); w.pc.trust=clamp(w.pc.trust-4,0,100); return ['Muchos seguidores nuevos, pero el cuerpo y el técnico lo notan'+jugAttr(p,{sta:-1,det:-1})+'.','bad']; } }
+});
+// lesiones largas: operarte o volver antes
+function jugSurgery(w,p){ const pc=w.pc, h=p.ih&&p.ih[p.ih.length-1], key=h?h.s*1000+h.d:-1; if(p.inj<28||key<0||pc.surg===key||jugPend(w,'pev')) return; pc.surg=key;
+  mail(w,'Servicios médicos','Lesión larga: hay que decidir',`${p.injT||'La lesión'} te tendrá fuera unas ${Math.ceil(p.inj/7)} semanas. Hay dos caminos.`,'bad',{t:'pev',e:'surg',exp:w.day+4,o:[['Operarme','Más tiempo de baja, pero vuelves al cien por cien.'],['Infiltrarme y volver antes','Vuelves en la mitad de tiempo, con riesgo de perder velocidad.']]}); }
+JUG_EV.surg={t:'Lesión larga',gen:()=>null,res:(w,p,a,i)=>{ if(p.inj<=0) return ['Ya estás recuperado.','']; if(i===0){ p.inj+=14; return ['Operación con éxito. Toca paciencia.','good']; } p.inj=Math.max(3,Math.ceil(p.inj*.5)); if(rc(.5)) return ['Vuelves antes, pero la lesión deja huella'+jugAttr(p,{pac:-1,acc:-1})+'.','bad']; return ['Vuelves antes y sin secuelas. Buena suerte.','good']; }};
+
 /* ---------- interfaz del modo jugador ---------- */
 const NAVJ=[
  ['Oficina',[['home','Inicio','home'],['world','Mundo','world'],['inbox','Bandeja','inbox'],['cal','Calendario','cal']]],
- ['Mi carrera',[['jme','Mi jugador','mgr'],['jtrain','Entrenamiento','tactics'],['jcon','Contrato y ofertas','market'],['jlife','Vida y vestuario','rumor']]],
- ['Fútbol',[['jclub','Mi club','club'],['comp','Competiciones','comp'],['sel','Selecciones','flag'],['trophy','Palmarés','trophy']]],
+ ['Mi carrera',[['jme','Mi jugador','mgr'],['jtrain','Entrenamiento','tactics'],['jcon','Contrato y ofertas','market'],['jlife','Vida y vestuario','rumor'],['jvit','Vitrina','trophy']]],
+ ['Fútbol',[['jclub','Mi club','club'],['rank','Rankings','star'],['comp','Competiciones','comp'],['sel','Selecciones','flag'],['trophy','Palmarés','trophy']]],
  ['Herramientas',[['settings','Ajustes','settings']]]
 ];
-Object.assign(NAVDESC,{jme:'Tu ficha, atributos y trayectoria',jtrain:'Qué trabajas cada mes',jcon:'Salario, ofertas y retirada',jclub:'Tu equipo y tus compañeros',jlife:'Redes, prensa y compañeros'});
+Object.assign(NAVDESC,{jme:'Tu ficha, atributos y trayectoria',jtrain:'Qué trabajas cada mes',jcon:'Salario, ofertas y retirada',jclub:'Tu equipo y tus compañeros',jlife:'Redes, prensa y compañeros',jvit:'Trofeos, premios y logros'});
 function navGroups(){ return isJug(W)?NAVJ:NAVG; }
 function jugTop(){
   const p=jugMe(), c=p.club>=0?W.clubs[p.club]:null, cc=c||W.clubs[jugClub(W)], f=jugFixture(W), wx=wxAt(W,W.leagues[cc.lg].nat,W.day), done=!!W.pc.done;
@@ -7891,7 +8044,7 @@ Object.assign(ACT,{
   mjface:()=>{ APP.pick.face=genFace(APP.pick.nat||'MEX',17); renderMenu(); },
   mnewj:()=>menuNew('jug')
 });
-['jtf','jti','jtp','jcask','jpos','jpost','jretask','jretgo','jsim'].forEach(k=>JUG_OK.add(k));
+['jtf','jti','jtp','jcask','jpos','jpost','jvit','rktab','jretask','jretgo','jsim'].forEach(k=>JUG_OK.add(k));
 Object.assign(MINP,{ jfn:(t)=>{ APP.pick.fn=t.value; }, jln:(t)=>{ APP.pick.ln=t.value; }, jnn:(t)=>{ APP.pick.nn=t.value; }, jpos:(t)=>{ APP.pick.pos=t.value; } });
 
 /* ---------- menú: crear al jugador ---------- */

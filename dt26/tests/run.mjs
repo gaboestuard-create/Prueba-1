@@ -407,6 +407,51 @@ test('modo jugador: vida fuera del campo (redes, vestuario, entrevistas y decisi
   await ctx.close();
 });
 
+test('modo jugador: rankings, premios mundiales, vitrina y decisiones que cambian atributos', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await newPlayerCareer(page, { tal: 2 });
+  const r0 = await page.evaluate(() => {
+    const p = W.players[W.me], out = {};
+    // decisiones con coste: sin ahorros no se paga; con ahorros cambian los atributos
+    W.pc.earn = 0; W.pc.spent = 0;
+    const a0 = { t: 'pev', e: 'spec', ...JUG_EV.spec.gen(W, p) }; out.poor = JUG_EV.spec.res(W, p, a0, 0)[0];
+    W.pc.earn = 1e6; const fin0 = p.a.slice(); out.rich = JUG_EV.spec.res(W, p, a0, 0)[0]; out.changed = p.a.some((v, i) => v !== fin0[i]); out.spent = W.pc.spent;
+    const g0 = p.a[A.str]; JUG_EV.gym.res(W, p, { t: 'pev', e: 'gym' }, 0); out.gym = p.a[A.str] - g0;
+    // lesión larga: llega la decisión de operarse
+    p.inj = 40; p.injT = 'Rotura de prueba'; p.ih = [{ s: W.season, d: W.day, t: 'Rotura', w: 6 }]; jugSurgery(W, p);
+    const sm = W.inbox.find(m => m.act && m.act.e === 'surg'); out.surg = !!sm; if (sm) mactDo(sm.id, '1'); out.inj = p.inj; p.inj = 0;
+    return out;
+  });
+  assert(/No tienes ahorros/.test(r0.poor), 'se pagó sin ahorros');
+  assert(r0.changed && r0.spent > 0, 'la decisión pagada no cambió atributos: ' + JSON.stringify(r0));
+  assert(r0.gym > 0, 'el programa de musculación no subió la fuerza');
+  assert(r0.surg && r0.inj <= 20, 'la decisión de la lesión larga no funcionó');
+  // una temporada completa: premios mundiales y vitrina
+  const s0 = await page.evaluate(() => W.season);
+  for (let k = 0; k < 40; k++) { const x = await simDaysJug(page, 15); if (x.season > s0) break; }
+  const r = await page.evaluate(() => {
+    const A = (W.awards || []).filter(a => a.lg === -1 && a.s === W.season - 1).map(a => a.n);
+    const p = W.players[W.me]; (p.aw || (p.aw = [])).push({ s: W.season - 1, n: 'Bota de Oro' }); jugVitCheck(W);
+    const L = jugVitList(), i = L.findIndex(e => e.n === 'Bota de Oro'); jugVitOpen(i); const modalTxt = document.querySelector('#modal').textContent; closeModal();
+    const tabs = {}; for (const [k] of RK_TABS) { UI.rkT = k; go('rank'); tabs[k] = document.querySelector('#main').textContent.length > 200; }
+    go('jvit'); const vit = document.querySelector('#main').textContent;
+    return { A, bdr: (W.bdr || []).length, vitN: L.length, ach: Object.keys(W.pc.ach || {}), modalTxt, tabs, vit: /Vitrina/.test(vit), ok: validateWorld(W).ok };
+  });
+  for (const n of ['Balón Dorado DT26', 'Bota de Oro', 'Trofeo Promesa', 'Mejor jugador de Europa', 'Mejor jugador de América']) assert(r.A.includes(n), `no se entregó «${n}»: ${r.A.join(', ')}`);
+  assert(r.bdr === 1, 'no se guardó el podio del Balón Dorado');
+  assert(/Bota de Oro/.test(r.modalTxt) && /goles/.test(r.modalTxt), 'el detalle del trofeo no muestra su historia');
+  assert(r.ach.includes('deb'), 'no se registró el logro del debut: ' + r.ach);
+  assert(Object.values(r.tabs).every(Boolean), 'alguna pestaña de rankings no se dibuja: ' + JSON.stringify(r.tabs));
+  assert(r.vit && r.ok, 'la vitrina no se dibuja o la partida quedó dañada');
+  // en el modo técnico también hay rankings
+  const ctx2 = await fresh(); const b = await openGame(ctx2, srv.url); await newCareer(b.page);
+  const dt = await b.page.evaluate(() => { const o = {}; for (const [k] of RK_TABS) { UI.rkT = k; go('rank'); o[k] = UI.view; } return o; });
+  assert(Object.values(dt).every(v => v === 'rank'), 'los rankings no se abren en el modo técnico');
+  console.log(`      ${r.vitN} piezas en la vitrina; logros: ${r.ach.join(', ')}`);
+  assert(realErrors(errors).length === 0 && realErrors(b.errors).length === 0, 'errores: ' + realErrors(errors.concat(b.errors)).join('\n'));
+  await ctx.close(); await ctx2.close();
+});
+
 test('modo jugador: la retirada termina la carrera y la guarda en el salón de la fama', async () => {
   const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
   await newPlayerCareer(page);

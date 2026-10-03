@@ -34,6 +34,8 @@ Los jugadores llevan temporadas enteras guardadas. Cualquier cambio debe poder a
 - Las funciones que suponen que hay un club del usuario deben aguantar `w.userClub===-1` (usa `focusClub(w)`).
 - La vida fuera del campo (redes, vestuario, entrevistas, decisiones personales) está en la sección
   "modo jugador: vida fuera del campo". Sus datos viven en `W.pc` y se crean al usarse: no requieren conversión.
+- Rankings (vista `rank`, en los dos modos) y premios mundiales (`worldAwards`, se llama desde `seasonAwards`).
+  Vitrina del jugador: `jugVitCheck` guarda cada título, premio y logro con su texto en `W.pc.vit`.
 
 ## Pruebas
 
