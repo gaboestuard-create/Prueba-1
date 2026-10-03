@@ -24,6 +24,15 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
   - Portero: `reaccionPortero` decide si llega al tiro (con algo de suerte) e `iaPortero` lo coloca y lo hace salir
     en los mano a mano.
   - Cambio de jugador y defensa: `puntuarDefensor`, `autoCambio` y `planEquipos` (quién presiona y quién cubre).
+- Físicas del jugador y del balón (versión 0.4):
+  - `moverJugador`: inercia. A más velocidad, giro más abierto; media vuelta corriendo = frena recto y luego gira;
+    acelerar cuesta más cerca de la velocidad máxima (el sprint se nota). Guarda `inclLat` y `frenado` para que la
+    animación se incline en las curvas y al frenar.
+  - `conducir`: con el balón, este rueda de verdad y el jugador lo empuja con toques (cortos al trote, largos al
+    esprintar, de giro para cambiar de dirección o arrastre con la suela). Si el balón se aleja más de 3,5 m se pierde;
+    `robarToque` deja que un rival se meta en un toque largo. Cerca de las líneas el toque va hacia dentro.
+  - `golpear`: pases y tiros no salen al instante: la pierna se prepara (`PREPARA_GOLPE`, ~0,08 s) y el balón sale
+    cuando el pie llega a él, con el pie del lado del balón (`p.pie`). Usa siempre `golpear` para golpeos nuevos.
 - La simulación usa un paso fijo (`DT = 1/60`, función `paso`). La lógica del juego no depende de los fotogramas por
   segundo; el dibujo sí. El azar sale de `rng()` (con semilla) para que las pruebas se repitan igual.
 

@@ -80,7 +80,7 @@ test('pase corto: llega al compañero y pasas a controlarlo', async () => {
   const r = await page.evaluate(() => {
     const p = G.ctrl, m = G.eqs[0].pl[7]; m.x = 12; m.z = 2; m.vx = m.vz = 0;
     Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, pass: true }); G.avanzar(1);
-    Object.assign(G.prueba, { pass: false, mx: 0 });
+    Object.assign(G.prueba, { pass: false, mx: 0 }); G.avanzar(8); // la pierna se prepara y golpea
     const destino = G.balon.destino, ctrl = G.ctrl;
     G.avanzar(120); G.prueba.activo = false;
     return { destinoOk: destino === m, ctrlOk: ctrl === m, dueno: G.balon.dueno === m, tipo: G.balon.tipo };
@@ -104,7 +104,7 @@ test('asistencia de pase: apuntando algo desviado, el pase va al compañero y ll
       m.x = Math.cos(ang) * dist; m.z = Math.sin(ang) * dist;
       // el control apunta unos 30-40 grados al lado del compañero
       const a = ang + (k % 2 ? -.6 : .6);
-      Object.assign(G.prueba, { activo: true, mx: Math.cos(a), mz: Math.sin(a), pass: true }); G.avanzar(1);
+      Object.assign(G.prueba, { activo: true, mx: Math.cos(a), mz: Math.sin(a), pass: true }); G.avanzar(8);
       if (G.balon.destino === m) aEl++;
       Object.assign(G.prueba, { pass: false }); // sigue empujando el control hacia el mismo lado
       G.avanzar(150); G.prueba.activo = false;
@@ -147,16 +147,105 @@ test('al perder el balón pasas a controlar al mejor defensor', async () => {
   const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
   const r = await page.evaluate(() => {
     nuevoPartido(12); G.saque = null;
-    const lejos = G.eqs[0].pl[9]; lejos.x = 30; lejos.z = 0; G.balon.dueno = null; tomar(lejos); controlar(lejos);
+    const lejos = G.eqs[0].pl[9]; lejos.x = 30; lejos.z = 0; G.balon.dueno = null; tomar(lejos); controlar(lejos); lejos.protegido = 5;
     G.avanzar(60);
     const rival = G.eqs[1].pl[5]; rival.x = -5; rival.z = 5;
     const def = G.eqs[0].pl[2]; def.x = -12; def.z = 4;           // entre el balón y nuestra portería
     G.balon.dueno = null; G.balon.x = -5; G.balon.z = 5; tomar(rival);
     G.avanzar(5);
     const ctrl = G.ctrl;
-    return { cambio: ctrl !== lejos, cerca: hyp(ctrl.x - G.balon.x, ctrl.z - G.balon.z) < 12, detras: (G.balon.x - ctrl.x) > -1 };
+    const d = hyp(ctrl.x - G.balon.x, ctrl.z - G.balon.z);
+    // vale el que está entre el balón y la portería, o uno pegado al rival que puede presionarlo ya
+    return { cambio: ctrl !== lejos, cerca: d < 12, detras: (G.balon.x - ctrl.x) > -1 || d < 3 };
   });
   assert(r.cambio && r.cerca && r.detras, 'no se cambió a un defensor cercano y entre el balón y la portería: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
+test('inercia: a toda velocidad gira en curva y para dar la vuelta primero frena', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const prep = () => { nuevoPartido(5); G.saque = null; const p = G.eqs[0].pl[5]; G.balon.dueno = null; const gk = G.eqs[0].pl[0]; G.balon.x = gk.x; G.balon.z = gk.z; tomar(gk); gk.protegido = 99; gk.retener = 99; p.x = -20; p.z = 0; p.vx = p.vz = 0; p.cara = 0; controlar(p); G.todos.forEach(q => { if (q !== p && !q.por) { q.x = 30; q.z = -30; } }); return p; };
+    // desde parado: cuánto tarda en dar 3 m hacia atrás
+    let p = prep(); Object.assign(G.prueba, { activo: true, mx: -1, mz: 0 });
+    let t0 = 0; const x0 = p.x; while (p.x > x0 - 3 && t0 < 200) { G.avanzar(1); t0++; }
+    // a toda velocidad hacia delante y luego hacia atrás
+    p = prep(); Object.assign(G.prueba, { mx: 1, mz: 0, sprint: true }); G.avanzar(90);
+    const vMax = hyp(p.vx, p.vz);
+    Object.assign(G.prueba, { mx: -1 }); let t1 = 0; const x1 = p.x; let xMax = p.x;
+    while (!(p.x < xMax - 3) && t1 < 300) { G.avanzar(1); t1++; xMax = Math.max(xMax, p.x); }
+    // giro de 90 grados a toda velocidad: radio de la curva
+    p = prep(); Object.assign(G.prueba, { mx: 1, mz: 0, sprint: true }); G.avanzar(90);
+    const ax = p.x; Object.assign(G.prueba, { mx: 0, mz: 1 }); let t2 = 0; while (p.vx > .5 && t2 < 200) { G.avanzar(1); t2++; }
+    G.prueba.activo = false;
+    return { t0, t1, vMax, avance: p.x - ax };
+  });
+  assert(r.vMax > 7.5, 'no llega a velocidad de sprint: ' + r.vMax);
+  assert(r.t1 > r.t0 + 15, `dar la vuelta corriendo debería costar más que desde parado (${r.t1} vs ${r.t0} pasos)`);
+  assert(r.avance > 1.2 && r.avance < 8, 'el giro a toda velocidad debería ser una curva de unos metros: ' + r.avance.toFixed(2));
+  await ctx.close();
+});
+
+test('conducción: el balón rueda delante con toques, más largos al correr, y no se pierde', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const prueba = sprint => {
+      nuevoPartido(6); G.saque = null;
+      const p = G.eqs[0].pl[9]; G.todos.forEach(q => { if (q !== p) { q.x = q.eq.i ? 45 : -45; q.z = q.k * 2 - 10; } });
+      p.x = -30; p.z = 0; p.cara = 0; G.balon.dueno = null; tomar(p); controlar(p); p.protegido = 99;
+      Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, sprint });
+      let max = 0, min = 9, toques = 0, t = G.balon.toque || 0;
+      for (let i = 0; i < 200; i++) { G.avanzar(1); const d = hyp(G.balon.x - p.x, G.balon.z - p.z); if (i > 40) { max = Math.max(max, d); min = Math.min(min, d); } }
+      toques = (G.balon.toque || 0) - t;
+      G.prueba.activo = false;
+      return { max, min, toques, sigue: G.balon.dueno === p, vel: hyp(p.vx, p.vz) };
+    };
+    return { trote: prueba(false), sprint: prueba(true) };
+  });
+  assert(r.trote.sigue && r.sprint.sigue, 'perdió el balón conduciendo en línea recta: ' + JSON.stringify(r));
+  assert(r.trote.toques >= 5 && r.sprint.toques >= 4, 'debería conducir a base de toques: ' + JSON.stringify(r));
+  assert(r.trote.max - r.trote.min > .2, 'el balón no se separa del pie entre toques: ' + JSON.stringify(r.trote));
+  assert(r.sprint.max > r.trote.max + .2, 'al esprintar los toques deberían ser más largos: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
+test('giro con el balón: cambia de sentido sin perderlo', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    nuevoPartido(7); G.saque = null;
+    const p = G.eqs[0].pl[9]; G.todos.forEach(q => { if (q !== p) { q.x = q.eq.i ? 45 : -45; q.z = q.k * 2 - 10; } });
+    p.x = 0; p.z = 0; p.cara = 0; G.balon.dueno = null; tomar(p); controlar(p); p.protegido = 99;
+    Object.assign(G.prueba, { activo: true, mx: 1, mz: 0 }); G.avanzar(80);
+    const x0 = p.x; Object.assign(G.prueba, { mx: -1 }); G.avanzar(110);
+    G.prueba.activo = false;
+    return { sigue: G.balon.dueno === p, retrocede: x0 - p.x, vx: p.vx };
+  });
+  assert(r.sigue, 'perdió el balón al girar');
+  assert(r.retrocede > 2 && r.vx < -2, 'no se dio la vuelta con el balón: ' + JSON.stringify(r));
+  await ctx.close();
+});
+
+test('golpeo: el balón sale cuando el pie llega, con el pie del lado del balón', async () => {
+  const ctx = await fresh(); const { page } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const res = [];
+    for (const lado of [1, -1]) {
+      nuevoPartido(8); G.saque = null;
+      const p = G.eqs[0].pl[9], m = G.eqs[0].pl[7]; G.todos.forEach(q => { if (q !== p && q !== m) { q.x = q.eq.i ? 45 : -45; q.z = q.k * 2 - 10; } });
+      p.x = 0; p.z = 0; p.cara = 0; m.x = 15; m.z = 0; G.balon.dueno = null; tomar(p); controlar(p); p.protegido = 99;
+      G.balon.x = .45; G.balon.z = lado * .2;
+      Object.assign(G.prueba, { activo: true, pass: true }); let pasos = 0;
+      G.avanzar(1); G.prueba.pass = false;
+      while (G.balon.dueno === p && pasos < 60) { G.avanzar(1); pasos++; }
+      G.prueba.activo = false;
+      res.push({ pasos, pie: p.pie, lado });
+    }
+    return res;
+  });
+  for (const x of r) {
+    assert(x.pasos >= 3 && x.pasos <= 9, 'el pase debería salir tras una preparación corta (~0,1 s): ' + JSON.stringify(x));
+    assert(x.pie === (x.lado > 0 ? 1 : 0), 'golpeó con el pie del otro lado: ' + JSON.stringify(x));
+  }
   await ctx.close();
 });
 

@@ -126,7 +126,7 @@ body.tactil #tactil{display:block}
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.3.0';
+const JUEGO_VERSION = '0.4.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -178,6 +178,7 @@ function crearEquipo(i) {
       base: f, x: 0, z: 0, vx: 0, vz: 0, cara: 0, fase: rng() * 6,
       tx: 0, tz: 0, prisa: false,
       entrada: null, entT: 0, entCD: 0, entHecha: false, suelo: 0, tropiezo: 0, protegido: 0, patadaCD: 0, patadaT: 0,
+      golpe: null, pie: 1, toqueT: 0, toqueCD: 0, inclLat: 0, frenado: 0, dvx: 0, dvz: 0,
       decT: rng() * .4, desT: rng() * 2, desX: 0, desZ: 0, desmarque: false, retener: 0, estirada: null, celebra: 0,
       piel: PIEL[Math.floor(rng() * PIEL.length)], pelo: PELO[Math.floor(rng() * PELO.length)],
     };
@@ -255,14 +256,7 @@ function pasoBalon(dt) {
     if (o.por && o.retener > 0) { // el portero lo lleva en las manos
       b.x = o.x + Math.cos(o.cara) * .35; b.z = o.z + Math.sin(o.cara) * .35; b.y = 1.05; b.vx = b.vy = b.vz = 0; return;
     }
-    const sp = hyp(o.vx, o.vz);
-    const d = .52 + Math.min(.38, sp * .045) + Math.sin(o.fase * .5) * .06 * Math.min(1, sp / 5);
-    const tx = o.x + Math.cos(o.cara) * d, tz = o.z + Math.sin(o.cara) * d;
-    const k = Math.min(1, dt * 22);
-    const nx = b.x + (tx - b.x) * k, nz = b.z + (tz - b.z) * k;
-    b.rotX += (nz - b.z) / BR; b.rotZ -= (nx - b.x) / BR;
-    b.vx = (nx - b.x) / dt; b.vz = (nz - b.z) / dt; b.vy = 0;
-    b.x = nx; b.z = nz; b.y = BR;
+    conducir(b, o, dt);
     return;
   }
   const ox = b.x;
@@ -316,7 +310,8 @@ function patear(p, vx, vy, vz, tipo, destino) {
   b.dueno = null; b.vx = vx; b.vy = vy; b.vz = vz; b.tipo = tipo; b.destino = destino || null;
   b.ultimo = p; b.pateador = p; b.id = ++G.idPatada; b.paraPor = null; b.batido = null;
   if (b.y < BR) b.y = BR;
-  p.patadaCD = .28; p.patadaT = .3; p.retener = 0;
+  p.patadaCD = .28; p.retener = 0;
+  if (p.patadaT <= 0) { p.patadaT = DUR_PATADA * .7; p.pie = ladoBalon(p); }   // golpeo sin preparación (de primera)
   for (const q of G.todos) q.recibe = null;
   if (G.saque) G.saque = null;
   if (esUsuario(p)) vibrar(12);
@@ -327,6 +322,8 @@ function tomar(p) {
   b.dueno = p; b.tipo = null; b.ultimo = p; b.paraPor = null; b.batido = null;
   if (b.destino === p && b.pateador && b.pateador.eq === p.eq) G.stats.pasesOk[p.eq.i]++;
   b.destino = null; p.recibe = null; p.protegido = .4;
+  if (hyp(b.x - p.x, b.z - p.z) > 1.2) { b.x = p.x + Math.cos(p.cara) * .45; b.z = p.z + Math.sin(p.cara) * .45; b.vx = b.vz = 0; } // por si se le da el balón a distancia
+  p.toqueCD = .12;
   if (cambio && p.eq !== eqUsuario()) G.perdidaT = G.t;
   G.posesion = p.eq;
   if (p.por && enAreaPropia(p, b.x, b.z) && (cambio || b.pateador?.eq !== p.eq)) { p.retener = 1.1; b.y = 1.05; }
@@ -473,14 +470,49 @@ function moverHacia(p, tx, tz, sprint, frenar = true) {
   return [dx / d * v, dz / d * v];
 }
 function moverJugador(p, dvx, dvz, dt) {
+  let giroV = 0, frena = 0;
   if (p.suelo > 0) { dvx = dvz = 0; }
   if (p.entrada) { const k = Math.exp(-(p.entrada === 'barrida' ? 2.2 : 5) * dt); p.vx *= k; p.vz *= k; }
   else if (p.suelo > 0) { p.vx *= Math.exp(-8 * dt); p.vz *= Math.exp(-8 * dt); }
   else {
-    const ax = dvx - p.vx, az = dvz - p.vz, a = hyp(ax, az);
-    const acel = (dvx * p.vx + dvz * p.vz >= 0 ? 30 : 40) * dt;
-    if (a > acel) { p.vx += ax / a * acel; p.vz += az / a * acel; } else { p.vx = dvx; p.vz = dvz; }
+    const b = G.balon, conduce = b.dueno === p && !(p.por && p.retener > 0) && !(G.saque && G.saque.tomador === p);
+    let ds = hyp(dvx, dvz);
+    if (conduce && ds > .3 && hyp(b.x - p.x, b.z - p.z) > .9) {
+      // el balón se le adelantó: va a buscarlo colocándose detrás de él respecto a donde quiere ir
+      // (si lo tiene al alcance del pie no hace falta: el toque lo lleva hacia el nuevo lado, ver conducir)
+      const ux = dvx / ds, uz = dvz / ds;
+      const ax = b.x + b.vx * .12 - ux * .42 - p.x, az = b.z + b.vz * .12 - uz * .42 - p.z, d = hyp(ax, az);
+      if (d > .25) {
+        const m = clamp((d - .25) / .8, 0, .85), nx = ux * (1 - m) + ax / d * m, nz = uz * (1 - m) + az / d * m, l = hyp(nx, nz) || 1;
+        dvx = nx / l * ds; dvz = nz / l * ds;
+      }
+    }
+    p.dvx = dvx; p.dvz = dvz;
+    const sp = hyp(p.vx, p.vz); ds = hyp(dvx, dvz);
+    if (sp < .8 || ds < .2) {
+      // parado o casi parado: los primeros pasos son rápidos en cualquier dirección
+      const ax = dvx - p.vx, az = dvz - p.vz, a = hyp(ax, az), acel = 20 * dt;
+      if (a > acel) { p.vx += ax / a * acel; p.vz += az / a * acel; } else { p.vx = dvx; p.vz = dvz; }
+      frena = Math.max(0, sp - ds) * 4;
+    } else {
+      // en carrera: cuanto más rápido, más abierto el giro; un cambio de dirección brusco obliga a frenar antes
+      const ang = Math.atan2(p.vz, p.vx), dif = angDif(ang, Math.atan2(dvz, dvx));
+      const giroMax = 13 / (1 + sp * .32) * (conduce ? .85 : 1) * dt;
+      // media vuelta corriendo: primero clava los pies y frena en línea recta, luego gira
+      const g = Math.abs(dif) > 2.2 && sp > 2.5 ? 0 : clamp(dif, -giroMax, giroMax);
+      const objetivo = ds * clamp(1 - (Math.abs(dif) - .5) / 1.6, .12, 1);
+      // acelerar cuesta más cerca de la velocidad máxima (el sprint se nota como un cambio de ritmo)
+      // frenar también cuesta: más cuanto más rápido va (unos 0,4 s para pararse desde el sprint)
+      const vmax = velMax(p, true), acel = objetivo > sp ? 6 + 16 * Math.max(0, 1 - sp / vmax) : 30 - 13 * Math.min(1, sp / vmax);
+      const nsp = objetivo > sp ? Math.min(objetivo, sp + acel * dt) : Math.max(objetivo, sp - acel * dt);
+      p.vx = Math.cos(ang + g) * nsp; p.vz = Math.sin(ang + g) * nsp;
+      giroV = g / dt; frena = (sp - nsp) / dt;
+    }
   }
+  // inclinaciones del cuerpo para la animación: hacia dentro en las curvas y hacia atrás al frenar
+  const spn = hyp(p.vx, p.vz), kk = Math.min(1, dt * 9);
+  p.inclLat += (clamp(giroV * spn * .035, -.38, .38) - p.inclLat) * kk;
+  p.frenado += (clamp(frena * .018, 0, .22) - p.frenado) * kk;
   p.x += p.vx * dt; p.z += p.vz * dt;
   p.x = clamp(p.x, -HL - 4, HL + 4); p.z = clamp(p.z, -HW - 3, HW + 3);
   const sp = hyp(p.vx, p.vz);
@@ -502,6 +534,79 @@ function separar() {
     const a = T[i], b = T[j], dx = b.x - a.x, dz = b.z - a.z, d = hyp(dx, dz);
     if (d > 0 && d < .75) { const e = (.75 - d) / 2 / d; a.x -= dx * e; a.z -= dz * e; b.x += dx * e; b.z += dz * e; }
   }
+}
+
+/* ---------- conducción: el balón rueda de verdad y el jugador lo empuja con toques ----------
+   Despacio: toques cortos, el balón cerca del pie. Corriendo: toques largos, el balón se adelanta (y un rival
+   puede quitártelo, ver robarToque). Para girar, el jugador rodea el balón y lo toca hacia el nuevo lado. */
+function ladoBalon(p) { // 1 = el balón está a su derecha (golpea con la derecha), 0 = izquierda
+  const b = G.balon, fx = Math.cos(p.cara), fz = Math.sin(p.cara);
+  return ((b.x - p.x) * -fz + (b.z - p.z) * fx) >= 0 ? 1 : 0;
+}
+function conducir(b, o, dt) {
+  b.px = b.x; b.pz = b.z;
+  const sp = hyp(o.vx, o.vz), fx = Math.cos(o.cara), fz = Math.sin(o.cara);
+  const rx = b.x - o.x, rz = b.z - o.z, dist = hyp(rx, rz);
+  o.toqueCD -= dt;
+  const quieto = sp < .9 && hyp(o.dvx, o.dvz) < .5;
+  if (quieto || (G.saque && G.saque.tomador === o)) {
+    // parado: lo sujeta con la suela delante del pie
+    b.vx = (o.x + fx * .42 - b.x) * 8; b.vz = (o.z + fz * .42 - b.z) * 8;
+  } else {
+    const dd = hyp(o.dvx, o.dvz);
+    let ux = dd > .1 ? o.dvx / dd : fx, uz = dd > .1 ? o.dvz / dd : fz;
+    // cerca de las líneas el toque se da hacia dentro para no regalar el balón (salvo que vaya hacia la portería)
+    if (Math.abs(b.z) > HW - 6 && uz * Math.sign(b.z) > 0) { uz *= clamp((HW - 1.5 - Math.abs(b.z)) / 4.5, 0, 1); const l = hyp(ux, uz) || 1; ux /= l; uz /= l; }
+    if (Math.abs(b.x) > HL - 6 && ux * Math.sign(b.x) > 0 && Math.abs(b.z) > GW2 + 2) { ux *= clamp((HL - 1.5 - Math.abs(b.x)) / 4.5, 0, 1); const l = hyp(ux, uz) || 1; ux /= l; uz /= l; }
+    const bv = hyp(b.vx, b.vz), mismaDir = bv < .3 ? -1 : (b.vx * ux + b.vz * uz) / bv;
+    const delante = rx * ux + rz * uz;
+    const hace = (b.vx * ux + b.vz * uz) < sp * 1.02 || delante < .3 || mismaDir < .8;
+    if (dist < .72 + sp * .03 && o.toqueCD <= 0 && hace) {
+      // toque para cambiar de dirección: el balón iba hacia otro lado, o está quieto pero no delante (arrastre con la suela)
+      const giro = bv > .3 ? mismaDir < .7 : delante < .2;
+      const sprint = sp > velMax(o, false) * 1.05;
+      const v = giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.3 : 1.15) + .45;
+      b.vx = ux * v; b.vz = uz * v;
+      o.toqueCD = giro ? .26 : clamp(.36 - sp * .02, .18, .36);
+      o.toqueT = .2; o.pie = ladoBalon(o); b.toque = (b.toque || 0) + 1;
+      if (giro) { o.vx *= .8; o.vz *= .8; }
+    }
+  }
+  const k = Math.exp(-ROCE * dt); b.vx *= k; b.vz *= k;
+  b.x += b.vx * dt; b.z += b.vz * dt; b.y = BR; b.vy = 0;
+  b.rotX += b.vz * dt / BR; b.rotZ -= b.vx * dt / BR;
+  if (dist > 3.5) { b.dueno = null; b.tipo = 'suelto'; if (G.ctrl === o) G.carga = null; } // se le escapó
+}
+// un rival se mete entre el jugador y un balón que se le adelantó
+function robarToque() {
+  const b = G.balon, o = b.dueno;
+  if ((o.por && o.retener > 0) || o.protegido > 0) return;
+  const dDueno = hyp(o.x - b.x, o.z - b.z);
+  if (dDueno < .6) return; // pegado al pie: para quitárselo hace falta una entrada
+  for (const r of o.eq.rival.pl) {
+    if (r.suelo > 0 || r.entrada || (r.por && !enAreaPropia(r, b.x, b.z))) continue;
+    const d = hyp(r.x - b.x, r.z - b.z);
+    if (d > .75 || d > dDueno - .15 || r.fallo === 't' + b.toque) continue;
+    r.fallo = 't' + b.toque;
+    if (rng() < .35 + r.def * .35 + (dDueno - .6) * .15) { o.tropiezo = .3; b.dueno = null; tomar(r); return; }
+  }
+}
+// golpeo con el pie: la pierna se prepara y el balón sale cuando el pie llega a él
+const DUR_PATADA = .3, PREPARA_GOLPE = .08;
+function golpear(p, fn, espera = PREPARA_GOLPE) {
+  if (p.golpe || G.balon.dueno !== p) return false;
+  p.golpe = { t: 0, espera, fn }; p.patadaT = DUR_PATADA; p.pie = ladoBalon(p);
+  return true;
+}
+function pasoGolpe(p, dt) {
+  const g = p.golpe, b = G.balon;
+  if (!g) return;
+  if (b.dueno !== p) { p.golpe = null; return; }
+  g.t += dt;
+  const enManos = p.por && p.retener > 0;
+  if (g.t >= g.espera && (enManos || hyp(b.x - p.x, b.z - p.z) < 1.15)) { p.golpe = null; g.fn(); }
+  else if (g.t > 1.2) p.golpe = null;                  // no llegó a alcanzar el balón
+  else if (g.t >= g.espera) p.patadaT = Math.max(p.patadaT, DUR_PATADA * .72); // espera con la pierna preparada
 }
 
 /* ---------- entradas ---------- */
@@ -672,7 +777,7 @@ function iaConBalon(p, dt) {
     p.mirar = Math.atan2(-p.z, eq.dir * 10);
     if (G.saque.t > 1.1) {
       const m = mejorPase(p, true);
-      if (m) pasarA(p, m.p, m.tipo); else pasar(p, eq.dir, 0, 'largo');
+      golpear(p, () => { if (m) pasarA(p, m.p, m.tipo); else pasar(p, eq.dir, 0, 'largo'); });
     }
     return [0, 0];
   }
@@ -681,29 +786,36 @@ function iaConBalon(p, dt) {
   for (const o of eq.rival.pl) { const d = hyp(o.x - p.x, o.z - p.z); if (d < presion) presion = d; }
   p.decT -= dt;
   if (p.decT <= 0) {
-    p.decT = dif(eq).decision * rnd(.7, 1.3);
+    p.decT = dif(eq).decision * rnd(.7, 1.3) * (dGol < 30 ? .6 : 1); // cerca del área decide más rápido
     // ¿tirar?
     const angulo = Math.abs(p.z) / Math.max(1, Math.abs(gx - p.x));
-    if (dGol < 28 && angulo < 1.5) {
+    if (dGol < 30 && angulo < 1.5 && !p.golpe) {
       const libre = lineaLibre(p.x, p.z, gx, 0, eq.rival);
-      const prob = dGol < 14 ? .9 : (28 - dGol) / 28 * .9 + (libre > 1.5 ? .25 : 0) - (presion < 2 ? 0 : .1);
-      if (rng() < prob) { const gk = eq.rival.pl[0]; disparar(p, dGol > 16 ? rnd(.7, .9) : rnd(.45, .8), 0, gk.z > 0 ? -1 : 1); return [p.vx, p.vz]; }
+      const prob = dGol < 16 ? .95 : (32 - dGol) / 32 * 1.2 + (libre > 1.5 ? .3 : 0) - (presion < 2 ? 0 : .1);
+      if (rng() < prob) { const gk = eq.rival.pl[0], pot = dGol > 16 ? rnd(.7, .9) : rnd(.45, .8); golpear(p, () => disparar(p, pot, 0, gk.z > 0 ? -1 : 1)); return [p.vx, p.vz]; }
     }
     const m = mejorPase(p, false);
     // espacio libre por delante para conducir
     let espacio = 12;
     for (const o of eq.rival.pl) { const rx = (o.x - p.x) * eq.dir, rz = o.z - p.z, d = hyp(rx, rz); if (rx > 0 && Math.abs(rz) < rx * 1.2 + 1 && d < espacio) espacio = d; }
     const valorConducir = .3 + espacio * .13 + (presion < 1.8 ? -.7 : 0) + (dGol < 30 ? .3 : 0);
-    if (m && m.s > valorConducir + rnd(-.3, .3)) { pasarA(p, m.p, m.tipo); return [p.vx, p.vz]; }
+    if (m && m.s > valorConducir + rnd(-.3, .3)) { golpear(p, () => pasarA(p, m.p, m.tipo)); return [p.vx, p.vz]; }
   }
   // conducir hacia la portería esquivando rivales
   let dx = eq.dir, dz = -p.z / 60;
   if (dGol < 20) { dx = (gx - p.x) / dGol; dz = -p.z / dGol; }
+  else if ((gx - p.x) * eq.dir < 32) { // en el último tercio: corta hacia dentro, hacia la frontal del área
+    const tx = gx - eq.dir * 12 - p.x, tz = p.z * .25 - p.z, l = hyp(tx, tz) || 1; dx = tx / l; dz = tz / l;
+  }
   for (const o of eq.rival.pl) {
     const rx = o.x - p.x, rz = o.z - p.z, d = hyp(rx, rz);
     if (d < 7 && d > 0 && rx * eq.dir > -1) { const f = (7 - d) / 7 * 1.6; dz -= Math.sign(rz || (rng() - .5)) * f; dx -= rx / d * f * .3; }
   }
-  if (Math.abs(p.z) > HW - 4) dz -= Math.sign(p.z) * .8;
+  // las líneas pesan más que los rivales: cerca de la banda nunca conduce hacia fuera
+  const bordeZ = Math.abs(p.z) - (HW - 6);
+  if (bordeZ > 0) { dz -= Math.sign(p.z) * (.4 + bordeZ * .45); if (Math.abs(p.z) > HW - 2.5 && dz * Math.sign(p.z) > 0) dz = 0; }
+  const bordeX = Math.abs(p.x) - (HL - 5);
+  if (bordeX > 0 && Math.abs(p.z) > AREA_W2) { dx -= Math.sign(p.x) * bordeX * .5; if (dx * Math.sign(p.x) > 0 && Math.abs(p.x) > HL - 2) dx = 0; }
   const l = hyp(dx, dz) || 1, sp = velMax(p, presion > 3);
   return [dx / l * sp, dz / l * sp];
 }
@@ -852,14 +964,16 @@ function controlUsuario(p, dt) {
   const quieto = G.saque && G.saque.tomador === p;
   if (G.muerto > 0 || G.fase !== 'juego') { return [0, 0]; }
   if (tiene && !(p.por)) {
-    if (BORDE.pass) pasar(p, ENT.mx, ENT.mz, 'corto');
-    else if (BORDE.long) pasar(p, ENT.mx, ENT.mz, 'largo');
+    const mx = ENT.mx, mz = ENT.mz;
+    if (p.golpe) { /* ya está golpeando */ }
+    else if (BORDE.pass) golpear(p, () => pasar(p, mx, mz, 'corto'));
+    else if (BORDE.long) golpear(p, () => pasar(p, mx, mz, 'largo'));
     else if (BORDE.shot) G.carga = { t: 0 };
     if (G.carga && b.dueno === p) {
       G.carga.t += dt;
       if (!ENT.shot || G.carga.t >= .95) {
         const pot = .2 + .8 * Math.min(1, G.carga.t / .85); G.carga = null;
-        if (G.saque) pasar(p, ENT.mx, ENT.mz, 'largo'); else disparar(p, pot, ENT.mx, ENT.mz);
+        if (G.saque) golpear(p, () => pasar(p, mx, mz, 'largo')); else golpear(p, () => disparar(p, pot, mx, mz));
       }
     }
   } else if (!b.dueno && b.destino === p) {
@@ -920,7 +1034,7 @@ function saqueInicial(eq) {
   G.fase = 'juego'; G.muerto = 0; G.golT = 0;
   for (const e of G.eqs) e.pl.forEach((p, k) => {
     const f = FORMACION[k], pos = posFormacion(e, Math.min(f.fx, .45), f.fz);
-    Object.assign(p, { x: pos.x, z: pos.z, vx: 0, vz: 0, cara: e.dir > 0 ? 0 : Math.PI, entrada: null, suelo: 0, tropiezo: 0, estirada: null, celebra: 0, retener: 0, recibe: null, desmarque: false, desX: 0, desZ: 0 });
+    Object.assign(p, { x: pos.x, z: pos.z, vx: 0, vz: 0, cara: e.dir > 0 ? 0 : Math.PI, entrada: null, suelo: 0, tropiezo: 0, estirada: null, celebra: 0, retener: 0, recibe: null, desmarque: false, desX: 0, desZ: 0, golpe: null, toqueT: 0, inclLat: 0, frenado: 0 });
   });
   const t = eq.pl[9], comp = eq.pl[7];
   t.x = -eq.dir * .4; t.z = 0; comp.x = -eq.dir * 6; comp.z = -eq.dir * 5;
@@ -1009,7 +1123,8 @@ function paso(dt) {
   planEquipos();
   autoCambio();
   for (const p of G.todos) {
-    p.entCD -= dt; p.suelo -= dt; p.tropiezo -= dt; p.protegido -= dt; p.patadaCD -= dt; p.patadaT -= dt; p.celebra -= dt;
+    p.entCD -= dt; p.suelo -= dt; p.tropiezo -= dt; p.protegido -= dt; p.patadaCD -= dt; p.patadaT -= dt; p.celebra -= dt; p.toqueT -= dt;
+    if (p.golpe && G.fase === 'juego' && G.muerto <= 0) pasoGolpe(p, dt);
     let v;
     if (G.fase === 'gol') v = p.celebra > 0 ? moverHacia(p, p.x + p.eq.dir * 3, p.z * .9, false) : moverHacia(p, ...posFormacionAlto(p), false);
     else if (G.muerto > 0) v = moverHacia(p, ...puestoEnBloque(p), false);
@@ -1036,7 +1151,8 @@ function posFormacionAlto(p) { const f = FORMACION[p.k], q = posFormacion(p.eq, 
 // quién toca el balón suelto
 function contacto() {
   const b = G.balon;
-  if (b.dueno || b.y > 2.4) return;
+  if (b.dueno) { robarToque(); return; }
+  if (b.y > 2.4) return;
   // parada del portero: cuando el balón llega a su altura (ya se decidió en reaccionPortero que la para)
   const gk = b.paraPor;
   const cruza = gk && b.px != null && (b.px - gk.x) * (b.x - gk.x) <= 0;
@@ -1286,10 +1402,11 @@ function dibujarJugadores(cuerpos = true) {
     let amp = Math.min(1, sp / 6) * .9, sw = Math.sin(p.fase) * amp, brazos = -sw * .9, brazoArriba = 0;
     if (p.entrada === 'barrida' || (p.suelo > 0 && !p.por)) { lean = -1.25; y = -.55; sw = .9; }
     else if (p.entrada === 'pie') { lean = .35; sw = 1; }
-    if (p.patadaT > 0) sw = Math.sin((1 - p.patadaT / .3) * Math.PI) * 1.3;
+    if (p.patadaT > 0) sw = Math.sin((1 - p.patadaT / DUR_PATADA) * Math.PI) * 1.3 * (p.pie ? 1 : -1);
     if (p.estirada && p.estirada.t > p.estirada.reac) { const k = Math.min(1, (p.estirada.t - p.estirada.reac) / .25); roll = p.estirada.lado * p.eq.dir * 1.25 * k; y = .35 * Math.sin(k * Math.PI * .8); brazoArriba = 2.6 * k; }
     if (p.celebra > 0 && G.fase === 'gol') { y = Math.abs(Math.sin(p.celebra * 7)) * .45; brazoArriba = 2.8; }
     if (p.por && G.balon.dueno === p && p.retener > 0) brazoArriba = 1.4;
+    if (lean > -1 && !p.estirada) { roll += p.inclLat; lean -= p.frenado; }
     R.E.set(roll, -p.cara, -lean); R.Q.setFromEuler(R.E); R.V.set(p.x, y, p.z);
     R.M.compose(R.V, R.Q, R.U);
     parte(R.torso, i, 0, 1.08, 0, 0); parte(R.short, i, 0, .72, 0, 0);
@@ -1407,10 +1524,16 @@ function dibujarReal() {
       ua[s] = -A * .7 * Math.sin(fs); ab[s] = .1; co[s] = .25 + A * .9;
     }
     if (sp < .3) { th[0] = .05; th[1] = -.05; kn[0] = kn[1] = .12; co[0] = co[1] = .3; lean = .06 + Math.sin(G.t * 2 + i) * .012; giro = 0; y = 0; }
-    if (p.patadaT > 0) { // golpeo con la pierna derecha
-      const u = 1 - p.patadaT / .3;
-      th[1] = u < .4 ? -.7 * u / .4 : -.7 + 2.1 * (u - .4) / .6; kn[1] = u < .4 ? 1.3 * u / .4 : 1.3 * (1 - (u - .4) / .6);
-      th[0] = -.12; kn[0] = .25; ab[0] = ab[1] = .5; lean = .1;
+    if (p.toqueT > 0 && sp > .9) { // toque de conducción: la pierna se adelanta un poco
+      const k = p.pie, w = Math.sin((1 - p.toqueT / .2) * Math.PI);
+      th[k] = th[k] * (1 - w) + .55 * w; kn[k] = kn[k] * (1 - w) + .25 * w;
+    }
+    if (p.patadaT > 0) { // golpeo: pierna atrás, contacto con el balón (u = 0,3) y acompañamiento
+      const k = p.pie, o = 1 - k, u = 1 - p.patadaT / DUR_PATADA;
+      if (u < .15) { th[k] = -.6 * u / .15; kn[k] = 1.2 * u / .15; }
+      else if (u < .3) { th[k] = -.6 + .85 * (u - .15) / .15; kn[k] = 1.2 - .8 * (u - .15) / .15; }
+      else { const v = Math.min(1, (u - .3) / .3); th[k] = .25 + .9 * v; kn[k] = .4 * (1 - v); }
+      th[o] = -.1; kn[o] = .3; ab[0] = ab[1] = .5; lean = .1 + (u > .3 ? .1 : 0); giro = (k ? -1 : 1) * .2 * Math.sin(u * Math.PI);
     }
     if (p.entrada === 'pie') { th[1] = 1.1; kn[1] = .25; th[0] = -.2; kn[0] = .5; lean = .3; }
     if (p.entrada === 'barrida' || (p.suelo > 0 && !p.por)) { atras = 1.2; y = -.08; th[1] = .35; kn[1] = .05; th[0] = 0; kn[0] = 1; ab[0] = ab[1] = .9; lean = 0; giro = 0; }
@@ -1420,6 +1543,7 @@ function dibujarReal() {
     const enManos = p.por && b.dueno === p && p.retener > 0;
     // estaturas algo distintas; todos un 12 % más grandes que en la realidad para que se vean bien en el celular
     const alto = 1.12 * (.95 + ((p.num * 7 + p.eq.i * 5) % 11) * .01);
+    if (!atras && !p.estirada) { roll += p.inclLat; lean -= p.frenado; }
     R.E.set(roll, -p.cara, atras); R.Q.setFromEuler(R.E); R.V.set(p.x, y, p.z); R.U.set(alto, alto, alto);
     R.M.compose(R.V, R.Q, R.U); R.U.set(1, 1, 1);
     // tronco: gira e inclina desde la cintura
