@@ -42,5 +42,9 @@
   {
     "nombre": "0.11.0 (celular, app y exportar partida)",
     "commit": "5de23fd"
+  },
+  {
+    "nombre": "0.12.0 (editores dentro de los modos)",
+    "commit": "daddd3b"
   }
 ]
