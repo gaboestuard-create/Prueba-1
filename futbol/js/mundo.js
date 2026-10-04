@@ -161,7 +161,10 @@ function equipoParaPartido(M, clubId, once) {
   return {
     id: c.id, nombre: c.nombre, corto: c.corto, camiseta: c.camiseta, pantalon: c.pantalon, medias: c.camiseta, camiseta2: c.camiseta2,
     portero: colorPortero(c), formacion: c.formacion, estilo: { ...c.estilo }, escudo: c.escudo, estadio: c.estadio,
-    jugadores: once.map(id => { const j = M.jug[id]; return j ? { id: j.id, nombre: j.nombre, nombre1: j.nombre1, num: j.num, atrib: j.at, piel: j.piel, pelo: j.pelo, forma: j.forma, foto: j.foto } : null; }),
+    jugadores: once.map(id => { const j = M.jug[id]; return j ? { id: j.id, nombre: j.nombre, nombre1: j.nombre1, num: j.num, atrib: j.at, piel: j.piel, pelo: j.pelo, forma: j.forma, foto: j.foto, med: j.med, pos: j.pos } : null; }),
+    // para la pantalla previa: media del equipo (OVR) y el banquillo (los mejores que no empiezan)
+    ovr: Math.round(fuerzaDe(M, c, once)),
+    banquillo: plantillaDe(M, c).filter(j => !once.includes(j.id) && disponible(j)).sort((a, b) => b.med - a.med).slice(0, 7).map(j => ({ nombre: j.nombre, num: j.num, pos: j.pos, med: j.med })),
   };
 }
 

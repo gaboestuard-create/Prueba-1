@@ -125,6 +125,19 @@ pestañas) más la compatibilidad con cada versión publicada.
 Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) sustituye a los controles y
 `G.avanzar(n)` adelanta n pasos sin dibujar. `G.autoplay = true` hace que la computadora maneje a los dos equipos.
 
+## Ayudas, previa e IA (0.14)
+
+- Nombres sobre los jugadores (`actualizarEtiquetas`, `#etiquetas`): el que manejas (triángulo amarillo), el que lleva el
+  balón y el compañero al que iría el pase. Ajuste "Nombres en el campo". El marcador es de tele (`#gL`, `#gV`, reloj mm:ss).
+- Línea de apunte (`actualizarLineaApunte`, `R.linea`): curva azul en córners, bandas, saques de puerta, tiros libres y
+  penaltis cuando sacas tú; usa `elegirReceptor` igual que el pase real.
+- Pantalla previa (`previaPartido` en menus.js, ajuste "Previa del partido"): se muestra desde `jugarPartido` cuando juega
+  el usuario; `equipoParaPartido`/`equipoEstrella` traen `ovr`, `banquillo` y `med`/`pos` de cada jugador. Las pruebas la
+  apagan en `openGame` (tests/harness.mjs); hay una prueba aparte para ella.
+- IA: los compañeros del usuario presionan solos (`planEquipos`), contrapresión 2,6 s tras perder el balón (`eq.perdioT`),
+  desmarques en profundidad por pasillos libres (`iaJugador`) y la IA les pasa al hueco (`mejorPase`, `pasarA`).
+  Portero más fiable en `reaccionPortero` (no se lanza al lado contrario en tiros al cuerpo).
+
 ## Editores dentro de los modos (0.12)
 
 - Carrera de técnico y de jugador: pestaña "Editor" (`vistaEditorCarrera`, `accionesEditorCarrera` en editor.js).
@@ -141,7 +154,7 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
   columna a la izquierda y los `.panel` se ponen lado a lado. Hay un bloque `@media (max-height:520px)` que compacta
   todo para celulares en horizontal. La prueba "celular en horizontal" comprueba que las pantallas principales caben.
 - Pantalla completa: `pantallaCompleta()` (botón en el menú principal y en la pausa; en el celular se pone sola al
-  tocar la portada si el ajuste "Pantalla completa al empezar" está en Sí) e intenta girar a horizontal.
+  tocar la portada si el ajuste "Pantalla completa (celular)" está en Sí) e intenta girar a horizontal.
 - App instalable (PWA): `manifest.webmanifest`, `icons/` y `sw.js` (guarda los archivos para jugar sin conexión;
   red primero para que lleguen las versiones nuevas). **Si añades un archivo a `js/`, añádelo también en `ARCHIVOS`
   de `sw.js`** (lo comprueba la prueba "instalable"). El registro solo se hace fuera de Claude (no en un marco).

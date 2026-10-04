@@ -421,7 +421,8 @@ body.app .b-completa{display:none}
   .acciones{margin-top:6px;gap:8px}
   .intro,.nota,.hoja p{font-size:12.5px;line-height:1.35}
   .etq{margin:6px 0 3px;font-size:10px}
-  .seg button{padding:5px 10px;font-size:12px}
+  .seg button{padding:5px 9px;font-size:11.5px}
+  .ops{grid-template-columns:repeat(auto-fill,minmax(min(100%,196px),1fr));gap:0 12px}
   table.t{font-size:12px}table.t td{padding:4px 6px}table.t th{padding:5px 6px}
   .fila-j{padding:4px 8px}
   .modo{min-height:60px;padding:9px 12px}.modo b{font-size:17px}.modo span{font-size:12px}
@@ -438,6 +439,27 @@ body.app .b-completa{display:none}
   .equipo-vs>.escudo{grid-row:1/span 3;width:46px!important;height:46px!important;font-size:12px!important}
   .equipo-vs b{font-size:16px;text-align:left}.vs-x{font-size:20px}
 }
+/* etiquetas de nombre sobre los jugadores y marcador de televisión */
+#etiquetas{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.et{position:absolute;left:0;top:0;transform:translate(-50%,-100%);font:800 12px var(--f-texto);color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.7);will-change:transform}
+.et.yo{color:var(--amarillo);font-size:13px}.et.yo::after{content:"";display:block;margin:2px auto 0;width:0;height:0;border:6px solid transparent;border-top:9px solid var(--amarillo);border-bottom:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.et.rec{color:#8ff0c8}.et.rec::after{content:"";display:block;margin:2px auto 0;width:0;height:0;border:5px solid transparent;border-top:8px solid #46e0a8;border-bottom:0}
+.et.riv{color:#ffd0cc}
+#marcador .gol b{font-weight:400;font-size:20px}#marcador .gol i{font-style:normal;opacity:.5;margin:0 5px}
+#marcador .gol{padding:5px 12px;background:rgba(0,0,0,.25)}
+#marcador .reloj{font-size:16px;min-width:50px;text-align:center}
+/* pantalla previa al partido */
+.previa .hueco{gap:0}
+.pc-camisa{width:7.4cqw;height:7.4cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 3.6cqw var(--f-texto);border:.4cqw solid rgba(255,255,255,.85);box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.pc-nom{margin-top:.5cqw;font:800 2.6cqw var(--f-texto);color:#fff;text-shadow:0 1px 3px #000;white-space:nowrap;max-width:15cqw;overflow:hidden;text-overflow:ellipsis}
+.pc-med{font:800 2.3cqw var(--f-texto);background:rgba(0,0,0,.6);border-radius:3px;padding:0 .8cqw;line-height:1.3}
+.pv-vs{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pv-eq{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;flex:1;min-width:0;position:relative}
+.pv-eq>b{font-family:var(--f-titulo);font-weight:400;font-size:17px;line-height:1.05}.pv-eq>small{color:var(--gris);font-weight:800;font-size:11px}
+.pv-ovr{position:absolute;top:-4px;right:calc(50% - 46px);font-family:var(--f-titulo);font-size:19px;line-height:.9;text-align:center;padding:3px 6px 2px;border-radius:6px;background:#e6e9ee;color:#14181c;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.pv-ovr small{display:block;font:800 8px var(--f-texto)}.pv-ovr.oro{background:linear-gradient(#ffe48a,#d8a630);color:#2a1d00}.pv-ovr.bronce{background:linear-gradient(#e8b083,#a5673f);color:#2b1405}
+.banquillo{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:4px 10px;font-size:12.5px;font-weight:700}
+.banquillo>span{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}.banquillo em{margin-left:auto;font-style:normal;font-weight:800;color:var(--amarillo)}
 @media (max-width:560px){.vs{grid-template-columns:1fr}.vs-x{text-align:center}.goles-final{font-size:40px}.marcador-final{padding:12px 8px}}
 @media (prefers-reduced-motion:reduce){#aviso,#toast,#potencia{transition:none}}
 </style>
@@ -445,7 +467,8 @@ body.app .b-completa{display:none}
 <body>
 <canvas id="cv" tabindex="0" aria-label="Campo de juego"></canvas>
 <div id="hud">
-  <div id="marcador"><span class="eq l" id="nomL">HAL</span><span class="gol" id="goles">0 - 0</span><span class="eq v" id="nomV">TOR</span><span class="reloj" id="reloj">0'</span></div>
+  <div id="marcador"><span class="eq l" id="nomL">HAL</span><span class="gol" id="goles"><b id="gL">0</b><i>-</i><b id="gV">0</b></span><span class="eq v" id="nomV">TOR</span><span class="reloj" id="reloj">00:00</span></div>
+  <div id="etiquetas"></div>
   <div id="quien"></div>
   <div id="energia" aria-label="Energía"><i></i></div>
   <canvas id="radar" width="132" height="86"></canvas>

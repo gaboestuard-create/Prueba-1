@@ -13,7 +13,35 @@ function vibrar(p) { try { if (DATOS.ajustes.vibrar && navigator.vibrate) naviga
 function actualizarMarcador() {
   $('nomL').textContent = G.eqs[0].id; $('nomV').textContent = G.eqs[1].id;
   for (const [el, eq] of [[$('nomL'), G.eqs[0]], [$('nomV'), G.eqs[1]]]) { el.style.background = colorCss(eq.camiseta); el.style.color = difColor(eq.camiseta, 0xffffff) < 200 ? '#111' : '#fff'; }
-  $('goles').textContent = G.eqs[0].goles + ' - ' + G.eqs[1].goles;
+  $('gL').textContent = G.eqs[0].goles; $('gV').textContent = G.eqs[1].goles;
+}
+// nombres sobre los jugadores: el que manejas (con triángulo), el que lleva el balón y el compañero al que iría el pase
+const ETQ = [];
+const _v3 = typeof THREE !== 'undefined' ? new THREE.Vector3() : null;
+function etiqueta(i, p, clase, txt) {
+  let el = ETQ[i];
+  if (!el) { el = ETQ[i] = document.createElement('div'); el.className = 'et'; el.hidden = true; $('etiquetas').appendChild(el); }
+  if (!p) { if (!el.hidden) el.hidden = true; return; }
+  _v3.set(p.x, 2.35, p.z).project(R.cam);
+  if (_v3.z > 1 || Math.abs(_v3.x) > 1.05 || Math.abs(_v3.y) > 1.05) { el.hidden = true; return; }
+  if (el.className !== 'et ' + clase) el.className = 'et ' + clase;
+  if (el.textContent !== txt) el.textContent = txt;
+  el.hidden = false;
+  el.style.transform = `translate(${((_v3.x + 1) / 2 * innerWidth).toFixed(1)}px,${((1 - _v3.y) / 2 * innerHeight).toFixed(1)}px) translate(-50%,-100%)`;
+}
+function actualizarEtiquetas() {
+  if (!R || !_v3) return;
+  const on = DATOS.ajustes.nombres !== 'no' && !G.autoplay && !G.pausa && !document.body.classList.contains('en-menu');
+  if (!on) { for (let i = 0; i < ETQ.length; i++) etiqueta(i, null); return; }
+  const c = G.ctrl, b = G.balon, o = b.dueno;
+  const nom = p => p.nombre || '';
+  etiqueta(0, c, 'yo', c ? nom(c) : '');
+  // el que lleva el balón (si no eres tú): compañero en verde, rival en rojizo
+  etiqueta(1, o && o !== c && !o.por ? o : null, o && c && o.eq === c.eq ? 'rec' : 'riv', o ? nom(o) : '');
+  // compañero al que iría un pase hacia donde apuntas
+  let rec = null;
+  if (c && o === c && !G.saque && hyp(ENT.mx, ENT.mz) > .3) rec = elegirReceptor(c, ENT.mx, ENT.mz, 'corto');
+  etiqueta(2, rec, 'rec', rec ? nom(rec) : '');
 }
 function actualizarQuien() { const c = G.ctrl; $('quien').textContent = c && !G.autoplay ? (G.unJugador ? 'Tú · ' : '') + c.num + ' · ' + c.nombre : ''; }
 function alCambiarEquipos() { if (R) { colorearJugadores(); colorearReal(); } actualizarMarcador(); actualizarQuien(); }
@@ -45,8 +73,10 @@ function dibujarRadar() {
 function actualizarHud(dt) {
   const c = G.ctrl, en = $('energia');
   if (en) { const e = c && !G.autoplay ? c.energia : null; en.hidden = e == null; if (e != null && (G.frames & 7) === 0) { en.firstElementChild.style.width = Math.round(e * 100) + '%'; en.classList.toggle('baja', e < .3); } }
-  const min = Math.min(90, Math.floor(G.reloj / 60));
-  const txt = min + "'"; if ($('reloj').textContent !== txt) $('reloj').textContent = txt;
+  // reloj como en la tele: minutos y segundos del partido (de 0 a 90)
+  const seg = Math.min(5400, Math.floor(G.reloj)), txt = String(Math.floor(seg / 60)).padStart(2, '0') + ':' + String(seg % 60).padStart(2, '0');
+  if ($('reloj').textContent !== txt) $('reloj').textContent = txt;
+  actualizarEtiquetas();
   if (avisoT > 0) { avisoT -= dt; if (avisoT <= 0) $('aviso').classList.remove('ver'); }
   const pot = $('potencia');
   const carga = G.carga ? G.carga.t : G.buffer && G.buffer.a === 'shot' && ENT.shot ? G.buffer.carga : -1;
@@ -127,8 +157,10 @@ function iniciarTeclado() {
 /* ---------- pantallas ---------- */
 const OPCIONES = [
   { k: 'cam', t: 'Cámara', o: [['tele', 'Televisión'], ['diag', 'Alta'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
+  { k: 'nombres', t: 'Nombres en el campo', o: [['si', 'Sí'], ['no', 'No']] },
+  { k: 'previa', t: 'Previa del partido', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
-  { k: 'completa', t: 'Pantalla completa al empezar (celular)', o: [['si', 'Sí'], ['no', 'No']] },
+  { k: 'completa', t: 'Pantalla completa (celular)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },
   { k: 'estilo', t: 'Estilo', o: [['dia', 'Día'], ['tarde', 'Atardecer'], ['noche', 'Noche']] },
   { k: 'calidad', t: 'Gráficos', o: [['auto', 'Automático'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']] },
@@ -219,12 +251,6 @@ function mostrarFinal() {
   $('bOtra').onclick = () => { nuevoPartido(Date.now() % 1e9); cerrarCapa(); G.pausa = false; aviso('¡A jugar!', 'Saque inicial', 1.4); };
 }
 function mostrarError(t) { abrirCapa(`<div class="hoja"><h2>No se pudo empezar</h2><p>${t}</p></div>`); }
-function pantallaCompleta() {
-  if (!document.body.classList.contains('tactil')) return;
-  try { const el = document.documentElement; const r = el.requestFullscreen ? el.requestFullscreen() : null; if (r && r.catch) r.catch(() => { }); } catch (e) { }
-  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { }); } catch (e) { }
-}
-
 /* ---------- pantalla completa y app instalada ---------- */
 const ICONO_COMPLETA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 // ¿abierto como app instalada (sin barra del navegador)?

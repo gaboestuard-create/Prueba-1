@@ -518,7 +518,7 @@ test('tiro: entra en la portería, sube el marcador y hay saque inicial', async 
     G.saque = null; G.balon.dueno = null; G.eqs[1].pl[0].z = 30;
     Object.assign(G.balon, { x: HL - 2, y: .5, z: 0, vx: 25, vy: 0, vz: 0, ultimo: G.ctrl });
     for (let i = 0; i < 400 && !(G.saque && G.saque.tipo === 'inicial'); i++) G.avanzar(1);
-    return { saque: G.saque && G.saque.tipo, saca: G.saque && G.saque.tomador.eq.i, bx: G.balon.x, marcador: $('goles').textContent, fase: G.fase }; });
+    return { saque: G.saque && G.saque.tipo, saca: G.saque && G.saque.tomador.eq.i, bx: G.balon.x, marcador: $('gL').textContent + ' - ' + $('gV').textContent, fase: G.fase }; });
   assert(r.fase === 'juego' && r.saque === 'inicial', 'después del gol no hay saque inicial: ' + JSON.stringify(r));
   assert(r.saca === 1, 'debería sacar el equipo que recibió el gol');
   assert(r.marcador === '1 - 0', 'el marcador muestra ' + r.marcador);
@@ -614,6 +614,76 @@ test('teclado: las flechas mueven al jugador y J pasa el balón', async () => {
   assert(x1 < x0 - 1, `no se movió con la flecha izquierda (${x0} → ${x1})`);
   await page.keyboard.down('KeyJ'); await page.waitForTimeout(80); await page.keyboard.up('KeyJ');
   assert(await page.evaluate(() => G.stats.pases[0]) === 1, 'J no hizo un pase');
+  sinErrores(errors); await ctx.close();
+});
+
+test('pantalla previa: medias, alineación sobre el campo y banquillo antes del partido', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    DATOS.ajustes.previa = 'si';
+    AMISTOSO.local = APP.mundo.clubes.find(c => c.nombre === 'Real Madrid').id; AMISTOSO.visita = APP.mundo.clubes.find(c => c.nombre === 'Arsenal').id; AMISTOSO.lado = 0;
+    empezarAmistoso();
+    const capa = $('capa'), previa = !!capa.querySelector('.previa');
+    return { previa, pausa: G.pausa, huecos: capa.querySelectorAll('.cancha-est .hueco').length, ovr: [...capa.querySelectorAll('.pv-ovr')].map(e => parseInt(e.textContent)), banquillo: capa.querySelectorAll('.banquillo > span').length, jugar: !!capa.querySelector('[data-acc="jugar"]') };
+  });
+  assert(r.previa && r.pausa && r.jugar, 'no aparece la pantalla previa: ' + JSON.stringify(r));
+  assert(r.huecos === 11, 'la alineación debería mostrar 11 jugadores: ' + r.huecos);
+  assert(r.ovr.length === 2 && r.ovr.every(o => o >= 60 && o <= 99), 'faltan las medias de los equipos: ' + JSON.stringify(r.ovr));
+  assert(r.banquillo >= 5, 'debería verse el banquillo: ' + r.banquillo);
+  await page.click('[data-acc="jugar"]');
+  const d = await page.evaluate(() => ({ pausa: G.pausa, modo: G.cfg && G.cfg.modo, capa: $('capa').hidden }));
+  assert(!d.pausa && d.modo === 'amistoso' && d.capa, 'al tocar "¡A jugar!" debería empezar el partido: ' + JSON.stringify(d));
+  // con el ajuste en No, el partido empieza directamente
+  const e = await page.evaluate(() => { DATOS.ajustes.previa = 'no'; G.pausa = true; empezarAmistoso(); return { pausa: G.pausa, previa: !$('capa').hidden && !!$('capa').querySelector('.previa') }; });
+  assert(!e.pausa && !e.previa, 'con la previa apagada no debería salir: ' + JSON.stringify(e));
+  sinErrores(errors); await ctx.close();
+});
+
+test('ayudas en pantalla: nombres sobre los jugadores y línea de apunte en los saques', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    salirDeMenus(); G.pausa = false; G.saque = null; G.avanzar(300); G.pausa = false;
+    const visibles = () => Array.from(document.querySelectorAll('#etiquetas .et')).filter(e => !e.hidden).map(e => e.textContent);
+    const conBalon = () => { actualizarEtiquetas(); return visibles(); };
+    // el jugador que manejas aparece con su nombre
+    const yo = G.ctrl, a = conBalon();
+    DATOS.ajustes.nombres = 'no'; const b = conBalon(); DATOS.ajustes.nombres = 'si';
+    // tiro libre con el jugador cerca del área: sale la línea de apunte
+    const o = G.eqs[0].pl[9], p = G.eqs[1].pl[5]; o.x = 30; o.z = 6; p.x = 29; p.z = 6; G.balon.dueno = null; tomar(o);
+    cometerFalta(p, o, true, true); let w = 0; while (G.pendiente && w++ < 400) G.avanzar(1); G.avanzar(5);
+    Object.assign(G.prueba, { activo: true, mx: 1, mz: 0 }); G.avanzar(2);
+    actualizarLineaApunte(); const linea = !!R.linea && R.linea.visible;
+    // al chutar, la línea desaparece
+    G.saque = null; actualizarLineaApunte(); const luego = R.linea.visible;
+    return { a, yo: yo.nombre, b, linea, luego };
+  });
+  assert(r.a.includes(r.yo), 'debería verse el nombre del jugador que manejas: ' + JSON.stringify(r.a));
+  assert(r.b.length === 0, 'con "Nombres" en No no debería verse ninguno: ' + JSON.stringify(r.b));
+  assert(r.linea && !r.luego, 'la línea de apunte debería verse en el tiro libre y desaparecer al sacar: ' + JSON.stringify(r));
+  sinErrores(errors); await ctx.close();
+});
+
+test('compañeros: presionan solos al defender y se desmarcan al atacar', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    nuevoPartido({ semilla: 4, usuario: 0 }); G.pausa = false; G.avanzar(400); G.saque = null;
+    // el rival tiene el balón en nuestro campo: aunque no aprietes Presión, un compañero cierra
+    const rival = G.eqs[1].pl[9]; rival.x = -20; rival.z = 4; G.balon.dueno = null; tomar(rival); G.balon.x = -19.5; G.balon.z = 4;
+    G.eqs[0].pl.forEach(q => { if (!q.por) { q.x = -5 - Math.random() * 10; q.z = (Math.random() - .5) * 30; } });
+    G.avanzar(3);
+    const pres = !!(G.eqs[0].presiona || G.eqs[0].presiona2);
+    // contrapresión: justo después de perder el balón presionan los tres más cercanos
+    G.eqs[0].perdioT = G.t; G.avanzar(2);
+    const contra = !!G.eqs[0].presiona && !!G.eqs[0].presiona2;
+    // atacando: con el balón en campo rival, varios delanteros/medios se desmarcan en profundidad
+    const yo = G.eqs[0].pl[9]; yo.x = 10; yo.z = 0; G.balon.dueno = null; tomar(yo); G.balon.x = 10.5; G.balon.z = 0;
+    Object.assign(G.prueba, { activo: true, mx: 1, mz: 0 });
+    let max = 0; for (let i = 0; i < 20; i++) { G.avanzar(30); max = Math.max(max, G.eqs[0].pl.filter(q => q.desmarque).length); if (G.balon.dueno !== yo) break; }
+    return { pres, contra, desmarcados: max };
+  });
+  assert(r.pres, 'al defender, un compañero debería presionar sin que lo pidas');
+  assert(r.contra, 'tras perder el balón deberían presionar dos o más (contrapresión)');
+  assert(r.desmarcados >= 1, 'al atacar, algún compañero debería desmarcarse en profundidad: ' + r.desmarcados);
   sinErrores(errors); await ctx.close();
 });
 
