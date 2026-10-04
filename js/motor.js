@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.15.0';
+const JUEGO_VERSION = '0.16.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -1706,10 +1706,11 @@ function junta(out, padre, px, py, pz, rz, rx = 0, ry = 0) {
   return out.multiplyMatrices(padre, R.L2);
 }
 // dibuja jugadores con el modelo realista. K: juego de mallas (R para el partido, R.menu.K para el menú)
-function dibujarReal(K = R, lista = G.todos) {
-  const b = G.balon;
-  const th = [0, 0], kn = [0, 0], ua = [0, 0], ab = [0, 0], co = [0, 0];
-  lista.forEach((p, i) => {
+// pose de un jugador a partir de su estado: ángulos de muslos (th), rodillas (kn), brazos (ua adelante-atrás, ab hacia fuera),
+// codos (co), inclinación del tronco (lean), giro, caída lateral (roll), tumbado (atras), brazos arriba, altura. La usan los dos modelos.
+const POSE = { th: [0, 0], kn: [0, 0], ua: [0, 0], ab: [0, 0], co: [0, 0], lean: 0, giro: 0, y: 0, roll: 0, atras: 0, arriba: 0, enManos: false, alto: 1 };
+function calcularPose(p, i, b) {
+  const th = POSE.th, kn = POSE.kn, ua = POSE.ua, ab = POSE.ab, co = POSE.co;
     const sp = hyp(p.vx, p.vz), A = Math.min(1, sp / 7.5), f = p.fase;
     // ciclo de carrera: la rodilla se dobla sobre todo cuando la pierna va hacia delante
     let lean = .04 + A * .2, giro = A * .12 * Math.sin(f), y = A * .05 * Math.abs(Math.cos(f)), roll = 0, atras = 0, arriba = 0;
@@ -1739,6 +1740,14 @@ function dibujarReal(K = R, lista = G.todos) {
     // estaturas algo distintas; todos un 12 % más grandes que en la realidad para que se vean bien en el celular
     const alto = 1.12 * (.95 + ((p.num * 7 + p.eq.i * 5) % 11) * .01);
     if (!atras && !p.estirada) { roll += p.inclLat; lean -= p.frenado; }
+  POSE.lean = lean; POSE.giro = giro; POSE.y = y; POSE.roll = roll; POSE.atras = atras; POSE.arriba = arriba; POSE.enManos = enManos; POSE.alto = alto;
+  return POSE;
+}
+function dibujarReal(K = R, lista = G.todos) {
+  const b = G.balon;
+  lista.forEach((p, i) => {
+    const P = calcularPose(p, i, b), th = P.th, kn = P.kn, ua = P.ua, ab = P.ab, co = P.co;
+    let { lean, giro, y, roll, atras, arriba, enManos, alto } = P;
     R.E.set(roll, -p.cara, atras); R.Q.setFromEuler(R.E); R.V.set(p.x, y, p.z); R.U.set(alto, alto, alto);
     R.M.compose(R.V, R.Q, R.U); R.U.set(1, 1, 1);
     // tronco: gira e inclina desde la cintura
@@ -1846,7 +1855,7 @@ function animarMenu3D(dt) {
   if (Math.random() < dt * 22) E.fx.emitir(_azar(-3.5, 3.5), _azar(.3, 5), _azar(-3.5, 3.5), _azar(-.05, .05), _azar(.1, .3), _azar(-.05, .05), .85, .93, 1, _azar(.5, 1.1), _azar(3.5, 6), 0);
   E.fx.escala(R.renderer.domElement.height / 700 * .1); E.fx.paso(dt);
   E.haces.forEach((h, i) => { const u = h.userData; h.rotation.z = Math.sin(E.t * .35 + i * 2.1) * .18 + u.ry * .5; h.rotation.x = Math.cos(E.t * .27 + i) * .12; h.material.opacity = .22 + .06 * Math.sin(E.t * .9 + i); });
-  dibujarReal(E.K, [p]);
+  if (MODELO_GLB()) menuGLB(E, p); else { E.K.real.forEach(m => m.visible = true); if (E.glb) E.glb.visible = false; dibujarReal(E.K, [p]); }
   const a = .55 + Math.sin(E.t * .12) * .5, cam = R.cam, ancho = innerWidth, alto = innerHeight;
   // en vertical la cámara se aleja para que el jugador quepa entre el título y los botones
   const vertical = ancho <= alto * 1.1, dist = (vertical ? 6.4 : 4.6) + (modo === 'celebra' ? .5 : 0), portada = typeof APP !== 'undefined' && APP.enPortada;
@@ -1860,7 +1869,9 @@ function animarMenu3D(dt) {
 
 function aplicarModelo() {
   const real = MODELO_REAL();
-  R.real.forEach(m => m.visible = real);
+  const glb = MODELO_GLB();
+  R.real.forEach(m => m.visible = real && !glb);
+  if (!glb) glbOcultar();
   [R.torso, R.short, R.pierna, R.bota, R.brazo, R.cabeza, R.pelo].forEach(m => m.visible = !real);
   R.balonR.visible = real; R.balonC.visible = !real; R.balon = real ? R.balonR : R.balonC;
   actualizarSombras();

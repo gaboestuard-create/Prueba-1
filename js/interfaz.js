@@ -44,7 +44,7 @@ function actualizarEtiquetas() {
   etiqueta(2, rec, 'rec', rec ? nom(rec) : '');
 }
 function actualizarQuien() { const c = G.ctrl; $('quien').textContent = c && !G.autoplay ? (G.unJugador ? 'Tú · ' : '') + c.num + ' · ' + c.nombre : ''; }
-function alCambiarEquipos() { if (R) { colorearJugadores(); colorearReal(); } actualizarMarcador(); actualizarQuien(); }
+function alCambiarEquipos() { if (R) { colorearJugadores(); colorearReal(); glbColorearTodos(); } actualizarMarcador(); actualizarQuien(); }
 let ultimoContexto = null;
 function actualizarBotones() {
   const b = G.balon, at = atacando() || !b.dueno && G.posesion === eqUsuario() && G.saque;
@@ -172,7 +172,7 @@ const OPCIONES = [
   { k: 'efectos', t: 'Efectos (confeti, polvo…)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
   { k: 'completa', t: 'Pantalla completa (celular)', o: [['si', 'Sí'], ['no', 'No']] },
-  { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },
+  { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['glb', 'Mi modelo (.glb)'], ['caricatura', 'Caricatura']] },
   { k: 'estilo', t: 'Estilo', o: [['dia', 'Día'], ['tarde', 'Atardecer'], ['noche', 'Noche']] },
   { k: 'calidad', t: 'Gráficos', o: [['auto', 'Automático'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']] },
   { k: 'dif', t: 'Dificultad', o: [[0, 'Fácil'], [1, 'Normal'], [2, 'Difícil']] },
@@ -189,11 +189,30 @@ function htmlAyuda() {
     <b>Defendiendo</b><span>Pase cambia de jugador · Disparo hace la entrada · desliza sobre Sprint para una barrida · Pase en profundidad (mantener) manda a un compañero a presionar</span>
   </div>`;
 }
+function htmlModeloPropio() {
+  const msg = GLB.plantilla ? 'Modelo cargado: ' + GLB.nombre : GLB.error || 'Ninguno (personaje con esqueleto, formato .glb)';
+  return `<div class="op" style="grid-column:1/-1"><div style="margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="seg"><button id="glb-cargar">Cargar mi modelo (.glb)…</button><button id="glb-quitar">Quitar</button></div><p class="nota" id="glb-msg" style="margin:0;flex:1;min-width:180px">${msg}</p></div><input type="file" id="glb-archivo" accept=".glb,.gltf,model/gltf-binary" hidden></div>`;
+}
 function htmlAjustes(solo) {
-  return '<div class="ops">' + OPCIONES.filter(op => !solo || solo.includes(op.k)).map(op => `<div class="op"><div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div></div>`).join('') + '</div>';
+  return '<div class="ops">' + OPCIONES.filter(op => !solo || solo.includes(op.k)).map(op => `<div class="op"><div class="etq">${op.t}</div><div class="seg">${op.o.map(([v, t]) => `<button id="op-${op.k}-${v}" data-k="${op.k}" data-v="${v}" class="${String(DATOS.ajustes[op.k]) === String(v) ? 'sel' : ''}">${t}</button>`).join('')}</div></div>`).join('') + (solo ? '' : htmlModeloPropio()) + '</div>';
 }
 function enlazarAjustes(capa) {
-  capa.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  const cargar = capa.querySelector('#glb-cargar');
+  if (cargar) {
+    const inp = capa.querySelector('#glb-archivo'), msg = capa.querySelector('#glb-msg');
+    cargar.onclick = () => inp.click();
+    inp.onchange = async () => {
+      msg.textContent = 'Leyendo el modelo…';
+      const r = await glbDesdeArchivo(inp.files[0]); inp.value = '';
+      msg.textContent = r.ok ? 'Modelo cargado: ' + GLB.nombre + (r.guardado ? '' : ' (solo para esta sesión: no se pudo guardar)') : r.error;
+      if (r.ok) capa.querySelectorAll('[data-k="modelo"]').forEach(x => x.classList.toggle('sel', x.dataset.v === 'glb'));
+    };
+    capa.querySelector('#glb-quitar').onclick = async () => {
+      glbQuitar(); await glbBorrarGuardado(); if (DATOS.ajustes.modelo === 'glb') { DATOS.ajustes.modelo = 'real'; capa.querySelectorAll('[data-k="modelo"]').forEach(x => x.classList.toggle('sel', x.dataset.v === 'real')); aplicarModelo(); guardarPronto(); }
+      msg.textContent = 'Modelo quitado.';
+    };
+  }
+  capa.querySelectorAll('.seg button[data-k]').forEach(b => b.addEventListener('click', () => {
     const op = OPCIONES.find(o => o.k === b.dataset.k), val = op.o.find(([v]) => String(v) === b.dataset.v)[0];
     DATOS.ajustes[op.k] = val;
     b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));

@@ -3,7 +3,7 @@
    La biblioteca 3D y las fuentes, que no cambian, salen directamente de lo guardado. */
 const CACHE = 'pelotazo';
 const ARCHIVOS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-  'js/sonido.js', 'js/motor.js', 'js/efectos.js', 'js/datos.js', 'js/mundo.js', 'js/interfaz.js', 'js/guardado.js', 'js/menus.js', 'js/portada.js',
+  'js/sonido.js', 'js/motor.js', 'js/efectos.js', 'js/gltfloader.js', 'js/skeletonutils.js', 'js/glb.js', 'js/datos.js', 'js/mundo.js', 'js/interfaz.js', 'js/guardado.js', 'js/menus.js', 'js/portada.js',
   'js/torneos.js', 'js/temporada.js', 'js/carrera_dt.js', 'js/carrera_jug.js', 'js/cartas.js', 'js/estrella.js', 'js/editor.js', 'js/arranque.js',
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'];
 self.addEventListener('install', e => {
