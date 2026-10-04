@@ -46,5 +46,9 @@
   {
     "nombre": "0.12.0 (editores dentro de los modos)",
     "commit": "daddd3b"
+  },
+  {
+    "nombre": "0.13.0 (cámara tele, 4 botones y regates)",
+    "commit": "264cb28"
   }
 ]
