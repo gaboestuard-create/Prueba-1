@@ -54,5 +54,9 @@
   {
     "nombre": "0.14.0 (ayudas, previa e IA)",
     "commit": "c6f21aa"
+  },
+  {
+    "nombre": "0.14.1 (correcciones: hundirse, pases al esprintar, bombeado)",
+    "commit": "9069400"
   }
 ]
