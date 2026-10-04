@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.14.0';
+const JUEGO_VERSION = '0.14.1';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -626,8 +626,12 @@ function pasoGolpe(p, dt) {
   if (!g) return;
   if (b.dueno !== p) { p.golpe = null; return; }
   g.t += dt;
-  const enManos = p.por && p.retener > 0;
-  if (g.t >= g.espera && (enManos || hyp(b.x - p.x, b.z - p.z) < 1.15)) { p.golpe = null; g.fn(); }
+  const enManos = p.por && p.retener > 0, d = hyp(b.x - p.x, b.z - p.z);
+  // al esprintar el balón va más adelantado: el alcance del pie crece con la velocidad (si no, el pase o el tiro se quedaba
+  // esperando con la pierna levantada y nunca salía)
+  const alcance = 1.15 + Math.min(.8, hyp(p.vx, p.vz) * .09);
+  if (g.t >= g.espera && (enManos || d < alcance)) { p.golpe = null; g.fn(); }
+  else if (g.t > .4 && d < 3.2 && b.dueno === p) { p.golpe = null; g.fn(); } // el balón se queda un poco lejos: se golpea igual, nunca se pierde la orden
   else if (g.t > 1.2) p.golpe = null;                  // no llegó a alcanzar el balón
   else if (g.t >= g.espera) p.patadaT = Math.max(p.patadaT, DUR_PATADA * .72); // espera con la pierna preparada
 }
@@ -1089,6 +1093,7 @@ function controlUsuario(p, dt) {
   const b = G.balon, tiene = b.dueno === p, mag = hyp(ENT.mx, ENT.mz);
   const dx = mag > .2 ? ENT.mx / mag : Math.cos(p.cara), dz = mag > .2 ? ENT.mz / mag : Math.sin(p.cara);
   const quieto = G.saque && G.saque.tomador === p;
+  if (!tiene) G.prof = null; // un pase en profundidad a medio preparar no se queda esperando para cuando recuperes el balón
   if (G.muerto > 0 || G.fase !== 'juego') { return [0, 0]; }
   if (tiene && !(p.por)) {
     const mx = ENT.mx, mz = ENT.mz;
@@ -1722,7 +1727,7 @@ function dibujarReal(K = R, lista = G.todos) {
       th[o] = -.1; kn[o] = .3; ab[0] = ab[1] = .5; lean = .1 + (u > .3 ? .1 : 0); giro = (k ? -1 : 1) * .2 * Math.sin(u * Math.PI);
     }
     if (p.entrada === 'pie') { th[1] = 1.1; kn[1] = .25; th[0] = -.2; kn[0] = .5; lean = .3; }
-    if (p.entrada === 'barrida' || (p.suelo > 0 && !p.por)) { atras = 1.2; y = -.08; th[1] = .35; kn[1] = .05; th[0] = 0; kn[0] = 1; ab[0] = ab[1] = .9; lean = 0; giro = 0; }
+    if (p.entrada === 'barrida' || (p.suelo > 0 && !p.por)) { atras = 1.2; y = .46; th[1] = .35; kn[1] = .05; th[0] = 0; kn[0] = 1; ab[0] = ab[1] = .9; lean = 0; giro = 0; }
     if (p.tropiezo > 0 && !p.entrada) lean = .45;
     if (p.estirada && p.estirada.t > p.estirada.reac) { const k = Math.min(1, (p.estirada.t - p.estirada.reac) / .25); roll = p.estirada.lado * p.eq.dir * 1.3 * k; y = .4 * Math.sin(k * Math.PI * .8); arriba = 2.7 * k; th[0] = th[1] = .15; }
     if (p.celebra > 0 && G.fase === 'gol') { y = Math.abs(Math.sin(p.celebra * 7)) * .45; arriba = 2.7; }
