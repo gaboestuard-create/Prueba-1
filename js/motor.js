@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.14.1';
+const JUEGO_VERSION = '0.15.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -242,6 +242,7 @@ function suena(nombre, ...a) { if (typeof SFX !== 'undefined' && !document.body.
 function patear(p, vx, vy, vz, tipo, destino) {
   suena('patada', clamp(hyp(vx, vy, vz) / 30, .15, 1));
   const b = G.balon;
+  if (typeof fxPatada === 'function') fxPatada(b, hyp(vx, vy, vz));
   if (b.dueno && b.dueno !== p) return;
   b.dueno = null; b.vx = vx; b.vy = vy; b.vz = vz; b.tipo = tipo; b.destino = destino || null;
   b.ultimo = p; b.pateador = p; b.id = ++G.idPatada; b.paraPor = null; b.batido = null;
@@ -641,6 +642,7 @@ function hacerEntrada(p, tipo) {
   if (p.entrada || p.entCD > 0 || p.suelo > 0 || p.por) return;
   const b = G.balon;
   p.entrada = tipo; p.entT = 0; p.entHecha = false; p.entCD = tipo === 'barrida' ? 1.2 : .55;
+  if (tipo === 'barrida' && typeof fxBarrida === 'function') fxBarrida(p);
   let a = p.cara;
   if (hyp(b.x - p.x, b.z - p.z) < 5) a = Math.atan2(b.z - p.z, b.x - p.x);
   p.cara = a;
@@ -1258,6 +1260,7 @@ function gol(eq) {
   suena('gol');
   const b = G.balon, autor = b.ultimo;
   eq.goles++; G.fase = 'gol'; G.golT = 0; G.carga = null; G.buffer = null;
+  if (typeof fxGol === 'function') fxGol();
   if (b.dueno) { b.dueno = null; }
   const propia = autor && autor.eq !== eq;
   if (autor && !propia) autor.celebra = 3;
@@ -1320,7 +1323,7 @@ function paso(dt) {
     else if (p === G.ctrl && !G.autoplay) v = controlUsuario(p, dt);
     else v = iaJugador(p, dt);
     pasoEntrada(p, dt);
-    if (v) moverJugador(p, v[0], v[1], dt);
+    if (v) { moverJugador(p, v[0], v[1], dt); if (p.frenado > .17 && (G.frames & 3) === 0 && typeof fxFreno === 'function' && hyp(p.vx, p.vz) > 4.5) fxFreno(p); }
     else { p.x += p.vx * dt; p.z += p.vz * dt; p.fase += hyp(p.vx, p.vz) * dt * 2.1; } // estirada del portero
     if (G.saque && G.saque.tomador === p) { p.vx = 0; p.vz = 0; }
   }
@@ -1401,6 +1404,7 @@ function iniciarGraficos() {
   scene.add(sol.target);
   R = { renderer, scene, cam, hemi, sol, camX: 0, camZ: 0, calidad: 1, fpsT: 0, fpsN: 0, autoBajado: 0, sombrasAuto: true };
   construirEstadio();
+  construirAmbiente();
   construirJugadores();
   construirReal();
   construirBalon();
@@ -1458,7 +1462,7 @@ function construirEstadio() {
     for (const z of [-GW2, GW2]) { const m = new THREE.Mesh(poste, blanco); m.position.set(0, GH / 2, z); grupo.add(m); }
     const l = new THREE.Mesh(larguero, blanco); l.rotation.x = Math.PI / 2; l.position.set(0, GH, 0); grupo.add(l);
     const fondo = new THREE.Mesh(new THREE.PlaneGeometry(GW2 * 2, GH * .85), matRed.clone()); fondo.material.map = red.clone(); fondo.material.map.needsUpdate = true; fondo.material.map.repeat.set(9, 3);
-    fondo.rotation.y = Math.PI / 2; fondo.position.set(s * P, GH * .85 / 2, 0); grupo.add(fondo);
+    fondo.rotation.y = Math.PI / 2; fondo.position.set(s * P, GH * .85 / 2, 0); grupo.add(fondo); (R.redes = R.redes || []).push({ m: fondo, x0: s * P, s });
     const techo = new THREE.Mesh(new THREE.PlaneGeometry(hyp(P, GH * .15), GW2 * 2), matRed); techo.material.map.repeat.set(3, 9);
     techo.rotation.x = -Math.PI / 2;
     techo.position.set(s * P / 2, GH * .925, 0); grupo.add(techo);
@@ -1475,16 +1479,13 @@ function construirEstadio() {
   valla(PL + 6, 0, -HW - 3.5, 0); valla(PL + 6, 0, HW + 3.5, Math.PI);
   valla(PW - 10, -HL - 4.5, 0, Math.PI / 2); valla(PW - 10, HL + 4.5, 0, -Math.PI / 2);
   // gradas con público
-  R.texPublico = texturaCanvas(512, 128, (c, w, h) => {
-    c.fillStyle = '#1d2733'; c.fillRect(0, 0, w, h);
-    const cols = ['#2f7bff', '#e8463a', '#ffd23f', '#f3f6ee', '#7fd1ff', '#ff8a65', '#9ccc65', '#ce93d8'];
-    for (let y = 2; y < h; y += 6) { for (let x = 1; x < w; x += 4) { if (rng() < .85) { c.fillStyle = cols[Math.floor(rng() * cols.length)]; c.fillRect(x, y + rng() * 1.5, 3, 4); } } c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(0, y + 4, w, 1); }
-  });
+  R.texPublico = crearTexturaPublico();
   R.texPublico.wrapS = R.texPublico.wrapT = THREE.RepeatWrapping;
   R.matGrada = new THREE.MeshLambertMaterial({ map: R.texPublico });
   const grada = (largo, x, z, ry) => {
     const t = R.texPublico.clone(); t.needsUpdate = true; t.repeat.set(largo / 30, 3);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(largo, 22), new THREE.MeshLambertMaterial({ map: t }));
+    const mg = new THREE.MeshLambertMaterial({ map: t }); (R.texGradas = R.texGradas || []).push(t); (R.matsGrada = R.matsGrada || []).push(mg);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(largo, 22), mg);
     const g = new THREE.Group(); m.rotation.x = -Math.PI / 2 + .55; m.position.set(0, 5.5, -9.3); g.add(m);
     const muro = new THREE.Mesh(new THREE.BoxGeometry(largo, 1.4, .5), new THREE.MeshLambertMaterial({ color: 0x1a222c })); muro.position.set(0, .7, 0); g.add(muro);
     g.position.set(x, 0, z); g.rotation.y = ry; S.add(g); return g;
@@ -1499,13 +1500,7 @@ function construirEstadio() {
   }
   S.add(R.focos);
 }
-function texturaCesped(cols) {
-  return texturaCanvas(1024, 512, (c, w, h) => {
-    const n = 18;
-    for (let i = 0; i < n; i++) { c.fillStyle = cols[i % 2]; c.fillRect(i * w / n, 0, w / n + 1, h); }
-    for (let i = 0; i < 9000; i++) { c.fillStyle = rng() < .5 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.06)'; c.fillRect(rng() * w, rng() * h, 2, 2); }
-  });
-}
+function texturaCesped(cols) { return crearTexturaCesped(cols); }
 function aplicarEstilo() {
   const E = ESTILOS[DATOS.ajustes.estilo] || ESTILOS.dia;
   R.scene.background = new THREE.Color(E.cielo);
@@ -1517,6 +1512,7 @@ function aplicarEstilo() {
   R.matCesped.map = texturaCesped(E.cesped); R.matCesped.needsUpdate = true;
   semilla = semillaGuardada;
   R.matFuera.color.set(E.fuera);
+  pintarCielo(DATOS.ajustes.estilo in CIELOS ? DATOS.ajustes.estilo : 'dia');
   R.focos.visible = E.focos;
 }
 
@@ -1594,7 +1590,7 @@ function dibujarJugadores(cuerpos = true) {
     else if (p.entrada === 'pie') { lean = .35; sw = 1; }
     if (p.patadaT > 0) sw = Math.sin((1 - p.patadaT / DUR_PATADA) * Math.PI) * 1.3 * (p.pie ? 1 : -1);
     if (p.estirada && p.estirada.t > p.estirada.reac) { const k = Math.min(1, (p.estirada.t - p.estirada.reac) / .25); roll = p.estirada.lado * p.eq.dir * 1.25 * k; y = .35 * Math.sin(k * Math.PI * .8); brazoArriba = 2.6 * k; }
-    if (p.celebra > 0 && G.fase === 'gol') { y = Math.abs(Math.sin(p.celebra * 7)) * .45; brazoArriba = 2.8; }
+    if (p.celebra > 0 && (G.fase === 'gol' || p.menu)) { y = Math.abs(Math.sin(p.celebra * 7)) * .45; brazoArriba = 2.8; }
     if (p.por && G.balon.dueno === p && p.retener > 0) brazoArriba = 1.4;
     if (lean > -1 && !p.estirada) { roll += p.inclLat; lean -= p.frenado; }
     R.E.set(roll, -p.cara, -lean); R.Q.setFromEuler(R.E); R.V.set(p.x, y, p.z);
@@ -1639,7 +1635,7 @@ function unirGeos(geos) { // une varias piezas sencillas en una sola geometría
 function construirReal() {
   const S = R.scene, N = 22;
   const mat = rough => new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: rough, metalness: 0 });
-  const tela = mat(.85), piel = mat(.62), cuero = mat(.4);
+  const tela = mat(.85), piel = mat(.62), cuero = mat(.4), telaT = materialCamiseta(tela);
   const inst = (geo, n, m) => { const x = new THREE.InstancedMesh(geo, m, n); x.instanceMatrix.setUsage(THREE.DynamicDrawUsage); x.frustumCulled = false; x.castShadow = true; S.add(x); return x; };
   const cil = (rt, rb, h, sg = 10) => new THREE.CylinderGeometry(rt, rb, h, sg).translate(0, -h / 2, 0); // cuelga de su articulación
   const esf = (r, a = 10, b = 8) => new THREE.SphereGeometry(r, a, b);
@@ -1648,7 +1644,9 @@ function construirReal() {
     new THREE.CylinderGeometry(.215, .16, .46, 14).scale(.6, 1, 1).translate(0, 1.24, 0),
     new THREE.CylinderGeometry(.162, .168, .1, 14).scale(.62, 1, 1).translate(0, 1.02, 0),
     esf(.072).scale(1, .9, 1).translate(0, 1.4, -.19), esf(.072).scale(1, .9, 1).translate(0, 1.4, .19),
-  ]), N, tela);
+  ]), N, telaT);
+  R.rTorso.geometry.setAttribute('aCol2', new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3));
+  R.rTorso.geometry.setAttribute('aPat', new THREE.InstancedBufferAttribute(new Float32Array(N), 1));
   R.rShort = inst(new THREE.CylinderGeometry(.165, .18, .2, 14).scale(.7, 1, 1).translate(0, .965, 0), N, tela);
   R.rMusloS = inst(cil(.093, .087, .21), N * 2, tela);
   R.rMuslo = inst(cil(.07, .05, .42, 9), N * 2, piel);
@@ -1681,20 +1679,26 @@ function construirReal() {
   R.E2 = new THREE.Euler(0, 0, 0, 'YZX'); R.Q2 = new THREE.Quaternion(); R.V2 = new THREE.Vector3(); R.L2 = new THREE.Matrix4(); R.U1 = new THREE.Vector3(1, 1, 1);
   R.Mt = new THREE.Matrix4(); R.Ma = new THREE.Matrix4(); R.Mb = new THREE.Matrix4(); R.Mc = new THREE.Matrix4(); R.T1 = new THREE.Matrix4().makeTranslation(0, -1, 0);
 }
+// botas de varios colores (como en la realidad): negras las más, y algunas blancas, naranjas, azules o amarillas
+const BOTAS = [0x17181c, 0x17181c, 0x17181c, 0xf2f2f2, 0xff7a1a, 0x17181c, 0x2d6cff, 0x17181c, 0xe8ff3a, 0x17181c, 0xff3b6b];
 function colorearReal() {
   const c = new THREE.Color(), pon = (m, i, col) => { c.set(col); m.setColorAt(i, c); };
   G.todos.forEach((p, i) => {
     const E = p.eq, cam = p.por ? E.portero : E.camiseta, pan = p.por ? 0x24262c : E.pantalon;
-    pon(R.rTorso, i, cam); pon(R.rShort, i, pan); pon(R.rCabeza, i, p.piel); pon(R.rPelo, i, p.pelo);
+    pon(R.rTorso, i, cam); pon(R.rShort, i, pan);
+    // dibujo de la camiseta (rayas, aros, mitades...) y segundo color
+    const pat = p.por ? { id: 0, col2: cam } : patronDeEquipo(E); c.set(pat.col2);
+    R.rTorso.geometry.attributes.aCol2.setXYZ(i, c.r, c.g, c.b); R.rTorso.geometry.attributes.aPat.setX(i, pat.id); pon(R.rCabeza, i, p.piel); pon(R.rPelo, i, p.pelo);
     for (let s = 0; s < 2; s++) {
       const j = i * 2 + s;
-      pon(R.rMusloS, j, pan); pon(R.rMuslo, j, p.piel); pon(R.rTibia, j, p.por ? E.portero : E.medias); pon(R.rBota, j, 0x17181c);
+      pon(R.rMusloS, j, pan); pon(R.rMuslo, j, p.piel); pon(R.rTibia, j, p.por ? E.portero : E.medias); pon(R.rBota, j, BOTAS[(p.num * 7 + i * 3) % BOTAS.length]);
       pon(R.rManga, j, cam); pon(R.rBrazo, j, p.por ? cam : p.piel); pon(R.rAntebrazo, j, p.por ? 0xe9edf2 : p.piel); // el portero lleva manga larga y guantes
     }
     R.rNum.geometry.attributes.aNum.array[i] = p.num;
   });
   R.real.forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   R.rNum.geometry.attributes.aNum.needsUpdate = true;
+  R.rTorso.geometry.attributes.aCol2.needsUpdate = R.rTorso.geometry.attributes.aPat.needsUpdate = true;
 }
 // articulación: out = padre · trasladar(px,py,pz) · girar(rx, ry, rz)
 function junta(out, padre, px, py, pz, rz, rx = 0, ry = 0) {
@@ -1730,7 +1734,7 @@ function dibujarReal(K = R, lista = G.todos) {
     if (p.entrada === 'barrida' || (p.suelo > 0 && !p.por)) { atras = 1.2; y = .46; th[1] = .35; kn[1] = .05; th[0] = 0; kn[0] = 1; ab[0] = ab[1] = .9; lean = 0; giro = 0; }
     if (p.tropiezo > 0 && !p.entrada) lean = .45;
     if (p.estirada && p.estirada.t > p.estirada.reac) { const k = Math.min(1, (p.estirada.t - p.estirada.reac) / .25); roll = p.estirada.lado * p.eq.dir * 1.3 * k; y = .4 * Math.sin(k * Math.PI * .8); arriba = 2.7 * k; th[0] = th[1] = .15; }
-    if (p.celebra > 0 && G.fase === 'gol') { y = Math.abs(Math.sin(p.celebra * 7)) * .45; arriba = 2.7; }
+    if (p.celebra > 0 && (G.fase === 'gol' || p.menu)) { y = Math.abs(Math.sin(p.celebra * 7)) * .45; arriba = 2.7; }
     const enManos = p.por && b.dueno === p && p.retener > 0;
     // estaturas algo distintas; todos un 12 % más grandes que en la realidad para que se vean bien en el celular
     const alto = 1.12 * (.95 + ((p.num * 7 + p.eq.i * 5) % 11) * .01);
@@ -1784,7 +1788,9 @@ function construirMenu3D() {
   suelo.rotation.x = -Math.PI / 2; suelo.receiveShadow = true; S.add(suelo);
   const K = { real: [] };
   for (const k of ['rTorso', 'rShort', 'rMusloS', 'rMuslo', 'rTibia', 'rBota', 'rCabeza', 'rPelo', 'rBrazo', 'rManga', 'rAntebrazo']) {
-    const m = new THREE.InstancedMesh(R[k].geometry, R[k].material, k === 'rTorso' || k === 'rShort' || k === 'rCabeza' || k === 'rPelo' ? 1 : 2);
+    let geo = R[k].geometry;
+    if (k === 'rTorso') { geo = geo.clone(); geo.setAttribute('aCol2', new THREE.InstancedBufferAttribute(new Float32Array(3), 3)); geo.setAttribute('aPat', new THREE.InstancedBufferAttribute(new Float32Array(1), 1)); } // el jugador del menú lleva la camiseta lisa
+    const m = new THREE.InstancedMesh(geo, R[k].material, k === 'rTorso' || k === 'rShort' || k === 'rCabeza' || k === 'rPelo' ? 1 : 2);
     m.castShadow = true; m.frustumCulled = false; S.add(m); K[k] = m; K.real.push(m);
   }
   const gN = R.rNum.geometry.clone(); gN.setAttribute('aNum', new THREE.InstancedBufferAttribute(new Float32Array([10]), 1));
@@ -1796,21 +1802,56 @@ function construirMenu3D() {
   K.real.forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   const balon = new THREE.Mesh(R.balonR.geometry, R.balonR.material); balon.castShadow = true; S.add(balon);
   const p = { x: 0, z: 0, vx: 0, vz: 0, cara: 0, fase: 0, patadaT: 0, pie: 0, toqueT: 0, num: 10, eq: { i: 0, dir: 1 }, inclLat: 0, frenado: 0, malabar: true, por: false, celebra: 0, suelo: 0, tropiezo: 0 };
-  R.menu = { S, K, balon, p, t: 0, foco };
+  // haces de luz de los focos (conos con degradado, se suman a lo de atrás) y partículas de polvo flotando
+  const gh = texturaCanvas(8, 128, (c, w, h) => { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); });
+  const haces = [];
+  for (const [x, z, ry] of [[-5, -6, .5], [6.5, -5, -.5], [-1, 7, .1]]) {
+    const hz = new THREE.Mesh(new THREE.ConeGeometry(3.2, 15, 28, 1, true), new THREE.MeshBasicMaterial({ map: gh, color: 0xb8d6ff, transparent: true, opacity: .26, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    hz.position.set(x, 7.5, z); hz.userData = { x, z, ry }; S.add(hz); haces.push(hz);
+  }
+  const fx = crearParticulas(S, 360);
+  R.menu = { S, K, balon, p, t: 0, foco, haces, fx, ciclo: -1 };
 }
 // toques con los dos pies (el balón sube y baja al ritmo de la pierna) y cámara que gira despacio alrededor
 function animarMenu3D(dt) {
-  const E = R.menu, p = E.p, b = E.balon; E.t += dt;
-  const per = .64, n = Math.floor(E.t / per), fase = (E.t % per) / per, desde = fase * per, hasta = per - desde;
-  if (desde < .1) { p.pie = n % 2; p.toqueT = .1 - desde; } else if (hasta < .1) { p.pie = (n + 1) % 2; p.toqueT = .1 + hasta; } else p.toqueT = 0;
-  const lado = k => (k ? 1 : -1) * .12, z0 = lado(n % 2), z1 = lado((n + 1) % 2);
-  b.position.set(.42, .3 + 4.4 * fase * (1 - fase) * 1.05, z0 + (z1 - z0) * fase);
-  b.rotation.x += dt * 5; b.rotation.z -= dt * 3;
+  const E = R.menu, p = E.p, b = E.balon; E.t += dt; p.menu = true;
+  // ciclo de 15 s: toques con los dos pies → pelotazo al cielo → celebración con confeti → toques otra vez
+  const T = E.t % 15, ciclo = Math.floor(E.t / 15);
+  let modo = T >= 5.2 && T < 8.9 ? 'pelotazo' : T >= 8.9 && T < 12.4 ? 'celebra' : 'toques', altoMirada = 1.05;
+  p.celebra = 0;
+  if (modo === 'celebra') { p.celebra = 3 - (T - 8.9); }
+  if (modo === 'toques') {
+    const per = .64, n = Math.floor(E.t / per), fase = (E.t % per) / per, desde = fase * per, hasta = per - desde;
+    if (desde < .1) { p.pie = n % 2; p.toqueT = .1 - desde; } else if (hasta < .1) { p.pie = (n + 1) % 2; p.toqueT = .1 + hasta; } else p.toqueT = 0;
+    const lado = k => (k ? 1 : -1) * .12, z0 = lado(n % 2), z1 = lado((n + 1) % 2);
+    b.position.set(.42, .3 + 4.4 * fase * (1 - fase) * 1.05, z0 + (z1 - z0) * fase);
+    b.rotation.x += dt * 5; b.rotation.z -= dt * 3;
+    p.malabar = true;
+    if (E.ultModo === 'celebra' || E.ultModo === 'pelotazo') E.ultModo = 'toques';
+  } else if (modo === 'pelotazo') {
+    p.malabar = false;
+    const s = (T - 5.2) / 3.7;
+    if (E.ultModo !== 'pelotazo') { E.ultModo = 'pelotazo'; p.patadaT = DUR_PATADA; p.pie = 1; E.fx.chispas(.45, .3, 0, 10, 1.6); }
+    else p.patadaT -= dt;
+    b.position.set(.45 + Math.sin(s * Math.PI) * .5, .3 + 4 * 10 * s * (1 - s), Math.sin(s * Math.PI * 2) * .25);
+    b.rotation.x += dt * 9;
+    altoMirada = 1.05 + Math.sin(Math.min(1, s * 1.15) * Math.PI) * 1.8;
+    p.toqueT = 0;
+  } else {
+    p.malabar = false;
+    if (E.ultModo !== 'celebra') { E.ultModo = 'celebra'; E.fx.confeti(0, 0, 130, 3.4, 7); E.fx.chispas(.4, .3, 0, 12, 1.8); }
+    b.position.set(.42, .17, .1); p.toqueT = 0; p.patadaT = 0;
+  }
+  // polvo de luz flotando en los focos
+  if (Math.random() < dt * 22) E.fx.emitir(_azar(-3.5, 3.5), _azar(.3, 5), _azar(-3.5, 3.5), _azar(-.05, .05), _azar(.1, .3), _azar(-.05, .05), .85, .93, 1, _azar(.5, 1.1), _azar(3.5, 6), 0);
+  E.fx.escala(R.renderer.domElement.height / 700 * .1); E.fx.paso(dt);
+  E.haces.forEach((h, i) => { const u = h.userData; h.rotation.z = Math.sin(E.t * .35 + i * 2.1) * .18 + u.ry * .5; h.rotation.x = Math.cos(E.t * .27 + i) * .12; h.material.opacity = .22 + .06 * Math.sin(E.t * .9 + i); });
   dibujarReal(E.K, [p]);
   const a = .55 + Math.sin(E.t * .12) * .5, cam = R.cam, ancho = innerWidth, alto = innerHeight;
   // en vertical la cámara se aleja para que el jugador quepa entre el título y los botones
-  const vertical = ancho <= alto * 1.1, dist = vertical ? 6.4 : 4.6, portada = typeof APP !== 'undefined' && APP.enPortada;
-  cam.fov = 36; cam.position.set(Math.cos(a) * dist, 1.35 + Math.sin(E.t * .2) * .1, Math.sin(a) * dist); cam.lookAt(0, 1.05, 0);
+  const vertical = ancho <= alto * 1.1, dist = (vertical ? 6.4 : 4.6) + (modo === 'celebra' ? .5 : 0), portada = typeof APP !== 'undefined' && APP.enPortada;
+  E.mirada = (E.mirada == null ? altoMirada : E.mirada + (altoMirada - E.mirada) * Math.min(1, dt * 4));
+  cam.fov = 36; cam.position.set(Math.cos(a) * dist, 1.35 + Math.sin(E.t * .2) * .1 + (E.mirada - 1.05) * .35, Math.sin(a) * dist); cam.lookAt(0, E.mirada, 0);
   // en pantallas anchas el jugador queda a la derecha y los menús a la izquierda; en vertical, arriba (menú) o abajo (portada)
   if (!vertical) cam.setViewOffset(ancho, alto, -ancho * .2, 0, ancho, alto);
   else cam.setViewOffset(ancho, alto, 0, alto * (portada ? -.1 : .13), ancho, alto);
@@ -1853,6 +1894,9 @@ function moverCamara(dt) {
   else { h = 21; d = 25; fov = 38; }
   if (vertical) { const f = 1 + (1 / aspecto - 1) * .55; h *= f; d *= f; }
   else if (window.innerHeight < 520 && modo !== 'arriba') { h *= .86; d *= .86; } // celular en horizontal: un poco más cerca
+  const cg = camaraGol();
+  if (cg) { R.camGol = Math.min(1, (R.camGol || 0) + dt * 1.6); } else R.camGol = Math.max(0, (R.camGol || 0) - dt * 1.4);
+  if (R.camGol > 0) { const k = R.camGol * R.camGol * (3 - 2 * R.camGol), ref = cg || R.camGolUlt; if (cg) R.camGolUlt = cg; if (ref) { R.camX += (ref.x - R.camX) * k * .25; R.camZ += (ref.z - R.camZ) * k * .25; h += (ref.h - h) * k; d += (ref.d - d) * k; fov += (ref.fov - fov) * k; } }
   cam.fov = fov; cam.position.set(R.camX, h, R.camZ + d); cam.lookAt(R.camX, modo === 'tele' ? .5 : 0, R.camZ - (modo === 'arriba' ? 0 : modo === 'tele' ? 1 : 3)); cam.updateProjectionMatrix();
   if (R.sol.castShadow) {
     const ancho = modo === 'lejos' ? 44 : 34, sc = R.sol.shadow.camera;
