@@ -25,9 +25,9 @@ function actualizarBotones() {
   if (ctx === ultimoContexto) return; ultimoContexto = ctx;
   const B = k => document.querySelector('.b[data-b="' + k + '"]');
   B('pass').textContent = pedir ? 'Pedir' : at ? 'Pase' : (G.unJugador ? 'Pase' : 'Cambiar');
-  B('long').innerHTML = pedir ? 'Pedir' : at ? 'Pase<br>largo' : 'Presión';
-  B('shot').textContent = at || pedir ? 'Tiro' : 'Barrida';
-  B('tackle').classList.toggle('apagado', at || pedir);
+  B('through').innerHTML = '<span>' + (pedir ? 'Pedir<br>al hueco' : at ? 'Pase en<br>profundidad' : 'Presión') + '</span>';
+  B('shot').textContent = at || pedir ? 'Disparo' : 'Entrada';
+  B('sprint').innerHTML = '<span>' + (at || pedir ? 'Sprint<br>y regate' : 'Sprint<small>desliza: barrida</small>') + '</span>';
 }
 function dibujarRadar() {
   const c = $('radar'), x = c.getContext('2d'), w = c.width, h = c.height;
@@ -81,10 +81,21 @@ function iniciarTactil() {
   zona.addEventListener('pointermove', e => { if (e.pointerId === id) { e.preventDefault(); mover(e); } });
   const fin = e => { if (e.pointerId !== id) return; id = null; TACT.mx = TACT.mz = 0; TACT.sprint = false; knob.style.transform = ''; knob.classList.remove('sprint'); base.classList.remove('activo'); casa(); };
   zona.addEventListener('pointerup', fin); zona.addEventListener('pointercancel', fin); zona.addEventListener('lostpointercapture', fin);
+  // botones: Pase, Pase en profundidad, Disparo y Sprint y regate. Al defender, Disparo hace la entrada.
+  // Deslizar el dedo sobre Sprint y regate hace un regate hacia ese lado (al defender, una barrida).
   document.querySelectorAll('.b').forEach(bt => {
-    const k = bt.dataset.b; const ids = new Set();
-    const on = () => { TACT[k] = ids.size > 0; bt.classList.toggle('on', TACT[k]); };
-    bt.addEventListener('pointerdown', e => { e.preventDefault(); ids.add(e.pointerId); PULSO[k] = true; try { bt.setPointerCapture(e.pointerId); } catch (er) { } activarTactil(); on(); });
+    const k0 = bt.dataset.b, ids = new Map();
+    const tecla = () => k0 === 'shot' && !atacando() && !(G.saque && G.saque.tomador === G.ctrl) ? 'tackle' : k0;
+    const on = () => { for (const kk of ['shot', 'tackle']) if (k0 === 'shot') TACT[kk] = [...ids.values()].some(v => v.k === kk); if (k0 !== 'shot') TACT[k0] = ids.size > 0; bt.classList.toggle('on', ids.size > 0); };
+    bt.addEventListener('pointerdown', e => {
+      e.preventDefault(); const k = tecla(); ids.set(e.pointerId, { k, x: e.clientX, y: e.clientY, regate: false }); PULSO[k] = true;
+      try { bt.setPointerCapture(e.pointerId); } catch (er) { } activarTactil(); on();
+    });
+    bt.addEventListener('pointermove', e => {
+      const t = ids.get(e.pointerId); if (!t || k0 !== 'sprint' || t.regate) return;
+      const dx = e.clientX - t.x, dy = e.clientY - t.y, d = hyp(dx, dy);
+      if (d > 26) { t.regate = true; SKILL = { x: dx / d, z: dy / d }; vibrar(12); }
+    });
     const up = e => { ids.delete(e.pointerId); on(); };
     bt.addEventListener('pointerup', up); bt.addEventListener('pointercancel', up); bt.addEventListener('lostpointercapture', up);
   });
@@ -115,7 +126,7 @@ function iniciarTeclado() {
 
 /* ---------- pantallas ---------- */
 const OPCIONES = [
-  { k: 'cam', t: 'Cámara', o: [['diag', 'Diagonal'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
+  { k: 'cam', t: 'Cámara', o: [['tele', 'Televisión'], ['diag', 'Alta'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
   { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
   { k: 'completa', t: 'Pantalla completa al empezar (celular)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },
@@ -129,10 +140,10 @@ const OPCIONES = [
 function htmlAyuda() {
   return `<div class="etq">Cómo se juega</div>
   <div class="ayuda">
-    <b>Pantalla táctil</b><span>Joystick a la izquierda (llévalo hasta el borde para correr). Botones a la derecha.</span>
-    <b>Teclado</b><span>Flechas o WASD para moverte · J pase · L pase largo · K tiro (mantén para más fuerza) · Mayús sprint · Espacio entrada · Q cambiar · Esc pausa</span>
-    <b>Mando</b><span>Stick izquierdo · A/✕ pase · X/▢ pase largo · B/○ tiro · RB-RT/R1-R2 sprint · LB/L1 cambiar</span>
-    <b>Defendiendo</b><span>Pase cambia de jugador · Entrada para robar · Tiro hace una barrida · Pase largo (mantener) manda a un compañero a presionar</span>
+    <b>Pantalla táctil</b><span>Joystick a la izquierda (llévalo hasta el borde para correr). Pase · Pase en profundidad (mantén: bombeado) · Disparo (mantén para más fuerza) · Sprint y regate: mantén para correr y desliza el dedo sobre él hacia un lado para regatear (adelante: cambio de ritmo; a un lado: recorte; atrás: ruleta).</span>
+    <b>Teclado</b><span>Flechas o WASD para moverte · J pase · I pase en profundidad (mantén: bombeado) · L pase largo · K tiro (mantén para más fuerza) · Mayús sprint · E regate hacia donde vas · Espacio entrada · Q cambiar · Esc pausa</span>
+    <b>Mando</b><span>Stick izquierdo · A/✕ pase · Y/△ pase en profundidad · X/▢ pase largo · B/○ tiro · RB-RT/R1-R2 sprint · stick derecho: regate · LB/L1 cambiar</span>
+    <b>Defendiendo</b><span>Pase cambia de jugador · Disparo hace la entrada · desliza sobre Sprint para una barrida · Pase en profundidad (mantener) manda a un compañero a presionar</span>
   </div>`;
 }
 function htmlAjustes(solo) {

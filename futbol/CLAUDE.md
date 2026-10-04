@@ -42,6 +42,12 @@ almacenamiento con él. Pelotazo guarda en su propia base de datos (`pelotazo`).
 - Jugadores realistas o de caricatura (ver "Modelos de jugadores"). Tiene que ir fluido en un celular de gama media: los 22 jugadores se dibujan
   con una malla por pieza del cuerpo (`InstancedMesh`), así son pocas llamadas de dibujo. No añadas una malla por
   jugador ni sombras en tiempo real sin medir antes.
+- Controles (0.13, al estilo de los juegos de fútbol de celular): 4 botones táctiles: Pase, Pase en profundidad
+  (`through`: tocar = raso al hueco, mantener = bombeado; `pasarProfundidad`), Disparo (al defender manda `tackle`,
+  la entrada) y Sprint y regate (mantener = sprint; deslizar el dedo sobre él = `SKILL`, un regate con `regate()`:
+  adelante cambio de ritmo, a un lado recorte, atrás ruleta; al defender, barrida). Teclado: I profundidad, E regate.
+  Mando: Y profundidad, stick derecho regate. Internamente siguen existiendo `long` y `tackle` (teclado, mando, pruebas).
+- Cámara por defecto `tele` (de lado, baja y lejana con teleobjetivo, como la tele). Las demás quedan en Ajustes.
 - Controles: pantalla táctil, teclado y mando deben hacer lo mismo. Todo pasa por `leerControles()`, que mezcla las
   tres fuentes en `ENT` (estado), `BORDE` (recién pulsado) y `SUELTO` (recién soltado). Las pulsaciones rápidas se
   guardan en `PULSO` para no perderlas aunque el juego vaya a pocos fotogramas. Los botones cambian de función al

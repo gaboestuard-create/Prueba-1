@@ -66,8 +66,8 @@ test('se ve bien en un teléfono en vertical y en horizontal', async () => {
     const r = await page.evaluate(() => {
       const ver = s => { const e = document.querySelector(s), b = e.getBoundingClientRect(); return b.width > 0 && b.left >= 0 && b.right <= innerWidth + 1 && b.bottom <= innerHeight + 1; };
       const choca = (a, b) => { const r = document.querySelector(a).getBoundingClientRect(), q = document.querySelector(b).getBoundingClientRect(); return r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom; };
-      const choques = [['#marcador', '#radar'], ['#radar', '#bPausa'], ['#marcador', '#bPausa'], ['.b[data-b="pass"]', '.b[data-b="shot"]'], ['.b[data-b="pass"]', '.b[data-b="long"]'], ['.b[data-b="sprint"]', '.b[data-b="tackle"]'], ['#stickBase', '.b[data-b="sprint"]']].filter(([a, b]) => choca(a, b));
-      return { choques, tactil: document.body.classList.contains('tactil'), botones: ['.b[data-b="pass"]', '.b[data-b="shot"]', '.b[data-b="long"]', '.b[data-b="tackle"]', '.b[data-b="sprint"]', '#stickBase', '#marcador'].filter(s => !ver(s)), scroll: document.documentElement.scrollWidth > innerWidth };
+      const choques = [['#marcador', '#radar'], ['#radar', '#bPausa'], ['#marcador', '#bPausa'], ['.b[data-b="pass"]', '.b[data-b="shot"]'], ['.b[data-b="pass"]', '.b[data-b="through"]'], ['.b[data-b="pass"]', '.b[data-b="sprint"]'], ['.b[data-b="through"]', '.b[data-b="shot"]'], ['.b[data-b="through"]', '.b[data-b="sprint"]'], ['.b[data-b="shot"]', '.b[data-b="sprint"]'], ['#stickBase', '.b[data-b="pass"]']].filter(([a, b]) => choca(a, b));
+      return { choques, tactil: document.body.classList.contains('tactil'), botones: ['.b[data-b="pass"]', '.b[data-b="shot"]', '.b[data-b="through"]', '.b[data-b="sprint"]', '#stickBase', '#marcador'].filter(s => !ver(s)), scroll: document.documentElement.scrollWidth > innerWidth };
     });
     assert(r.tactil, `${viewport.width}x${viewport.height}: no se muestran los controles táctiles`);
     assert(!r.botones.length, `${viewport.width}x${viewport.height}: se salen de la pantalla: ${r.botones}`);
@@ -172,7 +172,7 @@ test('faltas en un partido entero: se pitan pero no demasiadas, y el partido ter
     let f = 0, am = 0, ro = 0, term = 0;
     for (let s = 1; s <= 4; s++) {
       nuevoPartido({ semilla: 20 + s, usuario: -1 }); G.autoplay = true; G.pausa = false;
-      for (let i = 0; i < 6 * 60 * 60 && G.fase !== 'fin'; i += 60) G.avanzar(60);
+      for (let i = 0; i < 9 * 60 * 60 && G.fase !== 'fin'; i += 60) G.avanzar(60); // 5 min de reloj + paradas
       f += G.stats.faltas[0] + G.stats.faltas[1]; am += G.stats.amarillas[0] + G.stats.amarillas[1]; ro += G.stats.rojas[0] + G.stats.rojas[1]; term += G.fase === 'fin' ? 1 : 0;
     }
     return { f, am, ro, term };
@@ -614,6 +614,90 @@ test('teclado: las flechas mueven al jugador y J pasa el balón', async () => {
   assert(x1 < x0 - 1, `no se movió con la flecha izquierda (${x0} → ${x1})`);
   await page.keyboard.down('KeyJ'); await page.waitForTimeout(80); await page.keyboard.up('KeyJ');
   assert(await page.evaluate(() => G.stats.pases[0]) === 1, 'J no hizo un pase');
+  sinErrores(errors); await ctx.close();
+});
+
+test('regates: cambio de ritmo, recorte y ruleta conservan el balón', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const res = {};
+  for (const [n, sx, sz] of [['ritmo', 1, 0], ['recorte', 0, 1], ['ruleta', -1, 0]]) {
+    let bien = 0, nombres = new Set(), giro = 0;
+    for (let s = 1; s <= 5; s++) {
+      await prepararJugada(page, { x: 0, z: 0, semilla: s });
+      const r = await page.evaluate(({ sx, sz }) => {
+        const p = G.ctrl, b = G.balon;
+        Object.assign(G.prueba, { activo: true, mx: 1, mz: 0 }); G.avanzar(40);
+        Object.assign(G.prueba, { skill: { x: sx, z: sz }, mx: sx, mz: sz }); G.avanzar(1);
+        const aviso = G.ultimoAviso; G.avanzar(45);
+        return { tiene: b.dueno === p, aviso, dir: Math.atan2(p.vz, p.vx), haciaX: Math.cos(Math.atan2(p.vz, p.vx)) * sx + Math.sin(Math.atan2(p.vz, p.vx)) * sz };
+      }, { sx, sz });
+      if (r.tiene) bien++; nombres.add(r.aviso); if (r.haciaX > .7) giro++;
+    }
+    res[n] = { bien, nombres: [...nombres], giro };
+  }
+  assert(res.ritmo.bien >= 4 && res.recorte.bien >= 4 && res.ruleta.bien >= 4, 'los regates pierden el balón: ' + JSON.stringify(res));
+  assert(res.ritmo.nombres.includes('Cambio de ritmo') && res.recorte.nombres.includes('Recorte') && res.ruleta.nombres.includes('Ruleta'), 'no hizo el regate esperado: ' + JSON.stringify(res));
+  assert(res.recorte.giro >= 4 && res.ruleta.giro >= 4, 'tras el regate debería ir hacia el lado elegido: ' + JSON.stringify(res));
+  sinErrores(errors); await ctx.close();
+});
+
+test('pase en profundidad: raso o bombeado al hueco por delante del compañero', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  for (const alto of [false, true]) {
+    await prepararJugada(page, { x: -10, z: 0 });
+    const r = await page.evaluate(alto => {
+      const p = G.ctrl, m = G.eqs[0].pl[7], b = G.balon; m.x = 5; m.z = 6; m.vx = 3; m.vz = 0;
+      Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, through: true }); G.avanzar(alto ? 25 : 1);
+      Object.assign(G.prueba, { through: false }); G.avanzar(12);
+      const info = { tipo: b.tipo, destino: b.destino === m, delante: m.recibe ? (m.recibe.x - m.x) * p.eq.dir : -99 };
+      G.avanzar(150); info.recibe = b.dueno === m;
+      return info;
+    }, alto);
+    assert(r.tipo === (alto ? 'largo' : 'pase') && r.destino, `${alto ? 'bombeado' : 'raso'}: no fue al compañero: ` + JSON.stringify(r));
+    assert(r.delante > 1.5, 'el pase debería ir al hueco, por delante del receptor: ' + JSON.stringify(r));
+    assert(r.recibe, 'el receptor debería llegar al balón: ' + JSON.stringify(r));
+  }
+  sinErrores(errors); await ctx.close();
+});
+
+test('pantalla táctil: deslizar sobre Sprint hace un regate y Disparo al defender es entrada', async () => {
+  const ctx = await fresh({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  const toque = (sel, tipo, x, y, id) => page.evaluate(({ sel, tipo, x, y, id }) => {
+    document.querySelector(sel).dispatchEvent(new PointerEvent(tipo, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true }));
+  }, { sel, tipo, x, y, id });
+  await prepararJugada(page, { x: 0, z: 0 });
+  await page.evaluate(() => { G.pausa = false; G.prueba.activo = false; });
+  const sb = await (await page.$('.b[data-b="sprint"]')).boundingBox(), cx = sb.x + sb.width / 2, cy = sb.y + sb.height / 2;
+  await toque('.b[data-b="sprint"]', 'pointerdown', cx, cy, 5);
+  await toque('.b[data-b="sprint"]', 'pointermove', cx, cy + 40, 5);
+  await page.waitForTimeout(150);
+  await toque('.b[data-b="sprint"]', 'pointerup', cx, cy + 40, 5);
+  const reg = await page.evaluate(() => ({ aviso: G.ultimoAviso, cd: G.ctrl.regCD }));
+  assert(['Recorte', 'Ruleta', 'Cambio de ritmo'].includes(reg.aviso), 'deslizar sobre Sprint no hizo un regate: ' + JSON.stringify(reg));
+  // defendiendo: el botón Disparo hace una entrada (no barrida)
+  const def = await page.evaluate(() => {
+    G.pausa = true; nuevoPartido(3); G.saque = null; const r = G.eqs[1].pl[9]; G.balon.dueno = null; tomar(r); controlar(G.eqs[0].pl[5]);
+    actualizarBotones(); return document.querySelector('.b[data-b="shot"]').textContent;
+  });
+  const shb = await (await page.$('.b[data-b="shot"]')).boundingBox();
+  await toque('.b[data-b="shot"]', 'pointerdown', shb.x + 20, shb.y + 20, 6);
+  const t = await page.evaluate(() => ({ tackle: TACT.tackle, shot: TACT.shot }));
+  await toque('.b[data-b="shot"]', 'pointerup', shb.x + 20, shb.y + 20, 6);
+  assert(def === 'Entrada' && t.tackle && !t.shot, 'al defender Disparo debería ser Entrada: ' + JSON.stringify({ def, t }));
+  sinErrores(errors); await ctx.close();
+});
+
+test('cámara de televisión por defecto (y quien tenía la de antes pasa a ella)', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    const nuevo = DATOS.ajustes.cam;
+    const viejo = { ajustes: { cam: 'diag' }, estad: {}, historial: [] }; arreglarDatos(viejo);
+    const elegida = { ajustes: { cam: 'lejos' }, estad: {}, historial: [] }; arreglarDatos(elegida);
+    return { nuevo, viejo: viejo.ajustes.cam, elegida: elegida.ajustes.cam };
+  });
+  assert(r.nuevo === 'tele' && r.viejo === 'tele' && r.elegida === 'lejos', 'cámara por defecto mal: ' + JSON.stringify(r));
   sinErrores(errors); await ctx.close();
 });
 

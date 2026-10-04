@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.12.0';
+const JUEGO_VERSION = '0.13.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -114,7 +114,7 @@ function nuevoPartido(cfg) {
   G.todos = [...G.eqs[0].pl, ...G.eqs[1].pl];
   G.unJugador = cfg.jugadorId != null ? G.todos.find(p => p.id === cfg.jugadorId && p.eq.i === G.usuario) || null : null;
   G.balon = nuevoBalon();
-  G.reloj = 0; G.t = 0; G.fase = 'juego'; G.parte = 1; G.buffer = null; G.carga = null; G.pidePase = 0; G.goles = [];
+  G.reloj = 0; G.t = 0; G.fase = 'juego'; G.parte = 1; G.buffer = null; G.carga = null; G.prof = null; SKILL = null; G.pidePase = 0; G.goles = [];
   G.stats = { tiros: [0, 0], aPuerta: [0, 0], pos: [0, 0], pases: [0, 0], pasesOk: [0, 0], faltas: [0, 0], amarillas: [0, 0], rojas: [0, 0] };
   G.ctrl = null;
   saqueInicial(G.eqs[0]);
@@ -276,6 +276,7 @@ function tomar(p) {
     const a = G.buffer; G.buffer = null;
     // tiro de primera: si ya soltaste el botón sale con la fuerza cargada (mínimo media); si no, sigue cargando
     if (a.a === 'shot') { if (!ENT.shot) disparar(p, a.pot || .45, a.ax || 0, a.az || 0); else G.carga = { t: a.carga || 0 }; }
+    else if (a.a === 'through') pasarProfundidad(p, a.dx, a.dz, false);
     else pasar(p, a.dx, a.dz, a.a === 'long' ? 'largo' : 'corto');
   } else if (G.ctrl === p) G.buffer = null;
 }
@@ -333,6 +334,61 @@ function pasarA(p, m, tipo) {
   }
   ax = clamp(ax, -HL + .8, HL - .8); az = clamp(az, -HW + .8, HW - .8);
   lanzarPase(p, ax, az, tipo, m);
+}
+// pase en profundidad: al hueco por delante del compañero que mejor encaja (hacia la portería rival), para que llegue
+// corriendo. Raso, o bombeado por encima de la defensa si se mantiene el botón.
+function pasarProfundidad(p, dx, dz, alto) {
+  const l = hyp(dx, dz), dir = p.eq.dir;
+  if (l < .2) { dx = dir; dz = 0; } else { dx /= l; dz /= l; }
+  let mejor = null, ms = -1e9;
+  for (const m of p.eq.pl) {
+    if (m === p || m.por) continue;
+    const vx = m.x - p.x, vz = m.z - p.z, d = hyp(vx, vz);
+    if (d < 4 || d > (alto ? 60 : 42)) continue;
+    const ang = Math.acos(clamp((vx * dx + vz * dz) / d, -1, 1));
+    if (ang > CONO_PASE) continue;
+    const avance = (m.x - p.x) * dir, libre = Math.min(3, lineaLibre(p.x, p.z, m.x, m.z, p.eq.rival, alto ? 0 : 16));
+    const s = -ang * 2.4 + clamp(avance, -10, 25) * .09 + libre * .25 - d * .01;
+    if (s > ms) { ms = s; mejor = m; }
+  }
+  if (!mejor) { lanzarPase(p, clamp(p.x + dx * 16, -HL + 1, HL - 1), clamp(p.z + dz * 16, -HW + 1, HW - 1), alto ? 'largo' : 'pase', null); return; }
+  // el hueco: unos metros por delante del receptor, hacia la portería y hacia donde ya corre
+  const m = mejor, adel = alto ? 8 : 6, sp = hyp(m.vx, m.vz);
+  let tx = m.x + dir * adel * .75 + (sp > 1 ? m.vx / sp * adel * .45 : 0), tz = m.z + (sp > 1 ? m.vz / sp * adel * .35 : 0) + dz * 1.5;
+  tx = clamp(tx, -HL + 2, HL - 2); tz = clamp(tz, -HW + 1.5, HW - 1.5);
+  m.desmarque = true;
+  lanzarPase(p, tx, tz, alto ? 'largo' : 'pase', m);
+}
+// regates: deslizar el dedo sobre Sprint y regate (o E, o el stick derecho) hacia un lado.
+// Hacia delante: cambio de ritmo (se lanza el balón y arranca). A un lado: recorte con finta (los rivales cercanos
+// muerden). Hacia atrás: ruleta (pisa el balón y se da la vuelta con él). Sale mejor cuanto mejor regateador es.
+function regate(p, sx, sz) {
+  const b = G.balon;
+  if (p.golpe || (p.regCD || 0) > 0 || b.dueno !== p || (G.saque && G.saque.tomador === p)) return;
+  const fx = Math.cos(p.cara), fz = Math.sin(p.cara);
+  let l = hyp(sx, sz); if (l < .2) { sx = fx; sz = fz; l = 1; }
+  sx /= l; sz /= l;
+  const rel = Math.acos(clamp(sx * fx + sz * fz, -1, 1)), sp = hyp(p.vx, p.vz), error = (1 - p.reg) * .45 * (.5 + rng());
+  let nombre;
+  if (rel < .8) { // cambio de ritmo
+    const v = Math.max(sp, 4) + 5.5 + error * 3;
+    b.vx = sx * v; b.vz = sz * v; p.burstT = .7; p.vx = sx * Math.max(sp, 3.5); p.vz = sz * Math.max(sp, 3.5);
+    nombre = 'Cambio de ritmo';
+  } else if (rel < 2.3) { // recorte con finta
+    const v = 4.6 + error * 3;
+    b.vx = sx * v + fx * sp * .35; b.vz = sz * v + fz * sp * .35;
+    p.vx = sx * Math.max(3.5, sp * .8); p.vz = sz * Math.max(3.5, sp * .8); p.cara = Math.atan2(sz, sx);
+    for (const r of p.eq.rival.pl) if (!r.por && hyp(r.x - p.x, r.z - p.z) < 3.2) { r.vx *= .3; r.vz *= .3; r.tropiezo = Math.max(r.tropiezo, .25 * (.6 + p.reg)); }
+    nombre = 'Recorte';
+  } else { // ruleta
+    b.vx = sx * (2.6 + error * 2); b.vz = sz * (2.6 + error * 2);
+    p.vx = sx * 2.2; p.vz = sz * 2.2; p.cara = Math.atan2(sz, sx);
+    nombre = 'Ruleta';
+  }
+  p.protegido = Math.max(p.protegido, .3 + p.reg * .15); p.regCD = .55; p.toqueCD = .3; p.toqueT = .25; p.pie = ladoBalon(p);
+  b.toque = (b.toque || 0) + 1;
+  if (esUsuario(p)) aviso(nombre, '', .6, true);
+  suena('patada', .25);
 }
 const llegada = p => 6.5 + p.pas * 2.5;           // velocidad con la que llega un pase raso
 function lanzarPase(p, tx, tz, tipo, m) {
@@ -408,7 +464,7 @@ function reaccionPortero(eq) {
 // velocidad máxima: el sprint depende de la energía que le quede (resistencia: ver moverJugador)
 function velMax(p, sprint) {
   const e = p.energia == null ? 1 : p.energia;
-  return (5.6 + p.vel * 1.6) * (sprint ? 1 + .3 * (.35 + .65 * e) : 1) * (G.balon && G.balon.dueno === p ? .9 : 1) * (p.tropiezo > 0 ? .5 : 1);
+  return (5.6 + p.vel * 1.6) * (sprint ? 1 + .3 * (.35 + .65 * e) : 1) * ((p.burstT || 0) > 0 ? 1.1 : 1) * (G.balon && G.balon.dueno === p ? .9 : 1) * (p.tropiezo > 0 ? .5 : 1);
 }
 function moverHacia(p, tx, tz, sprint, frenar = true) {
   const dx = tx - p.x, dz = tz - p.z, d = hyp(dx, dz);
@@ -447,9 +503,9 @@ function moverJugador(p, dvx, dvz, dt) {
     } else {
       // en carrera: cuanto más rápido, más abierto el giro; un cambio de dirección brusco obliga a frenar antes
       const ang = Math.atan2(p.vz, p.vx), dif = angDif(ang, Math.atan2(dvz, dvx));
-      const giroMax = 13 / (1 + sp * .32) * (conduce ? .85 : 1) * dt;
+      const giroMax = 13 / (1 + sp * .32) * (conduce ? (sp > 6.5 ? .85 : 1.1) : 1) * dt;
       // media vuelta corriendo: primero clava los pies y frena en línea recta, luego gira
-      const g = Math.abs(dif) > 2.2 && sp > 2.5 ? 0 : clamp(dif, -giroMax, giroMax);
+      const g = Math.abs(dif) > 2.2 && sp > (conduce ? 4.2 : 2.5) ? 0 : clamp(dif, -giroMax, giroMax);
       let objetivo = ds * clamp(1 - (Math.abs(dif) - .5) / 1.6, .12, 1);
       if (conduce) { // con el balón, un giro cerrado obliga a frenar para tocarlo hacia el nuevo lado...
         const difQ = Math.abs(angDif(ang, Math.atan2(p.qz, p.qx))), db = hyp(b.x - p.x, b.z - p.z);
@@ -480,7 +536,7 @@ function moverJugador(p, dvx, dvz, dt) {
     if (sp > .5) objetivo = Math.atan2(p.vz, p.vx);
     else if (p.mirar != null) objetivo = p.mirar;
     if (objetivo != null) {
-      const giro = (G.balon.dueno === p ? 11 : 14) * dt, d = angDif(p.cara, objetivo);
+      const giro = (G.balon.dueno === p ? 13 : 14) * dt, d = angDif(p.cara, objetivo);
       p.cara += clamp(d, -giro, giro);
     }
   }
@@ -531,7 +587,7 @@ function conducir(b, o, dt) {
       const sprint = sp > velMax(o, false) * 1.05;
       // media vuelta corriendo: pisa el balón para frenarlo y se da la vuelta con él (no lo manda lejos hacia atrás)
       const pisa = giro && sp > 3.2 && (bv > .3 ? mismaDir < -.2 : delante < -.2);
-      const v = pisa ? .8 : giro ? clamp(sp, 2.5, 4.5) + 1.2 : sp * (sprint ? 1.12 : 1.15) + (sprint ? .7 : .45);
+      const v = pisa ? .8 : giro ? clamp(sp, 2.5, 4.5) + 1.1 : sp * (sprint ? 1.12 : 1.08) + (sprint ? .7 : .35);
       b.vx = ux * v; b.vz = uz * v;
       o.toqueCD = giro ? .26 : clamp(.36 - sp * .02, .18, .36);
       o.toqueT = .2; o.pie = ladoBalon(o); b.toque = (b.toque || 0) + 1;
@@ -932,15 +988,17 @@ function sacarPortero(p) {
 }
 
 /* ---------- controles: estado combinado de teclado, pantalla táctil y mando ---------- */
-const BOTONES = ['pass', 'long', 'shot', 'tackle', 'sprint', 'swap'];
-const ENT = { mx: 0, mz: 0, sprint: false, pass: false, long: false, shot: false, tackle: false, swap: false };
+const BOTONES = ['pass', 'through', 'long', 'shot', 'tackle', 'sprint', 'swap'];
+const ENT = { mx: 0, mz: 0, sprint: false, pass: false, through: false, long: false, shot: false, tackle: false, swap: false };
+// regate pedido (deslizar sobre el botón Sprint y regate, tecla E o el stick derecho del mando): { x, z } dirección
+let SKILL = null;
 const PREV = {};
 const BORDE = {};   // pulsado en este fotograma
 const SUELTO = {};  // soltado en este fotograma
 const TECLAS = {}, TACT = { mx: 0, mz: 0, sprint: false }, PRUEBA = { activo: false };
 const PULSO = {};   // botones pulsados desde el último fotograma (aunque ya se hayan soltado)
 const MAPA_TECLAS = {
-  KeyJ: 'pass', KeyX: 'pass', KeyK: 'shot', KeyC: 'shot', KeyL: 'long', KeyZ: 'long', Space: 'tackle', KeyV: 'tackle',
+  KeyJ: 'pass', KeyX: 'pass', KeyK: 'shot', KeyC: 'shot', KeyL: 'long', KeyZ: 'long', KeyI: 'through', KeyB: 'through', Space: 'tackle', KeyV: 'tackle',
   ShiftLeft: 'sprint', ShiftRight: 'sprint', KeyQ: 'swap',
 };
 let mandoConectado = false;
@@ -973,12 +1031,18 @@ function leerControles() {
     if (bt(0)) v.pass = true;                       // A / X(PS): pase · cambiar
     if (bt(1)) v[at ? 'shot' : 'tackle'] = true;    // B / Círculo: tiro · entrada
     if (bt(2)) v[at ? 'long' : 'shot'] = true;      // X / Cuadrado: pase largo · barrida
-    if (bt(3)) v.long = true;                       // Y / Triángulo: pase largo · presión
+    if (bt(3)) v[at ? 'through' : 'long'] = true;   // Y / Triángulo: pase en profundidad · presión
+    // stick derecho: un golpe rápido hacia un lado = regate hacia ese lado
+    const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0, rl = hyp(rx, ry);
+    if (rl > .75 && !PREV.stickR) { SKILL = { x: rx / rl, z: ry / rl }; PREV.stickR = true; } else if (rl < .35) PREV.stickR = false;
     if (bt(4)) v.swap = true;                       // LB / L1: cambiar jugador
     if (bt(5) || bt(7)) v.sprint = true;            // RB-RT / R1-R2: sprint
     if (bt(9) && !PREV.pausa) { PREV.pausa = true; setTimeout(abrirPausa, 0); } else if (!bt(9)) PREV.pausa = false;
   }
-  if (PRUEBA.activo) { mx = PRUEBA.mx || 0; mz = PRUEBA.mz || 0; for (const k of BOTONES) v[k] = !!PRUEBA[k]; }
+  if (PRUEBA.activo) { mx = PRUEBA.mx || 0; mz = PRUEBA.mz || 0; for (const k of BOTONES) v[k] = !!PRUEBA[k]; if (PRUEBA.skill) { SKILL = PRUEBA.skill; PRUEBA.skill = null; } }
+  // teclado: E = regate hacia donde vas (o hacia delante)
+  if (TECLAS.KeyE && !PREV.teclaE) SKILL = mx || mz ? { x: mx, z: mz } : { x: 0, z: 0 };
+  PREV.teclaE = !!TECLAS.KeyE;
   ENT.mx = mx; ENT.mz = mz;
   for (const k of BOTONES) {
     const ahora = v[k] || !!PULSO[k]; PULSO[k] = false;
@@ -1015,6 +1079,13 @@ function controlUsuario(p, dt) {
     else if (BORDE.pass) golpear(p, () => pasar(p, mx, mz, 'corto'));
     else if (BORDE.long) golpear(p, () => pasar(p, mx, mz, 'largo'));
     else if (BORDE.shot) G.carga = { t: 0 };
+    else if (BORDE.through) G.prof = { t: 0 };
+    else if (SKILL) regate(p, SKILL.x, SKILL.z);
+    // pase en profundidad: tocar = raso al hueco; mantener = bombeado por encima de la defensa
+    if (G.prof && b.dueno === p && !p.golpe) {
+      G.prof.t += dt;
+      if (!ENT.through || G.prof.t >= .3) { const alto = G.prof.t >= .3; G.prof = null; golpear(p, () => pasarProfundidad(p, mx, mz, alto)); }
+    }
     if (G.carga && b.dueno === p) {
       G.carga.t += dt;
       if (!ENT.shot || G.carga.t >= .95) {
@@ -1027,6 +1098,7 @@ function controlUsuario(p, dt) {
     // preparar un pase o tiro de primera mientras llega el balón
     if (BORDE.pass) G.buffer = { a: 'pass', t: G.t, dx: ENT.mx, dz: ENT.mz };
     else if (BORDE.long) G.buffer = { a: 'long', t: G.t, dx: ENT.mx, dz: ENT.mz };
+    else if (BORDE.through) G.buffer = { a: 'through', t: G.t, dx: ENT.mx, dz: ENT.mz };
     else if (BORDE.shot) G.buffer = { a: 'shot', t: G.t, ax: ENT.mx, az: ENT.mz, inicio: G.t, carga: 0, pot: .45 };
     if (G.buffer && G.buffer.a === 'shot' && ENT.shot) { // mantener el tiro cargando mientras llega el balón
       G.buffer.carga = G.t - G.buffer.inicio; G.buffer.pot = Math.max(.45, .2 + .8 * Math.min(1, G.buffer.carga / .85)); G.buffer.t = G.t;
@@ -1036,9 +1108,11 @@ function controlUsuario(p, dt) {
     if (BORDE.pass || BORDE.swap) cambiarJugador();
     if (BORDE.tackle) hacerEntrada(p, 'pie');
     if (BORDE.shot) hacerEntrada(p, 'barrida');
-    G.presion = ENT.long;
-  } else if (G.unJugador && (BORDE.pass || BORDE.long)) { G.pidePase = G.t; aviso('¡Pásala!', '', .8, true); } // pedir el balón
+    if (SKILL) { if (hyp(SKILL.x, SKILL.z) > .1) p.cara = Math.atan2(SKILL.z, SKILL.x); hacerEntrada(p, 'barrida'); } // deslizar al defender = barrida
+    G.presion = ENT.long || ENT.through;
+  } else if (G.unJugador && (BORDE.pass || BORDE.long || BORDE.through)) { G.pidePase = G.t; aviso('¡Pásala!', '', .8, true); } // pedir el balón
   else if (BORDE.swap) cambiarJugador();
+  SKILL = null;
   if (!(b.dueno && b.dueno.eq !== p.eq)) G.presion = false;
   if (G.ctrl !== p) return [0, 0];
   if (quieto) { if (mag > .2) p.mirar = Math.atan2(dz, dx); return [0, 0]; }
@@ -1215,6 +1289,7 @@ function paso(dt) {
     if (p.exp) { // el expulsado camina fuera del campo
       const v = moverHacia(p, p.x * .9, Math.sign(p.z || 1) * (HW + 7), false); moverJugador(p, v[0], v[1], dt); continue;
     }
+    p.regCD = (p.regCD || 0) - dt; p.burstT = (p.burstT || 0) - dt;
     p.entCD -= dt; p.suelo -= dt; p.tropiezo -= dt; p.protegido -= dt; p.patadaCD -= dt; p.patadaT -= dt; p.celebra -= dt; p.toqueT -= dt;
     if (p.golpe && G.fase === 'juego' && G.muerto <= 0) pasoGolpe(p, dt);
     let v;
@@ -1741,7 +1816,7 @@ function moverCamara(dt) {
   if (cam.view && cam.view.enabled) cam.clearViewOffset();
   const aspecto = window.innerWidth / Math.max(1, window.innerHeight);
   const vertical = aspecto < 1;
-  const lead = G.autoplay ? 0 : eqUsuario().dir * 4;
+  const lead = G.autoplay ? 0 : eqUsuario().dir * (modo === 'tele' ? 5 : 4);
   // en la carrera de jugador la cámara mira entre el balón y tu jugador
   const yo = G.unJugador, fx = yo ? b.x * .6 + yo.x * .4 : b.x, fz = yo ? b.z * .6 + yo.z * .4 : b.z;
   const objX = clamp(fx + lead, -HL + (modo === 'arriba' ? 10 : 14), HL - (modo === 'arriba' ? 10 : 14));
@@ -1749,12 +1824,14 @@ function moverCamara(dt) {
   const k = 1 - Math.exp(-dt * 4.5);
   R.camX += (objX - R.camX) * k; R.camZ += (objZ - R.camZ) * k;
   let h, d, fov;
-  if (modo === 'arriba') { h = 44; d = 8; fov = 40; }
+  // televisión (por defecto): de lado, baja y cerca, como una retransmisión; se ve la grada del fondo
+  if (modo === 'tele') { h = 15; d = 35; fov = 29; }
+  else if (modo === 'arriba') { h = 44; d = 8; fov = 40; }
   else if (modo === 'lejos') { h = 30; d = 36; fov = 34; }
   else { h = 21; d = 25; fov = 38; }
   if (vertical) { const f = 1 + (1 / aspecto - 1) * .55; h *= f; d *= f; }
   else if (window.innerHeight < 520 && modo !== 'arriba') { h *= .86; d *= .86; } // celular en horizontal: un poco más cerca
-  cam.fov = fov; cam.position.set(R.camX, h, R.camZ + d); cam.lookAt(R.camX, 0, R.camZ - (modo === 'arriba' ? 0 : 3)); cam.updateProjectionMatrix();
+  cam.fov = fov; cam.position.set(R.camX, h, R.camZ + d); cam.lookAt(R.camX, modo === 'tele' ? .5 : 0, R.camZ - (modo === 'arriba' ? 0 : modo === 'tele' ? 1 : 3)); cam.updateProjectionMatrix();
   if (R.sol.castShadow) {
     const ancho = modo === 'lejos' ? 44 : 34, sc = R.sol.shadow.camera;
     if (sc.right !== ancho) { sc.left = sc.bottom = -ancho; sc.right = sc.top = ancho; sc.updateProjectionMatrix(); }

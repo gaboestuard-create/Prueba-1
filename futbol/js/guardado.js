@@ -9,7 +9,7 @@
      no afecte a las demás.
    ===================================================================== */
 const SAVE_VERSION = 2;
-const AJUSTES_DEF = { cam: 'diag', modelo: 'real', sonido: 'si', completa: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
+const AJUSTES_DEF = { cam: 'tele', modelo: 'real', sonido: 'si', completa: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
 const ESTAD_CLAVES = ['jugados', 'ganados', 'empatados', 'perdidos', 'gf', 'gc'];
 const MIGR = {
   // 1: datos sin número de versión (versión 0) → 1
@@ -17,11 +17,13 @@ const MIGR = {
   // 2: modos de juego (Equipo Estrella y torneo en curso)
   2: d => { d.v = 2; d.estrella = d.estrella || null; d.torneo = d.torneo || null; return d; },
 };
-function datosNuevos() { return { v: SAVE_VERSION, creado: Date.now(), guardado: 0, ajustes: { ...AJUSTES_DEF }, estad: { jugados: 0, ganados: 0, empatados: 0, perdidos: 0, gf: 0, gc: 0 }, historial: [], estrella: null, torneo: null }; }
+function datosNuevos() { return { v: SAVE_VERSION, camTele: true, creado: Date.now(), guardado: 0, ajustes: { ...AJUSTES_DEF }, estad: { jugados: 0, ganados: 0, empatados: 0, perdidos: 0, gf: 0, gc: 0 }, historial: [], estrella: null, torneo: null }; }
 let DATOS = datosNuevos();
 // completa lo que falte y corrige ajustes con valores que no existen
 function arreglarDatos(d) {
   if (!d.ajustes || typeof d.ajustes !== 'object') d.ajustes = {};
+  // 0.13: la cámara de televisión pasa a ser la de por defecto (solo si tenías la de antes por defecto)
+  if (!d.camTele) { if (d.ajustes.cam === 'diag') d.ajustes.cam = 'tele'; d.camTele = true; }
   for (const k in AJUSTES_DEF) {
     const op = OPCIONES.find(o => o.k === k);
     if (!(k in d.ajustes) || (op && !op.o.some(([v]) => v === d.ajustes[k]))) d.ajustes[k] = AJUSTES_DEF[k];
