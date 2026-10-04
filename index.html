@@ -75,11 +75,14 @@ body.tactil #tactil{display:block}
 .b{position:absolute;pointer-events:auto;border-radius:50%;border:2px solid rgba(255,255,255,.5);background-color:rgba(10,24,17,.55);background-image:radial-gradient(circle at 50% 28%,rgba(255,255,255,.35),rgba(255,255,255,0) 55%);font-weight:800;font-size:13px;line-height:1.05;display:flex;align-items:center;justify-content:center;text-align:center;touch-action:none;box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 -4px 8px rgba(0,0,0,.25);text-shadow:0 1px 2px rgba(0,0,0,.5);transition:transform .06s}
 .b.on{background-color:rgba(255,210,63,.9);color:#1b1400;border-color:#fff;transform:scale(.94);text-shadow:none}
 .b.apagado{opacity:.4}
-.b[data-b="shot"]{width:92px;height:92px;right:0;top:20px;font-family:var(--f-titulo);font-size:20px;background:rgba(232,70,58,.6)}
-.b[data-b="pass"]{width:88px;height:88px;right:98px;top:104px;font-family:var(--f-titulo);font-size:19px;background:rgba(47,123,255,.6)}
-.b[data-b="long"]{width:66px;height:66px;right:12px;top:126px}
-.b[data-b="tackle"]{width:62px;height:62px;right:108px;top:28px}
-.b[data-b="sprint"]{width:64px;height:64px;right:178px;top:20px}
+.b{background-color:rgba(10,24,17,.42);border-color:rgba(255,255,255,.4)}
+.b[data-b="shot"]{width:84px;height:84px;right:6px;top:0;font-family:var(--f-titulo);font-size:17px}
+.b[data-b="through"]{width:78px;height:78px;right:96px;top:14px;font-size:11.5px}
+.b[data-b="pass"]{width:84px;height:84px;right:150px;top:118px;font-family:var(--f-titulo);font-size:16px}
+.b[data-b="sprint"]{width:104px;height:104px;right:16px;top:100px;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 0 0 6px rgba(255,255,255,.06)}
+.b[data-b="sprint"] small{display:block;font-size:9.5px;font-weight:700;opacity:.85}
+.b[data-b="sprint"]::before,.b[data-b="sprint"]::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px dashed rgba(255,255,255,.18);pointer-events:none}
+.b[data-b="sprint"]::after{display:none}
 @media (max-width:500px){#botones{transform:scale(.8);transform-origin:bottom right}#stickBase{left:calc(env(safe-area-inset-left,0px) + 76px)}}
 
 /* ---------- pantallas (inicio, pausa, final) ---------- */
@@ -455,11 +458,10 @@ body.app .b-completa{display:none}
 <div id="tactil">
   <div id="zonaStick"><div id="stickBase"><div id="stickKnob"></div></div></div>
   <div id="botones">
-    <button class="b" data-b="sprint">Sprint</button>
-    <button class="b" data-b="tackle">Entrada</button>
-    <button class="b" data-b="shot">Tiro</button>
+    <button class="b" data-b="shot">Disparo</button>
+    <button class="b" data-b="through"><span>Pase en<br>profundidad</span></button>
     <button class="b" data-b="pass">Pase</button>
-    <button class="b" data-b="long">Pase<br>largo</button>
+    <button class="b" data-b="sprint"><span>Sprint<br>y regate</span></button>
   </div>
 </div>
 <div id="capa" hidden></div>
