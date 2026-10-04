@@ -58,5 +58,9 @@
   {
     "nombre": "0.14.1 (correcciones: hundirse, pases al esprintar, bombeado)",
     "commit": "9069400"
+  },
+  {
+    "nombre": "0.15.0 (gráficos etapa 1)",
+    "commit": "9769459"
   }
 ]
