@@ -93,7 +93,9 @@ function equipoEstrella(E) {
   return {
     id: 'estrella', nombre: E.nombre, corto: 'EST', camiseta: E.camiseta, pantalon: E.pantalon, medias: E.camiseta, camiseta2: 0xf4f4f4, portero: difColor(E.camiseta, 0x2bc46a) > 150 ? 0x2bc46a : 0xffc928,
     formacion: E.formacion, estilo: { presion: 1, linea: 1, ritmo: 1 },
-    jugadores: E.once.map(u => { const c = cartaPorUid(E, u); return c ? { id: 'c' + c.uid, nombre: c.nombre, nombre1: c.nombre1, num: c.num, atrib: c.at, piel: c.piel, pelo: c.pelo, forma: q } : null; }),
+    jugadores: E.once.map(u => { const c = cartaPorUid(E, u); return c ? { id: 'c' + c.uid, nombre: c.nombre, nombre1: c.nombre1, num: c.num, atrib: c.at, piel: c.piel, pelo: c.pelo, forma: q, med: c.med, pos: c.pos } : null; }),
+    ovr: Math.round(fuerzaEstrella(E)),
+    banquillo: E.cartas.filter(c => !E.once.includes(c.uid)).sort((a, b) => b.med - a.med).slice(0, 7).map(c => ({ nombre: c.nombre, num: c.num, pos: c.pos, med: c.med })),
   };
 }
 // nivel de los rivales de cada división (media): de 60 en la 10 a 87 en la 1
@@ -108,6 +110,7 @@ function nivelRival(E, club) { return Math.min(fuerzaDe(APP.mundo, club), nivelD
 function equipoRivalEst(E, club) {
   const def = equipoParaPartido(APP.mundo, club.id), k = nivelRival(E, club) / fuerzaDe(APP.mundo, club);
   def.jugadores = def.jugadores.map(j => j && { ...j, atrib: Object.fromEntries(Object.entries(j.atrib).map(([a, v]) => [a, Math.round(v * k)])) });
+  def.ovr = Math.round(nivelRival(E, club));
   return def;
 }
 const guardarEstrella = () => guardarAhora();

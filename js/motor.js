@@ -5,7 +5,7 @@
    jugadores e IA · controles · reglas básicas · gráficos · interfaz ·
    guardado protegido · arranque
    ===================================================================== */
-const JUEGO_VERSION = '0.13.0';
+const JUEGO_VERSION = '0.14.0';
 
 /* ---------- utilidades ---------- */
 const PL = 105, PW = 68, HL = PL / 2, HW = PW / 2;     // campo en metros
@@ -268,6 +268,7 @@ function tomar(p) {
   }
   p.toqueCD = .12;
   if (cambio && p.eq !== eqUsuario()) G.perdidaT = G.t;
+  if (cambio) p.eq.rival.perdioT = G.t; // el rival acaba de perder el balón: durante unos segundos presiona para recuperarlo
   G.posesion = p.eq;
   if (p.por && enAreaPropia(p, b.x, b.z) && (cambio || b.pateador?.eq !== p.eq)) { p.retener = 1.1; b.y = 1.05; }
   if (esUsuarioEq(p.eq) && !p.por) controlar(p);
@@ -326,7 +327,7 @@ function pasarA(p, m, tipo) {
   // adelantar el pase a donde va a estar el compañero
   let ax = m.x, az = m.z, t = .5;
   // adelanto pequeño: el pase va al pie, salvo el pase largo a un compañero que se desmarca
-  const adelanto = tipo === 'largo' ? (m.desmarque ? 1.05 : .8) : .45;
+  const adelanto = tipo === 'largo' ? (m.desmarque ? 1.05 : .8) : m.desmarque ? .85 : .45;
   for (let it = 0; it < 3; it++) {
     const d = hyp(ax - p.x, az - p.z);
     t = tipo === 'largo' ? .9 + d * .03 : Math.log((d * ROCE + llegada(p)) / llegada(p)) / ROCE;
@@ -446,16 +447,16 @@ function reaccionPortero(eq) {
   const alcance = cuerpo + Math.max(0, Tk - reac) * 9 + (Tk > reac ? .8 : 0);
   const vel = hyp(b.vx, b.vz);
   let prob;
-  if (lat <= cuerpo && yk < 2.1) prob = .82;                                  // le pega casi al cuerpo
-  else if (lat <= alcance) prob = .74 - .42 * (lat - cuerpo) / Math.max(.1, alcance - cuerpo);
+  if (lat <= cuerpo && yk < 2.1) prob = .93;                                  // le pega casi al cuerpo
+  else if (lat <= alcance) prob = .86 - .42 * (lat - cuerpo) / Math.max(.1, alcance - cuerpo);
   else prob = .06;                                                            // imposible... casi siempre
   if (yk > 1.6 && lat > 1.3) prob -= .14;                                     // arriba, a la escuadra
   if (yk < .45 && lat > 1.6) prob -= .06;                                     // raso y ajustado al palo
-  prob += -Math.max(0, vel - 22) * .012 + (gk.par - .7) * .35 + dif(eq).parada + rnd(-.1, .1);
-  const para = rng() < clamp(prob, .03, .93);
+  prob += -Math.max(0, vel - 22) * .012 + (gk.par - .7) * .35 + dif(eq).parada + rnd(-.06, .06);
+  const para = rng() < clamp(prob, .03, .96);
   const lado = Math.sign(zk - gk.z) || 1;
   let llegaZ = para ? zk : gk.z + (zk - gk.z) * rnd(.35, .7);
-  if (!para && lat <= cuerpo) llegaZ = gk.z - lado * rnd(.6, 1.2);          // se lanzó al otro lado
+  if (!para && lat <= cuerpo) llegaZ = gk.z + lado * rnd(.3, .8);           // le pasa por debajo o se le escapa de las manos (no se lanza al lado contrario)
   gk.estirada = { z: clamp(llegaZ, -GW2 - .6, GW2 + .6), y: yk, t: 0, reac, T: Tk, lado: Math.sign(llegaZ - gk.z) || lado, para };
   if (para) b.paraPor = gk; else b.batido = gk;
 }
@@ -782,15 +783,20 @@ function planEquipos() {
       const orden = campo.slice().sort((p, q) => hyp(p.x - b.x, p.z - b.z) - hyp(q.x - b.x, q.z - b.z));
       if (esUsuarioEq(eq)) {
         const c = G.ctrl, dc = c ? hyp(c.x - b.x, c.z - b.z) : 99;
-        const otros = orden.filter(p => p !== c);
-        if (G.presion || dc > 5) { eq.presiona = otros[0]; eq.cubre = otros[1]; }
+        const otros = orden.filter(p => p !== c), dg = hyp(porteriaPropiaX(eq) - b.x, b.z);
+        // los compañeros no se quedan mirando: el más cercano cierra siempre que el balón no está lejos, el segundo
+        // cubre, y cerca de nuestra portería los dos aprietan
+        if (G.presion || dc > 5 || (otros[0] && hyp(otros[0].x - b.x, otros[0].z - b.z) < 14) || dg < 50) { eq.presiona = otros[0]; eq.cubre = otros[1]; }
         else eq.cubre = otros[0];
+        if (dg < 28 && dc < 7) { eq.presiona2 = otros[0]; eq.presiona = null; eq.cubre = otros[1]; }
+        if (G.t - (eq.perdioT || 0) < 2.6) { eq.presiona = otros[0]; eq.presiona2 = otros[1]; eq.cubre = otros[2]; }
       } else {
         // presión según el estilo: baja = espera en su campo; alta = dos jugadores presionan casi en todo el campo
         const es = eq.estilo || ESTILO_DEF, dg = hyp(porteriaPropiaX(eq) - b.x, b.z);
         if (es.presion > 0 || dg < 55) eq.presiona = orden[0];
         eq.cubre = orden[1];
         if (dg < [22, 30, 60][es.presion]) { eq.presiona2 = orden[1]; eq.cubre = orden[2]; }
+        if (G.t - (eq.perdioT || 0) < 2.6) { eq.presiona = orden[0]; eq.presiona2 = orden[1]; eq.cubre = orden[2]; } // contrapresión tras perder el balón
       }
     }
   }
@@ -810,12 +816,22 @@ function iaJugador(p, dt) {
   if (b.dueno && b.dueno.eq === eq) { // atacando sin balón
     p.desT -= dt;
     if (p.desT <= 0) {
-      p.desT = rnd(1.2, 2.6); p.desmarque = false;
-      const bx = (eq.dir * b.x + HL) / PL;
-      if ((p.rol === 'DEL' || (p.rol === 'MED' && rng() < .3)) && bx > .35 && rng() < .5) {
+      p.desT = rnd(.9, 2); p.desmarque = false;
+      const bx = (eq.dir * b.x + HL) / PL, o = b.dueno;
+      const avanza = o && hyp(o.vx, o.vz) > 2 && o.vx * eq.dir > 0;
+      // desmarque en profundidad: delanteros casi siempre, centrocampistas a veces y laterales que se suman (si el que
+      // lleva el balón avanza, más). Eligen el pasillo con menos rivales.
+      const pr = p.rol === 'DEL' ? .7 : p.rol === 'MED' ? .35 : bx > .5 ? .22 : 0;
+      if (pr && bx > .3 && rng() < pr + (avanza ? .15 : 0)) {
         p.desmarque = true;
-        const lx = lineaDefensa(eq) + eq.dir * rnd(2, 6);
-        p.desX = clamp(lx, -HL + 6, HL - 6) - tx; p.desZ = rnd(-4, 4);
+        const lx = clamp(lineaDefensa(eq) + eq.dir * rnd(2, 7), -HL + 6, HL - 6);
+        let mz = 0, md = -1;
+        for (const z of [-HW * .6, -HW * .25, HW * .25, HW * .6]) {
+          let libre = 99; for (const r of eq.rival.pl) libre = Math.min(libre, hyp(r.x - lx, r.z - z));
+          const s = libre - Math.abs(z - o.z) * .05 - Math.abs(z - p.z) * .08 + rnd(0, 2);
+          if (s > md) { md = s; mz = z; }
+        }
+        p.desX = lx - tx; p.desZ = mz - tz;
       } else {
         const [hx, hz] = buscarHueco(p, tx, tz);
         p.desX = hx - tx; p.desZ = hz - tz;
@@ -930,6 +946,7 @@ function mejorPase(p, seguro) {
     const tipo = d > 28 || (libre < .8 && d > 14) ? 'largo' : 'corto';
     const ritmo = (eq.estilo || ESTILO_DEF).ritmo;
     let s = avance * [.04, .06, .085][ritmo] - (avance < -6 ? .3 : 0) + Math.min(libre, 3) * [.45, .35, .28][ritmo] + (tipo === 'largo' && ritmo === 2 ? .25 : 0) + Math.min(cerca, 6) * .15 - (d > 30 ? (d - 30) * .04 : 0) + (m.desmarque ? .4 : 0) + rnd(-.25, .25);
+    if (m.desmarque && avance > 5 && libre >= 1.5) s += .6; // el que se desmarca en profundidad pide el balón
     if (tipo === 'corto' && libre < .8) s -= 2.5;
     if (tipo === 'largo' && cerca < 2.5) s -= 1.5;
     if (seguro) s += avance < 0 ? .2 : 0;
@@ -1837,6 +1854,33 @@ function moverCamara(dt) {
     if (sc.right !== ancho) { sc.left = sc.bottom = -ancho; sc.right = sc.top = ancho; sc.updateProjectionMatrix(); }
     R.sol.position.set(R.camX - 30, 60, R.camZ + 25); R.sol.target.position.set(R.camX, 0, R.camZ);
   }
+}
+// línea de apunte (azul claro, curva) en córners, saques de banda y de puerta, tiros libres y penaltis cuando sacas tú:
+// muestra hacia dónde irá el balón según donde apuntas con el control
+function actualizarLineaApunte() {
+  if (!R) return;
+  const q = G.saque, p = G.ctrl, b = G.balon;
+  const on = q && p && q.tomador === p && !G.autoplay && G.fase === 'juego' && G.muerto <= 0 && b.dueno === p && q.tipo !== 'inicial';
+  if (!on) { if (R.linea) R.linea.visible = false; return; }
+  const dir = p.eq.dir, gx = dir * HL, mx = ENT.mx, mz = ENT.mz, mag = hyp(mx, mz);
+  let tx, tz, alto, tiro = q.tipo === 'penalti' || (q.tipo === 'falta' && q.muro);
+  if (tiro) {
+    const az = mag > .3 ? mz / mag : 0;
+    tx = gx; tz = Math.abs(az) > .3 ? Math.sign(az) * (GW2 - .75) * Math.min(1, Math.abs(az) * 1.25) : 0; alto = q.tipo === 'penalti' ? .6 : 2.2;
+  } else {
+    const dx = mag > .2 ? mx / mag : dir, dz = mag > .2 ? mz / mag : 0, m = elegirReceptor(p, dx, dz, 'largo');
+    if (m) { tx = m.x; tz = m.z; } else { tx = clamp(b.x + dx * 30, -HL + 1, HL - 1); tz = clamp(b.z + dz * 30, -HW + 1, HW - 1); }
+    alto = clamp(hyp(tx - b.x, tz - b.z) * .13, 1.2, 6);
+  }
+  const pts = [];
+  for (let i = 0; i <= 24; i++) { const t = i / 24; pts.push(new THREE.Vector3(b.x + (tx - b.x) * t, .25 + 4 * alto * t * (1 - t), b.z + (tz - b.z) * t)); }
+  if (!R.linea) {
+    R.linea = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x6ff3ff, transparent: true, opacity: .85, depthWrite: false }));
+    R.linea.frustumCulled = false; R.lineaFin = new THREE.Mesh(new THREE.RingGeometry(.5, .75, 24), new THREE.MeshBasicMaterial({ color: 0x6ff3ff, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false }));
+    R.lineaFin.rotation.x = -Math.PI / 2; R.scene.add(R.linea, R.lineaFin);
+  }
+  R.linea.geometry.dispose(); R.linea.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .09, 5, false);
+  R.lineaFin.position.set(tx, .05, tz); R.linea.visible = R.lineaFin.visible = true;
 }
 function ajustarTamano() {
   if (!R) return;

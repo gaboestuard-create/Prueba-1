@@ -21,7 +21,7 @@ function bucle(ahora) {
   }
   if (!$('capa').hidden) navMando(dt);
   if (R && document.body.classList.contains('en-menu') && R.menu) { animarMenu3D(dt); R.renderer.render(R.menu.S, R.cam); }
-  else if (R) { moverCamara(dt); const real = MODELO_REAL(); if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
+  else if (R) { moverCamara(dt); actualizarLineaApunte(); const real = MODELO_REAL(); if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
   actualizarHud(dt);
   G.frames++;
 }

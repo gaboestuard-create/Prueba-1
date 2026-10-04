@@ -124,12 +124,36 @@ function elegirClub({ titulo = 'Elige un club', alElegir, atras, liga = null, fi
 /* ---------- jugar un partido desde un modo ---------- */
 // cfg: { local, visita (definiciones para el motor), usuario, jugadorId, titulo, modo, alTerminar(res) }
 function jugarPartido(cfg) {
+  // pantalla previa (media de cada equipo, tu alineación y el banquillo) cuando juegas tú
+  if (cfg.usuario >= 0 && cfg.usuario != null && DATOS.ajustes.previa !== 'no' && !cfg.sinPrevia) return previaPartido(cfg, () => iniciarPartido(cfg));
+  iniciarPartido(cfg);
+}
+// pantalla previa: los dos equipos con su media (OVR), tu alineación sobre el campo y el banquillo
+function previaPartido(cfg, seguir) {
+  const U = cfg.usuario === 1 ? cfg.visita : cfg.local, O = cfg.usuario === 1 ? cfg.local : cfg.visita;
+  const form = FORMACIONES[U.formacion] || FORMACIONES['4-3-3'], tipoOvr = o => o >= 85 ? 'oro' : o >= 75 ? 'plata' : 'bronce';
+  const camis = j => colorCss(j.pos === 'POR' ? U.portero : U.camiseta), txtc = j => difColor(j.pos === 'POR' ? U.portero : U.camiseta, 0xffffff) < 200 ? '#111' : '#fff';
+  const huecos = form.map((f, k) => {
+    const j = U.jugadores[k], { x, y } = posHueco(f); if (!j) return '';
+    return `<div class="hueco" style="left:${x}%;top:${y}%"><span class="pc-camisa" style="background:${camis({ pos: f.p })};color:${txtc({ pos: f.p })}">${j.num}</span><span class="pc-nom">${esc(j.nombre)}</span>${j.med ? `<span class="pc-med">${j.med}</span>` : ''}</div>`;
+  }).join('');
+  const lado = (eq, rol) => `<div class="pv-eq">${escudoHTML(eq, 54)}<span class="pv-ovr ${tipoOvr(eq.ovr || 70)}">${eq.ovr || '—'}<small>OVR</small></span><b>${esc(eq.nombre)}</b><small>${esc(rol)}</small></div>`;
+  pantalla(`<div class="plantilla previa">
+      <div class="pl-izq"><div class="cancha-est">${huecos}</div></div>
+      <div class="pl-der">
+        <div class="pv-vs">${lado(U, 'Tu equipo · ' + (U.formacion || ''))}<span class="vs-x">VS</span>${lado(O, 'Rival · ' + (O.formacion || ''))}</div>
+        <p class="nota centro">${cfg.local.estadio ? esc(cfg.local.estadio) + ' · ' : ''}${esc(cfg.titulo || 'Partido')}</p>
+        ${U.banquillo && U.banquillo.length ? `<div class="etq">Banquillo</div><div class="banquillo">${U.banquillo.map(b => `<span><span class="pos pos-${b.pos}">${b.pos}</span>${esc(b.nombre)}<em>${b.med}</em></span>`).join('')}</div>` : ''}
+        <div class="acciones"><button class="btn prin grande" data-acc="jugar">¡A jugar!</button></div>
+      </div></div>`, { titulo: esc(cfg.titulo || 'Partido'), atras: () => { APP.enPartido = false; menuPrincipal(); }, acciones: { jugar: seguir } });
+}
+function iniciarPartido(cfg) {
   APP.fondo = false; APP.enPartido = true;
   salirDeMenus();
   const fin = cfg.alTerminar;
   nuevoPartido({ ...cfg, semilla: Date.now() % 1e9, alTerminar: r => { APP.enPartido = false; fin(r); } });
   G.pausa = false;
-  pantallaCompleta();
+  if (document.body.classList.contains('tactil') && !enApp() && DATOS.ajustes.completa !== 'no' && !document.fullscreenElement && !document.webkitFullscreenElement) pantallaCompleta(true);
   if (typeof SFX !== 'undefined') SFX.silbato('corto');
   aviso(cfg.titulo || '¡A jugar!', `${cfg.local.nombre} – ${cfg.visita.nombre}`, 1.8);
 }
