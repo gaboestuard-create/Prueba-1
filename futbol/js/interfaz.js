@@ -169,6 +169,7 @@ const OPCIONES = [
   { k: 'cam', t: 'Cámara', o: [['tele', 'Televisión'], ['diag', 'Alta'], ['lejos', 'Lejana'], ['arriba', 'Desde arriba']] },
   { k: 'nombres', t: 'Nombres en el campo', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'previa', t: 'Previa del partido', o: [['si', 'Sí'], ['no', 'No']] },
+  { k: 'efectos', t: 'Efectos (confeti, polvo…)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'sonido', t: 'Sonido', o: [['si', 'Sí'], ['bajo', 'Bajo'], ['no', 'No']] },
   { k: 'completa', t: 'Pantalla completa (celular)', o: [['si', 'Sí'], ['no', 'No']] },
   { k: 'modelo', t: 'Jugadores', o: [['real', 'Realistas'], ['caricatura', 'Caricatura']] },

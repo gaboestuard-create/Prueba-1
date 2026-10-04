@@ -9,7 +9,7 @@
      no afecte a las demás.
    ===================================================================== */
 const SAVE_VERSION = 2;
-const AJUSTES_DEF = { cam: 'tele', modelo: 'real', sonido: 'si', completa: 'si', nombres: 'si', previa: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
+const AJUSTES_DEF = { cam: 'tele', modelo: 'real', sonido: 'si', completa: 'si', nombres: 'si', previa: 'si', efectos: 'si', estilo: 'dia', calidad: 'auto', dif: 1, dur: 5, tactil: 'auto', vibrar: true };
 const ESTAD_CLAVES = ['jugados', 'ganados', 'empatados', 'perdidos', 'gf', 'gc'];
 const MIGR = {
   // 1: datos sin número de versión (versión 0) → 1

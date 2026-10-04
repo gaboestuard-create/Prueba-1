@@ -193,7 +193,7 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
 .carta.sel{outline:3px solid var(--amarillo);outline-offset:2px}
 /* ---------- portada y menú principal ---------- */
 .titulo-juego{font-family:var(--f-titulo);font-weight:400;letter-spacing:.02em;line-height:.9;color:#fff;text-shadow:0 3px 0 #0a2716,0 6px 0 rgba(0,0,0,.25),0 0 28px rgba(0,0,0,.45)}
-.titulo-juego span{color:var(--amarillo);background:linear-gradient(180deg,#fff3a8,#ffd23f 50%,#e39b0b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #0a2716) drop-shadow(0 0 14px rgba(0,0,0,.4))}
+.titulo-juego span{color:var(--amarillo);background:linear-gradient(105deg,#e39b0b 0%,#ffd23f 35%,#fff9c8 48%,#ffd23f 60%,#e39b0b 100%) 0 0/250% 100%;animation:brilloTitulo 4.5s ease-in-out infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none;filter:drop-shadow(0 3px 0 #0a2716) drop-shadow(0 0 14px rgba(0,0,0,.4))}
 .portada-pant,.principal{height:100%;min-height:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px)}
 .portada-pant .cuerpo,.principal .cuerpo{flex:1;min-height:0}
 .ini{flex:1;display:grid;grid-template-rows:1fr auto auto;align-items:center;cursor:pointer;min-height:0}
@@ -204,6 +204,7 @@ table.t .celda-club{display:flex;align-items:center;gap:8px}
 .ini-pulsa{text-align:center;padding-bottom:4vh}
 .ini-pulsa span{display:inline-block;font-family:var(--f-titulo);font-size:clamp(17px,min(3.4vh,5.4vw),28px);letter-spacing:.06em;padding:10px 28px;border-radius:999px;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.55) 20%,rgba(0,0,0,.55) 80%,rgba(0,0,0,0));text-shadow:0 2px 6px rgba(0,0,0,.8);animation:late 1.6s ease-in-out infinite}
 .ini-ver{text-align:center;color:var(--gris);font-weight:700;font-size:12px;opacity:.8}
+@keyframes brilloTitulo{0%,30%{background-position:100% 0}70%,100%{background-position:0 0}}
 @keyframes late{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes aparece{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes entra{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
@@ -422,9 +423,9 @@ body.app .b-completa{display:none}
   .chip{padding:6px 11px;font-size:12px}
   .acciones{margin-top:6px;gap:8px}
   .intro,.nota,.hoja p{font-size:12.5px;line-height:1.35}
-  .etq{margin:6px 0 3px;font-size:10px}
-  .seg button{padding:5px 9px;font-size:11.5px}
-  .ops{grid-template-columns:repeat(auto-fill,minmax(min(100%,196px),1fr));gap:0 12px}
+  .etq{margin:3px 0 1px;font-size:10px}
+  .seg button{padding:4px 9px;font-size:11.5px}
+  .ops{grid-template-columns:repeat(auto-fill,minmax(min(100%,196px),1fr));gap:0 10px}
   table.t{font-size:12px}table.t td{padding:4px 6px}table.t th{padding:5px 6px}
   .fila-j{padding:4px 8px}
   .modo{min-height:60px;padding:9px 12px}.modo b{font-size:17px}.modo span{font-size:12px}
@@ -441,6 +442,8 @@ body.app .b-completa{display:none}
   .equipo-vs>.escudo{grid-row:1/span 3;width:46px!important;height:46px!important;font-size:12px!important}
   .equipo-vs b{font-size:16px;text-align:left}.vs-x{font-size:20px}
 }
+#vineta{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 46%,rgba(0,0,0,0) 55%,rgba(0,0,0,.34) 100%)}
+body.en-menu #vineta{display:none}
 /* etiquetas de nombre sobre los jugadores y marcador de televisión */
 #etiquetas{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .et{position:absolute;left:0;top:0;transform:translate(-50%,-100%);font:800 12px var(--f-texto);color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.7);will-change:transform}
@@ -468,6 +471,7 @@ body.app .b-completa{display:none}
 </head>
 <body>
 <canvas id="cv" tabindex="0" aria-label="Campo de juego"></canvas>
+<div id="vineta"></div>
 <div id="hud">
   <div id="marcador"><span class="eq l" id="nomL">HAL</span><span class="gol" id="goles"><b id="gL">0</b><i>-</i><b id="gV">0</b></span><span class="eq v" id="nomV">TOR</span><span class="reloj" id="reloj">00:00</span></div>
   <div id="etiquetas"></div>
@@ -495,6 +499,7 @@ body.app .b-completa{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/sonido.js"></script>
 <script src="js/motor.js"></script>
+<script src="js/efectos.js"></script>
 <script src="js/datos.js"></script>
 <script src="js/mundo.js"></script>
 <script src="js/interfaz.js"></script>

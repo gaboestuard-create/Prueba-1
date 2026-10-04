@@ -15,6 +15,7 @@ Se publica como artefacto de claude.ai con su propio enlace y también se puede 
 | `js/interfaz.js` | Marcador, controles táctiles, pausa, ajustes |
 | `js/guardado.js` | Guardado protegido y ranuras |
 | `js/menus.js` | Sistema de pantallas (`pantalla()`), selector de clubes, amistoso, resultado, lista `MODOS` |
+| `js/efectos.js` | Etapa 1 gráfica (0.15): cielo, césped, ambiente, partículas (`crearParticulas`), uniformes con patrones (`UNIFORMES`, `materialCamiseta`), cámara de gol |
 | `js/portada.js` | Portada ("Pulsa cualquier botón"), menú principal por páginas y navegación con teclado y mando |
 | `js/torneos.js` | Liga, copa y Copa de Campeones |
 | `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
@@ -137,6 +138,13 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
 - IA: los compañeros del usuario presionan solos (`planEquipos`), contrapresión 2,6 s tras perder el balón (`eq.perdioT`),
   desmarques en profundidad por pasillos libres (`iaJugador`) y la IA les pasa al hueco (`mejorPase`, `pasarA`).
   Portero más fiable en `reaccionPortero` (no se lanza al lado contrario en tiros al cuerpo).
+
+## Gráficos etapa 1 (0.15)
+- Todo en `js/efectos.js`, sin archivos externos. Ajuste `efectos` ('si'/'no') apaga partículas y brillos.
+- REGLA: los efectos visuales NUNCA usan `rng()` (rompería los resultados con semilla); usar `Math.random`.
+- Uniformes: tabla `UNIFORMES` (rayas 'v', aros 'o', mitades 'h', banda 'c'); se asignan en `colorearReal`.
+- Menú principal: ciclo de 15 s (toques → pelotazo → celebración con confeti) en `animarMenu3D`.
+- Cámara de gol (`camaraGol`) acerca la cámara al marcar. Etapa 2 (futuro): modelos GLB con huesos.
 
 ## Correcciones 0.14.1
 
