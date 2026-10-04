@@ -21,7 +21,7 @@ function bucle(ahora) {
   }
   if (!$('capa').hidden) navMando(dt);
   if (R && document.body.classList.contains('en-menu') && R.menu) { animarMenu3D(dt); R.renderer.render(R.menu.S, R.cam); }
-  else if (R) { moverCamara(dt); actualizarLineaApunte(); animarAmbiente(dt); fxEstela(dt); const real = MODELO_REAL(); if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
+  else if (R) { moverCamara(dt); actualizarLineaApunte(); animarAmbiente(dt); fxEstela(dt); const real = MODELO_REAL(), glb = real && MODELO_GLB(); if (glb) dibujarGLB(); else if (real) dibujarReal(); dibujarJugadores(!real); R.renderer.render(R.scene, R.cam); medirFps(dt); }
   actualizarHud(dt);
   G.frames++;
 }
@@ -42,7 +42,7 @@ async function arrancar() {
   if (rm.estado === 'recuperada') setTimeout(() => toast('Tu base de datos editada estaba dañada: se recuperó de una copia.', 6000), 400);
   if (rm.estado === 'perdida') setTimeout(() => toast('Tu base de datos editada estaba dañada y no tenía copias: se usa la de fábrica.', 6000), 400);
   if (!iniciarGraficos()) return;
-  nuevoPartido();
+  nuevoPartido(); glbRestaurar();
   iniciarTactil(); iniciarTeclado(); iniciarNavegacion(); aplicarTactil(); iniciarApp();
   addEventListener('resize', ajustarTamano);
   addEventListener('gamepadconnected', () => toast('Mando conectado'));

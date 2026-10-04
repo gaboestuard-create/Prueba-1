@@ -16,6 +16,8 @@ Se publica como artefacto de claude.ai con su propio enlace y también se puede 
 | `js/guardado.js` | Guardado protegido y ranuras |
 | `js/menus.js` | Sistema de pantallas (`pantalla()`), selector de clubes, amistoso, resultado, lista `MODOS` |
 | `js/efectos.js` | Etapa 1 gráfica (0.15): cielo, césped, ambiente, partículas (`crearParticulas`), uniformes con patrones (`UNIFORMES`, `materialCamiseta`), cámara de gol |
+| `js/gltfloader.js`, `js/skeletonutils.js` | Copias de three.js r128 (examples/js) para leer .glb y clonar modelos con esqueleto; no se editan |
+| `js/glb.js` | Etapa 2 (0.16): modelo propio de jugador en .glb (`glbCargar`, `dibujarGLB`, `menuGLB`, `glbDesdeArchivo`) |
 | `js/portada.js` | Portada ("Pulsa cualquier botón"), menú principal por páginas y navegación con teclado y mando |
 | `js/torneos.js` | Liga, copa y Copa de Campeones |
 | `js/temporada.js` | Lo común a las carreras: todas las ligas avanzan jornada a jornada |
@@ -145,6 +147,18 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
 - Uniformes: tabla `UNIFORMES` (rayas 'v', aros 'o', mitades 'h', banda 'c'); se asignan en `colorearReal`.
 - Menú principal: ciclo de 15 s (toques → pelotazo → celebración con confeti) en `animarMenu3D`.
 - Cámara de gol (`camaraGol`) acerca la cámara al marcar. Etapa 2 (futuro): modelos GLB con huesos.
+
+## Modelo propio .glb (0.16, etapa 2)
+- Ajustes → Jugadores → "Mi modelo (.glb)" + botón "Cargar archivo .glb…" (`htmlModeloPropio`). El archivo se guarda en IndexedDB
+  (`modelo_glb`) y `glbRestaurar` lo recarga al abrir. Si falta o no se reconoce el esqueleto se usa el modelo realista.
+- No usa las animaciones del archivo: `calcularPose` (motor.js, la misma pose del modelo realista) da ángulos y `glbPose` apunta cada
+  hueso en una dirección (`glbApuntar`), así sirve con cualquier esqueleto humano (nombres tipo Mixamo o Blender, `glbClasificar`).
+  Ojo: el lector de three.js quita los ":" de los nombres (`mixamorig:Hips` → `mixamorigHips`).
+- Convenciones: sistema del jugador x delante, y arriba, z a su derecha; los .glb miran a +z, por eso hay un pivote girado 90°.
+  Altura normalizada a 1,8 m (×`P.alto`). Los índices de huesos son del recorrido del grupo completo (jugador→pivote→escena).
+- Camiseta: materiales cuyo nombre parece camiseta se pintan con el color del equipo; si no hay, se mezcla un 35 % el color.
+- Prueba: `tests/fixtures/maniqui.glb` (se regenera con `node tests/crear_maniqui.mjs`). Si cambias el esqueleto, vuelve a pasar las 3 pruebas "modelo propio".
+- Sin número en la espalda ni pelo/botas por separado con el modelo propio (queda para una etapa 3).
 
 ## Correcciones 0.14.1
 

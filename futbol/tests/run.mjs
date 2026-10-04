@@ -59,6 +59,75 @@ test('jugadores realistas y de caricatura: se cambia de uno a otro y se dibujan'
   sinErrores(errors); await ctx.close();
 });
 
+const MANIQUI = () => fs.readFileSync(path.join(ROOT, 'tests/fixtures/maniqui.glb')).toString('base64');
+
+test('modelo propio (.glb): reconoce el esqueleto, se dibuja en el partido y en el menú y se mueve', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  const r = await page.evaluate(async b64 => {
+    await glbCargar(Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer, 'maniqui.glb'); DATOS.ajustes.modelo = 'glb'; aplicarModelo();
+    G.avanzar(200); await new Promise(res => setTimeout(res, 250));
+    const g = R.glb || [], nan = g.some(x => { let m = false; x.traverse(o => { if (o.isBone && o.quaternion.toArray().some(isNaN)) m = true; }); return m; });
+    R.renderer.render(R.scene, R.cam);
+    // un jugador que corre tiene la pierna fuera de la vertical
+    const p = G.todos[9]; p.vx = 7; p.fase = 1.2; G.balon.dueno = null; dibujarGLB();
+    const e = R.glb[9].userData.huesos.find(h => h.h.tipo === 'muslo' && h.h.lado === 1), a = new THREE.Vector3(), b = new THREE.Vector3();
+    R.glb[9].updateMatrixWorld(true); e.o.getWorldPosition(a); e.o.children.find(c => c.isBone).getWorldPosition(b);
+    const dir = b.sub(a).normalize();
+    return { n: g.length, vis: g.every(x => x.visible), nan, llamadas: R.renderer.info.render.calls, instanciado: R.rTorso.visible, balon: R.balon === R.balonR, adelante: dir.x, GLB: !!GLB.plantilla };
+  }, MANIQUI());
+  assert(r.n === 22 && r.vis, 'no se dibujaron los 22 jugadores con el modelo propio: ' + JSON.stringify(r));
+  assert(!r.nan, 'hay huesos con valores inválidos (NaN)');
+  assert(!r.instanciado, 'el modelo realista de siempre debería estar oculto');
+  assert(Math.abs(r.adelante) > .15, 'la pierna no se mueve al correr: ' + r.adelante);
+  assert(r.llamadas < 100, 'demasiadas llamadas de dibujo: ' + r.llamadas);
+  // el menú principal usa el modelo propio
+  const m = await page.evaluate(() => { menuPrincipal(); return new Promise(res => setTimeout(() => res({ glb: !!(R.menu && R.menu.glb && R.menu.glb.visible), real: R.menu.K.rTorso.visible }), 400)); });
+  assert(m.glb && !m.real, 'el menú no usa el modelo propio: ' + JSON.stringify(m));
+  // al volver al realista, se oculta el modelo propio
+  await page.evaluate(() => { DATOS.ajustes.modelo = 'real'; aplicarModelo(); });
+  const v = await page.evaluate(() => ({ glb: R.glb ? R.glb.some(x => x.visible) : false, real: R.rTorso.visible }));
+  assert(!v.glb && v.real, 'al volver al modelo realista siguen los jugadores propios: ' + JSON.stringify(v));
+  sinErrores(errors); await ctx.close();
+});
+
+test('modelo propio (.glb): un archivo roto o sin esqueleto se rechaza con un aviso y el juego sigue', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  const r = await page.evaluate(async () => {
+    const basura = new TextEncoder().encode('esto no es un modelo 3D').buffer;
+    let e1 = ''; try { await glbCargar(basura, 'x.glb'); } catch (e) { e1 = e.message; }
+    const caja = new THREE.Group(); caja.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial()));
+    let e2 = ''; try { glbPreparar(caja); } catch (e) { e2 = e.message; }
+    DATOS.ajustes.modelo = 'glb'; aplicarModelo(); G.avanzar(30); await new Promise(res => setTimeout(res, 200));
+    return { e1, e2, plantilla: !!GLB.plantilla, real: R.rTorso.visible, n: G.todos.length };
+  });
+  assert(/\.glb|válido/.test(r.e1), 'un archivo roto debería dar un aviso: ' + r.e1);
+  assert(/esqueleto/.test(r.e2), 'un modelo sin esqueleto debería dar un aviso: ' + r.e2);
+  assert(!r.plantilla && r.real, 'sin modelo propio válido debería verse el modelo realista: ' + JSON.stringify(r));
+  sinErrores(errors); await ctx.close();
+});
+
+test('modelo propio (.glb): se elige en Ajustes, se guarda y vuelve al reabrir el juego', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  await page.evaluate(() => document.querySelector('#bPausa').click());
+  await page.setInputFiles('#glb-archivo', path.join(ROOT, 'tests/fixtures/maniqui.glb'));
+  await page.waitForFunction(() => /Modelo cargado/.test(document.getElementById('glb-msg').textContent), null, { timeout: 15000 });
+  const a = await page.evaluate(() => ({ modelo: DATOS.ajustes.modelo, sel: document.getElementById('op-modelo-glb').classList.contains('sel'), nombre: GLB.nombre }));
+  assert(a.modelo === 'glb' && a.sel && a.nombre === 'maniqui.glb', 'no quedó elegido el modelo propio: ' + JSON.stringify(a));
+  await page.evaluate(() => guardarAhora());
+  await page.waitForTimeout(500);
+  await page.reload(); await page.waitForFunction(() => window.G && G.listo, null, { timeout: 30000 });
+  await page.waitForFunction(() => !!GLB.plantilla, null, { timeout: 15000 });
+  const b = await page.evaluate(() => ({ modelo: DATOS.ajustes.modelo, glb: MODELO_GLB() }));
+  assert(b.modelo === 'glb' && b.glb, 'al reabrir no volvió el modelo propio: ' + JSON.stringify(b));
+  // quitarlo
+  await page.evaluate(async () => { glbQuitar(); await glbBorrarGuardado(); DATOS.ajustes.modelo = 'real'; aplicarModelo(); });
+  assert(await page.evaluate(() => !MODELO_GLB() && R.rTorso.visible), 'al quitarlo no volvió el modelo realista');
+  sinErrores(errors); await ctx.close();
+});
+
 test('se ve bien en un teléfono en vertical y en horizontal', async () => {
   for (const viewport of [{ width: 844, height: 390 }, { width: 390, height: 844 }]) {
     const ctx = await fresh({ viewport, hasTouch: true, isMobile: true }); const { page, errors } = await openGame(ctx, srv.url);
