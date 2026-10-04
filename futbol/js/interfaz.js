@@ -54,6 +54,8 @@ function actualizarBotones() {
   const B = k => document.querySelector('.b[data-b="' + k + '"]');
   B('pass').textContent = pedir ? 'Pedir' : at ? 'Pase' : (G.unJugador ? 'Pase' : 'Cambiar');
   B('through').innerHTML = '<span>' + (pedir ? 'Pedir<br>al hueco' : at ? 'Pase en<br>profundidad' : 'Presión') + '</span>';
+  B('long').innerHTML = '<span>' + (pedir ? 'Pedir' : at ? 'Pase<br>bombeado' : 'Presión') + '</span>';
+  B('through').classList.toggle('apagado', !at && !pedir);
   B('shot').textContent = at || pedir ? 'Disparo' : 'Entrada';
   B('sprint').innerHTML = '<span>' + (at || pedir ? 'Sprint<br>y regate' : 'Sprint<small>desliza: barrida</small>') + '</span>';
 }
@@ -109,6 +111,7 @@ function iniciarTactil() {
     mover(e);
   });
   zona.addEventListener('pointermove', e => { if (e.pointerId === id) { e.preventDefault(); mover(e); } });
+  LIMPIAR_TACTIL.push(() => { id = null; knob.style.transform = ''; knob.classList.remove('sprint'); base.classList.remove('activo'); casa(); });
   const fin = e => { if (e.pointerId !== id) return; id = null; TACT.mx = TACT.mz = 0; TACT.sprint = false; knob.style.transform = ''; knob.classList.remove('sprint'); base.classList.remove('activo'); casa(); };
   zona.addEventListener('pointerup', fin); zona.addEventListener('pointercancel', fin); zona.addEventListener('lostpointercapture', fin);
   // botones: Pase, Pase en profundidad, Disparo y Sprint y regate. Al defender, Disparo hace la entrada.
@@ -116,6 +119,7 @@ function iniciarTactil() {
   document.querySelectorAll('.b').forEach(bt => {
     const k0 = bt.dataset.b, ids = new Map();
     const tecla = () => k0 === 'shot' && !atacando() && !(G.saque && G.saque.tomador === G.ctrl) ? 'tackle' : k0;
+    LIMPIAR_TACTIL.push(() => { ids.clear(); bt.classList.remove('on'); });
     const on = () => { for (const kk of ['shot', 'tackle']) if (k0 === 'shot') TACT[kk] = [...ids.values()].some(v => v.k === kk); if (k0 !== 'shot') TACT[k0] = ids.size > 0; bt.classList.toggle('on', ids.size > 0); };
     bt.addEventListener('pointerdown', e => {
       e.preventDefault(); const k = tecla(); ids.set(e.pointerId, { k, x: e.clientX, y: e.clientY, regate: false }); PULSO[k] = true;
@@ -130,7 +134,13 @@ function iniciarTactil() {
     bt.addEventListener('pointerup', up); bt.addEventListener('pointercancel', up); bt.addEventListener('lostpointercapture', up);
   });
   document.addEventListener('contextmenu', e => e.preventDefault());
+  // si el navegador pierde un dedo (llamada, gesto del sistema, otra app) no se queda ningún botón ni el sprint "pegados"
+  const limpiar = () => { TACT.mx = TACT.mz = 0; TACT.sprint = false; for (const k of BOTONES) TACT[k] = false; LIMPIAR_TACTIL.forEach(f => f()); };
+  addEventListener('blur', limpiar); document.addEventListener('visibilitychange', limpiar);
+  document.addEventListener('touchend', e => { if (e.touches.length === 0) limpiar(); }, { passive: true });
+  document.addEventListener('touchcancel', limpiar, { passive: true });
 }
+const LIMPIAR_TACTIL = [];
 function activarTactil() { if (DATOS.ajustes.tactil !== 'no') document.body.classList.add('tactil'); }
 function aplicarTactil() {
   const t = DATOS.ajustes.tactil;

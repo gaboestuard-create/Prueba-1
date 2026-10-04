@@ -138,6 +138,15 @@ Para manejar el juego desde una prueba: `G.prueba` (activo, mx, mz y botones) su
   desmarques en profundidad por pasillos libres (`iaJugador`) y la IA les pasa al hueco (`mejorPase`, `pasarA`).
   Portero más fiable en `reaccionPortero` (no se lanza al lado contrario en tiros al cuerpo).
 
+## Correcciones 0.14.1
+
+- `pasoGolpe`: el alcance del pie crece con la velocidad y, pasado .4 s, se golpea aunque el balón esté a menos de 3,2 m.
+  Antes, al esprintar el balón iba a más de 1,15 m, la pierna se quedaba levantada y el pase o el tiro se perdía.
+- Barrida y jugador caído: `y = .40` en `dibujarReal` (antes -0,08 hundía el cuerpo 46 cm). La prueba "ningún jugador se
+  hunde" mide el punto más bajo de todas las piezas en cada pose; si cambias poses, vuelve a pasarla.
+- Táctil: `LIMPIAR_TACTIL` suelta botones y sprint si se pierde un dedo (blur, touchcancel...). `G.prof` se limpia al perder el balón.
+- Botón Pase bombeado (`long`) de vuelta; Pase en profundidad queda aparte (mantener = bombeado al hueco).
+
 ## Editores dentro de los modos (0.12)
 
 - Carrera de técnico y de jugador: pestaña "Editor" (`vistaEditorCarrera`, `accionesEditorCarrera` en editor.js).

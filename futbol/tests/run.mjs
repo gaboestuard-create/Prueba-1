@@ -66,8 +66,8 @@ test('se ve bien en un teléfono en vertical y en horizontal', async () => {
     const r = await page.evaluate(() => {
       const ver = s => { const e = document.querySelector(s), b = e.getBoundingClientRect(); return b.width > 0 && b.left >= 0 && b.right <= innerWidth + 1 && b.bottom <= innerHeight + 1; };
       const choca = (a, b) => { const r = document.querySelector(a).getBoundingClientRect(), q = document.querySelector(b).getBoundingClientRect(); return r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom; };
-      const choques = [['#marcador', '#radar'], ['#radar', '#bPausa'], ['#marcador', '#bPausa'], ['.b[data-b="pass"]', '.b[data-b="shot"]'], ['.b[data-b="pass"]', '.b[data-b="through"]'], ['.b[data-b="pass"]', '.b[data-b="sprint"]'], ['.b[data-b="through"]', '.b[data-b="shot"]'], ['.b[data-b="through"]', '.b[data-b="sprint"]'], ['.b[data-b="shot"]', '.b[data-b="sprint"]'], ['#stickBase', '.b[data-b="pass"]']].filter(([a, b]) => choca(a, b));
-      return { choques, tactil: document.body.classList.contains('tactil'), botones: ['.b[data-b="pass"]', '.b[data-b="shot"]', '.b[data-b="through"]', '.b[data-b="sprint"]', '#stickBase', '#marcador'].filter(s => !ver(s)), scroll: document.documentElement.scrollWidth > innerWidth };
+      const choques = [['#marcador', '#radar'], ['#radar', '#bPausa'], ['#marcador', '#bPausa'], ['.b[data-b="pass"]', '.b[data-b="shot"]'], ['.b[data-b="pass"]', '.b[data-b="through"]'], ['.b[data-b="pass"]', '.b[data-b="long"]'], ['.b[data-b="long"]', '.b[data-b="through"]'], ['.b[data-b="long"]', '.b[data-b="shot"]'], ['.b[data-b="pass"]', '.b[data-b="sprint"]'], ['.b[data-b="through"]', '.b[data-b="shot"]'], ['.b[data-b="through"]', '.b[data-b="sprint"]'], ['.b[data-b="shot"]', '.b[data-b="sprint"]'], ['#stickBase', '.b[data-b="pass"]']].filter(([a, b]) => choca(a, b));
+      return { choques, tactil: document.body.classList.contains('tactil'), botones: ['.b[data-b="pass"]', '.b[data-b="shot"]', '.b[data-b="through"]', '.b[data-b="long"]', '.b[data-b="sprint"]', '#stickBase', '#marcador'].filter(s => !ver(s)), scroll: document.documentElement.scrollWidth > innerWidth };
     });
     assert(r.tactil, `${viewport.width}x${viewport.height}: no se muestran los controles táctiles`);
     assert(!r.botones.length, `${viewport.width}x${viewport.height}: se salen de la pantalla: ${r.botones}`);
@@ -684,6 +684,72 @@ test('compañeros: presionan solos al defender y se desmarcan al atacar', async 
   assert(r.pres, 'al defender, un compañero debería presionar sin que lo pidas');
   assert(r.contra, 'tras perder el balón deberían presionar dos o más (contrapresión)');
   assert(r.desmarcados >= 1, 'al atacar, algún compañero debería desmarcarse en profundidad: ' + r.desmarcados);
+  sinErrores(errors); await ctx.close();
+});
+
+test('esprintando con el balón, pasar y tirar siempre salen (no se queda la pierna a medias)', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const res = await page.evaluate(() => {
+    const out = {};
+    for (const boton of ['pass', 'shot', 'through', 'long']) {
+      let fallos = 0, prueba = 0;
+      for (let n = 0; n < 30; n++) {
+        G.pausa = true; nuevoPartido(n + 1); G.saque = null; Object.assign(G.prueba, { activo: true, mx: 1, mz: 0, sprint: true, pass: false, shot: false, long: false, through: false });
+        const p = G.eqs[0].pl[9], b = G.balon;
+        G.todos.forEach(q => { if (q !== p && !q.por) { q.x = q.eq.i ? 45 : -45; q.z = 30; } q.vx = q.vz = 0; });
+        p.x = -30; p.z = 0; p.cara = 0; b.dueno = null; tomar(p); b.x = p.x + .55; b.z = 0; p.protegido = 20; controlar(p);
+        G.avanzar(40 + (n * 7) % 70);
+        for (const q of G.todos) if (q !== p && !q.por) { q.x = q.eq.i ? 45 : -45; q.z = 30; }
+        if (b.dueno !== p) continue;
+        prueba++; const n0 = G.stats.pases[0] + G.stats.tiros[0];
+        G.prueba[boton] = true; G.avanzar(boton === 'shot' || boton === 'through' ? 10 : 3); G.prueba[boton] = false;
+        for (let t = 0; t < 100 && G.stats.pases[0] + G.stats.tiros[0] === n0; t++) G.avanzar(1);
+        if (G.stats.pases[0] + G.stats.tiros[0] === n0) fallos++;
+      }
+      out[boton] = { fallos, prueba };
+    }
+    return out;
+  });
+  for (const [b, r] of Object.entries(res)) { assert(r.prueba >= 20, `${b}: pocas pruebas válidas (${r.prueba})`); assert(r.fallos === 0, `${b}: ${r.fallos} de ${r.prueba} veces no hizo nada al esprintar`); }
+  sinErrores(errors); await ctx.close();
+});
+
+test('ningún jugador se hunde en el césped (barrida, caído, estirada del portero)', async () => {
+  const ctx = await fresh(); const { page, errors } = await openGame(ctx, srv.url);
+  const r = await page.evaluate(() => {
+    G.pausa = true;
+    const minY = idx => {
+      let m = 9; const v = new THREE.Vector3(), M = new THREE.Matrix4();
+      for (const k of ['rTorso', 'rShort', 'rCabeza', 'rMuslo', 'rTibia', 'rBota', 'rBrazo', 'rAntebrazo']) {
+        const mesh = R[k]; mesh.geometry.computeBoundingBox(); const bb = mesh.geometry.boundingBox;
+        for (const i of (mesh.count === G.todos.length * 2 ? [idx * 2, idx * 2 + 1] : [idx])) {
+          mesh.getMatrixAt(i, M);
+          for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) { v.set(x, y, z).applyMatrix4(M); if (v.y < m) m = v.y; }
+        }
+      }
+      return m;
+    };
+    const p = G.eqs[0].pl[5], k = G.eqs[0].pl[0], i = G.todos.indexOf(p), ik = G.todos.indexOf(k), out = {};
+    const poner = f => { p.entrada = null; p.suelo = 0; p.tropiezo = 0; p.vx = p.vz = 0; p.patadaT = 0; k.estirada = null; for (const q of G.todos) { q.x = 40; q.z = 30; } p.x = 0; p.z = 0; p.cara = 0; k.x = 0; k.z = 0; f(); dibujarReal(); };
+    for (const [n, f] of Object.entries({ quieto: () => { }, corre: () => { p.vx = 7; }, barrida: () => { p.entrada = 'barrida'; p.vx = 5; }, caido: () => { p.suelo = .4; }, pie: () => { p.entrada = 'pie'; }, patada: () => { p.patadaT = .15; } })) { poner(f); out[n] = minY(i); }
+    poner(() => { k.estirada = { z: 2, y: 1, t: .3, reac: .1, T: .5, lado: 1, para: true }; }); out.estirada = minY(ik);
+    return out;
+  });
+  for (const [n, y] of Object.entries(r)) assert(y > -.06, `en "${n}" una parte del jugador se hunde ${(-y).toFixed(2)} m en el césped`);
+  sinErrores(errors); await ctx.close();
+});
+
+test('pase bombeado: el botón lo lanza por el aire hasta el compañero', async () => {
+  const ctx = await fresh({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }); const { page, errors } = await openGame(ctx, srv.url);
+  await empezar(page);
+  await prepararJugada(page, { x: -10, z: 0 });
+  await page.evaluate(() => { G.pausa = false; const m = G.eqs[0].pl[7]; m.x = 16; m.z = 4; m.vx = m.vz = 0; Object.assign(G.prueba, { activo: true, mx: 1, mz: 0 }); G.avanzar(2); G.prueba.mx = 0; });
+  const bb = await (await page.$('.b[data-b="long"]')).boundingBox();
+  const toque = (tipo, id) => page.evaluate(({ tipo, id, x, y }) => document.querySelector('.b[data-b="long"]').dispatchEvent(new PointerEvent(tipo, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true })), { tipo, id, x: bb.x + 20, y: bb.y + 20 });
+  await toque('pointerdown', 9); await page.waitForTimeout(80); await toque('pointerup', 9);
+  await page.waitForTimeout(150);
+  const r = await page.evaluate(() => ({ tipo: G.balon.tipo, alto: G.balon.y, vy: G.balon.vy, pases: G.stats.pases[0] }));
+  assert(r.pases === 1 && r.tipo === 'largo' && (r.alto > .5 || r.vy > 1), 'el pase bombeado no sale por el aire: ' + JSON.stringify(r));
   sinErrores(errors); await ctx.close();
 });
 
