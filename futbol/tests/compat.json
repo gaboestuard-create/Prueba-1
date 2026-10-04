@@ -62,5 +62,9 @@
   {
     "nombre": "0.15.0 (gráficos etapa 1)",
     "commit": "9769459"
+  },
+  {
+    "nombre": "0.16.0 (modelo propio .glb)",
+    "commit": "5f97e84"
   }
 ]
