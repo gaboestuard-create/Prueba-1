@@ -50,5 +50,9 @@
   {
     "nombre": "0.13.0 (cámara tele, 4 botones y regates)",
     "commit": "264cb28"
+  },
+  {
+    "nombre": "0.14.0 (ayudas, previa e IA)",
+    "commit": "c6f21aa"
   }
 ]
