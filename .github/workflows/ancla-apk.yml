@@ -5,6 +5,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+# si hay dos compilaciones a la vez, gana la más nueva (evita que una vieja pise el Release)
+concurrency:
+  group: ancla-apk
+  cancel-in-progress: true
 jobs:
   apk:
     runs-on: ubuntu-latest
