@@ -156,7 +156,39 @@ function migrate(){
 const MEALS=[['d','Desayuno'],['c','Comida'],['s','Snack']];
 let S=ls.get()||fresh(); migrate();
 let dbDoc=null, sync='local', saveT=0, saving=false, dirty=false;
-function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTimeout(flush,1200)}
+function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTimeout(flush,1200);clearTimeout(schedT);schedT=setTimeout(schedule,800)}
+
+// ---------- APK: avisos del sistema aunque la app esté cerrada ----------
+const LN=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.Plugins?.LocalNotifications;
+let schedT=0;
+async function nativeSetup(){
+  if(!LN)return;
+  try{await LN.requestPermissions();
+    await LN.createChannel({id:'ancla',name:'Avisos de Ancla',importance:5,vibration:true,visibility:1});
+    const e=await LN.checkExactNotificationSetting?.();if(e&&e.exact_alarm!=='granted')await LN.changeExactNotificationSetting();
+  }catch(e){}
+  schedule();
+}
+// reprograma todo: hoy y los de hora fija de mañana; firme = 5 avisos cada 3 min hasta que respondas
+async function schedule(){
+  if(!LN)return;
+  try{
+    const p=(await LN.getPending()).notifications;if(p.length)await LN.cancel({notifications:p.map(n=>({id:n.id}))});
+    const out=[],now=Date.now();
+    for(const off of [0,1]){
+      const dt=new Date();dt.setDate(dt.getDate()+off);const d=S.days[dkey(dt)]||{},w=off?null:win();
+      S.rem.forEach((r,i)=>{
+        if(r.pill&&d.pill||r.meal&&(d.meals||{})[r.meal])return;
+        const a=(d.ack||{})[r.id]||{};if(a.ok)return;
+        let at;if(r.kind==='fixed'){const x=atToday(r.at);x.setDate(x.getDate()+off);at=x.getTime()}else{if(!w)return;at=w.t.getTime()+r.at*6e4}
+        at=a.until||at;
+        for(let j=0;j<(r.mode==='firme'?5:1);j++){const t=at+j*18e4;if(t<=now)continue;
+          out.push({id:off*10000+i*10+j+1,title:r.text,body:r.mode==='firme'?'Abre Ancla y toca "Ya empecé".':'Ancla',channelId:'ancla',schedule:{at:new Date(t),allowWhileIdle:true}})}
+      });
+    }
+    if(out.length)await LN.schedule({notifications:out});
+  }catch(e){}
+}
 async function flush(){
   if(!dbDoc)return; if(saving){dirty=true;return}
   saving=true;
@@ -332,7 +364,7 @@ function summaryText(){
 function vAvisos(){
   const desc=r=>r.kind==='fixed'?`${esc(r.at)}${r.pill?' · solo si no la has tomado':''}`:`${r.at} min después de la pastilla`;
   return `<h1>Avisos</h1>
-    <section class="card"><p style="margin:0">En esta versión los avisos <b>suenan solo con la app abierta</b>. En la APK van a sonar aunque esté cerrada.</p>
+    <section class="card"><p style="margin:0">${LN?'Los avisos te llegan como notificación <b>aunque la app esté cerrada</b>. Al abrirla suena la alarma.':'En esta versión los avisos <b>suenan solo con la app abierta</b>. En la APK van a sonar aunque esté cerrada.'}</p>
       <div class="grid2"><button class="btn-soft" data-act="test" data-k="tranqui">Probar tranqui</button><button class="btn-sun" data-act="test" data-k="firme">Probar firme</button></div>
       <span class="small muted">Tranqui: suena una vez. Firme: suena hasta que toques "Ya empecé" o "Dame 10 min" (máximo 2 veces).</span></section>
     <section class="card"><span class="eyebrow">Tus avisos</span>
@@ -487,6 +519,6 @@ document.addEventListener('submit',e=>{
     S.rem.push({id:uid(),text:f.get('text').trim(),kind,at,mode:f.get('mode')});addRem=false;save();
   }
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!OV)render()});
-render();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedule();if(!OV)render()}});
+render();nativeSetup();
 </script>

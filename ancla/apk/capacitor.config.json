@@ -1,0 +1,6 @@
+{
+  "appId": "app.ancla",
+  "appName": "Ancla",
+  "webDir": "www",
+  "android": { "adjustMarginsForEdgeToEdge": "force" }
+}
