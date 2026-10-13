@@ -127,6 +127,8 @@ const TIPOS={
   otro:['Otro','Haz la parte más pequeña posible.']
 };
 const CAMA=['Siéntate en la cama. Solo eso.','Pon los pies en el piso.','Párate y tómate un vaso de agua.','Abre la cortina o prende la luz.','Haz 5 sentadillas. Nada más.'];
+const CASA=['Deja la mochila y quítate los zapatos.','Tómate un vaso de agua.','Come algo, aunque sea poquito.','Haz 5 lagartijas. Nada más.'];
+const CHORES={Lavar:'Junta la ropa sucia en un solo montón.','Hacer comida':'Saca lo que vas a usar y ponlo en la mesa.'};
 const RATES=[['e','Energía','baja','alta'],['a','Ánimo','bajo','bueno'],['f','Foco','disperso','enfocado'],['s','Sueño anoche','mal','bien'],['ap','Apetito','poco','normal']];
 
 function fresh(){return{v:1,t:0,cfg:{onset:90,len:6,limit:''},
@@ -208,7 +210,7 @@ function vPill(){
   let msg;
   if(now<w.a)msg=`Empieza a hacer efecto como a las <b>${hm(w.a)}</b>. Mientras, algo ligero: ordena tu espacio o elige tus 3 de hoy.`;
   else if(now<w.b)msg=`Estás en tu mejor rato hasta las <b>${hm(w.b)}</b>. Úsalo para lo difícil.`;
-  else msg=`Tu mejor rato ya pasó. Toca lo ligero o descansar, también cuenta.`;
+  else msg=`Ya vas de bajada. Lo ligero también cuenta: cuando llegues, toca <b>Llegué a casa</b>.`;
   return `<section class="card hero"><div class="row"><span class="eyebrow grow">Medicamento · tomado ${esc(d.pill)}</span><button class="btn-link small" data-act="pill-edit">Cambiar</button></div>
     <p style="margin:0">${msg}</p>
     <div class="dose" role="img" aria-label="Mejor rato de ${hm(w.a)} a ${hm(w.b)}">
@@ -253,7 +255,7 @@ function vHoy(){
   return `<header class="row" style="padding-top:4px"><div class="grow"><h1>Ancla</h1><span class="muted small">${esc(fecha)}</span></div>
       <div style="text-align:right"><div class="big" style="font-size:30px">${tried}</div><span class="small muted">días que lo<br>intentaste</span></div></header>
     ${vPill()}
-    <button class="btn-sun" style="width:100%;padding:14px" data-act="cama">Estoy pegado en la cama</button>
+    <div class="grid2"><button class="btn-sun" style="padding:14px" data-act="cama">Estoy pegado en la cama</button><button class="btn-sun" style="padding:14px" data-act="casa">Llegué a casa</button></div>
     ${next}
     ${tt.length?`<section class="card"><span class="eyebrow">Tus ${tt.length} de hoy</span><div>${tt.map(t=>taskRow(t,true)).join('')}</div></section>`:''}
     <section class="card"><div class="row"><span class="eyebrow grow">Movimiento</span>${mv?`<span class="chip">Hecho · ${mv} reps</span>`:''}</div>
@@ -337,14 +339,14 @@ function vAvisos(){
 }
 
 // ---------- overlay: temporizador, modo cama, alarma ----------
-let OV=null,T=null,C=0,ring=null,beepI=0,WL=null,tickI=0;
+let OV=null,T=null,C=0,FL=CAMA,ring=null,beepI=0,WL=null,tickI=0;
 function openOv(m){OV=m;renderOv()}
 function closeOv(){OV=null;clearInterval(beepI);clearInterval(tickI);ring=null;try{WL&&WL.release()}catch(e){}WL=null;$('#ov').hidden=true;$('#ov').className='';render()}
 function wake(){try{navigator.wakeLock?.request('screen').then(l=>WL=l).catch(()=>{})}catch(e){}}
 
-function startTimer(id,min=5){
+function startTimer(id,min=5,chore){
   const t=S.tasks.find(x=>x.id===id);
-  T={id,name:t?t.name:'Lo que tengas enfrente',step:t?stepOf(t):'',total:min*6e4,start:Date.now(),fin:false};
+  T={id,name:t?t.name:chore||'Lo que tengas enfrente',step:t?stepOf(t):CHORES[chore]||'',total:min*6e4,start:Date.now(),fin:false};
   touch();save();wake();openOv('timer');
   clearInterval(tickI);tickI=setInterval(tickTimer,250);
 }
@@ -369,9 +371,13 @@ function renderOv(){
       <div class="stack"><button class="btn-link" data-act="stop">Parar</button></div>`;
     tickTimer();return}
   if(OV==='cama'){
-    if(C<CAMA.length){o.innerHTML=`<div class="dots">${CAMA.map((_,i)=>`<i class="${i<=C?'on':''}"></i>`).join('')}</div>
-      <div class="say">${CAMA[C]}</div><div class="stack"><button class="btn-main" data-act="cama-next">Hecho</button><button class="btn-link" data-act="close">Salir</button></div>`;return}
+    if(C<FL.length){o.innerHTML=`<div class="dots">${FL.map((_,i)=>`<i class="${i<=C?'on':''}"></i>`).join('')}</div>
+      <div class="say">${FL[C]}</div><div class="stack"><button class="btn-main" data-act="cama-next">Hecho</button><button class="btn-link" data-act="close">Salir</button></div>`;return}
     const nx=nextTask();
+    if(FL===CASA){o.innerHTML=`<div class="say">Ya llegaste y ya te moviste. Ahora solo 5 minutos de:</div>
+      <div class="stack">${Object.keys(CHORES).map(c=>`<button class="btn-main" data-act="timer" data-chore="${c}">${c}</button>`).join('')}
+      ${nx?`<button class="btn-soft" data-act="timer" data-id="${nx.id}">${esc(nx.name)}</button>`:''}
+      <button class="btn-link" data-act="close">Hoy toca descansar, y está bien</button></div>`;return}
     o.innerHTML=`<div class="say">Ya estás de pie. Eso era lo más difícil.</div>
       <div class="stack">${nx?`<button class="btn-main" data-act="timer" data-id="${nx.id}">5 minutos de: ${esc(nx.name)}</button>`:`<button class="btn-main" data-act="tab-close" data-k="tareas">Elegir mis 3 de hoy</button>`}
       <button class="btn-link" data-act="close">Cerrar</button></div>`;return}
@@ -419,11 +425,11 @@ document.addEventListener('click',e=>{
     case 'pill-edit':pillEdit=true;render();break;
     case 'pill-cancel':pillEdit=false;render();break;
     case 'pill-set':{const v=$('#pill-time').value;if(v){d.pill=v;touch()}pillEdit=false;save();break}
-    case 'cama':C=0;touch();save();wake();openOv('cama');break;
-    case 'cama-next':if(C===4){d.mov.s+=5;save()}C++;renderOv();break;
-    case 'timer':startTimer(id);break;
+    case 'cama':case 'casa':FL=act==='cama'?CAMA:CASA;C=0;touch();save();wake();openOv('cama');break;
+    case 'cama-next':if(C===FL.length-1){d.mov[FL===CAMA?'s':'l']+=5;save()}C++;renderOv();break;
+    case 'timer':startTimer(id,5,b.dataset.chore);break;
     case 'stop':endSeg();T=null;closeOv();break;
-    case 'more':startTimer(T.id,+b.dataset.v);break;
+    case 'more':startTimer(T.id,+b.dataset.v,T.name);break;
     case 'finish':{const x=S.tasks.find(y=>y.id===T.id);if(x){x.done=dkey();touch();save()}T=null;closeOv();toast('Hecha. Bien ahí.');break}
     case 'close':endSeg();T=null;closeOv();break;
     case 'done':t.done=t.done?'':dkey();if(t.done){touch();chime();buzz(60)}save();break;
