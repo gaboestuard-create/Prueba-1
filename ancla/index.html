@@ -130,7 +130,16 @@ const TIPOS={
 };
 const CAMA=['Siéntate en la cama. Solo eso.','Pon los pies en el piso.','Párate y tómate un vaso de agua.','Abre la cortina o prende la luz.','Haz 5 sentadillas. Nada más.'];
 const CASA=['Deja la mochila y quítate los zapatos.','Tómate un vaso de agua.','Come algo, aunque sea poquito.','Haz 5 lagartijas. Nada más.'];
-const CHORES={Lavar:'Junta la ropa sucia en un solo montón.','Hacer comida':'Saca lo que vas a usar y ponlo en la mesa.'};
+// actividad: [primer paso, minutos, pide anotar una idea al final]
+const ACTS={
+  'Hacer tarea':['Abre la tarea y lee solo las instrucciones.',5],
+  'Estudiar':['Abre tus apuntes en el primer tema.',5],
+  'Caminar':['Ponte los tenis y sal a la puerta. Con 10 minutos cuenta.',10],
+  'Limpiar':['Recoge 5 cosas que estén fuera de lugar.',5],
+  'Lavar':['Junta la ropa sucia en un solo montón.',5],
+  'Hacer comida':['Saca lo que vas a usar y ponlo en la mesa.',5],
+  'Video o podcast':['Elige uno que te dé curiosidad y dale play.',20,1]};
+const actBtns=cls=>Object.entries(ACTS).map(([n,[,m]])=>`<button class="${cls}" data-act="timer" data-chore="${n}">${n}<span class="small" style="display:block;opacity:.75;font-weight:400">${m} min</span></button>`).join('');
 const RATES=[['e','Energía','baja','alta'],['a','Ánimo','bajo','bueno'],['f','Foco','disperso','enfocado'],['s','Sueño anoche','mal','bien'],['ap','Apetito','poco','normal']];
 
 function fresh(){return{v:1,t:0,cfg:{onset:90,len:6,limit:''},
@@ -229,7 +238,7 @@ let toastT=0;
 function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
 
 // ---------- vistas ----------
-let tab='hoy',armed='',pillEdit=false,addRem=false;
+let recallOff=0,tab='hoy',armed='',pillEdit=false,addRem=false;
 try{tab=localStorage.getItem('ancla.tab')||'hoy'}catch(e){}
 const TABS=[['hoy','Hoy'],['tareas','Tareas'],['diario','Diario'],['avisos','Avisos']];
 
@@ -310,6 +319,10 @@ function vHoy(){
     <section class="card"><div class="row"><span class="eyebrow grow">Movimiento</span>${mv?`<span class="chip">Hecho · ${mv} reps</span>`:''}</div>
       <p style="margin:0">${mv?'Ya cuenta como hecho. Si quieres más, va.':'Con 5 sentadillas o 5 lagartijas ya cuenta.'}</p>
       <div class="grid2"><button class="btn-soft" data-act="mov" data-k="s">+5 sentadillas${d.mov.s?` (${d.mov.s})`:''}</button><button class="btn-soft" data-act="mov" data-k="l">+5 lagartijas${d.mov.l?` (${d.mov.l})`:''}</button></div></section>
+    <section class="card"><span class="eyebrow">Otras actividades</span>
+      <p class="small muted" style="margin:0">Toca una y arranca el temporizador con su primer paso.</p>
+      <div class="grid2">${actBtns('btn-soft')}</div></section>
+    ${vRecall()}
     <section class="card"><span class="eyebrow">Check-in de la noche</span>
       <p class="small muted" style="margin:0">30 segundos. Se guarda solo y arma tu resumen para la psiquiatra.</p>
       ${RATES.map(([k,l,lo,hi])=>`<div class="rate"><span>${l}</span><div class="opts" role="group" aria-label="${l}">${[1,2,3,4,5].map(v=>`<button class="${ck[k]===v?'on':''}" data-act="rate" data-k="${k}" data-v="${v}" aria-pressed="${ck[k]===v}">${v}</button>`).join('')}</div><div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`).join('')}
@@ -317,6 +330,14 @@ function vHoy(){
     </section>`
 }
 
+const fdia=k=>{const d=new Date(k+'T00:00');return DIAS[d.getDay()]+' '+d.getDate()};
+function vRecall(){
+  const old=(S.ideas||[]).filter(i=>i.k<dkey()),pick=old.length?old[(Math.floor(Date.now()/864e5)+recallOff)%old.length]:null;
+  return `<section class="card"><span class="eyebrow">Cosas interesantes</span>
+    ${pick?`<p class="small muted" style="margin:0">¿Te acuerdas? Lo anotaste el ${fdia(pick.k)}${pick.src?' · '+esc(pick.src):''}:</p>
+      <p style="margin:0;font-weight:700;font-size:19px">${esc(pick.text)}</p>${old.length>1?'<button class="btn-link small" data-act="recall">Otra</button>':''}`
+    :`<p class="muted" style="margin:0">Cuando veas un video, escuches un podcast o algo en clase te llame la atención, anótalo. Aquí te lo vuelvo a mostrar otros días para que se te quede.</p>`}
+    <button class="btn-soft" data-act="idea">Anotar algo interesante</button></section>`}
 function vTareas(){
   const pend=S.tasks.filter(t=>!t.done),hechas=S.tasks.filter(t=>t.done).slice(-10).reverse();
   const tt=todayTasks().filter(t=>!t.done);
@@ -342,6 +363,7 @@ function vDiario(){
   const avg=f=>{const v=rows.map(r=>r.c[f]).filter(Boolean);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'–'};
   const tried=Object.values(S.days).filter(x=>x.tried).length;
   const notes=rows.filter(r=>r.note);
+  const ideas=(S.ideas||[]).slice().reverse();
   return `<h1>Diario</h1>
     <section class="card"><div class="row"><div class="grow"><span class="eyebrow">Días que lo intentaste</span><div class="big">${tried}</div></div>
       <p class="small muted grow" style="margin:0">Este número nunca baja. Un día malo no borra los buenos.</p></div></section>
@@ -353,7 +375,11 @@ function vDiario(){
       ${notes.length?`<div style="display:grid;gap:6px">${notes.map(r=>`<p class="small" style="margin:0"><b>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}:</b> ${esc(r.note)}</p>`).join('')}</div>`:''}
       <button class="btn-main" data-act="copy">Copiar resumen para mi psiquiatra</button>
       <textarea id="copy-box" readonly hidden></textarea>
-    </section>`
+    </section>
+    <section class="card"><span class="eyebrow">Cosas interesantes · ${ideas.length}</span>
+      ${ideas.length?`<div>${ideas.map(i=>`<div class="task"><div class="body"><span>${esc(i.text)}</span><span class="small muted">${fdia(i.k)}${i.src?' · '+esc(i.src):''}</span></div>
+        <button class="btn-x ${armed===i.id?'armed':''}" data-act="delidea" data-id="${i.id}" aria-label="Borrar">${armed===i.id?'¿Borrar?':'✕'}</button></div>`).join('')}</div>`:'<p class="muted" style="margin:0">Todavía no anotas nada.</p>'}
+      <button class="btn-soft" data-act="idea">Anotar algo interesante</button></section>`
 }
 function summaryText(){
   const lines=['Resumen semanal (Ancla)',''];
@@ -394,9 +420,9 @@ function openOv(m){OV=m;renderOv()}
 function closeOv(){OV=null;clearInterval(beepI);clearInterval(tickI);ring=null;try{WL&&WL.release()}catch(e){}WL=null;$('#ov').hidden=true;$('#ov').className='';render()}
 function wake(){try{navigator.wakeLock?.request('screen').then(l=>WL=l).catch(()=>{})}catch(e){}}
 
-function startTimer(id,min=5,chore){
-  const t=S.tasks.find(x=>x.id===id);
-  T={id,name:t?t.name:chore||'Lo que tengas enfrente',step:t?stepOf(t):CHORES[chore]||'',total:min*6e4,start:Date.now(),fin:false};
+function startTimer(id,min,chore){
+  const t=S.tasks.find(x=>x.id===id),a=ACTS[chore]||[];min=min||a[1]||5;
+  T={id,name:t?t.name:chore||'Lo que tengas enfrente',step:t?stepOf(t):a[0]||'',total:min*6e4,start:Date.now(),fin:false,learn:a[2]};
   touch();save();wake();openOv('timer');
   clearInterval(tickI);tickI=setInterval(tickTimer,250);
 }
@@ -424,13 +450,18 @@ function renderOv(){
     if(C<FL.length){o.innerHTML=`<div class="dots">${FL.map((_,i)=>`<i class="${i<=C?'on':''}"></i>`).join('')}</div>
       <div class="say">${FL[C]}</div><div class="stack"><button class="btn-main" data-act="cama-next">Hecho</button><button class="btn-link" data-act="close">Salir</button></div>`;return}
     const nx=nextTask();
-    if(FL===CASA){o.innerHTML=`<div class="say">Ya llegaste y ya te moviste. Ahora solo 5 minutos de:</div>
-      <div class="stack">${Object.keys(CHORES).map(c=>`<button class="btn-main" data-act="timer" data-chore="${c}">${c}</button>`).join('')}
+    if(FL===CASA){o.innerHTML=`<div class="say">Ya llegaste y ya te moviste. Ahora, un ratito de:</div>
+      <div class="stack"><div class="grid2">${actBtns('btn-soft')}</div>
       ${nx?`<button class="btn-soft" data-act="timer" data-id="${nx.id}">${esc(nx.name)}</button>`:''}
       <button class="btn-link" data-act="close">Hoy toca descansar, y está bien</button></div>`;return}
     o.innerHTML=`<div class="say">Ya estás de pie. Eso era lo más difícil.</div>
       <div class="stack">${nx?`<button class="btn-main" data-act="timer" data-id="${nx.id}">5 minutos de: ${esc(nx.name)}</button>`:`<button class="btn-main" data-act="tab-close" data-k="tareas">Elegir mis 3 de hoy</button>`}
       <button class="btn-link" data-act="close">Cerrar</button></div>`;return}
+  if(OV==='idea'){o.innerHTML=`<span class="eyebrow">Cosas interesantes</span><div class="say" style="font-size:24px">¿Qué fue lo más interesante?</div>
+      <p class="small muted" style="margin:0;max-width:34ch">Una frase con tus palabras. Escribirla te ayuda a recordarla, y aquí te la voy a volver a mostrar.</p>
+      <div class="stack"><textarea id="idea-txt" placeholder="Ej. México le vende a EE. UU. casi el 80% de lo que exporta"></textarea>
+      <input id="idea-src" placeholder="De dónde (opcional): video, podcast, clase…" autocomplete="off">
+      <button class="btn-main" data-act="idea-save">Guardar</button><button class="btn-link" data-act="close">Ahora no</button></div>`;return}
   if(OV==='alarm'){
     const r=ring,a=day().ack[r.id]||{};o.className=r.mode==='firme'?'alarm-firme':'';
     o.innerHTML=`<span class="eyebrow">${r.mode==='firme'?'Modo firme':'Recordatorio'}</span><div class="say">${esc(r.text)}</div>
@@ -466,7 +497,7 @@ setInterval(()=>{if(!OV&&tab==='hoy'&&!document.activeElement?.matches('textarea
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.tagName==='TEXTAREA')return;
   const act=b.dataset.act,id=b.dataset.id,k=b.dataset.k;
-  if(act!=='del'&&act!=='delrem')armed='';
+  if(!['del','delrem','delidea'].includes(act))armed='';
   const d=day(),t=id&&S.tasks.find(x=>x.id===id);
   switch(act){
     case 'tab':tab=k;try{localStorage.setItem('ancla.tab',k)}catch(e){}render();scrollTo(0,0);break;
@@ -477,11 +508,16 @@ document.addEventListener('click',e=>{
     case 'pill-set':{const v=$('#pill-time').value;if(v){d.pill=v;touch()}pillEdit=false;save();break}
     case 'cama':case 'casa':FL=act==='cama'?CAMA:CASA;C=0;touch();save();wake();openOv('cama');break;
     case 'cama-next':if(C===FL.length-1){d.mov[FL===CAMA?'s':'l']+=5;save()}C++;renderOv();break;
-    case 'timer':startTimer(id,5,b.dataset.chore);break;
-    case 'stop':endSeg();T=null;closeOv();break;
+    case 'timer':startTimer(id,0,b.dataset.chore);break;
+    case 'stop':{const l=T?.learn;endSeg();T=null;l?openOv('idea'):closeOv();break}
     case 'more':startTimer(T.id,+b.dataset.v,T.name);break;
-    case 'finish':{const x=S.tasks.find(y=>y.id===T.id);if(x){x.done=dkey();touch();save()}T=null;closeOv();toast('Hecha. Bien ahí.');break}
-    case 'close':endSeg();T=null;closeOv();break;
+    case 'finish':{const x=S.tasks.find(y=>y.id===T.id),l=T.learn;if(x){x.done=dkey();touch();save()}T=null;if(l){openOv('idea');break}closeOv();toast('Hecha. Bien ahí.');break}
+    case 'close':{const l=T?.learn;endSeg();T=null;l?openOv('idea'):closeOv();break}
+    case 'idea':openOv('idea');break;
+    case 'idea-save':{const text=$('#idea-txt').value.trim();if(!text){$('#idea-txt').focus();break}
+      S.ideas=[...(S.ideas||[]),{id:uid(),k:dkey(),text,src:$('#idea-src').value.trim()}];touch();save();closeOv();toast('Guardada. Otro día te la recuerdo.');break}
+    case 'recall':recallOff++;render();break;
+    case 'delidea':if(armed===id){S.ideas=S.ideas.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
     case 'done':t.done=t.done?'':dkey();if(t.done){touch();chime();buzz(60)}save();break;
     case 'today':if(t.today===dkey())t.today='';else if(todayTasks().filter(x=>!x.done).length>=3){toast('Ya tienes 3 para hoy. Quita una primero.');break}else t.today=dkey();save();break;
     case 'del':if(armed===id){S.tasks=S.tasks.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
