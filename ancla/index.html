@@ -170,8 +170,17 @@ function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTi
 // ---------- APK: avisos del sistema aunque la app esté cerrada ----------
 const LN=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.Plugins?.LocalNotifications;
 let schedT=0;
+// versión de esta APK (el workflow la reemplaza con el commit); si el Release es más nuevo, avisamos
+const BUILD='__BUILD__',APK_URL='https://github.com/gaboestuard-create/Prueba-1/releases/download/ancla-apk/ancla.apk';
+let upd=false;
+async function checkUpdate(){
+  try{const r=await fetch('https://api.github.com/repos/gaboestuard-create/Prueba-1/releases/tags/ancla-apk',{cache:'no-store'});
+    if(!r.ok)return;const sha=(await r.json()).target_commitish;
+    if(sha&&sha!==BUILD&&!upd){upd=true;render()}}catch(e){}
+}
 async function nativeSetup(){
   if(!LN)return;
+  checkUpdate();
   try{await LN.requestPermissions();
     await LN.createChannel({id:'ancla',name:'Avisos de Ancla',importance:5,vibration:true,visibility:1});
     const e=await LN.checkExactNotificationSetting?.();if(e&&e.exact_alarm!=='granted')await LN.changeExactNotificationSetting();
@@ -307,7 +316,8 @@ function vHoy(){
   else next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>Elige hasta 3 cosas para hoy</h2><p class="muted" style="margin:0">Solo 3. Una lista larga paraliza.</p><button class="btn-main" data-act="tab" data-k="tareas">Elegir mis 3</button></section>`;
   const mv=d.mov.s+d.mov.l,ml=d.meals||{};
   const ck=d.check||{};
-  return `<header class="row" style="padding-top:4px"><div class="grow"><h1>Ancla</h1><span class="muted small">${esc(fecha)}</span></div>
+  return `${upd?`<a class="card" href="${APK_URL}" style="background:var(--sun-soft);border-color:transparent;color:var(--ink);text-decoration:none"><b>Hay una versión nueva de Ancla</b><span class="small">Toca aquí para descargarla y luego dale "Instalar". Tus datos se quedan.</span></a>`:''}
+    <header class="row" style="padding-top:4px"><div class="grow"><h1>Ancla</h1><span class="muted small">${esc(fecha)}</span></div>
       <div style="text-align:right"><div class="big" style="font-size:30px">${tried}</div><span class="small muted">días que lo<br>intentaste</span></div></header>
     ${vPill()}
     <div class="grid2"><button class="btn-sun" style="padding:14px" data-act="cama">Estoy pegado en la cama</button><button class="btn-sun" style="padding:14px" data-act="casa">Llegué a casa</button></div>
@@ -555,6 +565,6 @@ document.addEventListener('submit',e=>{
     S.rem.push({id:uid(),text:f.get('text').trim(),kind,at,mode:f.get('mode')});addRem=false;save();
   }
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedule();if(!OV)render()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedule();if(LN)checkUpdate();if(!OV)render()}});
 render();nativeSetup();
 </script>

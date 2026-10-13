@@ -19,6 +19,7 @@ jobs:
         run: |
           mkdir -p www ~/.android
           { printf '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>'; cat ../index.html; printf '</body></html>'; } > www/index.html
+          sed -i "s/__BUILD__/$GITHUB_SHA/" www/index.html
           # llave fija: cada APK nueva se instala encima de la anterior sin borrar tus datos
           cp debug.keystore ~/.android/debug.keystore
           npm install
