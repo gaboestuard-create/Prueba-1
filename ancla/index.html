@@ -1,0 +1,466 @@
+<title>Ancla</title>
+<meta name="theme-color" content="#0E6B66">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: una columna de tarjetas tipo "bitácora del día", barra de pestañas abajo al alcance del pulgar */
+:root{
+  --bg:#EDF2F0;--surface:#FFFFFF;--ink:#13242A;--mute:#566A6C;--line:#D3DFDB;
+  --accent:#0E6B66;--accent-ink:#FFFFFF;--soft:#DCEBE6;--sun:#C9811F;--sun-soft:#F7E7CC;
+  --ok:#2C7A4F;--warn:#A9471F;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D191C;--surface:#152428;--ink:#E4EFEC;--mute:#93A8A7;--line:#26393D;
+  --accent:#4CC2B4;--accent-ink:#06211E;--soft:#1B3236;--sun:#F0B657;--sun-soft:#3A2E17;
+  --ok:#5CC98A;--warn:#F08A5D;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D191C;--surface:#152428;--ink:#E4EFEC;--mute:#93A8A7;--line:#26393D;
+  --accent:#4CC2B4;--accent-ink:#06211E;--soft:#1B3236;--sun:#F0B657;--sun-soft:#3A2E17;
+  --ok:#5CC98A;--warn:#F08A5D;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:17px/1.45 var(--f-body);padding:0 16px;padding-block:12px 96px}
+main{max-width:560px;margin:0 auto;display:grid;gap:14px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:700}
+.muted{color:var(--mute)}.small{font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+.card.hero{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.card.hero .muted,.card.hero .eyebrow{color:inherit;opacity:.8}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>.grow{flex:1;min-width:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:10px 14px;min-height:44px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.btn-main{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700;font-size:18px;padding:14px 18px;width:100%}
+.hero .btn-main{background:var(--accent-ink);color:var(--accent)}
+.btn-soft{background:var(--soft);border-color:transparent;font-weight:700}
+.btn-sun{background:var(--sun-soft);border-color:transparent;font-weight:700;color:var(--ink)}
+.btn-link{background:none;border:0;padding:6px 0;min-height:0;text-decoration:underline;color:inherit;opacity:.85}
+.btn-x{background:none;border:0;color:var(--mute);padding:6px 10px}
+.btn-x.armed{color:var(--warn);font-weight:700}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:70px;resize:vertical}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:380px){.grid2{grid-template-columns:1fr}}
+/* línea del medicamento */
+.dose{position:relative;height:14px;border-radius:7px;background:color-mix(in srgb,var(--accent-ink) 22%,transparent);overflow:hidden}
+.dose .ramp{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--accent-ink) 40%,transparent)}
+.dose .best{position:absolute;top:0;bottom:0;background:var(--accent-ink)}
+.dose .now{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;border-radius:2px;background:var(--sun)}
+.dose-labels{display:flex;justify-content:space-between;font-size:13px;font-variant-numeric:tabular-nums;opacity:.85}
+/* tareas */
+.task{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.task:first-child{border-top:0}
+.task .body{flex:1;min-width:0;display:grid;gap:4px}
+.task .name{font-weight:700;overflow-wrap:anywhere}
+.task.done .name{text-decoration:line-through;color:var(--mute)}
+.chk{width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;flex:none;border:2px solid var(--mute);background:none;font-weight:700}
+.done .chk{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.step{font-size:14px;color:var(--mute)}
+.step b{color:var(--ink)}
+.chip{display:inline-block;font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--soft)}
+.chip.sun{background:var(--sun-soft)}
+.chip.warn{background:var(--warn);color:var(--surface)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.actions button{min-height:36px;padding:6px 10px;font-size:14px}
+/* calificaciones */
+.rate{display:grid;grid-template-columns:7.5em 1fr;gap:8px;align-items:center}
+.rate .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.rate .opts button{padding:0;min-height:40px;font-weight:700;font-variant-numeric:tabular-nums}
+.rate .opts button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.ends{grid-column:2;display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:-4px}
+/* tabla diario */
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--mute);font-weight:700}
+.big{font-family:var(--f-display);font-size:40px;font-weight:800;line-height:1}
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:none;padding:12px 0 14px;font-weight:700;color:var(--mute);font-size:15px}
+nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+/* overlay */
+#ov{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+#ov.alarm-firme{background:var(--sun-soft)}
+#ov .say{font-family:var(--f-display);font-size:30px;font-weight:800;max-width:20ch;text-wrap:balance}
+#ov .stack{display:grid;gap:10px;width:100%;max-width:380px}
+.clock{font-family:var(--f-display);font-size:54px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+.ring{width:220px;height:220px;max-width:70vw;max-height:70vw;position:relative;display:grid;place-items:center}
+.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.dots{display:flex;gap:6px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--accent)}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:420px;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-weight:700;z-index:20;text-align:center}
+@media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+
+<main id="main"></main>
+<nav id="nav"></nav>
+<div id="ov" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const dkey=(d=new Date())=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const atToday=t=>{const[h,m]=t.split(':');const d=new Date();d.setHours(+h,+m,0,0);return d};
+const DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
+
+const TIPOS={
+  lectura:['Lectura','Abre el PDF y lee solo el primer párrafo.'],
+  escrito:['Ensayo o reporte','Escribe el título y 3 ideas sueltas, aunque estén feas.'],
+  presentacion:['Presentación','Crea la primera diapositiva: solo el título.'],
+  investigacion:['Investigación','Busca 2 fuentes y guarda los links.'],
+  examen:['Estudiar para examen','Lee tus apuntes del primer tema 5 minutos.'],
+  equipo:['Trabajo en equipo','Manda un mensaje al grupo.'],
+  otro:['Otro','Haz la parte más pequeña posible.']
+};
+const CAMA=['Siéntate en la cama. Solo eso.','Pon los pies en el piso.','Párate y tómate un vaso de agua.','Abre la cortina o prende la luz.','Haz 5 sentadillas. Nada más.'];
+const RATES=[['e','Energía','baja','alta'],['a','Ánimo','bajo','bueno'],['f','Foco','disperso','enfocado'],['s','Sueño anoche','mal','bien'],['ap','Apetito','poco','normal']];
+
+function fresh(){return{v:1,t:0,cfg:{onset:90,len:6,limit:''},
+  tasks:[
+    {id:uid(),name:'Ejemplo: leer el capítulo de Incoterms',type:'lectura',subj:'Comercio internacional',due:'',step:'',today:'',done:''},
+    {id:uid(),name:'Ejemplo: presentación sobre mercados emergentes',type:'presentacion',subj:'',due:'',step:'',today:'',done:''}],
+  rem:[
+    {id:'r1',text:'¿Ya tomaste tu medicamento?',kind:'fixed',at:'09:00',mode:'tranqui',pill:1},
+    {id:'r2',text:'Empieza lo difícil: ya estás en tu mejor rato',kind:'pill',at:90,mode:'firme'},
+    {id:'r3',text:'Movimiento: 5 sentadillas o 5 lagartijas',kind:'pill',at:240,mode:'tranqui'},
+    {id:'r4',text:'Check-in de la noche (30 segundos)',kind:'fixed',at:'21:30',mode:'tranqui'}],
+  days:{}}}
+
+// ---------- guardado: cuenta de Claude si se puede, si no este navegador ----------
+const LKEY='ancla.v1';
+const ls={get(){try{return JSON.parse(localStorage.getItem(LKEY))}catch(e){return null}},set(){try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){}}};
+let S=ls.get()||fresh(), dbDoc=null, sync='local', saveT=0, saving=false, dirty=false;
+function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTimeout(flush,1200)}
+async function flush(){
+  if(!dbDoc)return; if(saving){dirty=true;return}
+  saving=true;
+  try{await dbDoc.set(JSON.parse(JSON.stringify(S)));sync='cuenta'}catch(e){sync='error'}
+  saving=false; if(dirty){dirty=false;flush()} else render();
+}
+(async()=>{
+  if(!window.claude?.use)return;
+  try{
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    const id=db&&user&&await user.id(); if(!id)return;
+    dbDoc=db.collection('data/users/'+id).doc('ancla');
+    const snap=await dbDoc.get();
+    if(snap.exists&&(snap.data().t||0)>=(S.t||0)){S=JSON.parse(JSON.stringify(snap.data()));ls.set();sync='cuenta';render()}
+    else flush();
+  }catch(e){sync='error';render()}
+})();
+
+const day=(k=dkey())=>S.days[k]||(S.days[k]={pill:'',mov:{s:0,l:0},focus:0,check:{},note:'',ack:{},tried:0});
+const touch=()=>{day().tried=1};
+function win(k=dkey()){const p=S.days[k]?.pill;if(!p)return null;const t=atToday(p);
+  const a=new Date(t.getTime()+S.cfg.onset*6e4),b=new Date(a.getTime()+S.cfg.len*36e5);return{t,a,b}}
+const todayTasks=()=>S.tasks.filter(t=>t.today===dkey());
+const nextTask=()=>todayTasks().find(t=>!t.done);
+const stepOf=t=>t.step||(TIPOS[t.type]||TIPOS.otro)[1];
+
+// ---------- sonido ----------
+let AC=null;
+function ac(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC}
+document.addEventListener('pointerdown',ac,{once:true});
+function tone(f,dur,when=0,vol=.15){const c=ac();if(!c)return;const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+when;
+  o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(c.destination);o.start(t);o.stop(t+dur+.05)}
+const chime=()=>{tone(660,.7);tone(880,.9,.2)};
+const alarmBeep=()=>{tone(880,.18,0,.3);tone(880,.18,.25,.3);tone(1175,.35,.5,.3)};
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+let toastT=0;
+function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
+
+// ---------- vistas ----------
+let tab='hoy',armed='',pillEdit=false,addRem=false;
+try{tab=localStorage.getItem('ancla.tab')||'hoy'}catch(e){}
+const TABS=[['hoy','Hoy'],['tareas','Tareas'],['diario','Diario'],['avisos','Avisos']];
+
+function render(){
+  $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?'on':''}" data-act="tab" data-k="${k}" aria-current="${k===tab?'page':'false'}">${l}</button>`).join('');
+  $('#main').innerHTML=({hoy:vHoy,tareas:vTareas,diario:vDiario,avisos:vAvisos})[tab]();
+}
+
+function vPill(){
+  const d=day(),w=win(),now=new Date();
+  if(!d.pill||pillEdit){
+    const late=S.cfg.limit&&hm(now)>S.cfg.limit;
+    return `<section class="card hero"><span class="eyebrow">Medicamento</span>
+      <h2>${pillEdit?'¿A qué hora te la tomaste?':'¿Ya te la tomaste?'}</h2>
+      ${late&&!pillEdit?`<p class="small" style="margin:0">Ya pasó la hora límite que pusiste (${esc(S.cfg.limit)}). Si no la has tomado, sigue lo que acordaste con tu psiquiatra.</p>`:''}
+      ${pillEdit?`<input type="time" id="pill-time" value="${d.pill||hm(now)}"><div class="row"><button class="btn-main grow" data-act="pill-set">Guardar hora</button><button class="btn-link" data-act="pill-cancel">Cancelar</button></div>`
+      :`<button class="btn-main" data-act="pill-now">Ya me la tomé</button><button class="btn-link" data-act="pill-edit">Me la tomé a otra hora</button>`}
+    </section>`}
+  const span=w.b.getTime()+2*36e5-w.t.getTime(),pct=x=>Math.max(0,Math.min(100,(x-w.t.getTime())/span*100));
+  let msg;
+  if(now<w.a)msg=`Empieza a hacer efecto como a las <b>${hm(w.a)}</b>. Mientras, algo ligero: ordena tu espacio o elige tus 3 de hoy.`;
+  else if(now<w.b)msg=`Estás en tu mejor rato hasta las <b>${hm(w.b)}</b>. Úsalo para lo difícil.`;
+  else msg=`Tu mejor rato ya pasó. Toca lo ligero o descansar, también cuenta.`;
+  return `<section class="card hero"><div class="row"><span class="eyebrow grow">Medicamento · tomado ${esc(d.pill)}</span><button class="btn-link small" data-act="pill-edit">Cambiar</button></div>
+    <p style="margin:0">${msg}</p>
+    <div class="dose" role="img" aria-label="Mejor rato de ${hm(w.a)} a ${hm(w.b)}">
+      <div class="ramp" style="left:0;width:${pct(w.a.getTime())}%"></div>
+      <div class="best" style="left:${pct(w.a.getTime())}%;width:${pct(w.b.getTime())-pct(w.a.getTime())}%"></div>
+      <div class="now" style="left:${pct(now.getTime())}%"></div></div>
+    <div class="dose-labels"><span>${esc(d.pill)}</span><span>${hm(w.a)} – ${hm(w.b)}</span><span>${hm(new Date(w.t.getTime()+span))}</span></div>
+    <span class="small muted">Horas aproximadas. Ajústalas en Avisos según cómo lo sientas.</span></section>`
+}
+
+function taskRow(t,short){
+  const tp=(TIPOS[t.type]||TIPOS.otro)[0],meta=[tp];
+  if(t.subj)meta.push(esc(t.subj));
+  let due='';
+  if(t.due&&!t.done){const n=Math.round((new Date(t.due+'T00:00')-new Date(dkey()+'T00:00'))/864e5);
+    due=n<0?`<span class="chip warn">Atrasada</span>`:n===0?`<span class="chip warn">Entrega hoy</span>`:n===1?`<span class="chip sun">Entrega mañana</span>`:`<span class="chip">Entrega en ${n} días</span>`}
+  const isToday=t.today===dkey();
+  return `<div class="task ${t.done?'done':''}">
+    <button class="chk" data-act="done" data-id="${t.id}" aria-label="${t.done?'Marcar pendiente':'Marcar hecha'}">${t.done?'✓':''}</button>
+    <div class="body"><span class="name">${esc(t.name)}</span>
+      <span class="small muted">${meta.join(' · ')} ${due}</span>
+      ${t.done?'':`<span class="step">Primer paso: <b>${esc(stepOf(t))}</b></span>
+      <div class="actions"><button class="btn-soft" data-act="timer" data-id="${t.id}">Empezar 5 min</button>
+      ${short?'':`<button data-act="today" data-id="${t.id}">${isToday?'Quitar de hoy':'Para hoy'}</button>`}</div>`}
+    </div>
+    ${short?'':`<button class="btn-x ${armed===t.id?'armed':''}" data-act="del" data-id="${t.id}" aria-label="Borrar">${armed===t.id?'¿Borrar?':'✕'}</button>`}
+  </div>`}
+
+function vHoy(){
+  const d=day(),tt=todayTasks(),nx=nextTask(),now=new Date();
+  const tried=Object.values(S.days).filter(x=>x.tried).length;
+  const fecha=now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}).replace(/^./,c=>c.toUpperCase());
+  let next;
+  if(nx)next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>${esc(nx.name)}</h2>
+    <p class="step" style="margin:0">Primer paso: <b>${esc(stepOf(nx))}</b></p>
+    <button class="btn-main" data-act="timer" data-id="${nx.id}">Empezar 5 minutos</button>
+    <span class="small muted">Solo 5. Cuando acaben decides si sigues.</span></section>`;
+  else if(tt.length)next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>Hiciste tus ${tt.length} de hoy.</h2><p class="muted" style="margin:0">Lo demás es extra. Descansar también está bien.</p></section>`;
+  else next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>Elige hasta 3 cosas para hoy</h2><p class="muted" style="margin:0">Solo 3. Una lista larga paraliza.</p><button class="btn-main" data-act="tab" data-k="tareas">Elegir mis 3</button></section>`;
+  const mv=d.mov.s+d.mov.l;
+  const ck=d.check||{};
+  return `<header class="row" style="padding-top:4px"><div class="grow"><h1>Ancla</h1><span class="muted small">${esc(fecha)}</span></div>
+      <div style="text-align:right"><div class="big" style="font-size:30px">${tried}</div><span class="small muted">días que lo<br>intentaste</span></div></header>
+    ${vPill()}
+    <button class="btn-sun" style="width:100%;padding:14px" data-act="cama">Estoy pegado en la cama</button>
+    ${next}
+    ${tt.length?`<section class="card"><span class="eyebrow">Tus ${tt.length} de hoy</span><div>${tt.map(t=>taskRow(t,true)).join('')}</div></section>`:''}
+    <section class="card"><div class="row"><span class="eyebrow grow">Movimiento</span>${mv?`<span class="chip">Hecho · ${mv} reps</span>`:''}</div>
+      <p style="margin:0">${mv?'Ya cuenta como hecho. Si quieres más, va.':'Con 5 sentadillas o 5 lagartijas ya cuenta.'}</p>
+      <div class="grid2"><button class="btn-soft" data-act="mov" data-k="s">+5 sentadillas${d.mov.s?` (${d.mov.s})`:''}</button><button class="btn-soft" data-act="mov" data-k="l">+5 lagartijas${d.mov.l?` (${d.mov.l})`:''}</button></div></section>
+    <section class="card"><span class="eyebrow">Check-in de la noche</span>
+      <p class="small muted" style="margin:0">30 segundos. Se guarda solo y arma tu resumen para la psiquiatra.</p>
+      ${RATES.map(([k,l,lo,hi])=>`<div class="rate"><span>${l}</span><div class="opts" role="group" aria-label="${l}">${[1,2,3,4,5].map(v=>`<button class="${ck[k]===v?'on':''}" data-act="rate" data-k="${k}" data-v="${v}" aria-pressed="${ck[k]===v}">${v}</button>`).join('')}</div><div class="ends"><span>${lo}</span><span>${hi}</span></div></div>`).join('')}
+      <label>Algo que notaste hoy (opcional)<textarea id="note" data-act="note" placeholder="Ej. me dio menos hambre, dormí tarde, me sentí acelerado…">${esc(d.note)}</textarea></label>
+    </section>`
+}
+
+function vTareas(){
+  const pend=S.tasks.filter(t=>!t.done),hechas=S.tasks.filter(t=>t.done).slice(-10).reverse();
+  const tt=todayTasks().filter(t=>!t.done);
+  return `<h1>Tareas</h1>
+    <section class="card"><span class="eyebrow">Nueva tarea</span>
+    <form id="f-task" class="grid2" style="gap:10px">
+      <label style="grid-column:1/-1">Qué es<input name="name" required placeholder="Ej. reporte de balanza comercial" autocomplete="off"></label>
+      <label>Tipo<select name="type" id="f-type">${Object.entries(TIPOS).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('')}</select></label>
+      <label>Entrega (opcional)<input name="due" type="date"></label>
+      <label style="grid-column:1/-1">Materia (opcional)<input name="subj" autocomplete="off"></label>
+      <label style="grid-column:1/-1">Primer paso chiquito<input name="step" id="f-step" placeholder="${esc(TIPOS.lectura[1])}" autocomplete="off"></label>
+      <button class="btn-main" style="grid-column:1/-1">Agregar</button>
+    </form></section>
+    <section class="card"><div class="row"><span class="eyebrow grow">Pendientes</span><span class="small muted">${tt.length}/3 para hoy</span></div>
+      <div>${pend.length?pend.map(t=>taskRow(t)).join(''):'<p class="muted">Nada pendiente.</p>'}</div></section>
+    ${hechas.length?`<section class="card"><span class="eyebrow">Hechas</span><div>${hechas.map(t=>taskRow(t)).join('')}</div></section>`:''}`
+}
+
+function last7(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(d)}return out}
+function vDiario(){
+  const rows=last7().map(dt=>{const k=dkey(dt),d=S.days[k]||{},c=d.check||{};
+    return{dt,k,pill:d.pill||'–',focus:d.focus||0,tasks:S.tasks.filter(t=>t.done===k).length,mov:d.mov?d.mov.s+d.mov.l:0,c,note:d.note||''}});
+  const avg=f=>{const v=rows.map(r=>r.c[f]).filter(Boolean);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'–'};
+  const tried=Object.values(S.days).filter(x=>x.tried).length;
+  const notes=rows.filter(r=>r.note);
+  return `<h1>Diario</h1>
+    <section class="card"><div class="row"><div class="grow"><span class="eyebrow">Días que lo intentaste</span><div class="big">${tried}</div></div>
+      <p class="small muted grow" style="margin:0">Este número nunca baja. Un día malo no borra los buenos.</p></div></section>
+    <section class="card"><span class="eyebrow">Últimos 7 días</span>
+      <div class="tbl"><table><thead><tr><th>Día</th><th>Pastilla</th><th>Foco</th><th>Tareas</th><th>Mov.</th>${RATES.map(r=>`<th title="${r[1]}">${r[1].split(' ')[0].slice(0,4)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}</td><td>${r.pill}</td><td>${r.focus?r.focus+' min':'–'}</td><td>${r.tasks||'–'}</td><td>${r.mov||'–'}</td>${RATES.map(([k])=>`<td>${r.c[k]||'–'}</td>`).join('')}</tr>`).join('')}
+      <tr><td><b>Promedio</b></td><td></td><td></td><td></td><td></td>${RATES.map(([k])=>`<td><b>${avg(k)}</b></td>`).join('')}</tr></tbody></table></div>
+      <span class="small muted">Calificaciones del 1 al 5. Ener = energía, Ánim = ánimo, Foco, Sueñ = sueño, Apet = apetito.</span>
+      ${notes.length?`<div style="display:grid;gap:6px">${notes.map(r=>`<p class="small" style="margin:0"><b>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}:</b> ${esc(r.note)}</p>`).join('')}</div>`:''}
+      <button class="btn-main" data-act="copy">Copiar resumen para mi psiquiatra</button>
+      <textarea id="copy-box" readonly hidden></textarea>
+    </section>`
+}
+function summaryText(){
+  const lines=['Resumen semanal (Ancla)',''];
+  for(const dt of last7()){const k=dkey(dt),d=S.days[k]||{},c=d.check||{};
+    lines.push(`${DIAS[dt.getDay()]} ${dt.getDate()}: pastilla ${d.pill||'no registrada'} · foco ${d.focus||0} min · ${RATES.map(([f,l])=>`${l.toLowerCase()} ${c[f]||'–'}`).join(', ')}${d.note?` · nota: ${d.note}`:''}`)}
+  lines.push('','Escala 1 (bajo/mal) a 5 (alto/bien).');return lines.join('\n')}
+
+function vAvisos(){
+  const desc=r=>r.kind==='fixed'?`${esc(r.at)}${r.pill?' · solo si no la has tomado':''}`:`${r.at} min después de la pastilla`;
+  return `<h1>Avisos</h1>
+    <section class="card"><p style="margin:0">En esta versión los avisos <b>suenan solo con la app abierta</b>. En la APK van a sonar aunque esté cerrada.</p>
+      <div class="grid2"><button class="btn-soft" data-act="test" data-k="tranqui">Probar tranqui</button><button class="btn-sun" data-act="test" data-k="firme">Probar firme</button></div>
+      <span class="small muted">Tranqui: suena una vez. Firme: suena hasta que toques "Ya empecé" o "Dame 10 min" (máximo 2 veces).</span></section>
+    <section class="card"><span class="eyebrow">Tus avisos</span>
+      <div>${S.rem.map(r=>`<div class="task"><div class="body"><span class="name">${esc(r.text)}</span><span class="small muted">${desc(r)}</span></div>
+        <button class="${r.mode==='firme'?'btn-sun':'btn-soft'}" style="min-height:36px;padding:6px 10px;font-size:14px" data-act="mode" data-id="${r.id}" aria-label="Cambiar modo">${r.mode==='firme'?'Firme':'Tranqui'}</button>
+        <button class="btn-x ${armed===r.id?'armed':''}" data-act="delrem" data-id="${r.id}" aria-label="Borrar">${armed===r.id?'¿Borrar?':'✕'}</button></div>`).join('')}</div>
+      ${addRem?`<form id="f-rem" style="display:grid;gap:10px">
+        <label>Qué te digo<input name="text" required placeholder="Ej. Abre tu cuaderno de finanzas" autocomplete="off"></label>
+        <div class="grid2"><label>Cuándo<select name="kind" id="f-kind"><option value="fixed">A una hora fija</option><option value="pill">Después de la pastilla</option></select></label>
+        <label id="f-at-l">Hora<input name="at" type="time" value="18:00" id="f-at"></label></div>
+        <label>Modo<select name="mode"><option value="tranqui">Tranqui</option><option value="firme">Firme</option></select></label>
+        <div class="row"><button class="btn-main grow">Guardar aviso</button><button type="button" class="btn-link" data-act="addrem">Cancelar</button></div></form>`
+      :`<button class="btn-soft" data-act="addrem">Agregar aviso</button>`}
+    </section>
+    <section class="card"><span class="eyebrow">Tu ventana de foco</span>
+      <div class="grid2"><label>Empieza a hacer efecto (min)<input type="number" min="0" max="300" step="5" data-cfg="onset" value="${S.cfg.onset}"></label>
+      <label>Mejor rato dura (horas)<input type="number" min="1" max="14" step="0.5" data-cfg="len" value="${S.cfg.len}"></label></div>
+      <label>Hora límite para tomarla (pregúntale a tu psiquiatra)<input type="time" data-cfg="limit" value="${esc(S.cfg.limit)}"></label>
+      <span class="small muted">Son aproximaciones. Ajústalas cuando veas cómo te cae.</span></section>
+    <p class="small muted" style="text-align:center">${sync==='cuenta'?'Tus datos se guardan en tu cuenta.':sync==='error'?'No se pudo guardar en tu cuenta; se guardan en este navegador.':'Tus datos se guardan en este navegador.'}</p>`
+}
+
+// ---------- overlay: temporizador, modo cama, alarma ----------
+let OV=null,T=null,C=0,ring=null,beepI=0,WL=null,tickI=0;
+function openOv(m){OV=m;renderOv()}
+function closeOv(){OV=null;clearInterval(beepI);clearInterval(tickI);ring=null;try{WL&&WL.release()}catch(e){}WL=null;$('#ov').hidden=true;$('#ov').className='';render()}
+function wake(){try{navigator.wakeLock?.request('screen').then(l=>WL=l).catch(()=>{})}catch(e){}}
+
+function startTimer(id,min=5){
+  const t=S.tasks.find(x=>x.id===id);
+  T={id,name:t?t.name:'Lo que tengas enfrente',step:t?stepOf(t):'',total:min*6e4,start:Date.now(),fin:false};
+  touch();save();wake();openOv('timer');
+  clearInterval(tickI);tickI=setInterval(tickTimer,250);
+}
+function endSeg(){if(!T||T.closed)return;const m=Math.round(Math.min(Date.now()-T.start,T.total)/6e4);T.closed=1;if(m){day().focus+=m;save()}}
+function tickTimer(){
+  if(OV!=='timer'||!T||T.fin)return;
+  const left=T.total-(Date.now()-T.start);
+  if(left<=0){T.fin=true;endSeg();chime();buzz([200,100,200]);renderOv();return}
+  const el=$('#clock');if(el)el.textContent=pad(Math.floor(left/6e4))+':'+pad(Math.floor(left%6e4/1e3));
+  const c=$('#arc');if(c)c.style.strokeDashoffset=String(628*(1-left/T.total));
+}
+
+function renderOv(){
+  const o=$('#ov');o.hidden=false;o.className='';
+  if(OV==='timer'){
+    if(T.fin){o.innerHTML=`<span class="eyebrow">Se acabaron tus minutos</span><div class="say">¿Sigues un rato más?</div>
+      <div class="stack"><button class="btn-main" data-act="more" data-v="5">5 minutos más</button><button class="btn-soft" data-act="more" data-v="15">15 minutos más</button>
+      <button data-act="finish">La terminé</button><button class="btn-link" data-act="close">Ya por hoy, y está bien</button></div>`;return}
+    o.innerHTML=`<span class="eyebrow">Solo esto</span><div class="say" style="font-size:24px">${esc(T.name)}</div>
+      ${T.step?`<p class="step" style="margin:0;max-width:32ch">Primer paso: <b>${esc(T.step)}</b></p>`:''}
+      <div class="ring"><svg viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="100" stroke="var(--line)"/><circle id="arc" cx="110" cy="110" r="100" stroke="var(--accent)" stroke-linecap="round" stroke-dasharray="628" stroke-dashoffset="0"/></svg><div class="clock" id="clock">--:--</div></div>
+      <div class="stack"><button class="btn-link" data-act="stop">Parar</button></div>`;
+    tickTimer();return}
+  if(OV==='cama'){
+    if(C<CAMA.length){o.innerHTML=`<div class="dots">${CAMA.map((_,i)=>`<i class="${i<=C?'on':''}"></i>`).join('')}</div>
+      <div class="say">${CAMA[C]}</div><div class="stack"><button class="btn-main" data-act="cama-next">Hecho</button><button class="btn-link" data-act="close">Salir</button></div>`;return}
+    const nx=nextTask();
+    o.innerHTML=`<div class="say">Ya estás de pie. Eso era lo más difícil.</div>
+      <div class="stack">${nx?`<button class="btn-main" data-act="timer" data-id="${nx.id}">5 minutos de: ${esc(nx.name)}</button>`:`<button class="btn-main" data-act="tab-close" data-k="tareas">Elegir mis 3 de hoy</button>`}
+      <button class="btn-link" data-act="close">Cerrar</button></div>`;return}
+  if(OV==='alarm'){
+    const r=ring,a=day().ack[r.id]||{};o.className=r.mode==='firme'?'alarm-firme':'';
+    o.innerHTML=`<span class="eyebrow">${r.mode==='firme'?'Modo firme':'Recordatorio'}</span><div class="say">${esc(r.text)}</div>
+      <div class="stack">${r.pill?`<button class="btn-main" data-act="al-pill">Ya me la tomé</button>`:`<button class="btn-main" data-act="al-ok">Ya empecé</button>`}
+      ${(a.s||0)<2?`<button class="btn-soft" data-act="al-snooze">Dame 10 min</button>`:`<p class="small muted" style="margin:0">Ya usaste tus 2 "dame 10 min". Solo el primer paso, ándale.</p>`}
+      ${r.mode==='firme'?'':`<button class="btn-link" data-act="al-ok">Cerrar</button>`}</div>`}
+}
+
+function dueRem(){
+  const d=day(),now=Date.now(),w=win();
+  for(const r of S.rem){
+    if(r.pill&&d.pill)continue;
+    let at;if(r.kind==='fixed')at=atToday(r.at).getTime();else{if(!w)continue;at=w.t.getTime()+r.at*6e4}
+    const a=d.ack[r.id]||{};if(a.ok)continue;
+    if(now>=(a.until||at)&&now-at<3*36e5)return r;
+  }
+}
+function fire(r){
+  ring=r;openOv('alarm');
+  if(document.hidden&&'Notification' in window&&Notification.permission==='granted'){try{new Notification('Ancla',{body:r.text})}catch(e){}}
+  if(r.mode==='firme'){alarmBeep();buzz([400,200,400]);clearInterval(beepI);beepI=setInterval(()=>{alarmBeep();buzz([400,200,400])},3000)}
+  else{chime();buzz(200)}
+}
+function ack(fields){const d=day(),r=ring;d.ack[r.id]={...(d.ack[r.id]||{}),...fields};save();closeOv()}
+let lastKey=dkey();
+setInterval(()=>{
+  if(dkey()!==lastKey){lastKey=dkey();if(!OV)render()}
+  if(OV)return;const r=dueRem();if(r)fire(r);
+},10000);
+setInterval(()=>{if(!OV&&tab==='hoy'&&!document.activeElement?.matches('textarea,input'))render()},60000);
+
+// ---------- acciones ----------
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.tagName==='TEXTAREA')return;
+  const act=b.dataset.act,id=b.dataset.id,k=b.dataset.k;
+  if(act!=='del'&&act!=='delrem')armed='';
+  const d=day(),t=id&&S.tasks.find(x=>x.id===id);
+  switch(act){
+    case 'tab':tab=k;try{localStorage.setItem('ancla.tab',k)}catch(e){}render();scrollTo(0,0);break;
+    case 'tab-close':closeOv();tab=k;render();break;
+    case 'pill-now':d.pill=hm(new Date());touch();pillEdit=false;save();chime();toast('Anotado. Tu ventana de foco ya está calculada.');break;
+    case 'pill-edit':pillEdit=true;render();break;
+    case 'pill-cancel':pillEdit=false;render();break;
+    case 'pill-set':{const v=$('#pill-time').value;if(v){d.pill=v;touch()}pillEdit=false;save();break}
+    case 'cama':C=0;touch();save();wake();openOv('cama');break;
+    case 'cama-next':if(C===4){d.mov.s+=5;save()}C++;renderOv();break;
+    case 'timer':startTimer(id);break;
+    case 'stop':endSeg();T=null;closeOv();break;
+    case 'more':startTimer(T.id,+b.dataset.v);break;
+    case 'finish':{const x=S.tasks.find(y=>y.id===T.id);if(x){x.done=dkey();touch();save()}T=null;closeOv();toast('Hecha. Bien ahí.');break}
+    case 'close':endSeg();T=null;closeOv();break;
+    case 'done':t.done=t.done?'':dkey();if(t.done){touch();chime();buzz(60)}save();break;
+    case 'today':if(t.today===dkey())t.today='';else if(todayTasks().filter(x=>!x.done).length>=3){toast('Ya tienes 3 para hoy. Quita una primero.');break}else t.today=dkey();save();break;
+    case 'del':if(armed===id){S.tasks=S.tasks.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
+    case 'mov':d.mov[k]+=5;touch();save();buzz(40);break;
+    case 'rate':d.check={...d.check,[k]:+b.dataset.v};touch();save();break;
+    case 'copy':{const txt=summaryText(),box=$('#copy-box');
+      const fallback=()=>{box.hidden=false;box.value=txt;box.style.minHeight='200px';box.select();toast('Selecciona el texto y cópialo.')};
+      try{navigator.clipboard.writeText(txt).then(()=>toast('Resumen copiado.'),fallback)}catch(err){fallback()}break}
+    case 'test':ring={id:'test',text:k==='firme'?'Así suena el modo firme':'Así suena el modo tranqui',mode:k};fire(ring);break;
+    case 'mode':{const r=S.rem.find(x=>x.id===id);r.mode=r.mode==='firme'?'tranqui':'firme';save();break}
+    case 'delrem':if(armed===id){S.rem=S.rem.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
+    case 'addrem':addRem=!addRem;render();break;
+    case 'al-ok':if(ring.id==='test')closeOv();else ack({ok:1});break;
+    case 'al-pill':d.pill=hm(new Date());touch();ack({ok:1});break;
+    case 'al-snooze':if(ring.id==='test')closeOv();else{const a=d.ack[ring.id]||{};ack({s:(a.s||0)+1,until:Date.now()+10*6e4})}break;
+  }
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.dataset.cfg){const v=el.type==='number'?+el.value:el.value;if(el.type!=='number'||(v>=+el.min&&v<=+el.max)){S.cfg[el.dataset.cfg]=v;save()}}
+  else if(el.id==='note'){day().note=el.value.trim();touch();save()}
+  else if(el.id==='f-type'){$('#f-step').placeholder=(TIPOS[el.value]||TIPOS.otro)[1]}
+  else if(el.id==='f-kind'){const p=el.value==='pill';$('#f-at-l').innerHTML=p?'Minutos después<input name="at" type="number" min="0" max="900" step="15" value="90" id="f-at">':'Hora<input name="at" type="time" value="18:00" id="f-at">'}
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();const f=new FormData(e.target);
+  if(e.target.id==='f-task'){
+    const name=f.get('name').trim();if(!name)return;
+    S.tasks.push({id:uid(),name,type:f.get('type'),subj:f.get('subj').trim(),due:f.get('due'),step:f.get('step').trim(),today:'',done:''});
+    save();toast('Agregada. Toca "Para hoy" si va en tus 3.');
+  }else if(e.target.id==='f-rem'){
+    const kind=f.get('kind'),at=kind==='pill'?Math.max(0,+f.get('at')||0):f.get('at');if(!at&&kind==='fixed')return;
+    S.rem.push({id:uid(),text:f.get('text').trim(),kind,at,mode:f.get('mode')});addRem=false;save();
+  }
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!OV)render()});
+render();
+</script>
