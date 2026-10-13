@@ -179,8 +179,11 @@ function migrate(){
   return S}
 const MEALS=[['d','Desayuno'],['c','Comida'],['s','Snack']];
 let S=ls.get()||fresh(); migrate();
-let dbDoc=null, sync='local', saveT=0, saving=false, dirty=false;
-function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTimeout(flush,1200);clearTimeout(schedT);schedT=setTimeout(schedule,800)}
+const T0=S.t||0; // 0 = este dispositivo no tenía datos: la copia de la cuenta manda
+let dbDoc=null, loaded=false, sync='local', saveT=0, saving=false, dirty=false;
+// no redibujar mientras escribes, o se borra lo que llevas
+const softRender=()=>{if(!document.activeElement?.matches('input,textarea,select'))render()};
+function save(quiet){S.t=Date.now();ls.set();if(!quiet)render();clearTimeout(saveT);saveT=setTimeout(flush,1200);clearTimeout(schedT);schedT=setTimeout(schedule,800)}
 
 // ---------- APK: avisos del sistema aunque la app esté cerrada ----------
 const LN=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.Plugins?.LocalNotifications;
@@ -191,14 +194,14 @@ let upd=false;
 async function checkUpdate(){
   try{const r=await fetch('https://api.github.com/repos/gaboestuard-create/Prueba-1/releases/tags/ancla-apk',{cache:'no-store'});
     if(!r.ok)return;const sha=(await r.json()).target_commitish;
-    if(sha&&sha!==BUILD&&!upd){upd=true;render()}}catch(e){}
+    if(sha&&sha!==BUILD&&!upd){upd=true;softRender()}}catch(e){}
 }
 async function nativeSetup(){
   if(!LN)return;
   checkUpdate();
   try{await LN.requestPermissions();
     await LN.createChannel({id:'ancla',name:'Avisos de Ancla',importance:5,vibration:true,visibility:1});
-    const e=await LN.checkExactNotificationSetting?.();if(e&&e.exact_alarm!=='granted')await LN.changeExactNotificationSetting();
+    const e=await LN.checkExactNotificationSetting?.();if(e&&e.exact_alarm!=='granted'&&!localStorage.getItem('ancla.exact')){localStorage.setItem('ancla.exact','1');await LN.changeExactNotificationSetting()}
   }catch(e){}
   schedule();
 }
@@ -223,10 +226,10 @@ async function schedule(){
   }catch(e){}
 }
 async function flush(){
-  if(!dbDoc)return; if(saving){dirty=true;return}
+  if(!dbDoc||!loaded)return; if(saving){dirty=true;return}
   saving=true;
   try{await dbDoc.set(JSON.parse(JSON.stringify(S)));sync='cuenta'}catch(e){sync='error'}
-  saving=false; if(dirty){dirty=false;flush()} else render();
+  saving=false; if(dirty){dirty=false;flush()} else softRender();
 }
 (async()=>{
   if(!window.claude?.use)return;
@@ -235,9 +238,10 @@ async function flush(){
     const id=db&&user&&await user.id(); if(!id)return;
     dbDoc=db.collection('data/users/'+id).doc('ancla');
     const snap=await dbDoc.get();
-    if(snap.exists&&(snap.data().t||0)>=(S.t||0)){S=JSON.parse(JSON.stringify(snap.data()));migrate();ls.set();sync='cuenta';render()}
+    loaded=true;
+    if(snap.exists&&(T0===0||(snap.data().t||0)>=(S.t||0))){S=JSON.parse(JSON.stringify(snap.data()));migrate();ls.set();sync='cuenta';softRender()}
     else flush();
-  }catch(e){sync='error';render()}
+  }catch(e){sync='error';softRender()}
 })();
 
 const day=(k=dkey())=>S.days[k]||(S.days[k]={pill:'',mov:{s:0,l:0},focus:0,check:{},note:'',ack:{},tried:0});
@@ -453,7 +457,7 @@ function vAvisos(){
 let OV=null,T=null,C=0,FL=CAMA,ring=null,beepI=0,WL=null,tickI=0;
 function openOv(m){OV=m;renderOv()}
 function closeOv(){OV=null;clearInterval(beepI);clearInterval(tickI);ring=null;try{WL&&WL.release()}catch(e){}WL=null;$('#ov').hidden=true;$('#ov').className='';render()}
-function wake(){try{navigator.wakeLock?.request('screen').then(l=>WL=l).catch(()=>{})}catch(e){}}
+function wake(){if(WL&&!WL.released)return;try{navigator.wakeLock?.request('screen').then(l=>WL=l).catch(()=>{})}catch(e){}}
 
 function startTimer(id,min,chore){
   const t=S.tasks.find(x=>x.id===id),a=ACTS[chore]||[];min=min||a[1]||5;
@@ -576,7 +580,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.cfg){const v=el.type==='number'?+el.value:el.value;if(el.type!=='number'||(v>=+el.min&&v<=+el.max)){S.cfg[el.dataset.cfg]=v;save()}}
-  else if(el.id==='note'){day().note=el.value.trim();touch();save()}
+  else if(el.id==='note'){day().note=el.value.trim();touch();save(true)}
   else if(el.id==='f-type'){$('#f-step').placeholder=(TIPOS[el.value]||TIPOS.otro)[1]}
   else if(el.id==='f-kind'){const p=el.value==='pill';$('#f-at-l').innerHTML=p?'Minutos después<input name="at" type="number" min="0" max="900" step="15" value="90" id="f-at">':'Hora<input name="at" type="time" value="18:00" id="f-at">'}
 });
@@ -591,6 +595,9 @@ document.addEventListener('submit',e=>{
     S.rem.push({id:uid(),text:f.get('text').trim(),kind,at,mode:f.get('mode')});addRem=false;save();
   }
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){schedule();if(LN)checkUpdate();if(!OV)render()}});
+// la nota se guarda mientras escribes (por si cierras la app sin salir del cuadro)
+document.addEventListener('input',e=>{if(e.target.id==='note'){day().note=e.target.value.trim();touch();save(true)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveT);flush();return}
+  if(!document.hidden){schedule();if(LN)checkUpdate();if(!OV)render()}});
 render();nativeSetup();
 </script>
