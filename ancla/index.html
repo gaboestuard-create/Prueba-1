@@ -75,7 +75,9 @@ label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
 .rate{display:grid;grid-template-columns:7.5em 1fr;gap:8px;align-items:center}
 .rate .opts{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .rate .opts button{padding:0;min-height:40px;font-weight:700;font-variant-numeric:tabular-nums}
-.rate .opts button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.opts3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.opts3 button{padding:8px 4px;font-weight:700}
+.rate .opts button.on,.opts3 button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .ends{grid-column:2;display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:-4px}
 /* tabla diario */
 .tbl{overflow-x:auto}
@@ -145,7 +147,15 @@ function fresh(){return{v:1,t:0,cfg:{onset:90,len:6,limit:''},
 // ---------- guardado: cuenta de Claude si se puede, si no este navegador ----------
 const LKEY='ancla.v1';
 const ls={get(){try{return JSON.parse(localStorage.getItem(LKEY))}catch(e){return null}},set(){try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){}}};
-let S=ls.get()||fresh(), dbDoc=null, sync='local', saveT=0, saving=false, dirty=false;
+// agrega lo nuevo a datos guardados antes de que existiera
+function migrate(){
+  if(!S.m1){S.m1=1;S.cfg.med2??='Segunda pastilla';S.rem.push(
+    {id:'r5',text:'¿Ya comiste? Aunque no tengas hambre',kind:'fixed',at:'13:00',mode:'tranqui',meal:'c'},
+    {id:'r6',text:'Snack: algo chiquito para llegar con gasolina',kind:'fixed',at:'15:00',mode:'tranqui',meal:'s'})}
+  return S}
+const MEALS=[['d','Desayuno'],['c','Comida'],['s','Snack']];
+let S=ls.get()||fresh(); migrate();
+let dbDoc=null, sync='local', saveT=0, saving=false, dirty=false;
 function save(){S.t=Date.now();ls.set();render();clearTimeout(saveT);saveT=setTimeout(flush,1200)}
 async function flush(){
   if(!dbDoc)return; if(saving){dirty=true;return}
@@ -160,7 +170,7 @@ async function flush(){
     const id=db&&user&&await user.id(); if(!id)return;
     dbDoc=db.collection('data/users/'+id).doc('ancla');
     const snap=await dbDoc.get();
-    if(snap.exists&&(snap.data().t||0)>=(S.t||0)){S=JSON.parse(JSON.stringify(snap.data()));ls.set();sync='cuenta';render()}
+    if(snap.exists&&(snap.data().t||0)>=(S.t||0)){S=JSON.parse(JSON.stringify(snap.data()));migrate();ls.set();sync='cuenta';render()}
     else flush();
   }catch(e){sync='error';render()}
 })();
@@ -196,6 +206,8 @@ function render(){
   $('#main').innerHTML=({hoy:vHoy,tareas:vTareas,diario:vDiario,avisos:vAvisos})[tab]();
 }
 
+const med2Row=d=>S.cfg.med2?`<div class="row" style="border-top:1px solid color-mix(in srgb,currentColor 25%,transparent);padding-top:10px"><span class="grow">${esc(S.cfg.med2)}</span>
+  <button style="background:transparent;border-color:currentColor;color:inherit;font-weight:700" data-act="med2" aria-pressed="${!!d.med2}">${d.med2?'✓ Tomada':'Ya me la tomé'}</button></div>`:'';
 function vPill(){
   const d=day(),w=win(),now=new Date();
   if(!d.pill||pillEdit){
@@ -205,6 +217,7 @@ function vPill(){
       ${late&&!pillEdit?`<p class="small" style="margin:0">Ya pasó la hora límite que pusiste (${esc(S.cfg.limit)}). Si no la has tomado, sigue lo que acordaste con tu psiquiatra.</p>`:''}
       ${pillEdit?`<input type="time" id="pill-time" value="${d.pill||hm(now)}"><div class="row"><button class="btn-main grow" data-act="pill-set">Guardar hora</button><button class="btn-link" data-act="pill-cancel">Cancelar</button></div>`
       :`<button class="btn-main" data-act="pill-now">Ya me la tomé</button><button class="btn-link" data-act="pill-edit">Me la tomé a otra hora</button>`}
+      ${med2Row(d)}
     </section>`}
   const span=w.b.getTime()+2*36e5-w.t.getTime(),pct=x=>Math.max(0,Math.min(100,(x-w.t.getTime())/span*100));
   let msg;
@@ -218,6 +231,7 @@ function vPill(){
       <div class="best" style="left:${pct(w.a.getTime())}%;width:${pct(w.b.getTime())-pct(w.a.getTime())}%"></div>
       <div class="now" style="left:${pct(now.getTime())}%"></div></div>
     <div class="dose-labels"><span>${esc(d.pill)}</span><span>${hm(w.a)} – ${hm(w.b)}</span><span>${hm(new Date(w.t.getTime()+span))}</span></div>
+    ${med2Row(d)}
     <span class="small muted">Horas aproximadas. Ajústalas en Avisos según cómo lo sientas.</span></section>`
 }
 
@@ -250,7 +264,7 @@ function vHoy(){
     <span class="small muted">Solo 5. Cuando acaben decides si sigues.</span></section>`;
   else if(tt.length)next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>Hiciste tus ${tt.length} de hoy.</h2><p class="muted" style="margin:0">Lo demás es extra. Descansar también está bien.</p></section>`;
   else next=`<section class="card"><span class="eyebrow">Lo que sigue</span><h2>Elige hasta 3 cosas para hoy</h2><p class="muted" style="margin:0">Solo 3. Una lista larga paraliza.</p><button class="btn-main" data-act="tab" data-k="tareas">Elegir mis 3</button></section>`;
-  const mv=d.mov.s+d.mov.l;
+  const mv=d.mov.s+d.mov.l,ml=d.meals||{};
   const ck=d.check||{};
   return `<header class="row" style="padding-top:4px"><div class="grow"><h1>Ancla</h1><span class="muted small">${esc(fecha)}</span></div>
       <div style="text-align:right"><div class="big" style="font-size:30px">${tried}</div><span class="small muted">días que lo<br>intentaste</span></div></header>
@@ -258,6 +272,9 @@ function vHoy(){
     <div class="grid2"><button class="btn-sun" style="padding:14px" data-act="cama">Estoy pegado en la cama</button><button class="btn-sun" style="padding:14px" data-act="casa">Llegué a casa</button></div>
     ${next}
     ${tt.length?`<section class="card"><span class="eyebrow">Tus ${tt.length} de hoy</span><div>${tt.map(t=>taskRow(t,true)).join('')}</div></section>`:''}
+    <section class="card"><div class="row"><span class="eyebrow grow">Comidas</span>${MEALS.every(([k])=>ml[k])?'<span class="chip">Completas</span>':''}</div>
+      <p style="margin:0">${ml.d||ml.c||ml.s?'Bien. Comer es lo que te deja llegar con energía a las 4.':'La pastilla quita el hambre. Come aunque no se te antoje.'}</p>
+      <div class="opts3">${MEALS.map(([k,l])=>`<button class="${ml[k]?'on':''}" data-act="meal" data-k="${k}" aria-pressed="${!!ml[k]}">${ml[k]?'✓ ':''}${l}</button>`).join('')}</div></section>
     <section class="card"><div class="row"><span class="eyebrow grow">Movimiento</span>${mv?`<span class="chip">Hecho · ${mv} reps</span>`:''}</div>
       <p style="margin:0">${mv?'Ya cuenta como hecho. Si quieres más, va.':'Con 5 sentadillas o 5 lagartijas ya cuenta.'}</p>
       <div class="grid2"><button class="btn-soft" data-act="mov" data-k="s">+5 sentadillas${d.mov.s?` (${d.mov.s})`:''}</button><button class="btn-soft" data-act="mov" data-k="l">+5 lagartijas${d.mov.l?` (${d.mov.l})`:''}</button></div></section>
@@ -289,7 +306,7 @@ function vTareas(){
 function last7(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(d)}return out}
 function vDiario(){
   const rows=last7().map(dt=>{const k=dkey(dt),d=S.days[k]||{},c=d.check||{};
-    return{dt,k,pill:d.pill||'–',focus:d.focus||0,tasks:S.tasks.filter(t=>t.done===k).length,mov:d.mov?d.mov.s+d.mov.l:0,c,note:d.note||''}});
+    const ml=d.meals||{};return{dt,k,meals:MEALS.filter(([m])=>ml[m]).map(([,l])=>l[0]).join(' ')||'–',med2:d.med2?'✓':'–',pill:d.pill||'–',focus:d.focus||0,tasks:S.tasks.filter(t=>t.done===k).length,mov:d.mov?d.mov.s+d.mov.l:0,c,note:d.note||''}});
   const avg=f=>{const v=rows.map(r=>r.c[f]).filter(Boolean);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'–'};
   const tried=Object.values(S.days).filter(x=>x.tried).length;
   const notes=rows.filter(r=>r.note);
@@ -297,10 +314,10 @@ function vDiario(){
     <section class="card"><div class="row"><div class="grow"><span class="eyebrow">Días que lo intentaste</span><div class="big">${tried}</div></div>
       <p class="small muted grow" style="margin:0">Este número nunca baja. Un día malo no borra los buenos.</p></div></section>
     <section class="card"><span class="eyebrow">Últimos 7 días</span>
-      <div class="tbl"><table><thead><tr><th>Día</th><th>Pastilla</th><th>Foco</th><th>Tareas</th><th>Mov.</th>${RATES.map(r=>`<th title="${r[1]}">${r[1].split(' ')[0].slice(0,4)}</th>`).join('')}</tr></thead>
-      <tbody>${rows.map(r=>`<tr><td>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}</td><td>${r.pill}</td><td>${r.focus?r.focus+' min':'–'}</td><td>${r.tasks||'–'}</td><td>${r.mov||'–'}</td>${RATES.map(([k])=>`<td>${r.c[k]||'–'}</td>`).join('')}</tr>`).join('')}
-      <tr><td><b>Promedio</b></td><td></td><td></td><td></td><td></td>${RATES.map(([k])=>`<td><b>${avg(k)}</b></td>`).join('')}</tr></tbody></table></div>
-      <span class="small muted">Calificaciones del 1 al 5. Ener = energía, Ánim = ánimo, Foco, Sueñ = sueño, Apet = apetito.</span>
+      <div class="tbl"><table><thead><tr><th>Día</th><th>Pastilla</th>${S.cfg.med2?'<th>2ª</th>':''}<th>Comió</th><th>Foco</th><th>Tareas</th><th>Mov.</th>${RATES.map(r=>`<th title="${r[1]}">${r[1].split(' ')[0].slice(0,4)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}</td><td>${r.pill}</td>${S.cfg.med2?`<td>${r.med2}</td>`:''}<td>${r.meals}</td><td>${r.focus?r.focus+' min':'–'}</td><td>${r.tasks||'–'}</td><td>${r.mov||'–'}</td>${RATES.map(([k])=>`<td>${r.c[k]||'–'}</td>`).join('')}</tr>`).join('')}
+      <tr><td><b>Promedio</b></td><td></td>${S.cfg.med2?'<td></td>':''}<td></td><td></td><td></td><td></td>${RATES.map(([k])=>`<td><b>${avg(k)}</b></td>`).join('')}</tr></tbody></table></div>
+      <span class="small muted">Calificaciones del 1 al 5. Comió: D = desayuno, C = comida, S = snack.${S.cfg.med2?` 2ª = ${esc(S.cfg.med2)}.`:''} Ener = energía, Ánim = ánimo, Foco, Sueñ = sueño, Apet = apetito.</span>
       ${notes.length?`<div style="display:grid;gap:6px">${notes.map(r=>`<p class="small" style="margin:0"><b>${DIAS[r.dt.getDay()]} ${r.dt.getDate()}:</b> ${esc(r.note)}</p>`).join('')}</div>`:''}
       <button class="btn-main" data-act="copy">Copiar resumen para mi psiquiatra</button>
       <textarea id="copy-box" readonly hidden></textarea>
@@ -309,7 +326,7 @@ function vDiario(){
 function summaryText(){
   const lines=['Resumen semanal (Ancla)',''];
   for(const dt of last7()){const k=dkey(dt),d=S.days[k]||{},c=d.check||{};
-    lines.push(`${DIAS[dt.getDay()]} ${dt.getDate()}: pastilla ${d.pill||'no registrada'} · foco ${d.focus||0} min · ${RATES.map(([f,l])=>`${l.toLowerCase()} ${c[f]||'–'}`).join(', ')}${d.note?` · nota: ${d.note}`:''}`)}
+    lines.push(`${DIAS[dt.getDay()]} ${dt.getDate()}: pastilla ${d.pill||'no registrada'}${S.cfg.med2?` · ${S.cfg.med2.toLowerCase()} ${d.med2?'sí':'no'}`:''} · comió: ${MEALS.filter(([m])=>(d.meals||{})[m]).map(([,l])=>l.toLowerCase()).join(', ')||'nada registrado'} · foco ${d.focus||0} min · ${RATES.map(([f,l])=>`${l.toLowerCase()} ${c[f]||'–'}`).join(', ')}${d.note?` · nota: ${d.note}`:''}`)}
   lines.push('','Escala 1 (bajo/mal) a 5 (alto/bien).');return lines.join('\n')}
 
 function vAvisos(){
@@ -334,6 +351,7 @@ function vAvisos(){
       <div class="grid2"><label>Empieza a hacer efecto (min)<input type="number" min="0" max="300" step="5" data-cfg="onset" value="${S.cfg.onset}"></label>
       <label>Mejor rato dura (horas)<input type="number" min="1" max="14" step="0.5" data-cfg="len" value="${S.cfg.len}"></label></div>
       <label>Hora límite para tomarla (pregúntale a tu psiquiatra)<input type="time" data-cfg="limit" value="${esc(S.cfg.limit)}"></label>
+      <label>Nombre de tu otra pastilla (déjalo vacío si no tomas otra)<input type="text" data-cfg="med2" value="${esc(S.cfg.med2)}" autocomplete="off"></label>
       <span class="small muted">Son aproximaciones. Ajústalas cuando veas cómo te cae.</span></section>
     <p class="small muted" style="text-align:center">${sync==='cuenta'?'Tus datos se guardan en tu cuenta.':sync==='error'?'No se pudo guardar en tu cuenta; se guardan en este navegador.':'Tus datos se guardan en este navegador.'}</p>`
 }
@@ -392,7 +410,7 @@ function renderOv(){
 function dueRem(){
   const d=day(),now=Date.now(),w=win();
   for(const r of S.rem){
-    if(r.pill&&d.pill)continue;
+    if(r.pill&&d.pill||r.meal&&(d.meals||{})[r.meal])continue;
     let at;if(r.kind==='fixed')at=atToday(r.at).getTime();else{if(!w)continue;at=w.t.getTime()+r.at*6e4}
     const a=d.ack[r.id]||{};if(a.ok)continue;
     if(now>=(a.until||at)&&now-at<3*36e5)return r;
@@ -436,6 +454,8 @@ document.addEventListener('click',e=>{
     case 'today':if(t.today===dkey())t.today='';else if(todayTasks().filter(x=>!x.done).length>=3){toast('Ya tienes 3 para hoy. Quita una primero.');break}else t.today=dkey();save();break;
     case 'del':if(armed===id){S.tasks=S.tasks.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
     case 'mov':d.mov[k]+=5;touch();save();buzz(40);break;
+    case 'meal':d.meals={...d.meals,[k]:!(d.meals||{})[k]};touch();save();break;
+    case 'med2':d.med2=!d.med2;save();break;
     case 'rate':d.check={...d.check,[k]:+b.dataset.v};touch();save();break;
     case 'copy':{const txt=summaryText(),box=$('#copy-box');
       const fallback=()=>{box.hidden=false;box.value=txt;box.style.minHeight='200px';box.select();toast('Selecciona el texto y cópialo.')};
