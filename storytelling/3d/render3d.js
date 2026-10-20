@@ -8,7 +8,7 @@ fs.mkdirSync(tmp, { recursive: true });
 
 async function chunk(k, from, to) {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   await page.route('http://local/**', r => r.fulfill({ path: path.join(dir, decodeURIComponent(new URL(r.request().url()).pathname)) }));
   await page.goto('http://local/index.html');
   await page.waitForFunction('window.ready', null, { timeout: 180000 });
