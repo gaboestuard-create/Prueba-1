@@ -47,3 +47,16 @@ node render.js         # crea video_storytelling.mp4 con música (requiere playw
 ```
 
 `animacion.html` también se puede abrir en el navegador como vista previa en bucle.
+
+## Versión 3D
+
+`video_storytelling_3d.mp4`: la misma historia, voz y música, modelada en 3D con Three.js en estilo juguete o diorama, con luz cálida, sombras suaves, profundidad de campo y brillo (bloom). Las iluminaciones de HDRI y la tipografía Inter son CC0 (`@pmndrs/assets`).
+
+```bash
+cd 3d && npm install
+node render3d.js 3              # crea ../video_storytelling_3d.mp4 sin audio (~1 h con 3 procesos)
+../mezcla.sh video_storytelling_3d.mp4
+```
+
+Para previsualizarla en el navegador, sirve la carpeta `3d/` (por ejemplo `python3 -m http.server`) y abre `index.html`.
+
