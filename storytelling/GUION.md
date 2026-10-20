@@ -34,11 +34,16 @@
 
 La nostalgia aparece en tres momentos: la consola olvidada en la caja de «recuerdos», el póster de karts en el cuarto y la foto familiar en sepia del final.
 
+## Voz en off
+
+Voz masculina, calmada y cálida, en español latino neutro. Se generó con ElevenLabs (voz «Carlos», modelo `eleven_v4`) en una sola toma, con indicaciones de tono por frase: nostálgico al inicio, alegre en la carrera y tierno en la reflexión final. Está en `voz.mp3`. `mezcla.sh` coloca cada frase en su escena y baja la música mientras habla el narrador.
+
 ## Volver a generar el video
 
 ```bash
 python3 musica.py      # crea musica.wav
-node render.js         # crea video_storytelling.mp4 (requiere playwright y ffmpeg)
+node render.js         # crea video_storytelling.mp4 con música (requiere playwright y ffmpeg)
+./mezcla.sh            # agrega la voz en off
 ```
 
 `animacion.html` también se puede abrir en el navegador como vista previa en bucle.
