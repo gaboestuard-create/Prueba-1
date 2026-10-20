@@ -3,6 +3,7 @@
 # Cada frase: inicio y fin dentro de voz.mp3 -> segundo del video donde entra.
 set -e
 cd "$(dirname "$0")"
+V="${1:-video_storytelling.mp4}"  # video al que se le pone la voz
 FRASES="0.00 4.04 4.5
 4.67 7.13 12.4
 7.55 10.00 16.7
@@ -20,7 +21,7 @@ while read a b at; do
 done <<LIST
 $FRASES
 LIST
-ffmpeg -y -loglevel error -i video_storytelling.mp4 -i voz.mp3 -i musica.wav -filter_complex \
+ffmpeg -y -loglevel error -i "$V" -i voz.mp3 -i musica.wav -filter_complex \
   "${F}${L}amix=inputs=$i:normalize=0,apad,atrim=0:60,volume=2.2,asplit[voz][ctl];[2:a]volume=0.45[mus];[mus][ctl]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[duck];[duck][voz]amix=inputs=2:normalize=0,alimiter=limit=0.9[a]" \
   -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -t 60 tmp_mezcla.mp4
-mv tmp_mezcla.mp4 video_storytelling.mp4
+mv tmp_mezcla.mp4 "$V"
