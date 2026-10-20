@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>NEXO - Juntos</title>
+<style>html,body{margin:0;background:#000}canvas{display:block;max-width:100%}</style></head>
+<body><canvas id="c" width="1280" height="720"></canvas>
+<script>
+// Anuncio "Juntos" — marca, consola y personajes ficticios (sustituyen a los originales con copyright).
+const W = 1280, H = 720, x = document.getElementById('c').getContext('2d');
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const F = (s, w = 'bold') => `${w} ${s}px "DejaVu Sans", Arial, sans-serif`;
+
+function rr(x0, y0, w, h, r, fill, stroke, lw = 3) {
+  x.beginPath(); x.roundRect(x0, y0, w, h, r);
+  if (fill) { x.fillStyle = fill; x.fill(); }
+  if (stroke) { x.strokeStyle = stroke; x.lineWidth = lw; x.stroke(); }
+}
+function circ(cx, cy, r, fill) { x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fillStyle = fill; x.fill(); }
+function text(s, cx, cy, size, color, align = 'center', w = 'bold') {
+  x.font = F(size, w); x.fillStyle = color; x.textAlign = align; x.textBaseline = 'middle'; x.fillText(s, cx, cy);
+}
+
+// ---------- Personas ----------
+// o: {shirt, pants, skin, hair, style:'short'|'long'|'spiky'|'bun', mood, look, sit, walk, arms, device, glow}
+function person(px, py, s, o) {
+  x.save(); x.translate(px, py); x.scale(s, s);
+  const sit = o.sit, dy = sit ? 30 : 0, look = o.look || 0;
+  const legTop = sit ? -40 : -70;
+  // piernas
+  const sw = o.walk != null ? Math.sin(o.walk * 10) * 10 : 0;
+  rr(-22 + sw, legTop, 18, -legTop, 6, o.pants || '#34495e');
+  rr(4 - sw, legTop, 18, -legTop, 6, o.pants || '#34495e');
+  rr(-26 + sw, -8, 24, 10, 5, '#222'); rr(2 - sw, -8, 24, 10, 5, '#222');
+  // pelo largo detrás
+  if (o.style === 'long') rr(-36, -215 + dy, 72, 90, 30, o.hair);
+  // torso
+  rr(-32, -150 + dy, 64, 85, 18, o.shirt);
+  // brazos
+  const ay = -140 + dy;
+  x.fillStyle = o.shirt; x.strokeStyle = o.shirt; x.lineWidth = 16; x.lineCap = 'round';
+  const hand = (hx, hy) => circ(hx, hy, 9, o.skin);
+  if (o.arms === 'up') {
+    x.beginPath(); x.moveTo(-28, ay); x.lineTo(-52, ay - 55); x.moveTo(28, ay); x.lineTo(52, ay - 55); x.stroke();
+    hand(-52, ay - 58); hand(52, ay - 58);
+  } else if (o.arms === 'front') {
+    x.beginPath(); x.moveTo(-28, ay); x.lineTo(-30, ay + 40); x.lineTo(-10, ay + 48);
+    x.moveTo(28, ay); x.lineTo(30, ay + 40); x.lineTo(10, ay + 48); x.stroke();
+    hand(-10, ay + 48); hand(10, ay + 48);
+  } else {
+    x.beginPath(); x.moveTo(-30, ay); x.lineTo(-38 - sw * .3, ay + 60); x.moveTo(30, ay); x.lineTo(38 + sw * .3, ay + 60); x.stroke();
+    hand(-38 - sw * .3, ay + 62); hand(38 + sw * .3, ay + 62);
+  }
+  // dispositivo en manos
+  const hy = ay + 48;
+  if (o.device === 'phone') { rr(-12, hy - 22, 24, 36, 4, '#111'); rr(-9, hy - 19, 18, 28, 2, '#4fc3ff'); }
+  if (o.device === 'controller') { rr(-22, hy - 8, 20, 18, 6, '#2aa7e0'); rr(2, hy - 8, 20, 18, 6, '#ff4b4b'); }
+  if (o.device === 'console') drawConsole(0, hy - 6, .45, true);
+  // cabeza
+  const hx = 0, hc = -185 + dy;
+  rr(-8, hc + 25, 16, 14, 4, o.skin);
+  circ(hx, hc, 34, o.skin);
+  // pelo
+  x.fillStyle = o.hair;
+  if (o.style === 'spiky') {
+    x.beginPath(); x.moveTo(-34, hc - 5);
+    for (let i = 0; i <= 6; i++) x.lineTo(-34 + i * 11.3, hc - (i % 2 ? 48 : 30));
+    x.lineTo(34, hc - 5); x.closePath(); x.fill();
+  } else {
+    x.beginPath(); x.arc(hx, hc - 4, 35, Math.PI * 1.05, Math.PI * 1.95); x.closePath(); x.fill();
+    if (o.style === 'bun') circ(0, hc - 40, 14, o.hair);
+    if (o.style === 'long') { rr(-36, hc - 20, 12, 50, 6, o.hair); rr(24, hc - 20, 12, 50, 6, o.hair); }
+  }
+  // brillo de pantalla en la cara (aislamiento)
+  if (o.glow) { x.globalAlpha = .28 * o.glow; circ(hx, hc, 34, '#4fc3ff'); x.globalAlpha = 1; }
+  // ojos
+  const ex = look * 7;
+  if (o.mood === 'laugh') {
+    x.strokeStyle = '#222'; x.lineWidth = 3;
+    x.beginPath(); x.arc(-12 + ex, hc - 2, 6, Math.PI * 1.1, Math.PI * 1.9); x.stroke();
+    x.beginPath(); x.arc(12 + ex, hc - 2, 6, Math.PI * 1.1, Math.PI * 1.9); x.stroke();
+  } else {
+    const er = o.mood === 'wow' ? 6 : 4.5;
+    circ(-12 + ex, hc - 3, er, '#222'); circ(12 + ex, hc - 3, er, '#222');
+  }
+  // boca
+  x.strokeStyle = '#7a3b2e'; x.lineWidth = 3;
+  const my = hc + 14;
+  x.beginPath();
+  if (o.mood === 'smile') x.arc(ex, my - 6, 11, Math.PI * .15, Math.PI * .85);
+  else if (o.mood === 'laugh') { x.arc(ex, my - 4, 12, 0, Math.PI); x.closePath(); x.fillStyle = '#7a3b2e'; x.fill(); }
+  else if (o.mood === 'wow') { circ(ex, my, 7, '#7a3b2e'); }
+  else if (o.mood === 'sad') x.arc(ex, my + 8, 9, Math.PI * 1.2, Math.PI * 1.8);
+  else { x.moveTo(ex - 8, my); x.lineTo(ex + 8, my); }
+  x.stroke();
+  x.restore();
+}
+// Familia: Papá, Mamá, Leo (encuentra la consola), Sofi
+const DAD = { shirt: '#3d6fb6', pants: '#2c3e50', skin: '#e0ac7e', hair: '#3b2a20', style: 'short' };
+const MOM = { shirt: '#c0504d', pants: '#4a4a6a', skin: '#f2c9a0', hair: '#5a3825', style: 'long' };
+const LEO = { shirt: '#f1a33c', pants: '#3a5a8c', skin: '#e9b98f', hair: '#2b1d14', style: 'spiky' };
+const SOFI = { shirt: '#8e5fbf', pants: '#2f4f6f', skin: '#f2c9a0', hair: '#7a4a2a', style: 'bun' };
+const P = (base, extra) => Object.assign({}, base, extra);
+
+// ---------- Objetos ----------
+function drawConsole(cx, cy, s, on) {   // consola híbrida genérica "NEXO Duo"
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  rr(-110, -45, 40, 90, 20, '#2aa7e0'); rr(70, -45, 40, 90, 20, '#ff4b4b');
+  circ(-90, -15, 8, '#1b1b1b'); circ(90, 15, 8, '#1b1b1b');
+  rr(-72, -45, 144, 90, 6, '#2b2b2b');
+  rr(-64, -38, 128, 76, 4, on ? '#ffd54a' : '#111');
+  if (on) { circ(-20, 0, 14, '#ff4b4b'); circ(20, 0, 14, '#2aa7e0'); text('NEXO', 0, 26, 12, '#333'); }
+  x.restore();
+}
+function drawKart(cx, cy, s, color, driver, wob = 0) {
+  x.save(); x.translate(cx, cy); x.scale(s, s); x.rotate(wob);
+  circ(-48, 18, 18, '#222'); circ(48, 18, 18, '#222');
+  rr(-62, -18, 124, 40, 16, color);
+  rr(-40, -34, 80, 22, 8, '#ddd');
+  // conductor
+  const sk = '#f2c9a0';
+  if (driver === 'gorila') {
+    circ(0, -62, 30, '#6b3e26'); rr(-18, -64, 36, 26, 12, '#c9946a');
+    circ(-9, -70, 4, '#222'); circ(9, -70, 4, '#222'); circ(0, -52, 3, '#3a2010');
+  } else {
+    circ(0, -62, 26, sk);
+    circ(-8, -66, 3.5, '#222'); circ(8, -66, 3.5, '#222');
+    if (driver === 'gorra' || driver === 'verde') {
+      const cc = driver === 'gorra' ? '#e53935' : '#43a047';
+      x.fillStyle = cc; x.beginPath(); x.arc(0, -70, 27, Math.PI, 0); x.fill(); rr(0, -74, 34, 8, 4, cc);
+      if (driver === 'gorra') rr(-14, -54, 28, 8, 4, '#3b2a20'); // bigote
+    } else { // rosa
+      x.fillStyle = '#ff7eb9'; x.beginPath(); x.arc(0, -66, 29, Math.PI, 0); x.fill();
+      rr(-29, -66, 10, 34, 5, '#ff7eb9'); rr(19, -66, 10, 34, 5, '#ff7eb9');
+      x.strokeStyle = '#7a3b2e'; x.lineWidth = 2.5; x.beginPath(); x.arc(0, -56, 7, .2, Math.PI - .2); x.stroke();
+    }
+  }
+  x.restore();
+}
+function itemBox(cx, cy, s, t) {
+  x.save(); x.translate(cx, cy); x.scale(s, s); x.rotate(Math.sin(t * 3) * .2);
+  const g = x.createLinearGradient(-30, -30, 30, 30);
+  g.addColorStop(0, '#ff5f6d'); g.addColorStop(.33, '#ffc371'); g.addColorStop(.66, '#47d16b'); g.addColorStop(1, '#4fa3ff');
+  x.globalAlpha = .85; rr(-30, -30, 60, 60, 10, g, '#fff', 4); x.globalAlpha = 1;
+  text('?', 0, 2, 40, '#fff'); x.restore();
+}
+
+// ---------- Escenarios ----------
+function livingRoom(t, tv) {
+  x.fillStyle = '#f3e3c3'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#c9a27a'; x.fillRect(0, 520, W, 200);
+  x.fillStyle = '#b58b62'; for (let i = 0; i < 12; i++) x.fillRect(i * 110, 520, 4, 200);
+  // ventana
+  rr(1000, 80, 200, 170, 6, '#bfe3ff', '#fff', 10); x.fillStyle = '#fff'; x.fillRect(1096, 80, 8, 170); x.fillRect(1000, 160, 200, 8);
+  // cuadro familiar
+  rr(560, 110, 110, 80, 4, '#fff7e6', '#8b5a2b', 8); circ(595, 150, 12, '#e0ac7e'); circ(635, 150, 12, '#f2c9a0');
+  // mueble + TV
+  rr(80, 410, 380, 70, 8, '#8b5a2b'); x.fillStyle = '#6d4520'; x.fillRect(100, 480, 14, 40); x.fillRect(426, 480, 14, 40);
+  rr(70, 120, 400, 235, 10, '#1d1d1d');
+  x.save(); x.beginPath(); x.rect(84, 134, 372, 207); x.clip();
+  if (tv) tv(84, 134, 372, 207); else { x.fillStyle = '#0d0d0d'; x.fillRect(84, 134, 372, 207); }
+  x.restore();
+  rr(250, 355, 40, 55, 4, '#333');
+  // sofá
+  rr(560, 380, 620, 120, 30, '#5b8c85'); rr(540, 440, 660, 90, 26, '#4c7a73');
+  rr(530, 420, 60, 120, 24, '#3f6a63'); rr(1150, 420, 60, 120, 24, '#3f6a63');
+}
+function miniRace(x0, y0, w, h, t) {  // juego en la TV
+  x.fillStyle = '#7ec8ff'; x.fillRect(x0, y0, w, h * .45);
+  x.fillStyle = '#58b05a'; x.fillRect(x0, y0 + h * .45, w, h * .55);
+  x.fillStyle = '#777'; x.beginPath(); x.moveTo(x0 + w * .45, y0 + h * .45); x.lineTo(x0 + w * .55, y0 + h * .45);
+  x.lineTo(x0 + w * .95, y0 + h); x.lineTo(x0 + w * .05, y0 + h); x.fill();
+  x.strokeStyle = '#fff'; x.lineWidth = 3; x.setLineDash([12, 12]); x.lineDashOffset = -t * 120;
+  x.beginPath(); x.moveTo(x0 + w * .5, y0 + h * .45); x.lineTo(x0 + w * .5, y0 + h); x.stroke(); x.setLineDash([]);
+  drawKart(x0 + w * (.35 + .05 * Math.sin(t * 3)), y0 + h * .85, .45, '#e53935', 'gorra');
+  drawKart(x0 + w * (.65 + .05 * Math.sin(t * 2.3)), y0 + h * .8, .38, '#6b3e26', 'gorila');
+}
+function titleScreen(x0, y0, w, h, t) {
+  const g = x.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, '#4fa3ff'); g.addColorStop(1, '#a6e3ff');
+  x.fillStyle = g; x.fillRect(x0, y0, w, h);
+  const b = 1 + .05 * Math.sin(t * 6);
+  x.save(); x.translate(x0 + w / 2, y0 + h * .4); x.scale(b, b);
+  x.font = F(40); x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.lineWidth = 8; x.strokeStyle = '#c62828'; x.strokeText('SÚPER KART', 0, -20);
+  x.fillStyle = '#ffd54a'; x.fillText('SÚPER KART', 0, -20);
+  x.font = F(28); x.strokeText('MUNDIAL', 0, 22); x.fillStyle = '#fff'; x.fillText('MUNDIAL', 0, 22);
+  x.restore();
+  drawKart(x0 + w / 2, y0 + h * .86, .45, '#e53935', 'gorra');
+  if (Math.floor(t * 2) % 2) text('PRESIONA  A', x0 + w / 2, y0 + h * .66, 14, '#fff');
+}
+
+// ---------- Escenas ----------
+function s1(t) { // título
+  const g = x.createRadialGradient(640, 360, 50, 640, 360, 800); g.addColorStop(0, '#2a2a3a'); g.addColorStop(1, '#0a0a10');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const a = seg(t, .3, 1.3);
+  x.globalAlpha = a; pill(640, 300, 1.2);
+  text('presenta', 640, 400, 28, '#ddd', 'center', 'normal');
+  x.globalAlpha = seg(t, 1.6, 2.6); text('«JUNTOS»', 640, 470, 54, '#ffd54a');
+  x.globalAlpha = 1;
+}
+function pill(cx, cy, s) { // logotipo genérico NEXO
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  rr(-120, -42, 240, 84, 42, '#fff'); rr(-112, -34, 224, 68, 34, '#e60012');
+  text('NEXO', 0, 2, 44, '#fff'); x.restore();
+}
+function s2(t) { // casa: cada quien en su mundo
+  const rooms = [['#e8eef5', 0], ['#f5ead8', 427], ['#efe3f5', 854]];
+  rooms.forEach(([c, rx]) => { x.fillStyle = c; x.fillRect(rx, 0, 426, H); x.fillStyle = '#c9a27a'; x.fillRect(rx, 540, 426, 180); });
+  x.fillStyle = '#555'; x.fillRect(424, 0, 6, H); x.fillRect(851, 0, 6, H);
+  const br = Math.sin(t * 2) * 2;
+  // Papá en escritorio con laptop
+  rr(60, 475, 320, 18, 4, '#8b5a2b'); x.fillStyle = '#6d4520'; x.fillRect(80, 493, 12, 47); x.fillRect(348, 493, 12, 47);
+  person(215, 560 + br, 1, P(DAD, { sit: true, mood: 'neutral', arms: 'front', glow: 1 }));
+  laptopBack(215, 475);
+  // Mamá en comedor con laptop y café
+  rr(470, 480, 340, 18, 4, '#a0522d'); x.fillStyle = '#7a3f1f'; x.fillRect(490, 498, 12, 42); x.fillRect(780, 498, 12, 42);
+  person(640, 568 - br, 1, P(MOM, { sit: true, mood: 'neutral', arms: 'front', glow: 1 }));
+  laptopBack(640, 480); rr(740, 452, 26, 28, 5, '#fff');
+  // Niños en la cama con celular
+  rr(880, 470, 370, 70, 14, '#7e57c2'); rr(880, 440, 90, 40, 14, '#fff');
+  person(1000, 530 + br, .9, P(LEO, { sit: true, mood: 'neutral', arms: 'front', device: 'phone', glow: 1, look: .3 }));
+  person(1140, 530 - br, .9, P(SOFI, { sit: true, mood: 'neutral', arms: 'front', device: 'phone', glow: 1, look: -.3 }));
+  // burbujas: cada quien en su mundo
+  x.setLineDash([10, 10]); x.lineDashOffset = t * 20; x.lineWidth = 3; x.strokeStyle = 'rgba(80,140,220,.6)';
+  [[215, 420], [640, 425], [1070, 410]].forEach(([bx, by], i) => {
+    const r = (i === 2 ? 200 : 160) + Math.sin(t * 2 + i) * 6;
+    x.beginPath(); x.ellipse(bx, by, r, r * .9, 0, 0, Math.PI * 2); x.stroke();
+  });
+  x.setLineDash([]);
+  // notificaciones
+  [[1030, 4.6], [1170, 5.4], [270, 6.2], [700, 7], [1000, 8.2], [1150, 9.1], [250, 10]].forEach(([nx, nt]) => {
+    const p = seg(t + 4, nt, nt + 1.2);
+    if (p > 0 && p < 1) { x.globalAlpha = 1 - p; rr(nx - 20, 230 - p * 60, 40, 30, 8, '#ff5252'); text('1', nx, 245 - p * 60, 16, '#fff'); x.globalAlpha = 1; }
+  });
+  // reloj
+  circ(640, 110, 44, '#fff'); x.strokeStyle = '#333'; x.lineWidth = 4; x.beginPath(); x.arc(640, 110, 44, 0, 7); x.stroke();
+  const ang = t * 1.5; x.beginPath(); x.moveTo(640, 110); x.lineTo(640 + Math.sin(ang) * 34, 110 - Math.cos(ang) * 34);
+  x.moveTo(640, 110); x.lineTo(640 + Math.sin(ang / 12) * 22, 110 - Math.cos(ang / 12) * 22); x.stroke();
+}
+function laptopBack(cx, ty) { rr(cx - 60, ty - 42, 120, 42, 6, '#9aa4ad'); circ(cx, ty - 21, 7, '#cfd8dc'); }
+function s3(t) { // cuarto: buscando el cargador
+  x.fillStyle = '#efe3f5'; x.fillRect(0, 0, W, H); x.fillStyle = '#c9a27a'; x.fillRect(0, 540, W, 180);
+  rr(60, 470, 360, 70, 14, '#7e57c2'); rr(60, 440, 90, 40, 14, '#fff');
+  // póster genérico
+  rr(160, 90, 140, 180, 4, '#ffd54a', '#fff', 6); drawKart(230, 210, .5, '#e53935', 'gorra');
+  // armario
+  const open = ease(seg(t, 3, 3.8));
+  rr(820, 110, 340, 430, 6, '#6d4520');
+  x.fillStyle = '#3a2614'; x.fillRect(835, 125, 310, 400);
+  x.fillStyle = '#8b5a2b'; x.fillRect(835, 300, 310, 10);
+  // ropa colgada
+  ['#e57373', '#64b5f6', '#81c784', '#ffb74d'].forEach((c, i) => rr(870 + i * 62, 150, 48, 120, 10, c));
+  // cajas
+  rr(850, 420, 120, 105, 4, '#c8a165', '#8d6e3f'); rr(990, 440, 130, 85, 4, '#d7b47a', '#8d6e3f');
+  const fall = ease(seg(t, 4.0, 4.6));
+  const boxX = lerp(930, 760, fall), boxY = lerp(250, 470, fall);
+  const lid = seg(t, 4.6, 5.0);
+  // brillo de la consola
+  const reveal = seg(t, 4.7, 5.6);
+  if (reveal > 0) {
+    x.save(); x.translate(boxX, boxY - 30); x.globalAlpha = reveal * .7;
+    for (let i = 0; i < 12; i++) { x.rotate(Math.PI / 6 + t * .02); x.fillStyle = i % 2 ? '#fff6b0' : '#ffe082'; x.beginPath(); x.moveTo(0, 0); x.lineTo(-25, -260); x.lineTo(25, -260); x.fill(); }
+    x.restore();
+    drawConsole(boxX, boxY - 40 - reveal * 50, .7 + reveal * .2, false);
+    for (let i = 0; i < 8; i++) { const a = i * .8 + t * 2; circ(boxX + Math.cos(a) * 110, boxY - 90 + Math.sin(a) * 60, 4, '#fff59d'); }
+  }
+  x.save(); x.translate(boxX, boxY); x.rotate(fall * .3 * (1 - lid));
+  rr(-70, -60, 140, 70, 4, '#c8a165', '#8d6e3f');
+  x.save(); x.translate(-70, -60); x.rotate(-lid * 1.2); rr(0, -10, 140, 14, 3, '#b58d52', '#8d6e3f'); x.restore();
+  text('RECUERDOS', 0, -25, 16, '#6d4c2a'); x.restore();
+  // puertas del armario
+  x.fillStyle = '#9c6b3c';
+  x.fillRect(835, 125, 155 * (1 - open), 400); x.fillRect(1145 - 155 * (1 - open), 125, 155 * (1 - open), 400);
+  // Leo
+  const walk = ease(seg(t, 1.6, 3)), lx = lerp(260, 700, walk);
+  const found = t > 4.8;
+  person(lx, t < 1.6 ? 530 : 600, t < 1.6 ? .9 : 1.05, P(LEO, {
+    sit: t < 1.6, walk: t > 1.6 && t < 3 ? t : null, arms: t < 1.6 ? 'front' : (t > 6 ? 'front' : 'down'),
+    device: t < 1.6 ? 'phone' : (t > 6 ? 'console' : null), mood: found ? (t > 6 ? 'laugh' : 'wow') : 'neutral', look: found ? .6 : .2, glow: t < 1.6 ? 1 : 0 }));
+  // batería baja
+  if (t < 2.5 && Math.floor(t * 3) % 2 === 0) {
+    rr(300, 300, 90, 40, 6, '#fff', '#c62828', 4); rr(390, 312, 8, 16, 2, '#c62828'); rr(306, 306, 14, 28, 3, '#e53935'); text('5%', 352, 321, 18, '#c62828');
+  }
+}
+function s4(t) { // sala: conecta la consola
+  const on = t > 2.9;
+  livingRoom(t, on ? (a, b, c, d) => { titleScreen(a, b, c, d, t); if (t < 3.3) { x.globalAlpha = 1 - (t - 2.9) / .4; x.fillStyle = '#fff'; x.fillRect(a, b, c, d); x.globalAlpha = 1; } } : null);
+  if (t > 2.5) drawConsole(270, 396, .32, on);
+  let lx, sit = false, arms = 'front', dev = 'console', walkPh = null;
+  if (t < 2.5) { lx = lerp(1350, 300, ease(seg(t, 0, 2.3))); walkPh = t; }
+  else if (t < 3.2) { lx = 300; arms = 'down'; dev = null; }
+  else if (t < 4.5) { lx = lerp(300, 700, ease(seg(t, 3.2, 4.4))); walkPh = t; dev = 'controller'; }
+  else { lx = 700; sit = true; dev = 'controller'; }
+  person(lx, sit ? 520 : 600, 1, P(LEO, { sit, arms, device: dev, walk: walkPh, mood: t > 3 ? 'laugh' : 'smile', look: t > 2.3 ? -.8 : -.2 }));
+}
+function s5(t) { // la familia se une
+  livingRoom(t + 7, (a, b, c, d) => miniRace(a, b, c, d, t));
+  const arrive = [[DAD, .5, 820, 'smile'], [MOM, 1.5, 940, 'smile'], [SOFI, 2.5, 1060, 'laugh']];
+  person(700, 520, 1, P(LEO, { sit: true, arms: 'front', device: 'controller', mood: 'laugh', look: -.8 }));
+  arrive.forEach(([who, t0, sx, mood]) => {
+    const p = seg(t, t0, t0 + 2), sat = p >= 1;
+    if (t < t0) return;
+    const px = lerp(1380, sx, ease(p));
+    person(px, sat ? 520 : 600, sat ? 1 : 1.05, P(who, { sit: sat, walk: sat ? null : t, arms: sat ? 'front' : 'down', device: sat ? 'controller' : null, mood: sat ? mood : 'wow', look: -.8 }));
+    if (!sat && p < .7) { rr(px - 18, 300, 36, 50, 10, '#fff', '#333', 3); text('!', px, 326, 34, '#e53935'); }
+  });
+}
+function s6(t) { // carrera
+  const g = x.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, '#4fa3ff'); g.addColorStop(1, '#bfe9ff');
+  x.fillStyle = g; x.fillRect(0, 0, W, 300);
+  x.fillStyle = '#7cc576'; x.beginPath(); x.moveTo(0, 300);
+  for (let i = 0; i <= 16; i++) x.lineTo(i * 80, 300 - 50 - Math.sin(i * 1.3 + t * .2) * 35); x.lineTo(W, 300); x.fill();
+  [[200, 90], [900, 60], [1100, 130]].forEach(([cx, cy]) => { const o = (cx + t * 15) % 1400 - 60; circ(o, cy, 30, '#fff'); circ(o + 30, cy - 10, 36, '#fff'); circ(o + 60, cy, 28, '#fff'); });
+  // carretera pseudo-3D
+  for (let y = 300; y < H; y += 4) {
+    const z = 1 / ((y - 290) / 430), pos = z * 12 + t * 40;
+    const curve = Math.sin(t * .7) * (H - y) * .5 * ((H - y) / 430);
+    const rw = (y - 290) * 1.7, cx = 640 + curve;
+    x.fillStyle = Math.floor(pos) % 2 ? '#5fae5a' : '#6cbb63'; x.fillRect(0, y, W, 4);
+    x.fillStyle = Math.floor(pos) % 2 ? '#e53935' : '#fff'; x.fillRect(cx - rw * 1.1, y, rw * 2.2, 4);
+    x.fillStyle = '#7d7d7d'; x.fillRect(cx - rw, y, rw * 2, 4);
+    if (Math.floor(pos) % 2) { x.fillStyle = '#fff'; x.fillRect(cx - rw * .02, y, rw * .04, 4); }
+  }
+  // cajas sorpresa
+  [0, 2.7, 5.1].forEach(o => { const p = ((t + o) % 3) / 3; const yy = lerp(330, 760, p * p); itemBox(640 + (o - 2.5) * 80 * p * 3, yy, .3 + p * 1.2, t); });
+  // karts: la familia compite
+  const racers = [['#3d6fb6', 'gorra', 'PAPÁ'], ['#c0504d', 'rosa', 'MAMÁ'], ['#f1a33c', 'gorila', 'LEO'], ['#8e5fbf', 'verde', 'SOFI']];
+  const order = racers.map((r, i) => ({ r, i, d: Math.sin(t * .9 + i * 1.7) + i * .05 })).sort((a, b) => a.d - b.d);
+  order.forEach((k, j) => {
+    const yy = 440 + j * 55, sc = .7 + j * .15, xx = 640 + (k.i - 1.5) * 230 + Math.sin(t * 1.3 + k.i * 2) * 50;
+    drawKart(xx, yy, sc, k.r[0], k.r[1], Math.sin(t * 8 + k.i) * .04);
+    rr(xx - 42, yy - 100 * sc - 30, 84, 28, 10, 'rgba(0,0,0,.6)'); text(k.r[2], xx, yy - 100 * sc - 16, 16, '#fff');
+  });
+  // HUD
+  rr(30, 24, 210, 56, 12, 'rgba(0,0,0,.5)'); text('VUELTA 3/3', 135, 52, 26, '#fff');
+  text('SÚPER KART MUNDIAL', 1080, 52, 22, '#ffd54a');
+}
+function s6b(t) { // celebración en la sala
+  livingRoom(t, (a, b, c, d) => {
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 5; j++) { x.fillStyle = (i + j) % 2 ? '#111' : '#fff'; x.fillRect(a + i * c / 8, b + j * d / 5, c / 8, d / 5); }
+    rr(a + c / 2 - 110, b + d / 2 - 36, 220, 72, 14, 'rgba(229,57,53,.95)'); text('¡META!', a + c / 2, b + d / 2, 40, '#fff');
+  });
+  const jump = i => Math.abs(Math.sin(t * 6 + i)) * 12;
+  person(700, 520 - jump(0), 1, P(LEO, { sit: true, arms: 'up', mood: 'laugh', look: 0 }));
+  person(820, 520 - jump(1), 1, P(DAD, { sit: true, arms: 'up', mood: 'laugh', look: 0 }));
+  person(940, 520 - jump(2), 1, P(MOM, { sit: true, arms: 'front', device: 'controller', mood: 'laugh', look: -.5 }));
+  person(1060, 520 - jump(3), 1, P(SOFI, { sit: true, arms: 'up', mood: 'laugh', look: 0 }));
+  for (let i = 0; i < 70; i++) {
+    const cx = (i * 97) % W, cy = ((i * 53) % 300 + t * 160 + i * 7) % (H + 40) - 20;
+    x.fillStyle = ['#e53935', '#ffd54a', '#2aa7e0', '#43a047', '#ff7eb9'][i % 5]; x.save(); x.translate(cx, cy); x.rotate(t * 4 + i); x.fillRect(-6, -3, 12, 6); x.restore();
+  }
+}
+function familyPhoto(t) {
+  livingRoom(0, (a, b, c, d) => miniRace(a, b, c, d, 3));
+  person(700, 520, 1, P(LEO, { sit: true, arms: 'front', device: 'controller', mood: 'laugh', look: 0 }));
+  person(820, 520, 1, P(DAD, { sit: true, arms: 'front', device: 'controller', mood: 'laugh', look: 0 }));
+  person(940, 520, 1, P(MOM, { sit: true, arms: 'front', device: 'controller', mood: 'smile', look: 0 }));
+  person(1060, 520, 1, P(SOFI, { sit: true, arms: 'front', device: 'controller', mood: 'laugh', look: 0 }));
+}
+function s7(t) { // foto - nostalgia
+  x.fillStyle = '#3b2f25'; x.fillRect(0, 0, W, H);
+  const z = 1 + t * .015;
+  x.save(); x.translate(640, 330); x.rotate(-.025); x.scale(z, z);
+  rr(-420, -260, 840, 540, 6, '#fbf6ea');
+  x.save(); x.beginPath(); x.rect(-390, -230, 780, 440); x.clip();
+  x.translate(-390, -230); x.scale(780 / 760, 440 / 400); x.translate(-500, -170);
+  x.filter = 'sepia(.75) saturate(1.1)'; familyPhoto(t); x.filter = 'none';
+  x.restore();
+  text('Noche de juegos ♥', 0, 248, 24, '#6d4c2a', 'center', 'italic');
+  x.restore();
+}
+function s8(t) { // cierre
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#ffcf40'); g.addColorStop(1, '#f39c12');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 30; i++) { const a = (i * 2.39 + t * .5); circ(640 + Math.cos(a) * (200 + i * 15), 360 + Math.sin(a) * (120 + i * 8), 3 + (i % 3), 'rgba(255,255,255,.5)'); }
+  x.globalAlpha = seg(t, .2, 1.2); text('El tiempo en familia', 640, 130, 52, '#5d3a00'); text('vale oro.', 640, 195, 52, '#fff');
+  x.globalAlpha = seg(t, 1.6, 2.6); drawConsole(640, 345, 1.1, true);
+  x.globalAlpha = seg(t, 2.8, 3.8); pill(640, 500, 1); text('NEXO une familias.', 640, 590, 36, '#5d3a00');
+  x.globalAlpha = seg(t, 4, 5); text('Marca, consola, videojuego y personajes ficticios con fines académicos.', 640, 690, 15, 'rgba(60,30,0,.8)', 'center', 'normal');
+  x.globalAlpha = 1;
+}
+
+// ---------- Línea de tiempo ----------
+const SCENES = [[0, 4, s1], [4, 12, s2], [12, 20, s3], [20, 27, s4], [27, 34, s5], [34, 42, s6], [42, 46, s6b], [46, 53, s7], [53, 60, s8]];
+const CAPTIONS = [
+  [4.3, 11.8, 'Una familia como cualquiera… cada quien en su propio mundo.'],
+  [12.3, 16.3, 'Hasta que Leo buscó su cargador en el armario…'],
+  [16.6, 19.8, '…y encontró algo que todos habían olvidado.'],
+  [20.4, 26.8, 'Un control, la pantalla grande… y la sala volvió a encenderse.'],
+  [27.3, 33.8, 'Uno a uno, la curiosidad pudo más que el celular.'],
+  [34.3, 41.8, 'Ahora todos corren en la misma pista.'],
+  [42.2, 45.8, '¡Y las risas también cuentan como victoria!'],
+  [46.3, 49.6, 'A veces vivimos dentro de nuestro propio mundo…'],
+  [49.8, 52.8, '…pero un poco de imaginación y tiempo en familia nos regala una gran sonrisa.'],
+];
+const CUTS = [4, 12, 20, 34, 42, 46, 53];
+function caption(s, a) {
+  x.font = F(28, 'bold'); const w = Math.min(1200, x.measureText(s).width + 60);
+  x.globalAlpha = a; rr(640 - w / 2, 630, w, 60, 14, 'rgba(0,0,0,.65)');
+  text(s, 640, 661, s.length > 60 ? 24 : 28, '#fff'); x.globalAlpha = 1;
+}
+function render(t) {
+  x.clearRect(0, 0, W, H);
+  for (const [a, b, fn] of SCENES) if (t >= a && t < b) { fn(t - a); break; }
+  if (t >= 60) s8(7);
+  for (const [a, b, s] of CAPTIONS) if (t >= a && t <= b) caption(s, Math.min(seg(t, a, a + .4), 1 - seg(t, b - .4, b)));
+  let fade = Math.max(1 - seg(t, 0, .6), seg(t, 59.2, 60));
+  for (const c of CUTS) fade = Math.max(fade, 1 - Math.abs(t - c) / .35);
+  if (fade > 0) { x.fillStyle = `rgba(0,0,0,${fade})`; x.fillRect(0, 0, W, H); }
+}
+window.render = render;
+// vista previa en navegador (no se usa al renderizar el video)
+if (!navigator.webdriver) { const t0 = performance.now(); (function loop() { render(((performance.now() - t0) / 1000) % 60); requestAnimationFrame(loop); })(); }
+</script></body></html>
