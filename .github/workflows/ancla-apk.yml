@@ -29,6 +29,11 @@ jobs:
           npm install
           npx cap add android
           sed -i 's#<application#<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/><uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/><uses-permission android:name="android.permission.VIBRATE"/><application#' android/app/src/main/AndroidManifest.xml
+          # widget de pantalla de inicio: código nativo propio + receiver en el manifiesto
+          cp -r native/java/. android/app/src/main/java/
+          cp -r native/res/. android/app/src/main/res/
+          sed -i 's#</application>#<receiver android:name="app.ancla.AnclaWidget" android:exported="true" android:label="Ancla · Post-its"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/ancla_widget_info"/></receiver></application>#' android/app/src/main/AndroidManifest.xml
+          grep -q AnclaWidget android/app/src/main/AndroidManifest.xml
           npx cap sync android
       - name: Compilar
         working-directory: ancla/apk/android

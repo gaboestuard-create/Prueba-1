@@ -2,7 +2,7 @@
 <meta name="theme-color" content="#0E6B66">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
 <style>
 /* Layout: una columna de tarjetas tipo "bitácora del día", barra de pestañas abajo al alcance del pulgar */
 :root{
@@ -11,6 +11,7 @@
   --ok:#2C7A4F;--warn:#A9471F;
   --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
   --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --f-hand:"Kalam","Comic Sans MS",cursive;
   --r:14px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -100,6 +101,28 @@ nav button.on{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
 .ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .ring circle{fill:none;stroke-width:10}
 .dots{display:flex;gap:6px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--accent)}
+/* pizarra de corcho: los post-its son papel, mismo color en tema claro y oscuro */
+.board{border-radius:16px;padding:20px 12px 24px;border:8px solid #7A5536;box-shadow:inset 0 2px 10px rgba(0,0,0,.35);
+  background:radial-gradient(circle at 20% 30%,rgba(0,0,0,.09) 0 1px,transparent 2px) 0 0/13px 13px,radial-gradient(circle at 70% 60%,rgba(255,255,255,.14) 0 1px,transparent 2px) 0 0/17px 17px,radial-gradient(circle at 40% 80%,rgba(0,0,0,.07) 0 1.5px,transparent 2.5px) 0 0/23px 23px,#B98B5E;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px;min-height:220px;overflow:hidden}
+@media (min-width:520px){.board{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pi{--rot:0deg;position:relative;background:var(--pc);color:#2B2620;min-height:132px;padding:22px 12px 46px;transform:rotate(var(--rot));
+  box-shadow:0 7px 10px -5px rgba(0,0,0,.5);border-radius:2px 2px 16px 2px;display:flex;flex-direction:column;gap:6px;cursor:pointer;overflow-wrap:anywhere;font:19px/1.2 var(--f-hand)}
+.pi::before{content:"";position:absolute;top:6px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FF8A80,#C62828);box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.pi .txt{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.pi .when{font:700 12px var(--f-body);opacity:.75}.pi .when.late{color:#B3261E;opacity:1}
+.pi .hoy{position:absolute;top:5px;right:6px;font:800 10px var(--f-body);letter-spacing:.08em;background:#2B2620;color:var(--pc);padding:2px 5px;border-radius:4px}
+.pi .ok{position:absolute;right:6px;bottom:6px;width:38px;height:38px;min-height:38px;padding:0;border-radius:50%;border:2px solid rgba(43,38,32,.55);background:rgba(255,255,255,.4);color:#2B2620;font:800 18px var(--f-body)}
+.pi:focus-visible{outline:3px solid #2B2620;outline-offset:3px}
+.board-empty{grid-column:1/-1;align-self:center;text-align:center;color:#FFF3E2;font:22px var(--f-hand);margin:0}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}.swatches button{width:42px;height:42px;min-height:42px;border-radius:50%;padding:0;border:3px solid transparent}.swatches button.on{border-color:var(--ink)}
+#ov.sheet{justify-content:flex-start;overflow-y:auto;text-align:left}
+#ov.sheet .stack{max-width:440px}
+details summary{cursor:pointer;color:var(--mute);font-size:14px;padding:6px 0}
+@media (prefers-reduced-motion:no-preference){
+  .pi.fall{animation:fall .7s cubic-bezier(.5,0,.9,.6) forwards;pointer-events:none;z-index:3}
+  @keyframes fall{30%{transform:rotate(calc(var(--rot) - 8deg)) translateY(-8px)}100%{transform:rotate(calc(var(--rot) + 40deg)) translateY(110vh);opacity:.5}}}
+#toast button{margin-left:12px;background:none;border:0;color:var(--sun);font-weight:800;min-height:0;padding:4px 6px;text-decoration:underline}
 #toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:420px;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-weight:700;z-index:20;text-align:center}
 .group{font-family:var(--f-display);font-size:15px;font-weight:600;color:var(--mute);margin:10px 2px -4px;display:flex;align-items:center;gap:10px}
 .group::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -183,11 +206,19 @@ const T0=S.t||0; // 0 = este dispositivo no tenía datos: la copia de la cuenta 
 let dbDoc=null, loaded=false, sync='local', saveT=0, saving=false, dirty=false;
 // no redibujar mientras escribes, o se borra lo que llevas
 const softRender=()=>{if(!document.activeElement?.matches('input,textarea,select'))render()};
-function save(quiet){S.t=Date.now();ls.set();if(!quiet)render();clearTimeout(saveT);saveT=setTimeout(flush,1200);clearTimeout(schedT);schedT=setTimeout(schedule,800)}
+function save(quiet){S.t=Date.now();ls.set();if(!quiet)render();clearTimeout(saveT);saveT=setTimeout(flush,1200);clearTimeout(schedT);schedT=setTimeout(()=>{schedule();pushWidget()},800)}
 
 // ---------- APK: avisos del sistema aunque la app esté cerrada ----------
 const LN=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.Plugins?.LocalNotifications;
 let schedT=0;
+// widget de la pantalla de inicio (solo APK): le mandamos los pendientes como "color|texto" por línea
+const AW=window.Capacitor?.isNativePlatform?.()&&window.Capacitor.Plugins?.AnclaWidget;
+function pushWidget(){
+  if(!AW)return;
+  const items=S.tasks.filter(t=>!t.done).sort(byWhen).slice(0,8).map(t=>{const w=whenOf(t);
+    return colorOf(t)+'|'+(t.today===dkey()?'HOY · ':'')+t.name.replace(/[\n|]/g,' ')+(w?'  ('+fdate(w,!!t.at)+')':'')}).join('\n');
+  try{AW.update({items}).catch(()=>{})}catch(e){}
+}
 // versión de esta APK (el workflow la reemplaza con el commit); si el Release es más nuevo, avisamos
 const BUILD='__BUILD__',APK_URL='https://github.com/gaboestuard-create/Prueba-1/releases/download/ancla-apk/ancla.apk';
 let upd=false;
@@ -203,7 +234,7 @@ async function nativeSetup(){
     await LN.createChannel({id:'ancla',name:'Avisos de Ancla',importance:5,vibration:true,visibility:1});
     const e=await LN.checkExactNotificationSetting?.();if(e&&e.exact_alarm!=='granted'&&!localStorage.getItem('ancla.exact')){localStorage.setItem('ancla.exact','1');await LN.changeExactNotificationSetting()}
   }catch(e){}
-  schedule();
+  schedule();pushWidget();
 }
 // reprograma todo: hoy y los de hora fija de mañana; firme = 5 avisos cada 3 min hasta que respondas
 async function schedule(){
@@ -222,6 +253,12 @@ async function schedule(){
           out.push({id:off*10000+i*10+j+1,title:r.text,body:r.mode==='firme'?'Abre Ancla y toca "Ya empecé".':'Ancla',channelId:'ancla',schedule:{at:new Date(t),allowWhileIdle:true}})}
       });
     }
+    // post-its con fecha y hora (solo los próximos 14 días, Android limita las alarmas pendientes)
+    S.tasks.forEach((t,i)=>{
+      if(t.done||!t.at||t.ok)return;const at=t.until||+new Date(t.at);if(at-now>14*864e5)return;
+      for(let j=0;j<(t.mode==='firme'?5:1);j++){const x=at+j*18e4;if(x<=now)continue;
+        out.push({id:20000+i*10+j+1,title:'Post-it: '+t.name,body:t.mode==='firme'?'Abre Ancla y márcalo.':'Ancla',channelId:'ancla',schedule:{at:new Date(x),allowWhileIdle:true}})}
+    });
     if(out.length)await LN.schedule({notifications:out});
   }catch(e){}
 }
@@ -263,20 +300,21 @@ const chime=()=>{tone(660,.7);tone(880,.9,.2)};
 const alarmBeep=()=>{tone(880,.18,0,.3);tone(880,.18,.25,.3);tone(1175,.35,.5,.3)};
 const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 let toastT=0;
-function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
+let undoFn=null;
+function toast(m,undo){const el=$('#toast');el.innerHTML=esc(m)+(undo?'<button data-act="undo">Deshacer</button>':'');undoFn=undo||null;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;undoFn=null},undo?7000:2600)}
 
 // ---------- vistas ----------
 let ckOpen=false,recallOff=0,tab='hoy',armed='',pillEdit=false,addRem=false;
 try{tab=localStorage.getItem('ancla.tab')||'hoy'}catch(e){}
-const TABS=[['hoy','Hoy'],['tareas','Tareas'],['diario','Diario'],['avisos','Avisos']];
+const TABS=[['hoy','Hoy'],['tareas','Pizarra'],['diario','Diario'],['avisos','Avisos']];
 const ICONS={hoy:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
-  tareas:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
+  tareas:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h4v4H7zM13 10h4v5h-4z"/>',
   diario:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
   avisos:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>'};
 
 function render(){
   $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?'on':''}" data-act="tab" data-k="${k}" aria-current="${k===tab?'page':'false'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg>${l}</button>`).join('');
-  $('#main').innerHTML=({hoy:vHoy,tareas:vTareas,diario:vDiario,avisos:vAvisos})[tab]();
+  $('#main').innerHTML=({hoy:vHoy,tareas:vPizarra,diario:vDiario,avisos:vAvisos})[tab]();
 }
 
 const med2Row=d=>S.cfg.med2?`<div class="row" style="border-top:1px solid color-mix(in srgb,currentColor 25%,transparent);padding-top:10px"><span class="grow">${esc(S.cfg.med2)}</span>
@@ -377,23 +415,41 @@ function vRecall(){
       <p style="margin:0;font-weight:700;font-size:19px">${esc(pick.text)}</p>${old.length>1?'<button class="btn-link small" data-act="recall">Otra</button>':''}`
     :`<p class="muted" style="margin:0">Cuando veas un video, escuches un podcast o algo en clase te llame la atención, anótalo. Aquí te lo vuelvo a mostrar otros días para que se te quede.</p>`}
     <button class="btn-soft" data-act="idea">Anotar algo interesante</button></section>`}
-function vTareas(){
-  const pend=S.tasks.filter(t=>!t.done),hechas=S.tasks.filter(t=>t.done).slice(-10).reverse();
-  const tt=todayTasks().filter(t=>!t.done);
-  return `<h1>Tareas</h1>
-    <section class="card"><span class="eyebrow">Nueva tarea</span>
-    <form id="f-task" class="grid2" style="gap:10px">
-      <label style="grid-column:1/-1">Qué es<input name="name" required placeholder="Ej. reporte de balanza comercial" autocomplete="off"></label>
-      <label>Tipo<select name="type" id="f-type">${Object.entries(TIPOS).map(([k,[l]])=>`<option value="${k}">${l}</option>`).join('')}</select></label>
-      <label>Entrega (opcional)<input name="due" type="date"></label>
-      <label style="grid-column:1/-1">Materia (opcional)<input name="subj" autocomplete="off"></label>
-      <label style="grid-column:1/-1">Primer paso chiquito<input name="step" id="f-step" placeholder="${esc(TIPOS.lectura[1])}" autocomplete="off"></label>
-      <button class="btn-main" style="grid-column:1/-1">Agregar</button>
-    </form></section>
-    <section class="card"><div class="row"><span class="eyebrow grow">Pendientes</span><span class="small muted">${tt.length}/3 para hoy</span></div>
-      <div>${pend.length?pend.map(t=>taskRow(t)).join(''):'<p class="muted">Nada pendiente.</p>'}</div></section>
-    ${hechas.length?`<section class="card"><span class="eyebrow">Hechas</span><div>${hechas.map(t=>taskRow(t)).join('')}</div></section>`:''}`
+const PC={amarillo:'#FFE58A',rosa:'#FFB8CC',verde:'#BDEFC4',azul:'#B3DBFF',naranja:'#FFCB8E'};
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const hsh=x=>[...String(x)].reduce((a,c)=>(a*31+c.charCodeAt(0))|0,7)>>>0;
+const colorOf=t=>PC[t.color]?t.color:Object.keys(PC)[hsh(t.id)%5];
+const whenOf=t=>t.at?new Date(t.at):t.due?new Date(t.due+'T23:59'):null;
+const fdate=(d,time)=>`${DIAS[d.getDay()]} ${d.getDate()} ${MES[d.getMonth()]}${time?' · '+hm(d):''}`;
+// primero lo de hoy, luego por fecha, luego el resto en el orden en que los pegaste
+const byWhen=(a,b)=>((b.today===dkey())-(a.today===dkey()))||((whenOf(a)||8.64e15)-(whenOf(b)||8.64e15));
+function noteHtml(t){
+  const w=whenOf(t),late=w&&w<new Date();
+  return `<div class="pi" style="--pc:${PC[colorOf(t)]};--rot:${(hsh(t.id)%7-3)*0.9}deg" role="button" tabindex="0" data-act="edit-note" data-id="${t.id}" aria-label="Editar post-it: ${esc(t.name)}">
+    ${t.today===dkey()?'<span class="hoy">HOY</span>':''}<span class="txt">${esc(t.name)}</span>
+    ${w?`<span class="when ${late?'late':''}">${t.at?'⏰':'📅'} ${fdate(w,!!t.at)}${late?' · ya pasó':''}</span>`:''}
+    <button class="ok" data-act="note-done" data-id="${t.id}" aria-label="Terminado: ${esc(t.name)}">✓</button></div>`}
+function doneLog(){
+  const a=S.tasks.filter(t=>t.done).map(t=>({task:t.id,name:t.name,ts:t.doneAt||'',day:t.done}));
+  const b=(S.log||[]).map(l=>({name:l.name,ts:l.ts,min:l.min,day:l.ts.slice(0,10)}));
+  return [...a,...b].sort((x,y)=>(y.ts||y.day).localeCompare(x.ts||x.day));
 }
+let logN=15;
+function vPizarra(){
+  const pend=S.tasks.filter(t=>!t.done).sort(byWhen),log=doneLog();
+  return `<div class="row"><h1 class="grow">Pizarra</h1><button class="btn-main" style="width:auto;padding:12px 18px" data-act="note-new">+ Post-it</button></div>
+    <div class="board">${pend.length?pend.map(noteHtml).join(''):'<p class="board-empty">Pizarra limpia. Toca “+ Post-it” para pegar un pendiente.</p>'}</div>
+    <p class="small muted" style="margin:0">Toca un post-it para editarlo, ponerle fecha, hora y aviso, o mandarlo a tus 3 de hoy. Toca ✓ cuando lo termines.</p>
+    <section class="card"><span class="eyebrow">Registro · lo que ya hiciste</span>
+      ${log.length?`<div>${log.slice(0,logN).map(l=>`<div class="task"><div class="body"><span class="name">✓ ${esc(l.name)}</span>
+        <span class="small muted">${l.ts?fdate(new Date(l.ts),true):fdate(new Date(l.day+'T12:00'),false)}${l.min?` · ${l.min} min`:''}</span></div>
+        ${l.task?`<button class="btn-soft" style="min-height:36px;padding:6px 10px;font-size:14px" data-act="undo-done" data-id="${l.task}">Volver a poner</button>`:''}</div>`).join('')}</div>
+        ${log.length>logN?'<button class="btn-link" data-act="log-more">Ver más</button>':''}`
+      :'<p class="muted" style="margin:0">Aquí aparecen tus post-its terminados y las actividades que hagas con el temporizador, con fecha y hora.</p>'}
+    </section>`
+}
+function markDone(t){t.done=dkey();t.doneAt=new Date().toISOString();touch();save();
+  toast('Post-it terminado. ¡Bien!',()=>{t.done='';t.doneAt='';save()})}
 
 function last7(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(d)}return out}
 function vDiario(){
@@ -465,7 +521,7 @@ function startTimer(id,min,chore){
   touch();save();wake();openOv('timer');
   clearInterval(tickI);tickI=setInterval(tickTimer,250);
 }
-function endSeg(){if(!T||T.closed)return;const m=Math.round(Math.min(Date.now()-T.start,T.total)/6e4);T.closed=1;if(m){day().focus+=m;save()}}
+function endSeg(){if(!T||T.closed)return;const m=Math.round(Math.min(Date.now()-T.start,T.total)/6e4);T.closed=1;if(m){day().focus+=m;if(!T.id)S.log=[...(S.log||[]),{name:T.name,ts:new Date().toISOString(),min:m}].slice(-300);save()}}
 function tickTimer(){
   if(OV!=='timer'||!T||T.fin)return;
   const left=T.total-(Date.now()-T.start);
@@ -501,14 +557,42 @@ function renderOv(){
       <div class="stack"><textarea id="idea-txt" placeholder="Ej. México le vende a EE. UU. casi el 80% de lo que exporta"></textarea>
       <input id="idea-src" placeholder="De dónde (opcional): video, podcast, clase…" autocomplete="off">
       <button class="btn-main" data-act="idea-save">Guardar</button><button class="btn-link" data-act="close">Ahora no</button></div>`;return}
+  if(OV==='note'){
+    const isNew=NE==='new',t=isNew?{name:'',at:'',mode:'tranqui',type:'otro',step:'',subj:''}:S.tasks.find(x=>x.id===NE);
+    if(!t){closeOv();return}
+    o.className='sheet';
+    o.innerHTML=`<div class="stack"><span class="eyebrow">${isNew?'Nuevo post-it':'Post-it'}</span>
+      <label>Qué tienes que hacer<textarea id="ne-name" maxlength="140" placeholder="Ej. Entregar reporte de balanza comercial">${esc(t.name)}</textarea></label>
+      <div style="display:grid;gap:6px"><span class="small muted">Color</span><div class="swatches">${Object.entries(PC).map(([k,v])=>`<button type="button" class="${k===NEcol?'on':''}" style="background:${v}" data-act="ne-color" data-k="${k}" aria-label="Color ${k}" aria-pressed="${k===NEcol}"></button>`).join('')}</div></div>
+      <div class="grid2"><label>Fecha y hora (opcional)<input type="datetime-local" id="ne-at" value="${esc(t.at||'')}"></label>
+      <label>Aviso a esa hora<select id="ne-mode"><option value="tranqui">Tranqui</option><option value="firme" ${t.mode==='firme'?'selected':''}>Firme</option></select></label></div>
+      <details><summary>Más detalles (tipo, primer paso, materia)</summary><div class="stack" style="margin-top:8px">
+        <label>Tipo<select id="ne-type">${Object.entries(TIPOS).map(([k,[l]])=>`<option value="${k}" ${k===t.type?'selected':''}>${l}</option>`).join('')}</select></label>
+        <label>Primer paso chiquito<input id="ne-step" value="${esc(t.step||'')}" placeholder="${esc((TIPOS[t.type]||TIPOS.otro)[1])}" autocomplete="off"></label>
+        <label>Materia<input id="ne-subj" value="${esc(t.subj||'')}" autocomplete="off"></label></div></details>
+      <button class="btn-main" data-act="ne-save">${isNew?'Pegar en la pizarra':'Guardar'}</button>
+      ${isNew?'':`<div class="grid2"><button class="btn-soft" data-act="ne-today">${t.today===dkey()?'Quitar de hoy':'Para hoy'}</button><button class="btn-soft" data-act="timer" data-id="${t.id}">Empezar 5 min</button></div>
+      <button class="btn-x ${armed===t.id?'armed':''}" data-act="ne-del" data-id="${t.id}">${armed===t.id?'Toca otra vez para borrarlo':'Borrar post-it'}</button>`}
+      <button class="btn-link" data-act="close">Cancelar</button></div>`;
+    return}
   if(OV==='alarm'){
-    const r=ring,a=day().ack[r.id]||{};o.className=r.mode==='firme'?'alarm-firme':'';
+    const r=ring,a=ackOf(r);o.className=r.mode==='firme'?'alarm-firme':'';
     o.innerHTML=`<span class="eyebrow">${r.mode==='firme'?'Modo firme':'Recordatorio'}</span><div class="say">${esc(r.text)}</div>
       <div class="stack">${r.pill?`<button class="btn-main" data-act="al-pill">Ya me la tomé</button>`:`<button class="btn-main" data-act="al-ok">Ya empecé</button>`}
+      ${r.task?'<button class="btn-soft" data-act="al-done">Ya lo terminé</button>':''}
       ${(a.s||0)<2?`<button class="btn-soft" data-act="al-snooze">Dame 10 min</button>`:`<p class="small muted" style="margin:0">Ya usaste tus 2 "dame 10 min". Solo el primer paso, ándale.</p>`}
       ${r.mode==='firme'?'':`<button class="btn-link" data-act="al-ok">Cerrar</button>`}</div>`}
 }
 
+let NE=null,NEcol='amarillo';
+function neApply(){
+  const name=$('#ne-name')?.value.trim();if(!name){$('#ne-name')?.focus();toast('Escribe qué tienes que hacer.');return null}
+  let t=NE==='new'?null:S.tasks.find(x=>x.id===NE);
+  if(!t){t={id:uid(),name,type:'otro',subj:'',due:'',step:'',today:'',done:''};S.tasks.push(t);NE=t.id}
+  const at=$('#ne-at').value;if(at!==(t.at||'')){delete t.ok;delete t.until;delete t.s}
+  Object.assign(t,{name,color:NEcol,at,mode:$('#ne-mode').value,type:$('#ne-type').value,step:$('#ne-step').value.trim(),subj:$('#ne-subj').value.trim()});
+  save();return t}
+const ackOf=r=>r.task?(S.tasks.find(x=>x.id===r.task)||{}):(day().ack[r.id]||{});
 function dueRem(){
   const d=day(),now=Date.now(),w=win();
   for(const r of S.rem){
@@ -517,6 +601,10 @@ function dueRem(){
     const a=d.ack[r.id]||{};if(a.ok)continue;
     if(now>=(a.until||at)&&now-at<3*36e5)return r;
   }
+  for(const t of S.tasks){
+    if(t.done||!t.at||t.ok)continue;const at=+new Date(t.at);
+    if(now>=(t.until||at)&&now-at<12*36e5)return{id:'n'+t.id,task:t.id,text:'Post-it: '+t.name,mode:t.mode||'tranqui'};
+  }
 }
 function fire(r){
   ring=r;openOv('alarm');
@@ -524,7 +612,7 @@ function fire(r){
   if(r.mode==='firme'){alarmBeep();buzz([400,200,400]);clearInterval(beepI);beepI=setInterval(()=>{alarmBeep();buzz([400,200,400])},3000)}
   else{chime();buzz(200)}
 }
-function ack(fields){const d=day(),r=ring;d.ack[r.id]={...(d.ack[r.id]||{}),...fields};save();closeOv()}
+function ack(fields){const d=day(),r=ring,t=r.task&&S.tasks.find(x=>x.id===r.task);if(t)Object.assign(t,fields);else if(!r.task)d.ack[r.id]={...(d.ack[r.id]||{}),...fields};save();closeOv()}
 let lastKey=dkey();
 setInterval(()=>{
   if(dkey()!==lastKey){lastKey=dkey();if(!OV)render()}
@@ -536,7 +624,7 @@ setInterval(()=>{if(!OV&&tab==='hoy'&&!document.activeElement?.matches('textarea
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b||b.tagName==='TEXTAREA')return;
   const act=b.dataset.act,id=b.dataset.id,k=b.dataset.k;
-  if(!['del','delrem','delidea'].includes(act))armed='';
+  if(!['del','delrem','delidea','ne-del'].includes(act))armed='';
   const d=day(),t=id&&S.tasks.find(x=>x.id===id);
   switch(act){
     case 'tab':tab=k;try{localStorage.setItem('ancla.tab',k)}catch(e){}render();scrollTo(0,0);{const m=$('#main');m.classList.remove('enter');void m.offsetWidth;m.classList.add('enter')}break;
@@ -547,7 +635,7 @@ document.addEventListener('click',e=>{
     case 'pill-set':{const v=$('#pill-time').value;if(v){d.pill=v;touch()}pillEdit=false;save();break}
     case 'cama':case 'casa':FL=act==='cama'?CAMA:CASA;C=0;touch();save();wake();openOv('cama');break;
     case 'cama-next':if(C===FL.length-1){d.mov[FL===CAMA?'s':'l']+=5;save()}C++;renderOv();break;
-    case 'timer':startTimer(id,0,b.dataset.chore);break;
+    case 'timer':if(OV==='note'&&!neApply())break;startTimer(id,0,b.dataset.chore);break;
     case 'stop':{const l=T?.learn;endSeg();T=null;l?openOv('idea'):closeOv();break}
     case 'more':startTimer(T.id,+b.dataset.v,T.name);break;
     case 'finish':{const x=S.tasks.find(y=>y.id===T.id),l=T.learn;if(x){x.done=dkey();touch();save()}T=null;if(l){openOv('idea');break}closeOv();toast('Hecha. Bien ahí.');break}
@@ -558,7 +646,19 @@ document.addEventListener('click',e=>{
     case 'ck-open':ckOpen=true;render();break;
     case 'recall':recallOff++;render();break;
     case 'delidea':if(armed===id){S.ideas=S.ideas.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
-    case 'done':t.done=t.done?'':dkey();if(t.done){touch();chime();buzz(60)}save();break;
+    case 'done':t.done=t.done?'':dkey();t.doneAt=t.done?new Date().toISOString():'';if(t.done){touch();chime();buzz(60)}save();break;
+    case 'note-new':NE='new';NEcol=Object.keys(PC)[S.tasks.length%5];armed='';openOv('note');setTimeout(()=>$('#ne-name')?.focus(),50);break;
+    case 'edit-note':NE=id;NEcol=colorOf(t);armed='';openOv('note');break;
+    case 'ne-color':NEcol=k;b.parentNode.querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',x===b)});break;
+    case 'ne-save':{const isNew=NE==='new';if(neApply()){closeOv();toast(isNew?'Pegado en la pizarra.':'Guardado.')}break}
+    case 'ne-today':{const x=neApply();if(!x)break;if(x.today===dkey())x.today='';else if(todayTasks().filter(y=>!y.done).length>=3){toast('Ya tienes 3 para hoy. Quita una primero.');break}else x.today=dkey();save();b.textContent=x.today?'Quitar de hoy':'Para hoy';break}
+    case 'ne-del':if(armed===id){const i=S.tasks.findIndex(x=>x.id===id),old=S.tasks[i];S.tasks.splice(i,1);armed='';save();closeOv();toast('Post-it borrado.',()=>{S.tasks.splice(i,0,old);save()})}else{armed=id;renderOv()}break;
+    case 'note-done':{const el=b.closest('.pi');chime();buzz(60);
+      if(el&&matchMedia('(prefers-reduced-motion:no-preference)').matches){el.classList.add('fall');setTimeout(()=>markDone(t),650)}else markDone(t);break}
+    case 'undo':if(undoFn){const f=undoFn;undoFn=null;$('#toast').hidden=true;f()}break;
+    case 'undo-done':t.done='';t.doneAt='';save();toast('De vuelta en la pizarra.');break;
+    case 'log-more':logN+=30;render();break;
+    case 'al-done':{const x=S.tasks.find(y=>y.id===ring.task);ack({ok:1});if(x)markDone(x);break}
     case 'today':if(t.today===dkey())t.today='';else if(todayTasks().filter(x=>!x.done).length>=3){toast('Ya tienes 3 para hoy. Quita una primero.');break}else t.today=dkey();save();break;
     case 'del':if(armed===id){S.tasks=S.tasks.filter(x=>x.id!==id);armed='';save()}else{armed=id;render()}break;
     case 'mov':d.mov[k]+=5;touch();save();buzz(40);break;
@@ -574,27 +674,24 @@ document.addEventListener('click',e=>{
     case 'addrem':addRem=!addRem;render();break;
     case 'al-ok':if(ring.id==='test')closeOv();else ack({ok:1});break;
     case 'al-pill':d.pill=hm(new Date());touch();ack({ok:1});break;
-    case 'al-snooze':if(ring.id==='test')closeOv();else{const a=d.ack[ring.id]||{};ack({s:(a.s||0)+1,until:Date.now()+10*6e4})}break;
+    case 'al-snooze':if(ring.id==='test')closeOv();else{const a=ackOf(ring);ack({s:(a.s||0)+1,until:Date.now()+10*6e4})}break;
   }
 });
 document.addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.cfg){const v=el.type==='number'?+el.value:el.value;if(el.type!=='number'||(v>=+el.min&&v<=+el.max)){S.cfg[el.dataset.cfg]=v;save()}}
   else if(el.id==='note'){day().note=el.value.trim();touch();save(true)}
-  else if(el.id==='f-type'){$('#f-step').placeholder=(TIPOS[el.value]||TIPOS.otro)[1]}
+  else if(el.id==='ne-type'){$('#ne-step').placeholder=(TIPOS[el.value]||TIPOS.otro)[1]}
   else if(el.id==='f-kind'){const p=el.value==='pill';$('#f-at-l').innerHTML=p?'Minutos después<input name="at" type="number" min="0" max="900" step="15" value="90" id="f-at">':'Hora<input name="at" type="time" value="18:00" id="f-at">'}
 });
 document.addEventListener('submit',e=>{
   e.preventDefault();const f=new FormData(e.target);
-  if(e.target.id==='f-task'){
-    const name=f.get('name').trim();if(!name)return;
-    S.tasks.push({id:uid(),name,type:f.get('type'),subj:f.get('subj').trim(),due:f.get('due'),step:f.get('step').trim(),today:'',done:''});
-    save();toast('Agregada. Toca "Para hoy" si va en tus 3.');
-  }else if(e.target.id==='f-rem'){
+  if(e.target.id==='f-rem'){
     const kind=f.get('kind'),at=kind==='pill'?Math.max(0,+f.get('at')||0):f.get('at');if(!at&&kind==='fixed')return;
     S.rem.push({id:uid(),text:f.get('text').trim(),kind,at,mode:f.get('mode')});addRem=false;save();
   }
 });
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches?.('[role=button]')){e.preventDefault();e.target.click()}});
 // la nota se guarda mientras escribes (por si cierras la app sin salir del cuadro)
 document.addEventListener('input',e=>{if(e.target.id==='note'){day().note=e.target.value.trim();touch();save(true)}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveT);flush();return}
