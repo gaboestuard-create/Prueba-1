@@ -54,7 +54,7 @@ node render.js         # crea video_storytelling.mp4 con música (requiere playw
 
 ```bash
 cd 3d && npm install
-node render3d.js 3              # crea ../video_storytelling_3d.mp4 sin audio (~1 h con 3 procesos)
+node render3d.js 4              # crea ../video_storytelling_3d.mp4 a 1080p sin audio (~2 h con 4 procesos; si se corta, volver a correrlo continúa)
 ../mezcla.sh video_storytelling_3d.mp4
 ```
 
