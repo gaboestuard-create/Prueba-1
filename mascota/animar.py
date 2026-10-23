@@ -15,8 +15,8 @@ from PIL import Image, ImageDraw, ImageFilter
 DIR = Path(__file__).parent
 OUT = DIR / "salida"
 FPS = 30
-CANVAS = (1024, 1600)
-TOP = 40  # margen superior para saltos
+CANVAS = (1024, 1800)
+TOP = 220  # margen superior para saltos y efectos
 
 src = Image.open(DIR / "original.jpg").convert("RGB")
 W, H = src.size
@@ -82,15 +82,53 @@ def head_with_blink(t):
     return L_HEAD_CLOSED if t > 0.5 else L_HEAD
 
 
-def frame(head_rot=0.0, hand_rot=0.0, blink=0.0, sx=1.0, sy=1.0, dy=0.0, scale=1.0):
-    char = L_BODY.copy()
-    char.alpha_composite(head_with_blink(blink).rotate(head_rot, Image.BICUBIC, center=NECK))
-    char.alpha_composite(L_HAND.rotate(hand_rot, Image.BICUBIC, center=WRIST))
+# Brazo izquierdo completo (manga + mano) como pieza propia; el derecho es su espejo
+# (en la imagen original ese brazo está oculto tras la espalda).
+ARM_X, SHOULDER = 345, (345, 880)
+head_wide = np.asarray(Image.fromarray(head.astype('uint8') * 255).filter(ImageFilter.MaxFilter(15))) > 0
+arm_m = opaque & ~head_wide & (xx < ARM_X) & (yy >= 560) & (yy < 1010)
+# apertura: quita hilos finos del borde de la cabeza para que no viajen con el brazo
+arm_m = np.asarray(Image.fromarray(arm_m.astype('uint8') * 255).filter(ImageFilter.MinFilter(9)).filter(ImageFilter.MaxFilter(9))) > 0
+body_na_px = body_px.copy()
+# hombro redondeado donde estaba la manga: relleno color bata + contorno oscuro (así no queda un corte seco)
+cap = ((xx - ARM_X) / 85.0) ** 2 + ((yy - 905) / 75.0) ** 2 <= 1
+hole = arm_m & cap
+ring = np.asarray(Image.fromarray(cap.astype("uint8") * 255).filter(ImageFilter.MaxFilter(9))) > 0
+ring = ring & ~cap & (xx < ARM_X) & arm_m
+body_na_px = body_px.copy()
+for y in range(800, 1010):  # se estira el color de la bata hacia donde estaba la manga
+    body_na_px[y, 240:ARM_X] = rgb[y, ARM_X + 8]
+body_na_px[ring] = (22, 35, 80)
+L_BODY_NOARM = layer((body_fill & ~arm_m) | hole | ring, body_na_px)
+L_ARM = layer(arm_m)
+L_ARM_R = L_ARM.transpose(Image.FLIP_LEFT_RIGHT)
+SHOULDER_R = (W - 1 - SHOULDER[0], SHOULDER[1])
+
+
+def frame(head_rot=0.0, hand_rot=0.0, blink=0.0, sx=1.0, sy=1.0, dy=0.0, scale=1.0, arms=None, fx=None, arm_d=(0, 0), rubor=0.0):
+    """arms=(rotIzq, rotDer) en grados (negativo = sube) usa los brazos completos; fx(canvas) dibuja efectos."""
+    head = head_with_blink(blink)
+    if rubor > 0:  # enojo: la cara se enrojece
+        px = np.asarray(head).astype(float)
+        px[..., :3] = px[..., :3] * (1 - rubor) + np.array([255, 30, 30]) * rubor
+        head = Image.fromarray(px.astype("uint8"), "RGBA")
+    head = head.rotate(head_rot, Image.BICUBIC, center=NECK)
+    if arms is None:
+        char = L_BODY.copy()
+        char.alpha_composite(head)
+        char.alpha_composite(L_HAND.rotate(hand_rot, Image.BICUBIC, center=WRIST))
+    else:
+        char = L_BODY_NOARM.copy()
+        char.alpha_composite(L_ARM_R.rotate(-arms[1], Image.BICUBIC, center=SHOULDER_R), (int(-arm_d[0]), int(arm_d[1])))
+        char.alpha_composite(L_ARM.rotate(arms[0], Image.BICUBIC, center=SHOULDER), (int(arm_d[0]), int(arm_d[1])))
+        char.alpha_composite(head)
     w, h = max(int(W * sx * scale), 1), max(int(H * sy * scale), 1)
     char = char.resize((w, h), Image.LANCZOS)
     canvas = Image.new("RGBA", CANVAS, (0, 0, 0, 0))
     feet_y = TOP + H  # los pies quedan fijos en el piso
     canvas.alpha_composite(char, ((CANVAS[0] - w) // 2, int(feet_y - h + dy)))
+    if fx:
+        fx(canvas)
     return canvas
 
 
@@ -139,9 +177,10 @@ def export(name, fn, n):
     seq = str(tmp / "%04d.png")
     run = lambda *a: subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", seq, *a], check=True)
     run("-c:v", "libvpx-vp9", "-pix_fmt", "yuva420p", "-b:v", "0", "-crf", "30", "-auto-alt-ref", "0", str(OUT / f"{name}.webm"))
-    run("-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le", "-vf", "scale=512:-2", str(OUT / f"{name}.mov"))
+    run("-f", "lavfi", "-i", f"color=c=0x00FF00:s={CANVAS[0]}x{CANVAS[1]}:r={FPS}", "-filter_complex", "[1][0]overlay=shortest=1,scale=512:-2,format=yuv420p",
+        "-c:v", "libx264", "-crf", "18", str(OUT / f"{name}_pantalla_verde.mp4"))
     # vista previa sobre fondo de color (GIF no maneja bien alfa suave)
-    run("-filter_complex", "color=c=0x1f4fa3:s=1024x1600:r=30[bg];[bg][0]overlay=shortest=1,scale=384:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse",
+    run("-filter_complex", f"color=c=0x1f4fa3:s={CANVAS[0]}x{CANVAS[1]}:r=30[bg];[bg][0]overlay=shortest=1,scale=384:-2:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse",
         str(OUT / f"{name}_preview.gif"))
     shutil.rmtree(tmp)
 
