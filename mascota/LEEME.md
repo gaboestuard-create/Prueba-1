@@ -1,59 +1,61 @@
-# Mascota Laboratorio Clínico Villanueva — biblioteca de animaciones
+# Mascota Laboratorio Clínico Villanueva — sprites para motion graphics
 
-Personaje animado (luchador con bata) listo para pegar en videos de la marca. Todo sale de `original.jpg`
-con `animar.py` (recorte + piezas), `efectos.py` (signos, estrellas, vena…) y `biblioteca.py` (emociones).
+8 poses del luchador con bata (`poses/*.jpg`), cada una recortada sin fondo y con animación de **entrada**,
+**idle** (en bucle) y **salida**. Todo se genera con `animar.py`.
 
-## Catálogo (`salida/`)
+## Poses — cuándo usar cada una
 
-| Clip | Cuándo usarlo | Duración |
-|---|---|---|
-| `idle` | Personaje en pantalla mientras habla la voz o sale texto | 3 s (loop) |
-| `entrada` | Aparece con rebote; abrir una escena | 1.2 s |
-| `pulgar` | "¡Muy bien!", confirmar un resultado | 2 s (loop) |
-| `aprobado` | Dos pulgares arriba, cierre de un mensaje | 1.5 s (loop) |
-| `alegre` | Buenas noticias, promociones, resultados listos | 2 s (loop) |
-| `sorprendido` | Dato curioso, "¿sabías que…?", cifras llamativas | 2.5 s |
-| `pensativo` | Preguntas, "¿cuándo debo hacerme este estudio?" | 3 s (loop) |
-| `brazos_arriba` | Celebración, ofertas, saltando | 1.6 s (loop) |
-| `molesto` | Mitos o malas prácticas ("no te automediques") | 2 s (loop) |
-| `mascota_sin_fondo.png` | Imagen fija sin fondo | — |
+| Pose | Para la escena de… |
+|---|---|
+| `guino_pulgar` | Saludo / cierre amable, "¡te esperamos!" |
+| `dos_pulgares` | Confirmar, "¡listo!", resultados entregados |
+| `senalando_frente` | Hablarle al espectador: "¿Tú ya te hiciste tu chequeo?" |
+| `senalando_lado` | Señalar un texto, precio o dato que aparece **a la izquierda** (voltear el clip para la derecha) |
+| `pensativo` | Plantear una duda: "¿Cada cuánto debo hacerme análisis?" |
+| `dudando` | "¿Y ahora qué hago?", problema antes de la solución |
+| `sorprendido` | Dato impactante, "¿sabías que…?" |
+| `saltando` | Promociones, celebración, buenas noticias (brinca en bucle) |
 
-Cada clip existe en tres formatos (30 fps):
-- `<clip>.webm` — **transparente real** (VP9 con alfa), 1024×1800. Para web, Remotion, Canva y navegadores Chrome/Edge.
-- `<clip>_pantalla_verde.mp4` — H.264 estándar, fondo verde `#00FF00`, 512×900. Abre en cualquier equipo; quitar con croma en CapCut, DaVinci, Premiere, Clipchamp.
-- `<clip>_preview.gif` — vista previa sobre fondo azul.
+## Archivos (`salida/`)
 
-> No se usa ProRes/`.mov`: Windows no lo abre (error `0xC00D5212`).
+Por pose: `<pose>.png` (imagen fija sin fondo) y
+- `<pose>_entrada` — aparece con rebote desde los pies (0.6 s)
+- `<pose>_idle` — respira / se balancea; se repite sin corte (2 s). `saltando` brinca, `sorprendido` tiembla, `dudando` encoge hombros.
+- `<pose>_salida` — se agacha y desaparece (0.4 s)
 
-## Cómo usarlos en un video nuevo (para Claude)
+Cada clip en dos formatos (30 fps, lienzo 1080×1620, pies siempre en la misma línea):
+- `.webm` — **transparente real** (VP9 + alfa). Remotion, web, Canva, Chrome/Edge.
+- `_pantalla_verde.mp4` — H.264 con fondo `#00FF00` (540×810). Abre en Windows; quitar con croma en CapCut/DaVinci/Premiere/Clipchamp.
 
-1. Elige el clip por la escena (tabla de arriba) y **copia** el `.webm` o el MP4 al proyecto del video.
-2. Composición con ffmpeg (sobre un fondo/escena `escena.mp4`, personaje abajo a la derecha, 40 % del alto):
-   ```
-   ffmpeg -i escena.mp4 -c:v libvpx-vp9 -i salida/alegre.webm \
-     -filter_complex "[1]scale=-2:ih*0.4/1[p];[0][p]overlay=W-w-40:H-h-20:shortest=0" -c:a copy out.mp4
-   ```
-   (ajusta escala/posición; `-c:v libvpx-vp9` antes de `-i` es necesario para leer el alfa del webm).
-3. En Remotion: `<OffthreadVideo src={staticFile("alegre.webm")} transparent />` dentro de una `<Sequence>`.
-4. Se pueden encadenar clips (`entrada` → `idle` → `sorprendido` → `idle`) cortando en la pose neutra:
-   todos empiezan y terminan en postura parecida a `idle`.
+`demo.mp4` / `demo.gif`: todas las poses encadenadas sobre fondo azul, como referencia de ritmo.
 
-## Regenerar o crear clips nuevos
+## Cómo armar una escena (para Claude)
 
+Secuencia típica por cada línea del guion: `entrada` → `idle` (repetir lo que dure la frase) → `salida`, o cortar
+directo de un `idle` a la `entrada` de la siguiente pose (el rebote disimula el cambio). La entrada termina y la
+salida empieza en la pose de reposo, así que encadenan sin salto.
+
+ffmpeg — personaje abajo a la derecha (480 px de alto), idle repetido 3 veces:
 ```
-pip install pillow numpy   # y ffmpeg instalado
-python3 mascota/animar.py        # idle, pulgar, entrada
-python3 mascota/biblioteca.py    # emociones (o: python3 mascota/biblioteca.py alegre)
+ffmpeg -i escena.mp4 -stream_loop 2 -c:v libvpx-vp9 -i salida/pensativo_idle.webm \
+  -filter_complex "[1]scale=-2:480[p];[0][p]overlay=W-w-40:H-h:eof_action=pass" -c:a copy out.mp4
 ```
-Un clip nuevo es una función `(f, n) -> imagen` en `biblioteca.py` usando `animar.frame(...)`
-(rotación de cabeza/manos/brazos, saltos con `dy`, estiramiento `sx/sy`, parpadeo `blink`, efectos `fx`).
-Los efectos disponibles están en `efectos.py`.
+(`-c:v libvpx-vp9` antes del `-i` es necesario para leer el alfa del webm; para voltear añade `hflip` antes de `scale`.)
 
-## Límites conocidos (una sola imagen de partida)
+Remotion: `<OffthreadVideo src={staticFile("pensativo_idle.webm")} transparent />` dentro de un `<Loop>` / `<Sequence>`.
 
-- Solo hay una pose: se anima moviendo piezas (cabeza, manos/brazos, cuerpo) y con efectos dibujados. **No** hay giros,
-  caminar, ni manos con otra forma (siempre pulgar arriba; el brazo derecho es el izquierdo en espejo).
-- La expresión de la cara no cambia (la máscara tapa la boca); la emoción la dan el movimiento y los efectos.
-- `molesto` es el menos convincente. Para poses nuevas (señalar, saludar, sostener algo) conviene generar/dibujar
-  una imagen nueva del personaje y añadirla como pieza.
-- Poner el logo/colores de marca siempre desde la imagen original; no recolorear la cabeza.
+## Regenerar / añadir poses
+
+Pon la imagen nueva (fondo negro) en `poses/<nombre>.jpg` y corre:
+```
+pip install pillow numpy   # y ffmpeg
+python3 mascota/animar.py            # todas (~7 min)
+python3 mascota/animar.py pensativo  # solo una (también rehace la demo con esa)
+```
+Estilo de idle por pose en el diccionario `IDLE` de `animar.py`.
+
+## Límites
+
+- En `dudando` (manos y suelas) y `saltando` (una mano) la imagen original toca el borde, así que esas partes
+  salen cortadas en recto. Una versión de la imagen con más margen lo arregla.
+- Las animaciones son de escala/rebote/balanceo del sprite completo (no se mueven partes por separado).
