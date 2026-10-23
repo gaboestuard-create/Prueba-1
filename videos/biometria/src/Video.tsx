@@ -77,7 +77,7 @@ const Gancho: React.FC = () => {
       <AbsoluteFill style={{ transform: sac }}>
         {frame < f(3.5) && (
           <Centro top={330}>
-            <Golpe s={0.16} style={{ fontSize: 120 }}>¿SIEMPRE</Golpe>
+            <Golpe s={-0.12} desde={1.15} style={{ fontSize: 120 }}>¿SIEMPRE</Golpe>
             <Golpe s={0.84} style={{ fontSize: 170, color: C.naranjaViva }}>CANSADO?</Golpe>
             <div style={{ height: 50 }} />
             <Bateria />
