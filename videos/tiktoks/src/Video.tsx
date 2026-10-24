@@ -3,28 +3,15 @@
 import React from "react";
 import { AbsoluteFill, Audio, Img, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
 import {
-  C, Ficha, Fondo, Franjas, GloboBlanco, GloboRojo, Golpe, MONO, Mascota, Plaqueta, Progreso, Subtitulos, TITULO,
+  C, Centro, Escena, Ficha, Fondo, Franjas, GloboBlanco, GloboRojo, Golpe, MONO, Mascota, Plaqueta, Progreso, Subtitulos, TITULO,
   f, lerp, usePop, useSacudida,
 } from "./piezas";
+import palabras from "./palabras.json";
 
 export const DURACION = f(68.4);
 
 // límites de escena (inicio de cada frase en la voz)
 const E = { hook: 0, gabito: 6.05, muestra: 14.2, rojos: 19.15, blancos: 28.75, plaquetas: 37.98, dato: 42.07, cuando: 48.15, prep: 54.6, cta: 59.35, fin: 68.4 };
-
-const Escena: React.FC<{ desde: number; hasta: number; children: React.ReactNode }> = ({ desde, hasta, children }) => {
-  const frame = useCurrentFrame();
-  if (frame < f(desde) || frame >= f(hasta)) return null;
-  // micro zoom continuo: la escena nunca está quieta
-  const z = interpolate(frame, [f(desde), f(hasta)], [1, 1.045]);
-  return <AbsoluteFill style={{ transform: `scale(${z})` }}>{children}</AbsoluteFill>;
-};
-
-const Centro: React.FC<{ top: number; children: React.ReactNode; style?: React.CSSProperties }> = ({ top, children, style }) => (
-  <div style={{ position: "absolute", top, left: 60, right: 60, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", ...style }}>
-    {children}
-  </div>
-);
 
 // ---------- 1. Gancho ----------
 const Bateria: React.FC = () => {
@@ -561,7 +548,7 @@ export const Video: React.FC = () => {
       <Cuando />
       <Prep />
       <Cierre />
-      {!enCierre && <Subtitulos />}
+      {!enCierre && <Subtitulos palabras={palabras} />}
       {bordes.map((b) => <Franjas key={b} s={b} />)}
       <Progreso total={DURACION} />
 

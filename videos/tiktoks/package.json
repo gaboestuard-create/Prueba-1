@@ -2,7 +2,8 @@
   "name": "video-biometria",
   "private": true,
   "scripts": {
-    "render": "remotion render src/index.ts Biometria out/biometria_tiktok.mp4"
+    "render": "remotion render src/index.ts Biometria out/biometria_tiktok.mp4",
+    "render:medico": "remotion render src/index.ts DiaDelMedico out/dia_del_medico_tiktok.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.538",

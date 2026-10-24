@@ -12,7 +12,6 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import palabras from "./palabras.json";
 
 // Fuentes de Google Fonts guardadas en public/fuentes: el navegador del render no tiene acceso a internet.
 const LATIN = "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215";
@@ -225,21 +224,22 @@ export const useSacudida = (momentos: number[], fuerza = 18) => {
   return `translate(${dx}px, ${dy}px)`;
 };
 
-type Palabra = { t: string; s: number; e: number };
-const PALABRAS = palabras as Palabra[];
+export type Palabra = { t: string; s: number; e: number };
 // grupos de hasta 3 palabras, cortando en puntuación
-const GRUPOS: Palabra[][] = [];
-{
+const agrupar = (palabras: Palabra[]) => {
+  const grupos: Palabra[][] = [];
   let g: Palabra[] = [];
-  for (const w of PALABRAS) {
+  for (const w of palabras) {
     g.push(w);
-    if (g.length >= 3 || /[.,:!?]$/.test(w.t)) { GRUPOS.push(g); g = []; }
+    if (g.length >= 3 || /[.,:!?]$/.test(w.t)) { grupos.push(g); g = []; }
   }
-  if (g.length) GRUPOS.push(g);
-}
+  if (g.length) grupos.push(g);
+  return grupos;
+};
 
 /** Subtítulos estilo TikTok: grupo actual, palabra activa resaltada y con pequeño rebote. */
-export const Subtitulos: React.FC<{ top?: number }> = ({ top = 1400 }) => {
+export const Subtitulos: React.FC<{ palabras: Palabra[]; top?: number; acento?: string }> = ({ palabras, top = 1400, acento = C.naranjaViva }) => {
+  const GRUPOS = React.useMemo(() => agrupar(palabras), [palabras]);
   const frame = useCurrentFrame();
   const t = frame / FPS;
   const g = GRUPOS.find((gr, i) => t >= gr[0].s - 0.05 && t < (GRUPOS[i + 1]?.[0].s ?? gr[gr.length - 1].e + 0.6) - 0.05);
@@ -254,7 +254,7 @@ export const Subtitulos: React.FC<{ top?: number }> = ({ top = 1400 }) => {
         const limpio = w.t.replace(/[¿¡]/g, "");
         return (
           <span key={i} style={{ fontFamily: TITULO, fontWeight: 800, fontSize: 82, textTransform: "uppercase", letterSpacing: -1,
-            color: activa ? C.naranjaViva : C.blanco, WebkitTextStroke: "10px #050D18", paintOrder: "stroke fill",
+            color: activa ? acento : C.blanco, WebkitTextStroke: "10px #050D18", paintOrder: "stroke fill",
             transform: activa ? "scale(1.07) rotate(-2deg)" : "none", display: "inline-block",
             textShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
             {limpio}
@@ -273,3 +273,17 @@ export const Progreso: React.FC<{ total: number }> = ({ total }) => {
       background: `linear-gradient(90deg, ${C.naranja}, ${C.naranjaViva})`, boxShadow: `0 0 20px ${C.naranjaViva}` }} />
   );
 };
+
+export const Escena: React.FC<{ desde: number; hasta: number; children: React.ReactNode }> = ({ desde, hasta, children }) => {
+  const frame = useCurrentFrame();
+  if (frame < f(desde) || frame >= f(hasta)) return null;
+  // micro zoom continuo: la escena nunca está quieta
+  const z = interpolate(frame, [f(desde), f(hasta)], [1, 1.045]);
+  return <AbsoluteFill style={{ transform: `scale(${z})` }}>{children}</AbsoluteFill>;
+};
+
+export const Centro: React.FC<{ top: number; children: React.ReactNode; style?: React.CSSProperties }> = ({ top, children, style }) => (
+  <div style={{ position: "absolute", top, left: 60, right: 60, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", ...style }}>
+    {children}
+  </div>
+);
