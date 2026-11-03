@@ -4,3 +4,4 @@
   Para cualquier video de la marca, lee `mascota/LEEME.md`: ahí está el catálogo de clips, cómo pegarlos en un video y
   cómo regenerarlos. Los clips ya renderizados están en `mascota/salida/`.
 - `marca/` tiene el logo (original y sin fondo), el lema y los colores de la marca; ver `marca/LEEME.md`.
+- `turistab/` es el video demo de la app TurisTab (turismo en Tabasco); ver `turistab/LEEME.md`.

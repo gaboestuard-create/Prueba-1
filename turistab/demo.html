@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>TurisTab — demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@500;700;800;900&display=block" rel="stylesheet">
+<style>
+:root{--selva:#0f4d2c;--hoja:#2f8f46;--lima:#8cc63f;--oro:#e3ad2b;--oro2:#f6d36b;--rojo:#c8372d;--cacao:#6b3a1f;--crema:#fbf6ea;--tinta:#2b1d10;--agua:#2aa3b8;--mut:#7d725f}
+*{box-sizing:border-box;margin:0;padding:0;transition:none!important;animation:none!important}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#072a17}
+body{font-family:Nunito,sans-serif;color:var(--tinta)}
+.ab{position:absolute}
+.serif{font-family:Fraunces,serif}
+#stage{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 40% 45%,#1a6a3b 0%,#0e4426 45%,#062214 100%)}
+#grain{position:absolute;inset:0;opacity:.09;mix-blend-mode:overlay;pointer-events:none}
+.frame{position:absolute;inset:22px;border:2px solid rgba(227,173,43,.45);border-radius:26px;pointer-events:none}
+.frame::after{content:"";position:absolute;inset:8px;border:1px solid rgba(227,173,43,.22);border-radius:20px}
+
+/* título */
+#title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--crema)}
+#title .big{font-family:Fraunces,serif;font-weight:800;font-size:150px;line-height:1;letter-spacing:-2px}
+#title .big b{color:var(--oro2)}
+#title .sub{font-size:42px;font-weight:700;margin-top:18px;opacity:.92}
+#title .pill{margin-top:34px;font-size:24px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:var(--tinta);background:linear-gradient(90deg,var(--oro),var(--oro2));padding:12px 30px;border-radius:40px}
+
+/* teléfono */
+#phone{position:absolute;left:390px;top:103px;width:420px;height:874px;border-radius:66px;background:linear-gradient(145deg,#3b3b3b,#0c0c0c 40%,#1d1d1d);box-shadow:0 50px 90px rgba(0,0,0,.55),0 0 0 3px #4a4a4a inset,0 0 0 2px #000}
+#screen{position:absolute;left:15px;top:15px;width:390px;height:844px;border-radius:52px;overflow:hidden;background:var(--crema);font-size:14px}
+#island{position:absolute;left:135px;top:11px;width:120px;height:34px;border-radius:20px;background:#000;z-index:50}
+#status{position:absolute;left:0;right:0;top:0;height:50px;z-index:49;display:flex;justify-content:space-between;align-items:center;padding:6px 34px 0 40px;font-weight:800;font-size:15px}
+.scr{position:absolute;inset:0;overflow:hidden;background:var(--crema)}
+
+/* splash */
+#splash{background:radial-gradient(circle at 50% 40%,#2f8f46,#0f4d2c 70%);color:var(--crema);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#splash .nm{font-family:Fraunces,serif;font-weight:800;font-size:46px;margin-top:10px}
+#splash .nm b{color:var(--oro2)}
+#splash .tg{font-weight:700;opacity:.85;margin-top:4px}
+#load{width:160px;height:6px;border-radius:4px;background:rgba(255,255,255,.2);margin-top:40px;overflow:hidden}
+#load i{display:block;height:100%;background:var(--oro2);width:0}
+
+/* comunes app */
+.hdr{position:relative;background:linear-gradient(160deg,#2f8f46,#0f4d2c);color:var(--crema);padding:58px 20px 22px;overflow:hidden}
+.hdr .leafdeco{position:absolute;right:-30px;top:-10px;width:200px;opacity:.25}
+.row{display:flex;align-items:center}
+.chips{display:flex;gap:8px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:8px 13px;border-radius:20px;background:#fff;font-weight:800;font-size:13px;box-shadow:0 2px 6px rgba(60,40,10,.12);color:var(--tinta);border:1.5px solid #eadfc6}
+.chip.on{background:var(--selva);color:#fff;border-color:var(--selva)}
+.sec{display:flex;justify-content:space-between;align-items:baseline;padding:0 20px;margin:18px 0 10px}
+.sec h3{font-family:Fraunces,serif;font-size:19px;font-weight:800}
+.sec a{color:var(--rojo);font-weight:800;font-size:13px}
+.ill{display:block;width:100%;height:100%}
+.nav{position:absolute;left:0;right:0;bottom:0;height:82px;background:#fff;border-top:1px solid #eee3cc;display:flex;justify-content:space-around;padding-top:10px;z-index:5}
+.nav div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#a39a86;width:60px}
+.nav div.on{color:var(--selva)}
+.nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.homebar{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#222;z-index:60}
+
+/* home */
+.search{margin-top:16px;background:#fff;color:#9a8f78;border-radius:16px;padding:13px 14px;font-weight:700;display:flex;gap:8px;align-items:center;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+.card{flex:none;width:240px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 8px 18px rgba(60,40,10,.14)}
+.card .im{height:150px;position:relative}
+.card .tx{padding:10px 14px 13px}
+.card .tx b{font-size:15.5px;display:block}
+.card .tx span{font-size:12.5px;color:var(--mut);font-weight:700}
+.rate{position:absolute;right:10px;top:10px;background:rgba(255,255,255,.95);border-radius:12px;padding:3px 8px;font-weight:900;font-size:12px}
+.dish{flex:none;width:80px;text-align:center;font-size:11.5px;font-weight:800;line-height:1.2}
+.dish i{display:flex;width:64px;height:64px;margin:0 auto 6px;border-radius:50%;background:#fff3d1;border:2px solid var(--oro);align-items:center;justify-content:center;font-style:normal;font-size:30px}
+
+/* mapa */
+#map{background:#8fd3e0}
+#mapsvg{position:absolute;left:0;top:0;transform-origin:0 0;overflow:visible}
+.mk{position:absolute;left:0;top:0;transform-origin:50% 100%;display:flex;align-items:center;gap:5px;height:32px;padding:3px;border-radius:18px;background:#fff;box-shadow:0 4px 10px rgba(30,20,0,.28);font-weight:900;font-size:12.5px;white-space:nowrap}
+.mk::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.mk i{display:flex;width:26px;height:26px;border-radius:50%;align-items:center;justify-content:center;font-style:normal;font-size:15px;flex:none}
+.mk span{overflow:hidden;display:block}
+.mk.sel{background:var(--selva);color:#fff}
+.mk.sel::after{border-top-color:var(--selva)}
+.mtop{position:absolute;left:14px;right:14px;top:54px;display:flex;gap:10px;z-index:4}
+.mtop .search{margin:0;flex:1;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.fbtn{position:relative;width:48px;height:48px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.fbtn svg{width:24px;height:24px;stroke:var(--selva);stroke-width:2.4;fill:none;stroke-linecap:round}
+.badge{position:absolute;right:-5px;top:-5px;width:22px;height:22px;border-radius:50%;background:var(--rojo);color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center}
+#mchips{position:absolute;left:14px;top:114px;z-index:4}
+.pcard{position:absolute;left:14px;right:14px;bottom:96px;height:112px;background:#fff;border-radius:22px;box-shadow:0 10px 24px rgba(30,20,0,.28);display:flex;gap:12px;padding:8px;z-index:4}
+.pcard .im{width:96px;height:96px;border-radius:16px;overflow:hidden;flex:none}
+.pcard b{font-size:16px;display:block;margin-top:6px}
+.pcard .m{font-size:12.5px;color:var(--mut);font-weight:700;margin-top:3px}
+.pcard .g{font-size:12.5px;color:var(--hoja);font-weight:900;margin-top:6px}
+#dim{position:absolute;inset:0;background:#1b140a;z-index:6}
+#sheet{position:absolute;left:0;right:0;bottom:0;height:730px;background:var(--crema);border-radius:30px 30px 0 0;z-index:7;padding:12px 20px 0;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+#sheet .hd{width:44px;height:5px;border-radius:3px;background:#d8ccb0;margin:0 auto 12px}
+#sheet h2{font-family:Fraunces,serif;font-size:24px;font-weight:800}
+.lbl{font-size:11.5px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut);margin:16px 0 8px}
+.wrap{display:flex;flex-wrap:wrap;gap:7px}
+.wrap .chip{box-shadow:none;padding:7px 12px}
+.seg{display:flex;background:#efe5cd;border-radius:14px;padding:4px}
+.seg div{flex:1;text-align:center;padding:8px 0;border-radius:11px;font-weight:800;font-size:13px}
+.seg div.on{background:var(--selva);color:#fff}
+.tgl{width:52px;height:30px;border-radius:16px;background:#d8ccb0;position:relative}
+.tgl i{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25)}
+.track{position:relative;height:6px;border-radius:3px;background:#e2d6ba;margin:16px 4px 0}
+.track .fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;background:var(--hoja)}
+.track .knob{position:absolute;top:-11px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:#fff;border:3px solid var(--hoja);box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.btn{background:var(--rojo);color:#fff;font-weight:900;font-size:16px;text-align:center;border-radius:18px;padding:16px;box-shadow:0 6px 14px rgba(200,55,45,.35)}
+#offline{position:absolute;left:14px;right:14px;top:54px;z-index:4;background:#1f2a22;color:#fff;border-radius:16px;padding:11px 14px;font-weight:800;font-size:13px;display:flex;justify-content:space-between}
+#offline b{color:var(--lima)}
+#eta{position:absolute;left:14px;right:14px;bottom:96px;background:#fff;border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(30,20,0,.28);z-index:4}
+#eta .big{font-family:Fraunces,serif;font-size:28px;font-weight:800}
+#eta .big small{font-family:Nunito;font-size:15px;color:var(--mut);font-weight:800}
+.prog{height:8px;border-radius:4px;background:#efe5cd;margin-top:12px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--hoja),var(--lima))}
+#car{position:absolute;left:0;top:0;font-size:26px;z-index:3;width:40px;height:40px;margin:-20px 0 0 -20px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+#you{position:absolute;left:0;top:0;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:#2a7fe0;border:3px solid #fff;box-shadow:0 0 0 0 rgba(42,127,224,.35);z-index:2}
+
+/* detalle */
+#detail .hero{position:absolute;left:0;top:0;width:390px;height:330px;overflow:hidden}
+#dscroll{position:absolute;left:0;right:0;top:0}
+.dbody{position:relative;margin-top:296px;background:var(--crema);border-radius:30px 30px 0 0;padding:22px 20px 140px}
+.tag{display:inline-block;font-size:12px;font-weight:900;color:var(--rojo);background:#fbe2d6;border-radius:10px;padding:4px 10px}
+.dbody h1{font-family:Fraunces,serif;font-size:30px;font-weight:800;line-height:1.1;margin-top:10px}
+.dbody .m{color:var(--mut);font-weight:800;margin-top:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.grid div{background:#fff;border-radius:16px;padding:12px;font-size:12px;font-weight:700;color:var(--mut);border:1.5px solid #efe3c8}
+.grid b{display:block;color:var(--tinta);font-size:14px;margin-top:3px}
+.grid .ok b{color:var(--hoja)}
+.dish2{display:flex;gap:10px}
+.dish2>div{flex:1;background:#fff;border-radius:16px;padding:10px 6px;text-align:center;font-size:11px;font-weight:800;line-height:1.2;border:1.5px solid #efe3c8}
+.dish2 i{display:block;font-style:normal;font-size:30px;margin-bottom:4px}
+.dbar{position:absolute;left:0;right:0;bottom:0;height:104px;background:#fff;border-top:1px solid #eee3cc;display:flex;gap:10px;padding:14px 18px 0;z-index:5}
+.dbar .btn{flex:1;padding:15px}
+.dbar .sv{width:56px;height:52px;border-radius:16px;border:2px solid #e9dcbf;display:flex;align-items:center;justify-content:center;font-size:22px}
+.round{position:absolute;top:56px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;z-index:3}
+
+/* joyas */
+.jhdr{background:linear-gradient(160deg,#123d24,#07210f);padding-bottom:20px}
+.jhdr h1{font-family:Fraunces,serif;font-size:34px;font-weight:800;color:var(--oro2);margin-top:6px}
+.orn{height:14px;margin:8px 0 6px}
+.jl{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.jc{position:relative;display:flex;gap:12px;background:#fff;border-radius:20px;padding:8px;box-shadow:0 6px 14px rgba(60,40,10,.1)}
+.jc .im{width:104px;height:104px;border-radius:15px;overflow:hidden;flex:none}
+.jc b{display:block;font-size:15.5px;margin-top:8px}
+.jc .m{font-size:12.5px;color:var(--mut);font-weight:700;margin-top:3px}
+.jc .t{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:900;background:#e6f2dc;color:var(--selva);border-radius:9px;padding:3px 8px}
+.ck{position:absolute;right:12px;top:12px;width:26px;height:26px;border-radius:50%;border:2.5px solid #cdbf9f;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px}
+.ck.on{background:var(--oro);border-color:var(--oro)}
+.cmpb{display:inline-flex;align-items:center;gap:6px;background:var(--oro);color:var(--tinta);font-weight:900;font-size:13px;padding:8px 14px;border-radius:16px}
+#docmp{position:absolute;left:40px;right:40px;bottom:100px;z-index:6}
+
+/* comparar */
+.bi{display:inline-grid}
+.bi>i{grid-area:1/1;font-style:normal}
+.bi>i:first-child{opacity:calc(1 - var(--en))}
+.bi>i:last-child{opacity:var(--en)}
+#compare{--en:0}
+.lang{position:relative;display:flex;background:rgba(255,255,255,.18);border-radius:14px;padding:3px;font-weight:900;font-size:13px}
+.lang div{position:relative;z-index:1;width:40px;text-align:center;padding:5px 0}
+.lang .ind{position:absolute;left:3px;top:3px;width:40px;height:calc(100% - 6px);border-radius:11px;background:var(--oro2)}
+.cols{display:flex;gap:10px;padding:16px 16px 6px}
+.cols>div{flex:1;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 6px 14px rgba(60,40,10,.1)}
+.cols .im{height:92px}
+.cols b{display:block;padding:8px 10px 0;font-size:14px;line-height:1.15}
+.cols span{display:block;padding:2px 10px 10px;font-size:11.5px;color:var(--mut);font-weight:800}
+.crow{margin:0 16px;padding:8px 0;border-bottom:1.5px dashed #e6d9bb}
+.crow .l{text-align:center;font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--mut)}
+.crow .v{display:flex;margin-top:3px}
+.crow .v div{flex:1;text-align:center;font-weight:900;font-size:14.5px}
+.crow .v div.w{color:var(--hoja)}
+.bar{height:8px;border-radius:4px;background:#efe5cd;margin:6px 18px 0;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--oro)}
+.best{margin:14px 16px 0;background:linear-gradient(135deg,#fff3c9,#ffe08a);border:2px solid var(--oro);border-radius:20px;padding:13px 16px}
+.best b{display:block;font-size:15.5px}
+.best span{font-size:12.5px;font-weight:700;color:#6c5420}
+
+/* cursor */
+#cur{position:absolute;left:0;top:0;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(255,255,255,.55);border:2.5px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.35);z-index:100}
+#rip{position:absolute;left:0;top:0;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #fff;z-index:99}
+
+/* textos laterales */
+#cap{position:absolute;left:990px;top:250px;width:790px;color:var(--crema)}
+.cp{position:absolute;left:0;top:0;width:100%}
+.cp .n{font-family:Fraunces,serif;font-weight:800;font-size:110px;line-height:1;color:transparent;-webkit-text-stroke:2px var(--oro)}
+.cp .k{font-size:22px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:var(--oro2);margin-top:6px}
+.cp h2{font-family:Fraunces,serif;font-weight:800;font-size:66px;line-height:1.05;margin-top:14px}
+.cp p{font-size:29px;font-weight:600;line-height:1.4;margin-top:22px;opacity:.85;max-width:720px}
+.cp .ln{width:120px;height:4px;border-radius:2px;background:var(--oro);margin-top:26px}
+#dots{position:absolute;left:990px;top:900px;display:flex;gap:12px}
+#dots i{width:12px;height:12px;border-radius:6px;background:rgba(246,211,107,.3)}
+#brand{position:absolute;left:62px;top:52px;display:flex;align-items:center;gap:12px;color:var(--crema);font-family:Fraunces,serif;font-weight:800;font-size:30px}
+#brand b{color:var(--oro2)}
+
+/* cierre */
+#outro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--crema)}
+#outro .big{font-family:Fraunces,serif;font-weight:800;font-size:130px;line-height:1}
+#outro .big b{color:var(--oro2)}
+#outro .sub{font-size:40px;font-weight:700;margin-top:14px}
+.feat{display:flex;gap:26px;margin-top:46px}
+.feat div{width:190px;padding:20px 10px;border-radius:24px;background:rgba(255,255,255,.07);border:1.5px solid rgba(227,173,43,.45);font-weight:800;font-size:19px;line-height:1.25}
+.feat i{display:block;font-style:normal;font-size:44px;margin-bottom:8px}
+#outro .foot{margin-top:46px;font-size:22px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--oro2)}
+#outro .tiny{margin-top:10px;font-size:16px;opacity:.55;font-weight:700}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+ <defs>
+  <linearGradient id="gPin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6d36b"/><stop offset="1" stop-color="#d9951c"/></linearGradient>
+  <linearGradient id="gPod" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6c23a"/><stop offset=".55" stop-color="#e07a22"/><stop offset="1" stop-color="#b8321f"/></linearGradient>
+  <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5fb34a"/><stop offset="1" stop-color="#1d5e2c"/></linearGradient>
+  <linearGradient id="gLeaf2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f7a34"/><stop offset="1" stop-color="#8cc63f"/></linearGradient>
+  <linearGradient id="gSunset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc66b"/><stop offset="1" stop-color="#ffeec2"/></linearGradient>
+  <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fd0ea"/><stop offset="1" stop-color="#e6f7f1"/></linearGradient>
+  <linearGradient id="gJungle" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cbe9a6"/><stop offset="1" stop-color="#6aa84a"/></linearGradient>
+  <linearGradient id="gCave" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5f5c4"/><stop offset="1" stop-color="#7cc05a"/></linearGradient>
+  <filter id="wob"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  <pattern id="waves" width="60" height="34" patternUnits="userSpaceOnUse"><path d="M6 20 q8 -8 16 0 t16 0" fill="none" stroke="#6ec2d4" stroke-width="2.4" stroke-linecap="round"/></pattern>
+  <pattern id="trees" width="46" height="40" patternUnits="userSpaceOnUse"><g fill="#1f5e2b" opacity=".22"><circle cx="10" cy="12" r="6"/><circle cx="32" cy="30" r="5"/></g></pattern>
+
+  <!-- piezas reutilizables -->
+  <g id="pin"><path d="M0 -58 C-32 -58 -48 -34 -48 -12 C-48 18 -14 40 0 62 C14 40 48 18 48 -12 C48 -34 32 -58 0 -58Z" fill="url(#gPin)" stroke="#5a3510" stroke-width="4"/>
+   <path d="M0 -40 C-16 -32 -20 -8 -12 10 C-6 22 6 22 12 10 C20 -8 16 -32 0 -40Z" fill="url(#gPod)" stroke="#5a3510" stroke-width="3"/>
+   <path d="M0 -38 V18 M-8 -26 Q-12 -8 -7 12 M8 -26 Q12 -8 7 12" stroke="#7a2e14" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+   <path d="M2 -40 C10 -56 28 -60 36 -52 C26 -42 12 -40 2 -40Z" fill="#3f9442" stroke="#5a3510" stroke-width="2.5"/></g>
+  <g id="ctree"><path d="M-6 0 L-4 -70 Q0 -78 4 -70 L6 0Z" fill="#6b3a1f"/><circle cx="-28" cy="-82" r="30" fill="#2f7a34"/><circle cx="12" cy="-98" r="34" fill="#3f9442"/><circle cx="34" cy="-74" r="26" fill="#2f7a34"/>
+   <ellipse cx="-9" cy="-38" rx="7" ry="12" fill="#f2b632" stroke="#7a3d12" stroke-width="2"/><ellipse cx="9" cy="-50" rx="7" ry="12" fill="#e07a22" stroke="#7a3d12" stroke-width="2"/><ellipse cx="7" cy="-24" rx="6" ry="11" fill="#c8372d" stroke="#7a3d12" stroke-width="2"/></g>
+  <g id="palm"><path d="M0 0 Q6 -40 -4 -80" stroke="#7a5a33" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="#3f9442" stroke="#235e2a" stroke-width="2"><path d="M-4 -80 Q-40 -96 -60 -70 Q-36 -86 -4 -80Z"/><path d="M-4 -80 Q30 -100 56 -76 Q26 -88 -4 -80Z"/><path d="M-4 -80 Q-20 -116 -48 -112 Q-22 -104 -4 -80Z"/><path d="M-4 -80 Q14 -118 40 -110 Q14 -102 -4 -80Z"/></g></g>
+  <g id="house"><rect x="0" y="0" width="44" height="30" fill="#fffaf0" stroke="#3d2a14" stroke-width="2"/><path d="M-5 2 L22 -16 L49 2Z" fill="#c8372d" stroke="#3d2a14" stroke-width="2" stroke-linejoin="round"/><rect x="17" y="14" width="10" height="16" fill="#6b3a1f"/></g>
+  <g id="leafbig"><path d="M0 0 C70 -60 190 -64 260 0 C190 64 70 60 0 0Z" fill="url(#gLeaf)"/><path d="M6 0 H252" stroke="#cfe8a8" stroke-width="3" opacity=".7"/><g stroke="#cfe8a8" stroke-width="2" opacity=".5" fill="none"><path d="M50 0 Q70 -22 90 -34 M90 0 Q112 -24 134 -38 M130 0 Q152 -22 176 -34 M170 0 Q190 -18 208 -26 M50 0 Q70 22 90 34 M90 0 Q112 24 134 38 M130 0 Q152 22 176 34 M170 0 Q190 18 208 26"/></g></g>
+  <g id="leafline"><path d="M0 0 C70 -60 190 -64 260 0 C190 64 70 60 0 0Z M6 0 H252 M50 0 Q70 -22 90 -34 M90 0 Q112 -24 134 -38 M130 0 Q152 -22 176 -34 M50 0 Q70 22 90 34 M90 0 Q112 24 134 38 M130 0 Q152 22 176 34" fill="none" stroke="#e3ad2b" stroke-width="2.2"/></g>
+  <g id="pod"><path d="M0 -70 C-34 -60 -42 -10 -30 30 C-20 64 20 64 30 30 C42 -10 34 -60 0 -70Z" fill="url(#gPod)" stroke="#5a2a10" stroke-width="3"/><path d="M0 -66 V58 M-16 -54 Q-26 0 -14 50 M16 -54 Q26 0 14 50" stroke="#8a3a16" stroke-width="2.5" fill="none" opacity=".6"/><path d="M0 -70 Q4 -86 14 -92" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+
+  <!-- ilustraciones -->
+  <symbol id="i-cacao" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gSunset)"/><circle cx="300" cy="66" r="34" fill="#fff6d0"/>
+   <path d="M0 165 Q80 120 160 150 T320 138 T400 150 V260 H0Z" fill="#9cc76a"/>
+   <path d="M0 200 Q100 170 200 190 T400 185 V260 H0Z" fill="#6aa84a"/>
+   <g transform="translate(125,110)"><rect x="0" y="44" width="150" height="70" fill="#fbf3df" stroke="#3d2a14" stroke-width="3"/>
+    <path d="M-14 48 L75 6 L164 48Z" fill="#c8372d" stroke="#3d2a14" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="#6b3a1f"><path d="M14 114 V84 a12 12 0 0 1 24 0 V114Z"/><path d="M63 114 V84 a12 12 0 0 1 24 0 V114Z"/><path d="M112 114 V84 a12 12 0 0 1 24 0 V114Z"/></g></g>
+   <use href="#ctree" x="62" y="232"/><use href="#ctree" x="345" y="236"/><use href="#ctree" x="20" y="250" transform="translate(0,0)"/>
+   <path d="M0 260 V232 Q200 214 400 234 V260Z" fill="#4a8a30"/></symbol>
+
+  <symbol id="i-pyr" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gSky)"/>
+   <g fill="#fff"><ellipse cx="80" cy="50" rx="38" ry="13"/><ellipse cx="108" cy="42" rx="24" ry="14"/><ellipse cx="300" cy="64" rx="34" ry="11"/><ellipse cx="320" cy="56" rx="20" ry="12"/></g>
+   <path d="M0 175 Q100 140 200 160 T400 150 V260 H0Z" fill="#8cc06a"/>
+   <g stroke="#3d2a14" stroke-width="2.5" stroke-linejoin="round">
+    <rect x="90" y="176" width="220" height="30" fill="#b5562e"/><rect x="112" y="148" width="176" height="30" fill="#c0612f"/><rect x="134" y="120" width="132" height="30" fill="#b5562e"/><rect x="156" y="92" width="88" height="30" fill="#c0612f"/>
+    <rect x="172" y="64" width="56" height="30" fill="#a04a26"/><rect x="190" y="74" width="20" height="20" fill="#3d2a14"/>
+    <rect x="186" y="94" width="28" height="112" fill="#8f3f20"/></g>
+   <g stroke="#6b2a12" stroke-width="2" opacity=".6"><path d="M186 110 h28 M186 126 h28 M186 142 h28 M186 158 h28 M186 174 h28 M186 190 h28"/></g>
+   <path d="M0 205 Q200 190 400 206 V260 H0Z" fill="#6aa84a"/><use href="#palm" x="50" y="220"/><use href="#palm" x="355" y="216"/></symbol>
+
+  <symbol id="i-fall" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="#3f9442"/>
+   <path d="M0 0 H400 V90 Q330 60 300 20 Q260 0 200 10 Q140 0 100 24 Q70 64 0 90Z" fill="#8cc63f" opacity=".5"/>
+   <path d="M90 40 Q150 20 200 26 Q260 20 310 40 L330 210 H70Z" fill="#8a7a62" stroke="#3d2a14" stroke-width="3"/>
+   <path d="M118 60 L106 200 M290 60 L298 200" stroke="#6f604c" stroke-width="6"/>
+   <path d="M150 30 Q200 22 250 30 L262 206 H140Z" fill="#eafcff"/>
+   <g stroke="#a6e6f0" stroke-width="5" stroke-linecap="round"><path d="M170 40 V196 M196 36 V200 M222 38 V198 M246 42 V196"/></g>
+   <ellipse cx="200" cy="220" rx="190" ry="40" fill="#2ab3c0" stroke="#1b7f8c" stroke-width="3"/>
+   <g fill="#fff" opacity=".9"><ellipse cx="200" cy="205" rx="80" ry="12"/><ellipse cx="150" cy="214" rx="26" ry="7"/><ellipse cx="256" cy="212" rx="30" ry="7"/></g>
+   <g fill="#1f5e2b"><circle cx="30" cy="150" r="46"/><circle cx="380" cy="140" r="50"/><circle cx="60" cy="210" r="30"/><circle cx="360" cy="214" r="32"/></g></symbol>
+
+  <symbol id="i-cave" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="#2a1f1a"/>
+   <path d="M90 260 V150 Q90 40 200 40 Q310 40 310 150 V260Z" fill="url(#gCave)"/>
+   <path d="M150 260 L200 120 L250 260Z" fill="#fff" opacity=".12"/>
+   <g fill="#4a3a30" stroke="#1a120e" stroke-width="2"><path d="M0 0 H400 V60 Q300 30 200 30 Q100 30 0 60Z"/><path d="M120 46 L132 100 L144 44Z"/><path d="M170 32 L178 76 L188 32Z"/><path d="M220 32 L230 88 L240 32Z"/><path d="M262 40 L270 72 L280 44Z"/><path d="M60 54 L72 120 L86 50Z"/><path d="M318 50 L330 110 L342 56Z"/></g>
+   <ellipse cx="200" cy="240" rx="200" ry="30" fill="#2a7f8f"/><ellipse cx="200" cy="236" rx="70" ry="8" fill="#9fe0d6" opacity=".5"/>
+   <g fill="#4a3a30"><path d="M100 260 L112 214 L124 260Z"/><path d="M280 260 L292 222 L304 260Z"/></g></symbol>
+
+  <symbol id="i-olmec" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gJungle)"/>
+   <use href="#leafbig" transform="translate(-40,60) rotate(-20) scale(.6)"/><use href="#leafbig" transform="translate(440,80) rotate(200) scale(.6)"/>
+   <g stroke="#3d2a14" stroke-width="3" stroke-linejoin="round">
+    <path d="M120 230 Q110 90 200 70 Q290 90 280 230Z" fill="#8d8f86"/>
+    <path d="M118 120 Q200 60 282 120 L284 104 Q200 40 116 104Z" fill="#74766d"/>
+    <path d="M118 120 Q200 100 282 120" fill="none"/>
+    <path d="M150 150 Q165 140 182 150 Q165 158 150 150Z" fill="#5b5d55"/><path d="M218 150 Q235 140 250 150 Q235 158 218 150Z" fill="#5b5d55"/>
+    <path d="M200 152 Q194 178 182 186 Q200 196 218 186 Q206 178 200 152Z" fill="#7e8078"/>
+    <path d="M172 206 Q200 196 228 206 Q200 222 172 206Z" fill="#6b6d65"/>
+    <path d="M110 160 Q100 180 112 200 M290 160 Q300 180 288 200" fill="none"/></g>
+   <path d="M0 230 Q200 214 400 230 V260 H0Z" fill="#4a8a30"/></symbol>
+
+  <symbol id="i-town" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gSunset)"/>
+   <path d="M0 140 Q60 70 130 110 Q200 50 270 100 Q340 60 400 110 V260 H0Z" fill="#4f9a45"/>
+   <path d="M0 170 Q100 140 200 160 T400 150 V260 H0Z" fill="#7fb45a"/>
+   <use href="#house" x="40" y="150"/><use href="#house" x="96" y="160"/><use href="#house" x="250" y="156"/><use href="#house" x="306" y="148"/>
+   <g stroke="#3d2a14" stroke-width="2.5"><rect x="168" y="104" width="64" height="86" fill="#fffaf0"/><rect x="186" y="70" width="28" height="36" fill="#f6d36b"/><path d="M182 72 L200 48 L218 72Z" fill="#c8372d" stroke-linejoin="round"/><path d="M190 190 V160 a10 10 0 0 1 20 0 V190Z" fill="#6b3a1f"/></g>
+   <path d="M0 214 Q120 196 200 214 T400 210 V260 H0Z" fill="#3fb6c9"/><path d="M40 228 q20 -6 40 0 M220 232 q20 -6 40 0" stroke="#bdeef5" stroke-width="3" fill="none" stroke-linecap="round"/></symbol>
+
+  <symbol id="i-canyon" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gSky)"/>
+   <path d="M0 0 H150 Q140 60 160 110 Q150 170 175 260 H0Z" fill="#a8754a" stroke="#3d2a14" stroke-width="3"/>
+   <path d="M400 0 H260 Q272 70 248 120 Q262 180 232 260 H400Z" fill="#8c5d38" stroke="#3d2a14" stroke-width="3"/>
+   <path d="M0 0 H150 Q148 20 130 26 Q60 34 0 20Z M400 0 H260 Q262 24 290 28 Q350 34 400 22Z" fill="#3f9442"/>
+   <g stroke="#6b4426" stroke-width="3" opacity=".6"><path d="M30 80 h90 M20 140 h120 M40 200 h110 M290 90 h90 M270 160 h120 M260 220 h120"/></g>
+   <path d="M160 260 Q170 160 200 120 Q228 160 240 260Z" fill="#2ab3c0"/>
+   <g transform="translate(196,206)"><path d="M-22 0 H22 L14 10 H-14Z" fill="#c8372d" stroke="#3d2a14" stroke-width="2"/><circle cx="-4" cy="-6" r="5" fill="#f6d36b" stroke="#3d2a14" stroke-width="2"/></g></symbol>
+
+  <symbol id="i-jungle" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice">
+   <rect width="400" height="260" fill="url(#gJungle)"/>
+   <g fill="#2f7a34"><circle cx="40" cy="80" r="70"/><circle cx="360" cy="70" r="76"/><circle cx="200" cy="40" r="60"/></g>
+   <g fill="#1f5e2b"><circle cx="0" cy="200" r="80"/><circle cx="400" cy="210" r="80"/><circle cx="200" cy="250" r="70"/></g>
+   <path d="M30 70 L370 170" stroke="#3d2a14" stroke-width="3"/>
+   <g transform="translate(210,118)"><path d="M0 -6 V10" stroke="#3d2a14" stroke-width="3"/><circle cx="0" cy="18" r="9" fill="#f6d36b" stroke="#3d2a14" stroke-width="2"/><path d="M-8 28 Q0 46 8 28Z" fill="#c8372d" stroke="#3d2a14" stroke-width="2"/></g>
+   <use href="#leafbig" transform="translate(-20,250) rotate(-40) scale(.5)"/><use href="#leafbig" transform="translate(420,250) rotate(220) scale(.5)"/></symbol>
+ </defs>
+</svg>
+
+<div id="stage">
+ <!-- decoración de fondo -->
+ <svg class="ab" id="deco" width="1920" height="1080" style="left:0;top:0">
+  <g opacity=".28"><use href="#leafline" transform="translate(1500,120) rotate(-30) scale(1.4)"/><use href="#leafline" transform="translate(60,860) rotate(-60) scale(1.2)"/><use href="#leafline" transform="translate(940,1020) rotate(-10) scale(1.1)"/><use href="#leafline" transform="translate(1250,40) rotate(20) scale(.9)"/></g>
+  <g id="lbl"><use href="#leafbig" transform="translate(-60,1100) rotate(-55) scale(1.5)"/><use href="#leafbig" transform="translate(-80,980) rotate(-25) scale(1.2)"/><use href="#pod" transform="translate(120,960) rotate(-20) scale(1.1)"/></g>
+  <g id="lbr"><use href="#leafbig" transform="translate(1990,1120) rotate(-130) scale(1.6)"/><use href="#leafbig" transform="translate(2000,960) rotate(-160) scale(1.25)"/><use href="#pod" transform="translate(1800,980) rotate(25) scale(1.2)"/><use href="#pod" transform="translate(1700,1030) rotate(-15) scale(.9)"/></g>
+  <g id="ltr"><use href="#leafbig" transform="translate(1980,-60) rotate(150) scale(1.3)"/><use href="#leafbig" transform="translate(1960,180) rotate(190) scale(1)"/></g>
+  <g id="ltl"><use href="#leafbig" transform="translate(-70,-40) rotate(30) scale(1.2)"/></g>
+ </svg>
+ <svg id="grain" width="1920" height="1080"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#gn)"/></svg>
+ <div class="frame"></div>
+
+ <div id="brand"><svg width="40" height="54" viewBox="-52 -62 104 128"><use href="#pin"/></svg><span>Turis<b>Tab</b></span></div>
+
+ <div id="title">
+  <svg id="tpin" width="170" height="210" viewBox="-52 -62 104 128"><use href="#pin"/></svg>
+  <div class="big">Turis<b>Tab</b></div>
+  <div class="sub">En busca del destino ideal en Tabasco</div>
+  <div class="pill">Demostración de la app</div>
+ </div>
+
+ <div id="cap">
+  <div class="cp"><div class="n">01</div><div class="k">Inicio</div><h2>Todo Tabasco en una sola app</h2><p>Restaurantes, museos, naturaleza y joyas ocultas de los 17 municipios, con un diseño sencillo de usar.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">02</div><div class="k">Mapa interactivo</div><h2>Cada lugar es una burbuja en el mapa</h2><p>El color y el ícono dicen qué tipo de lugar es. Acércate y toca uno para ver su ficha al instante.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">03</div><div class="k">Filtro inteligente</div><h2>Encuentra justo lo que buscas</h2><p>Municipio, tipo de lugar, tipo de comida, aire libre o cerrado, horario de atención y tiempo de traslado.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">04</div><div class="k">Ficha del lugar</div><h2>Toda la información en un mismo sitio</h2><p>Horarios, tiempo estimado de llegada y los platillos recomendados junto al lugar donde puedes probarlos.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">05</div><div class="k">Mapas offline</div><h2>Rutas sugeridas aunque no haya señal</h2><p>El mapa de Tabasco se descarga una vez; la ruta y el tiempo de traslado funcionan sin internet.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">06</div><div class="k">Joyas ocultas</div><h2>Lo que casi nadie conoce</h2><p>Un apartado especial con cascadas poco conocidas, grutas, ranchos cacaoteros y pueblos con encanto.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">07</div><div class="k">Comparar destinos</div><h2>Decide con datos, no a ciegas</h2><p>Contrasta distancia, costo, horario y para quién es ideal cada lugar. La app te sugiere el mejor para ti.</p><div class="ln"></div></div>
+  <div class="cp"><div class="n">08</div><div class="k">Traductor</div><h2>Also in English</h2><p>Con un toque, toda la app cambia a inglés para que los turistas extranjeros descubran Tabasco.</p><div class="ln"></div></div>
+ </div>
+ <div id="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+ <div id="phone"><div id="screen">
+  <div id="island"></div>
+  <div id="status"><span>10:24</span><span>▂▄▆ &nbsp;100%</span></div>
+
+  <!-- SPLASH -->
+  <div class="scr" id="splash">
+   <svg id="spin" width="120" height="148" viewBox="-52 -62 104 128"><use href="#pin"/></svg>
+   <div class="nm">Turis<b>Tab</b></div><div class="tg">Turismo en Tabasco</div>
+   <div id="load"><i></i></div>
+  </div>
+
+  <!-- HOME -->
+  <div class="scr" id="home">
+   <div class="hdr">
+    <svg class="leafdeco" viewBox="0 -70 270 140"><use href="#leafline"/></svg>
+    <div class="row" style="justify-content:space-between"><div class="row" style="gap:8px"><svg width="26" height="32" viewBox="-52 -62 104 128"><use href="#pin"/></svg><b class="serif" style="font-size:20px">Turis<span style="color:var(--oro2)">Tab</span></b></div>
+     <div style="width:38px;height:38px;border-radius:50%;background:var(--oro2);display:flex;align-items:center;justify-content:center;font-size:20px">🧑🏽</div></div>
+    <div style="margin-top:16px;font-weight:700;opacity:.9">¡Hola, viajero! 👋</div>
+    <div class="serif" style="font-size:27px;font-weight:800;line-height:1.15;margin-top:2px">¿Qué quieres descubrir<br>hoy en Tabasco?</div>
+    <div class="search">🔍 <span>Lugares, platillos, municipios…</span></div>
+   </div>
+   <div class="chips" style="padding:16px 20px 0"><span class="chip on">🌎 Todo</span><span class="chip">🌿 Naturaleza</span><span class="chip">🍲 Comida</span><span class="chip">🏛️ Museos</span></div>
+   <div class="sec"><h3>Destacados</h3><a>Ver todo</a></div>
+   <div id="cards" class="chips" style="padding:0 20px;gap:14px">
+    <div class="card" id="card1"><div class="im"><svg class="ill"><use href="#i-olmec"/></svg><span class="rate">★ 4.8</span></div><div class="tx"><b>Parque-Museo La Venta</b><span>Centro · Museo al aire libre</span></div></div>
+    <div class="card"><div class="im"><svg class="ill"><use href="#i-pyr"/></svg><span class="rate">★ 4.9</span></div><div class="tx"><b>Zona Arqueológica Comalcalco</b><span>Comalcalco · Arqueología</span></div></div>
+    <div class="card"><div class="im"><svg class="ill"><use href="#i-town"/></svg><span class="rate">★ 4.8</span></div><div class="tx"><b>Tapijulapa, Pueblo Mágico</b><span>Tacotalpa · Pueblo</span></div></div>
+   </div>
+   <div class="sec"><h3>Platillos que debes probar</h3><a>Ver todo</a></div>
+   <div class="chips" id="dishes" style="padding:0 16px;gap:6px">
+    <div class="dish"><i>🐟</i>Pejelagarto asado</div><div class="dish"><i>🫔</i>Tamalitos de chipilín</div><div class="dish"><i>🥤</i>Pozol de cacao</div><div class="dish"><i>🍫</i>Chocolate de metate</div>
+   </div>
+   <div class="nav" id="nav1"></div>
+  </div>
+
+  <!-- MAPA -->
+  <div class="scr" id="map">
+   <svg id="mapsvg" width="900" height="700" viewBox="0 0 900 700">
+    <rect x="-1500" y="-1800" width="3900" height="4400" fill="#8fd3e0"/>
+    <rect x="-1500" y="-1800" width="3900" height="4400" fill="url(#waves)"/>
+    <g filter="url(#wob)">
+     <path d="M-1500 2600 V330 L38 320 L70 312 L108 300 L140 282 L175 268 L205 255 L240 250 L270 248 L300 246 L320 240 L355 226 L390 210 L405 190 L420 200 L440 180 L463 172 L520 160 L600 140 L700 80 L790 20 L850 -40 L1100 -260 L2400 -900 V2600Z" fill="#efe3c4" stroke="#c9b585" stroke-width="3"/>
+     <ellipse cx="690" cy="122" rx="72" ry="26" transform="rotate(-24 690 122)" fill="#8fd3e0" stroke="#c9b585" stroke-width="2"/>
+     <path id="tab" d="M38 320 L70 312 L108 300 L140 282 L175 268 L205 255 L240 250 L270 248 L300 246 L320 240 L355 226 L390 210 L405 190 L420 200 L440 180 L463 172 L480 190 L510 215 L540 240 L548 280 L545 320 L575 330 L600 345 L630 352 L655 350 L690 340 L700 290 L780 305 L860 330 L865 420 L875 520 L760 535 L720 500 L700 480 L690 440 L670 420 L640 380 L600 370 L575 380 L560 400 L540 410 L515 410 L470 440 L450 460 L435 500 L420 530 L400 520 L385 490 L360 470 L340 455 L330 440 L325 420 L310 400 L285 390 L255 390 L245 420 L225 470 L200 520 L190 550 L170 535 L165 480 L150 450 L120 430 L95 410 L70 380 L55 350Z" fill="#9cc76a"/>
+     <clipPath id="tabclip"><use href="#tab"/></clipPath>
+     <g clip-path="url(#tabclip)">
+      <circle cx="190" cy="320" r="150" fill="#b6d56a"/><circle cx="370" cy="400" r="95" fill="#8cc04e"/><circle cx="490" cy="260" r="110" fill="#86c3a0"/>
+      <circle cx="410" cy="490" r="85" fill="#5e9e48"/><circle cx="760" cy="430" r="150" fill="#a8cf6c"/><circle cx="170" cy="480" r="90" fill="#7fb45a"/>
+      <rect x="0" y="0" width="900" height="700" fill="url(#trees)"/>
+     </g>
+     <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M352 470 Q340 430 362 392 Q372 340 380 300 Q392 250 405 205" stroke="#4fb3c8" stroke-width="7"/>
+      <path d="M800 530 Q760 470 700 440 Q640 400 600 370 Q560 340 520 300 Q470 250 410 210" stroke="#4fb3c8" stroke-width="8"/>
+      <path d="M352 470 Q340 430 362 392 Q372 340 380 300 Q392 250 405 205 M800 530 Q760 470 700 440 Q640 400 600 370 Q560 340 520 300 Q470 250 410 210" stroke="#c9f0f6" stroke-width="2.5"/>
+     </g>
+     <g fill="#8fd3e0" stroke="#5aa9b8" stroke-width="2"><ellipse cx="150" cy="286" rx="26" ry="9" transform="rotate(-20 150 286)"/><ellipse cx="292" cy="242" rx="18" ry="7"/><ellipse cx="520" cy="262" rx="14" ry="22"/><ellipse cx="455" cy="232" rx="10" ry="16"/></g>
+     <use href="#tab" fill="none" stroke="#3d2a14" stroke-width="3.5" stroke-linejoin="round"/>
+    </g>
+    <g font-family="Nunito" font-weight="900" fill="#8a7550" font-size="22" letter-spacing="5" text-anchor="middle">
+     <text x="720" y="240">CAMPECHE</text><text x="470" y="640">CHIAPAS</text><text x="70" y="520">VERACRUZ</text><text x="820" y="610">GUATEMALA</text></g>
+    <text id="gulf" x="230" y="120" font-family="Fraunces" font-style="italic" font-weight="600" font-size="30" fill="#2f7f92" text-anchor="middle">Golfo de México</text>
+    <g id="towns" font-family="Nunito" font-weight="800" font-size="13" fill="#3d2a14">
+     <circle cx="360" cy="382" r="6" fill="#c8372d" stroke="#fff" stroke-width="2"/><text x="372" y="404" font-size="16" font-weight="900">Villahermosa</text>
+     <circle cx="160" cy="340" r="3.5"/><text x="140" y="356">Cárdenas</text>
+     <circle cx="405" cy="210" r="3.5"/><text x="414" y="210">Frontera</text>
+     <circle cx="470" cy="398" r="3.5"/><text x="480" y="402">Macuspana</text>
+     <circle cx="560" cy="330" r="3.5"/><text x="570" y="334">Jonuta</text>
+     <circle cx="770" cy="470" r="3.5"/><text x="736" y="490">Tenosique</text>
+     <circle cx="760" cy="380" r="3.5"/><text x="770" y="384">Balancán</text>
+     <circle cx="150" cy="420" r="3.5"/><text x="120" y="438">Huimanguillo</text>
+    </g>
+    <g id="rtg" fill="none" stroke-linecap="round" stroke-linejoin="round">
+     <path id="route0" d="M360 382 C 342 378 330 368 312 360 S 272 342 252 334 S 226 324 215 318" stroke="#fff" stroke-width="10"/>
+     <path id="route" d="M360 382 C 342 378 330 368 312 360 S 272 342 252 334 S 226 324 215 318" stroke="#c8372d" stroke-width="5.5"/>
+    </g>
+    <g transform="translate(70,70)" opacity=".75"><circle r="34" fill="#fbf6ea" stroke="#2f7f92" stroke-width="2"/><path d="M0 -30 L7 0 L0 30 L-7 0Z" fill="#c8372d"/><path d="M-30 0 L0 -6 L30 0 L0 6Z" fill="#2f7f92"/><text y="-38" font-family="Nunito" font-weight="900" font-size="14" text-anchor="middle" fill="#2f7f92">N</text></g>
+   </svg>
+   <div id="mks"></div>
+   <div id="you"></div><div id="car">🚗</div>
+   <div class="mtop" id="mtop"><div class="search">🔍 <span>Explora Tabasco</span></div><div class="fbtn" id="btn-filter"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="badge" id="fbadge">5</span></div></div>
+   <div id="mchips" class="chips"><span class="chip on">Todos</span><span class="chip">🌿 Naturaleza</span><span class="chip">🍲 Comida</span><span class="chip">🏛️ Cultura</span></div>
+   <div class="pcard" id="preview"><div class="im"><svg class="ill"><use href="#i-cacao"/></svg></div><div><b>Hacienda Cacao Real</b><div class="m">🍫 Restaurante · Comalcalco</div><div class="m">★ 4.9 (312) · $$ · 55 min</div><div class="g">● Abierto ahora · cierra 18:00</div></div></div>
+   <div id="offline"><span>📵 Sin conexión</span><b>✓ Mapa offline de Tabasco</b></div>
+   <div id="eta"><div class="row" style="justify-content:space-between"><div class="big" id="etamin">55 min <small>· 58 km</small></div><div style="font-weight:900;color:var(--hoja)" id="etalbl">Ruta sugerida</div></div>
+    <div style="font-weight:700;color:var(--mut);margin-top:4px">Villahermosa → Hacienda Cacao Real, vía Nacajuca y Jalpa de Méndez</div><div class="prog"><i id="etaprog"></i></div></div>
+   <div id="dim"></div>
+   <div id="sheet">
+    <div class="hd"></div>
+    <div class="row" style="justify-content:space-between"><h2>Filtros inteligentes</h2><b style="color:var(--rojo)">Limpiar</b></div>
+    <div class="lbl">Municipio</div>
+    <div class="wrap"><span class="chip">Centro</span><span class="chip" id="f-coma">Comalcalco</span><span class="chip">Cunduacán</span><span class="chip">Paraíso</span><span class="chip">Teapa</span><span class="chip">Tenosique</span><span class="chip">+11</span></div>
+    <div class="lbl">Tipo de lugar</div>
+    <div class="wrap"><span class="chip" id="f-rest">🍲 Restaurante</span><span class="chip">🏛️ Museo</span><span class="chip">🎡 Recreativo</span><span class="chip">🌿 Naturaleza</span></div>
+    <div class="lbl">Tipo de comida</div>
+    <div class="wrap"><span class="chip">🦐 Mariscos</span><span class="chip" id="f-trad">🫔 Tradicional</span><span class="chip">🍫 Cacao y chocolate</span></div>
+    <div class="lbl">Ambiente</div>
+    <div class="seg"><div id="f-aire">🌳 Aire libre</div><div>🏠 Cerrado</div><div id="f-ambos">Ambos</div></div>
+    <div class="row" style="justify-content:space-between;margin-top:16px"><div><b style="font-size:15px">Abierto ahora</b><div style="font-size:12px;color:var(--mut);font-weight:700">Solo lugares con horario activo</div></div><div class="tgl" id="f-open"><i></i></div></div>
+    <div class="row" style="justify-content:space-between;margin-top:14px"><b style="font-size:15px">Tiempo de traslado</b><b style="color:var(--hoja)" id="slv">hasta 2 h</b></div>
+    <div class="track"><div class="fill" id="slf"></div><div class="knob" id="knob"></div></div>
+    <div class="btn" id="f-apply" style="margin-top:22px">Ver <span id="fcount">128</span> lugares</div>
+   </div>
+   <div class="nav" id="nav2"></div>
+  </div>
+
+  <!-- DETALLE -->
+  <div class="scr" id="detail">
+   <div id="dscroll">
+    <div class="hero"><svg class="ill" id="dhero"><use href="#i-cacao"/></svg></div>
+    <div class="dbody">
+     <span class="tag">🍫 RESTAURANTE · CACAOTERO</span>
+     <h1>Hacienda Cacao Real</h1>
+     <div class="m">📍 Comalcalco, Tabasco &nbsp;·&nbsp; ★ 4.9 (312 reseñas)</div>
+     <div class="chips" style="margin-top:14px;flex-wrap:wrap"><span class="chip">🌳 Aire libre</span><span class="chip">👨‍👩‍👧 Familiar</span><span class="chip">🫔 Tradicional</span></div>
+     <div class="grid">
+      <div class="ok">Horario<b>● Abierto ahora</b>9:00 – 18:00</div>
+      <div>Tiempo de llegada<b>🚗 55 min</b>desde Villahermosa</div>
+      <div>Precio promedio<b>$$ · 250 MXN</b>por persona</div>
+      <div>Duración sugerida<b>⏱ 2 horas</b>incluye recorrido</div>
+     </div>
+     <div class="lbl" style="margin-top:20px">Platillos recomendados aquí</div>
+     <div class="dish2"><div><i>🍫</i>Chocolate de metate</div><div><i>🫔</i>Tamalitos de chipilín</div><div><i>🐟</i>Pejelagarto asado</div><div><i>🥤</i>Pozol de cacao</div></div>
+     <div class="lbl" style="margin-top:20px">Experiencia</div>
+     <div style="background:#fff;border-radius:16px;padding:14px;font-weight:700;line-height:1.4;border:1.5px solid #efe3c8">🌱 <b>Del árbol a la tableta:</b> recorrido guiado por el cacaotal y taller de chocolate artesanal.</div>
+    </div>
+   </div>
+   <div id="dtop" class="ab" style="left:0;right:0;top:0;height:52px;background:var(--crema);box-shadow:0 2px 8px rgba(0,0,0,.1);z-index:4"></div><div class="round" style="left:18px">‹</div><div class="round" style="right:18px">♡</div>
+   <div class="dbar"><div class="sv">🔖</div><div class="btn" id="btn-route">🧭 Cómo llegar</div></div>
+  </div>
+
+  <!-- JOYAS -->
+  <div class="scr" id="joyas">
+   <div class="hdr jhdr">
+    <svg class="leafdeco" viewBox="0 -70 270 140"><use href="#leafline"/></svg>
+    <div class="row" style="justify-content:space-between"><span style="font-weight:800;opacity:.8">✦ Sección exclusiva</span><span class="cmpb" id="btn-cmp">⇄ Comparar</span></div>
+    <h1>Joyas ocultas</h1>
+    <svg class="orn" width="200" viewBox="0 0 200 14"><path d="M0 7 H80 M120 7 H200" stroke="#e3ad2b" stroke-width="2"/><path d="M100 0 L107 7 L100 14 L93 7Z" fill="#e3ad2b"/></svg>
+    <div style="font-weight:700;opacity:.85">Lugares que pocos conocen en Tabasco</div>
+    <div class="chips" style="margin-top:14px"><span class="chip on" style="background:var(--oro);border-color:var(--oro);color:var(--tinta)">Todas</span><span class="chip">💧 Cascadas</span><span class="chip">🦇 Grutas</span><span class="chip">🍫 Cacao</span></div>
+   </div>
+   <div class="jl" id="jl">
+    <div class="jc"><div class="im"><svg class="ill"><use href="#i-fall"/></svg></div><div><b>Cascada de Agua Blanca</b><div class="m">Macuspana · ★ 4.8</div><div class="m">🚗 1 h 10 min</div><span class="t">💧 Cascada</span></div><span class="ck" id="ck1"></span></div>
+    <div class="jc"><div class="im"><svg class="ill"><use href="#i-cave"/></svg></div><div><b>Grutas de Coconá</b><div class="m">Teapa · ★ 4.7</div><div class="m">🚗 1 h</div><span class="t">🦇 Grutas</span></div><span class="ck" id="ck2"></span></div>
+    <div class="jc"><div class="im"><svg class="ill"><use href="#i-jungle"/></svg></div><div><b>Parque Kolem Jaa'</b><div class="m">Tacotalpa · ★ 4.8</div><div class="m">🚗 1 h 30 min</div><span class="t">🌿 Selva y aventura</span></div><span class="ck"></span></div>
+    <div class="jc"><div class="im"><svg class="ill"><use href="#i-cacao"/></svg></div><div><b>Ruta de ranchos cacaoteros</b><div class="m">Comalcalco · ★ 4.9</div><div class="m">🚗 55 min</div><span class="t">🍫 Cacao</span></div><span class="ck"></span></div>
+    <div class="jc"><div class="im"><svg class="ill"><use href="#i-canyon"/></svg></div><div><b>Cañón del Usumacinta</b><div class="m">Tenosique · ★ 4.9</div><div class="m">🚗 3 h 20 min</div><span class="t">🛶 Río y cañón</span></div><span class="ck"></span></div>
+   </div>
+   <div class="btn" id="docmp">⇄ Comparar (<span id="ncmp">1</span>)</div>
+   <div class="nav" id="nav3"></div>
+  </div>
+
+  <!-- COMPARAR -->
+  <div class="scr" id="compare">
+   <div class="hdr" style="padding-bottom:18px">
+    <div class="row" style="justify-content:space-between"><span style="font-size:24px;font-weight:900">‹</span><div class="lang" id="lang"><span class="ind" id="lind"></span><div>ES</div><div>EN</div></div></div>
+    <div class="serif" style="font-size:28px;font-weight:800;margin-top:8px"><span class="bi"><i>Comparar destinos</i><i>Compare destinations</i></span></div>
+   </div>
+   <div class="cols">
+    <div><div class="im"><svg class="ill"><use href="#i-fall"/></svg></div><b><span class="bi"><i>Cascada de Agua Blanca</i><i>Agua Blanca Waterfall</i></span></b><span>Macuspana</span></div>
+    <div><div class="im"><svg class="ill"><use href="#i-cave"/></svg></div><b><span class="bi"><i>Grutas de Coconá</i><i>Coconá Caves</i></span></b><span>Teapa</span></div>
+   </div>
+   <div id="crows">
+    <div class="crow"><div class="l"><span class="bi"><i>🚗 Distancia</i><i>🚗 Distance</i></span></div><div class="v"><div>1 h 10 min</div><div class="w">1 h</div></div></div>
+    <div class="crow"><div class="l"><span class="bi"><i>💲 Entrada</i><i>💲 Entry fee</i></span></div><div class="v"><div class="w">$30 MXN</div><div>$50 MXN</div></div></div>
+    <div class="crow"><div class="l"><span class="bi"><i>🕘 Horario</i><i>🕘 Hours</i></span></div><div class="v"><div class="w">8:00 – 17:00</div><div>9:00 – 16:00</div></div></div>
+    <div class="crow"><div class="l"><span class="bi"><i>👨‍👩‍👧 Ideal para</i><i>👨‍👩‍👧 Best for</i></span></div><div class="v"><div class="w"><span class="bi"><i>Familias</i><i>Families</i></span></div><div><span class="bi"><i>Aventureros</i><i>Adventurers</i></span></div></div></div>
+    <div class="crow"><div class="l"><span class="bi"><i>🏊 Actividad</i><i>🏊 Activity</i></span></div><div class="v"><div><span class="bi"><i>Nadar en pozas</i><i>Natural pools</i></span></div><div><span class="bi"><i>Recorrer grutas</i><i>Cave tour</i></span></div></div></div>
+    <div class="crow" style="border:0"><div class="l"><span class="bi"><i>★ Calificación</i><i>★ Rating</i></span></div><div class="v"><div class="w">4.8</div><div>4.7</div></div><div class="v"><div><div class="bar"><i id="b1"></i></div></div><div><div class="bar"><i id="b2"></i></div></div></div></div>
+   </div>
+   <div class="best" id="best"><b><span class="bi"><i>✓ Mejor opción para ti: Agua Blanca</i><i>✓ Best match for you: Agua Blanca</i></span></b><span class="bi"><i>Según tus filtros: familiar y al aire libre</i><i>Based on your filters: family-friendly, outdoors</i></span></div>
+  </div>
+
+  <div class="homebar"></div>
+ </div></div>
+
+ <div id="outro">
+  <svg id="opin" width="140" height="172" viewBox="-52 -62 104 128"><use href="#pin"/></svg>
+  <div class="big">Turis<b>Tab</b></div>
+  <div class="sub">Descubre el Tabasco que no conocías</div>
+  <div class="feat"><div><i>🗺️</i>Mapa con burbujas</div><div><i>🎯</i>Filtro inteligente</div><div><i>📵</i>Mapas offline</div><div><i>💎</i>Joyas ocultas</div><div><i>🇬🇧</i>En inglés</div></div>
+  <div class="foot">Expo UMMA 2026 · Fundamentos de Mercadotecnia</div>
+  <div class="tiny">Prototipo de demostración · lugares reales, datos de ejemplo</div>
+ </div>
+
+ <div id="rip"></div><div id="cur"></div>
+</div>
+
+<script>
+// ---------- utilidades ----------
+const cl=x=>Math.max(0,Math.min(1,x));
+const io=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const oc=x=>1-Math.pow(1-x,3);
+const bk=x=>{const c1=1.7,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const P=(t,a,b,e=io)=>e(cl((t-a)/(b-a)));
+const L=(a,b,p)=>a+(b-a)*p;
+const $=s=>document.querySelector(s);
+const S=(el,o)=>{if(typeof el==='string')el=$(el);for(const k in o)el.style[k]=o[k];return el};
+const on=(el,c)=>(typeof el==='string'?$(el):el).classList.toggle('on',c);
+// ventana: 0 antes de a, sube en [a,a+d], baja en [b-d2,b]
+const win=(t,a,b,d=.5,d2=d)=>Math.min(P(t,a,a+d,oc),1-P(t,b-d2,b,io));
+const pop=(t,t0,d=.3)=>t<t0?1:1+.12*Math.sin(Math.PI*cl((t-t0)/d)); // rebote al seleccionar
+
+// ---------- barra de navegación ----------
+const NAV=[['Inicio','<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],['Mapa','<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'],['Joyas','<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18M9 3l3 18 3-18"/>'],['Guardados','<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>'],['Perfil','<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.5-6.5 8-6.5s7 2 8 6.5"/>']];
+[['#nav1',0],['#nav2',1],['#nav3',2]].forEach(([s,a])=>{$(s).innerHTML=NAV.map((n,i)=>`<div class="${i==a?'on':''}" id="${s.slice(1)}-${i}"><svg viewBox="0 0 24 24">${n[1]}</svg>${n[0]}</div>`).join('')});
+
+// ---------- marcadores ----------
+const CAT={nat:'#2f8f46',com:'#c8372d',cul:'#e3ad2b',joy:'#1f8a9a'};
+const MK=[ // id, nombre, ícono, categoría, x, y, ¿queda tras filtros?
+ ['coma','Comalcalco','🏛️','cul',245,280],['hac','Hacienda Cacao Real','🍫','com',215,318,1],['ceiba','Mariscos Puerto Ceiba','🦐','com',272,250],
+ ['coc','Cocina Chontal','🫔','com',290,345,1],['pico','Pico de Oro','🏖️','nat',350,222],['venta','La Venta','🗿','cul',372,372],
+ ['centla','Pantanos de Centla','🐊','nat',470,235],['agua','Agua Blanca','💧','joy',492,432],['cocona','Grutas de Coconá','🦇','joy',343,470],
+ ['tapi','Tapijulapa','⛪','cul',418,502],['canon','Cañón del Usumacinta','🛶','nat',800,505],['kol',"Kolem Jaa'",'🌿','joy',400,525]];
+$('#mks').innerHTML=MK.map(m=>`<div class="mk" id="mk-${m[0]}"><i style="background:${CAT[m[3]]}22;border:2px solid ${CAT[m[3]]}">${m[2]}</i><span>${m[1]}</span></div>`).join('');
+MK.forEach(m=>{m.el=$('#mk-'+m[0]);m.sp=m.el.querySelector('span');m.w=m.sp.scrollWidth});
+
+const route=$('#route'),RL=route.getTotalLength();
+['#route','#route0'].forEach(s=>S(s,{strokeDasharray:RL+' '+RL}));
+
+// ---------- guion de toques: [tiempo, selector, mantener(s)] ----------
+const TAPS=[[9.0,'#card1',1.3],[12.6,'#nav1-1'],[21.3,'#mk-hac'],[22.5,'#btn-filter'],[23.8,'#f-coma'],[25.0,'#f-rest'],[26.2,'#f-trad'],[27.4,'#f-aire'],
+ [28.5,'#f-open'],[29.4,'#knob',1.0],[31.3,'#f-apply'],[33.5,'#preview'],[43.4,'#btn-route'],[51.4,'#nav2-2'],[56.9,'#btn-cmp'],[57.7,'#ck1'],[58.4,'#ck2'],[59.3,'#docmp'],[67.6,'#lang']];
+
+const CAPS=[[4.2,13.0],[13.0,22.4],[22.4,33.4],[33.4,43.9],[43.9,51.6],[51.6,59.6],[59.6,67.3],[67.3,72.4]];
+
+function center(sel){const r=$(sel).getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]}
+
+function render(t){
+ // fondo vivo
+ const sw=Math.sin(t*.6)*1.5;
+ S('#lbl',{transform:`rotate(${sw}deg)`,transformOrigin:'0 1080px'});S('#lbr',{transform:`rotate(${-sw}deg)`,transformOrigin:'1920px 1080px'});
+ S('#ltr',{transform:`rotate(${sw*.8}deg)`,transformOrigin:'1920px 0'});S('#ltl',{transform:`rotate(${-sw*.8}deg)`,transformOrigin:'0 0'});
+ S('#deco',{transform:`scale(${1.02+.02*Math.sin(t*.15)})`});
+
+ // título
+ const ti=P(t,.2,1.4,oc),to=P(t,3.1,3.8);
+ S('#title',{opacity:Math.min(ti,1-to),transform:`scale(${L(.92,1,ti)+to*.12})`});
+ S('#tpin',{transform:`translateY(${L(-80,0,P(t,.1,1.1,bk))}px) rotate(${Math.sin(t*2)*3}deg)`});
+ S('#title .pill',{opacity:P(t,1.2,1.8),transform:`translateY(${L(20,0,P(t,1.2,1.8,oc))}px)`});
+
+ // teléfono
+ const ph=P(t,3.4,4.5,oc),pout=P(t,72.2,73.2,io);
+ S('#phone',{transform:`translateY(${L(1100,0,ph)+pout*1150}px) scale(1.08) rotate(${L(6,0,ph)}deg)`});
+ S('#brand',{opacity:win(t,4.2,72.6,.6)});
+
+ // textos laterales
+ const cps=document.querySelectorAll('.cp');
+ CAPS.forEach(([a,b],i)=>{const v=win(t,a,b,.6,.4);S(cps[i],{opacity:v,transform:`translateY(${(1-P(t,a,a+.7,oc))*40-P(t,b-.4,b)*20}px)`,display:v>0?'block':'none'})});
+ S('#dots',{opacity:win(t,4.2,72.4,.6)});
+ const ci=CAPS.findIndex(([a,b])=>t>=a&&t<b);
+ document.querySelectorAll('#dots i').forEach((d,i)=>S(d,{width:i==ci?'40px':'12px',background:i==ci?'#f6d36b':i<ci?'rgba(246,211,107,.6)':'rgba(246,211,107,.25)'}));
+
+ // pantallas
+ const W=390;
+ const push=(a,d=.45)=>P(t,a,a+d,io); // 0→1
+ // splash → home
+ const sh=push(6.5);
+ S('#splash',{transform:`translateX(${-sh*W*.3}px)`,display:t<7?'flex':'none'});
+ S('#spin',{transform:`scale(${P(t,3.9,4.6,bk)}) translateY(${Math.sin(t*3)*3}px)`});
+ S('#load i',{width:P(t,4.6,6.3)*100+'%'});
+ S('#home',{transform:`translateX(${(1-sh)*W}px) scale(${1+P(t,12.9,13.4)*.04})`,opacity:1-P(t,12.9,13.4),display:t>6.4&&t<13.5?'block':'none'});
+ S('#cards',{transform:`translateX(${-P(t,9.1,10.3)*170}px)`});
+ document.querySelectorAll('#dishes .dish').forEach((d,i)=>S(d,{transform:`scale(${P(t,7.2+i*.12,7.7+i*.12,bk)})`}));
+
+ // mapa
+ const mapIn=P(t,12.9,13.4), det=push(33.8)-push(43.7);
+ S('#map',{opacity:mapIn,display:t>12.8&&t<52.4?'block':'none',transform:`translateX(${-det*W*.3}px)`,filter:`brightness(${1-det*.3})`});
+ // vista: overview → Chontalpa → ruta
+ const V=[{cx:455,cy:360,s:.43},{cx:250,cy:300,s:1.25},{cx:288,cy:352,s:1.6}];
+ const lerpV=(a,b,p)=>({cx:L(a.cx,b.cx,p),cy:L(a.cy,b.cy,p),s:a.s*Math.pow(b.s/a.s,p)});
+ let v=lerpV(V[0],V[1],P(t,19.3,21.0));
+ v=lerpV(v,V[2],P(t,44.0,45.3));
+ v.cx+=Math.sin(t*.4)*3*(1-P(t,19.3,21));
+ const mx=x=>(x-v.cx)*v.s+195, my=y=>(y-v.cy)*v.s+440;
+ S('#mapsvg',{transform:`translate(${mx(0)}px,${my(0)}px) scale(${v.s})`});
+ const lab=cl((v.s-.8)/.35), filt=P(t,31.7,32.3), rt=P(t,44.0,44.6);
+ MK.forEach((m,i)=>{
+  let sc=P(t,13.7+i*.16,14.15+i*.16,bk);
+  let op=1;
+  if(!m[6]){op*=1-filt*.85;sc*=1-filt*.35}
+  if(m[0]!=='hac'){op*=1-rt}
+  const sel=m[0]==='hac'&&t>21.3;
+  m.el.classList.toggle('sel',sel);
+  if(sel)sc*=pop(t,21.3,.35)*1.08;
+  S(m.sp,{maxWidth:(m.w*lab)+'px',marginRight:(lab*6)+'px',opacity:lab});
+  S(m.el,{opacity:op,transform:`translate(${mx(m[4])}px,${my(m[5])}px) translate(-50%,-100%) translateY(-6px) scale(${sc})`,zIndex:sel?3:1});
+ });
+ S('#mtop',{opacity:1-rt,transform:`translateY(${-P(t,13.2,13.8,oc)*0+(1-P(t,13.1,13.7,oc))*-30}px)`});
+ S('#mchips',{opacity:(1-rt)*P(t,13.3,13.9)});
+ S('#fbadge',{transform:`scale(${P(t,32.0,32.4,bk)})`});
+ const pv=Math.max(win(t,21.6,22.9,.45,.3),win(t,32.2,34.4,.45,.2));
+ S('#preview',{transform:`translateY(${(1-pv)*160}px)`,opacity:pv});
+ // hoja de filtros
+ const sht=P(t,22.7,23.2,oc)-P(t,31.5,32.0,io);
+ S('#sheet',{transform:`translateY(${(1-sht)*760}px)`});
+ S('#dim',{opacity:sht*.45,display:sht>0?'block':'none'});
+ [['#f-coma',23.8],['#f-rest',25.0],['#f-trad',26.2]].forEach(([s,a])=>{on(s,t>a);S(s,{transform:`scale(${pop(t,a)})`})});
+ on('#f-aire',t>27.4);on('#f-ambos',false);S('#f-aire',{transform:`scale(${pop(t,27.4)})`});
+ const tg=P(t,28.5,28.75);
+ S('#f-open',{background:tg>.5?'var(--hoja)':'#d8ccb0'});S('#f-open i',{transform:`translateX(${tg*22}px)`});
+ const sv=1-P(t,29.5,30.3)*.5; // 1 = 2 h, .5 = 60 min
+ S('#slf',{width:sv*100+'%'});S('#knob',{left:sv*100+'%'});
+ $('#slv').textContent=sv>.98?'hasta 2 h':'hasta '+Math.round(sv*120)+' min';
+ const counts=[[23.8,21],[25.0,9],[26.2,6],[27.4,4],[28.5,3],[30.0,2]];
+ let n=128;counts.forEach(([a,c])=>{if(t>a)n=c});$('#fcount').textContent=n;
+ // ruta offline
+ S('#offline',{opacity:rt,transform:`translateY(${(1-P(t,44.2,44.8,oc))*-40}px)`});
+ const draw=P(t,44.9,46.8,io);
+ S('#route',{strokeDashoffset:RL*(1-draw)});S('#route0',{strokeDashoffset:RL*(1-draw)});
+ S('#rtg',{opacity:rt});$('#gulf').style.opacity=1-rt;
+ const cp=P(t,47.2,50.8,io), pt=route.getPointAtLength(RL*cp);
+ S('#car',{opacity:P(t,46.8,47.2),transform:`translate(${mx(pt.x)}px,${my(pt.y)}px)`});
+ S('#you',{opacity:rt*(1-P(t,47.2,47.6)),transform:`translate(${mx(360)}px,${my(382)}px)`,boxShadow:`0 0 0 ${8+6*Math.sin(t*5)}px rgba(42,127,224,.25)`});
+ const eta=P(t,44.6,45.1,oc);
+ S('#eta',{transform:`translateY(${(1-eta)*200}px)`,opacity:eta});
+ S('#etaprog',{width:cp*100+'%'});
+ $('#etamin').innerHTML=cp>=1?'¡Llegaste! <small>🍫</small>':Math.max(1,Math.round(55*(1-cp)))+' min <small>· '+Math.round(58*(1-cp))+' km</small>';
+ $('#etalbl').textContent=cp>0&&cp<1?'Navegando…':cp>=1?'Buen provecho':'Ruta sugerida';
+
+ // detalle
+ S('#detail',{transform:`translateX(${(1-det)*W}px)`,display:det>0?'block':'none',boxShadow:'-10px 0 30px rgba(0,0,0,.2)'});
+ S('#dscroll',{transform:`translateY(${-P(t,37.4,39.4)*300+P(t,41.6,42.8)*300}px)`});
+ const dsc=P(t,37.4,38.2)-P(t,41.8,42.6);S('#dtop',{opacity:dsc});document.querySelectorAll('#detail .round').forEach(e=>S(e,{opacity:1-dsc}));
+ S('#dhero',{transform:`scale(${1+P(t,34,44,x=>x)*.1})`});
+
+ // joyas
+ const jy=P(t,51.8,52.3), cm=push(59.6);
+ S('#joyas',{opacity:jy,display:t>51.7&&t<60.2?'block':'none',transform:`translateX(${-cm*W*.3}px) scale(${L(1.04,1,jy)})`});
+ document.querySelectorAll('#jl .jc').forEach((c,i)=>S(c,{opacity:P(t,52.2+i*.15,52.7+i*.15),transform:`translateY(${(1-P(t,52.2+i*.15,52.8+i*.15,oc))*40}px)`}));
+ S('#jl',{transform:`translateY(${-P(t,54.0,55.4)*190+P(t,55.9,56.7)*190}px)`});
+ const ckv=P(t,57.0,57.3);
+ document.querySelectorAll('.ck').forEach(c=>S(c,{opacity:ckv,transform:`scale(${L(.4,1,ckv)})`}));
+ [['#ck1',57.7],['#ck2',58.4]].forEach(([s,a])=>{on(s,t>a);$(s).textContent=t>a?'✓':'';S(s,{transform:`scale(${t>57?pop(t,a,.3):.4})`})});
+ S('#btn-cmp',{transform:`scale(${pop(t,56.9)})`,background:t>56.9?'#fff':'var(--oro)'});
+ const db=P(t,57.8,58.2,bk);
+ S('#docmp',{transform:`translateY(${(1-db)*160}px) scale(${pop(t,58.4)})`});
+ $('#ncmp').textContent=t>58.4?2:1;
+
+ // comparar
+ S('#compare',{transform:`translateX(${(1-cm)*W}px)`,display:cm>0?'block':'none'});
+ document.querySelectorAll('#crows .crow').forEach((r,i)=>S(r,{opacity:P(t,60.2+i*.2,60.6+i*.2),transform:`translateX(${(1-P(t,60.2+i*.2,60.7+i*.2,oc))*30}px)`}));
+ S('#b1',{width:P(t,61.6,62.6,oc)*96+'%'});S('#b2',{width:P(t,61.6,62.6,oc)*94+'%'});
+ S('#best',{transform:`scale(${P(t,63.0,63.5,bk)})`,opacity:P(t,63,63.2)});
+ const en=P(t,67.75,68.35);
+ S('#compare',{'--en':en});$('#compare').style.setProperty('--en',en);
+ S('#lind',{transform:`translateX(${en*40}px)`});
+
+ // cierre
+ const oi=P(t,73.0,74.2,oc);
+ S('#outro',{opacity:oi*(1-P(t,79.4,80))});
+ S('#opin',{transform:`translateY(${L(-60,0,P(t,73,74,bk))}px) rotate(${Math.sin(t*2)*3}deg)`});
+ document.querySelectorAll('.feat div').forEach((d,i)=>S(d,{opacity:P(t,74.2+i*.15,74.6+i*.15),transform:`translateY(${(1-P(t,74.2+i*.15,74.8+i*.15,oc))*40}px)`}));
+ S('#outro .foot',{opacity:P(t,75.4,76)});S('#outro .tiny',{opacity:P(t,75.6,76.2)*.55});
+ S('#outro',{display:t>72.9?'flex':'none'});
+
+ // estado de barra superior
+ const dark=(t>13&&t<33.9)||(t>43.9&&t<52)||(t>37.8&&t<42.3);
+ S('#status',{color:dark?'#2b1d10':'#fff'});
+
+ cursor(t);
+}
+
+function cursor(t){
+ let cur=null,press=0,rip=0;
+ for(let i=0;i<TAPS.length;i++){
+  const [a,s,h=0]=TAPS[i],nx=TAPS[i+1],pv=TAPS[i-1];
+  const end=a+h;
+  // aparece
+  const startFromPrev=pv&&a-(pv[0]+(pv[2]||0))<=2.2;
+  if(t>=a-.85&&t<=end+.45){
+   let [x,y]=center(s);
+   let op=1;
+   if(t<a){
+    const p=P(t,a-.85,a-.12,io);
+    if(startFromPrev){const [px,py]=center(pv[1]);x=L(px,x,p);y=L(py,y,p)}
+    else{x+=(1-p)*70;y+=(1-p)*90;op=cl((t-(a-.85))/.25)}
+   }
+   const nextSoon=nx&&nx[0]-end<=2.2;
+   if(t>end&&!nextSoon)op=1-cl((t-end-.15)/.3);
+   cur={x,y,op};
+   if(t>=a-.08&&t<=end+.12)press=1;
+   if(t>=a&&t<a+.5)rip=(t-a)/.5;
+  } else if(pv===undefined){}
+ }
+ // tramo entre toques cercanos (fuera de las ventanas)
+ if(!cur){
+  for(let i=0;i<TAPS.length-1;i++){const [a,s,h=0]=TAPS[i],[b,s2]=TAPS[i+1];const e=a+h;if(t>e+.45&&t<b-.85&&b-e<=2.2){const [x,y]=center(s);cur={x,y,op:1}}}
+ }
+ if(cur){S('#cur',{display:'block',opacity:cur.op,transform:`translate(${cur.x}px,${cur.y}px) scale(${press?.82:1})`,background:press?'rgba(255,255,255,.75)':'rgba(255,255,255,.5)'})}
+ else S('#cur',{display:'none'});
+ if(cur&&rip>0){S('#rip',{display:'block',opacity:(1-rip)*.9,transform:`translate(${cur.x}px,${cur.y}px) scale(${1+rip*1.6})`})}else S('#rip',{display:'none'});
+}
+
+window.render=render;
+const q=new URLSearchParams(location.search).get('t');
+document.fonts.ready.then(()=>{MK.forEach(m=>{m.w=m.sp.scrollWidth});render(q?+q:0);window.READY=1});
+</script>
+</body>
+</html>
