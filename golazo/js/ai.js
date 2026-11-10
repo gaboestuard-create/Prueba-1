@@ -78,7 +78,8 @@
       if (m.x * dir > team.offLine + 0.3 && m.x * dir > 0 && Math.random() < D.vision) continue; // fuera de lugar
       const long = d > 26, space = oppDist(team, m.x, m.z);
       if (long ? space < 5 : !AI.lane(b.x, b.z, m.x, m.z, team, 1.5)) continue;
-      let s = 0.42 + prog * 0.011 + Math.min(space, 8) * 0.028 - d * 0.004 + p.st.pas + rnd(-0.06, 0.06) * D.err;
+      let s = 0.36 + prog * 0.02 + Math.min(space, 5) * 0.03 - d * 0.004 + p.st.pas + rnd(-0.06, 0.06) * D.err;
+      if (prog < -3 && !pressed) s -= 0.15; // el pase atrás solo como salida
       if (long) s -= 0.12;
       if (prog < 0 && m.x * dir < -25) s -= 0.12;
       if (m.ai.runT > 0 && prog > 5) s += 0.15;
@@ -104,13 +105,13 @@
     let sS = 0; const range = 26 + p.st.longShot;
     if (gd < range) {
       const ang = Math.atan2(Math.abs(p.z), Math.abs(gx - p.x));
-      sS = (1.3 - gd / range) * (1 - ang / 1.5) * (AI.lane(p.x, p.z, gx, 0, team, 1.1, true) ? 1 : 0.5) * 1.5 + p.st.sho + (gd < 14 ? 0.3 : 0) + noise();
+      sS = (1.3 - gd / range) * (1 - ang / 1.5) * (AI.lane(p.x, p.z, gx, 0, team, 1.1, true) ? 1 : 0.6) * 1.9 + p.st.sho + (gd < 14 ? 0.3 : 0) + noise();
     }
     // centrar
     let cS = 0;
     if (xT > 30 && Math.abs(p.z) > 13) { let n = 0; for (const m of team.players) if (m !== p && !m.off && m.x * dir > P.HL - 16 && Math.abs(m.z) < 12) n++; if (n) cS = 0.5 + n * 0.08 + noise(); }
     // pasar
-    const ps = a.hold > 0.3 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s : 0;
+    const ps = a.hold > 0.3 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s + (nd < 2.5 ? 0.15 : nd < 4.5 ? 0.06 : 0) : 0; // con un rival encima, soltarla antes
     // conducir: la dirección con más espacio, con preferencia por el arco
     const base = Math.atan2(-p.z * 0.4, gx - p.x); let dS = -1, dAng = base, dSpace = 0;
     for (let i = 0; i < 7; i++) {
@@ -119,7 +120,7 @@
       const sp = Math.min(oppDist(team, x, z), 8), s = sp * 0.05 + Math.cos(off) * 0.2;
       if (s > dS) { dS = s; dAng = an; dSpace = sp; }
     }
-    dS = 0.28 + dS + p.st.drib - (pressed ? 0.1 : 0) - (gd < 20 ? 0.2 : 0) + noise();
+    dS = 0.28 + dS + p.st.drib - (pressed ? 0.18 : 0) - (gd < 20 ? 0.2 : 0) + noise();
     const top = Math.max(sS, cS, pS, dS);
     if (top < 0.3 && pressed && xT < -15) { a.plan = null; return G.act.kick(p, { type: 'clear', x: p.x + dir * 30, z: p.z * 1.2 }); }
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));

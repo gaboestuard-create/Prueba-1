@@ -158,7 +158,7 @@
       if (o && G.nd < 3) { const ax = p.x - o.x, az = p.z - o.z, al = hyp(ax, az) + 0.01; mx = mx * 0.5 + ax / al; mz = mz * 0.5 + az / al; const l = hyp(mx, mz); mx /= l; mz /= l; }
       push = sp + 0.7;
     } else if (sp > 1 && (p.vx * mx + p.vz * mz) / sp < 0.5) { push = 2.2 + sp * 0.25; p.vx *= 0.75; p.vz *= 0.75; } // recorte
-    else if (sprint) push = top * 0.93 + (2.4 + (1 - p.dri) * 1.6) * T.touch;
+    else if (sprint) push = Math.max(sp, 3) + (2.6 + (1 - p.dri) * 1.2) * T.touch; // relativo a la velocidad actual: al arrancar el toque es corto
     else push = Math.max(sp, top * 0.48 * mag) + (0.9 + (1 - p.dri) * 0.4) * T.touch;
     b.vx = mx * push; b.vz = mz * push; b.vy = 0; b.spin = 0; b.lastTouch = p;
     p.touchCD = sprint ? 0.4 : 0.22 - 0.05 * p.dri - 0.03 * p.st.ctrl;

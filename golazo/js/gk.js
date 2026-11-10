@@ -9,13 +9,13 @@
 
   function startDive(p, ux, uz, dist, ty) {
     const s = Math.cos(p.face) * uz - Math.sin(p.face) * ux >= 0 ? 1 : -1;
-    p.dv = { ux, uz, dist: Math.max(0, dist - 0.3), ty: clamp(ty, 0.25, 2.5), s, v: 0, moved: 0 };
+    p.dv = { ux, uz, dist: Math.max(0, dist - 0.65), ty: clamp(ty, 0.25, 2.5), s, v: 0, moved: 0 }; // el balón debe cruzar a la altura de los brazos
     p.react = null; G.setState(p, 'gkdive');
   }
 
   GK.diveUpdate = function (p, dt) {
-    const d = p.dv, t = p.stateT, vmax = (5.5 + 3 * p.gkv) * (1 + p.st.gkReach);
-    if (d.moved < d.dist && t < 0.7) d.v = Math.min(vmax, d.v + 26 * dt); else d.v = Math.max(0, d.v - 14 * dt);
+    const d = p.dv, t = p.stateT, vmax = (3.4 + 2 * p.gkv) * (1 + p.st.gkReach);
+    if (d.moved < d.dist && t < 0.7) d.v = Math.min(vmax, d.v + 14 * dt); else d.v = Math.max(0, d.v - 22 * dt);
     p.vx = d.ux * d.v; p.vz = d.uz * d.v; p.x += p.vx * dt; p.z += p.vz * dt; d.moved += d.v * dt;
     p.y = clamp(d.ty - 0.9, 0, 1.3) * Math.sin(Math.PI * Math.min(1, t / 0.7));
     if (t > 1.15) { p.y = 0; G.setState(p, b.held === p ? 'gkhold' : 'free'); }
@@ -39,7 +39,7 @@
     if (!cross(gx, dir) || Math.abs(cr.z) > P.GW + 1 || cr.y > P.GH + 0.6) return false;
     if (!cross(p.x, dir)) cross(gx, dir); // ya lo superó: va a la línea
     const zk = cr.z, yk = cr.y, tk = cr.t;
-    if (!p.react) p.react = { t: ((0.32 - 0.2 * p.gkv) / D.gk) * T.aiReact, err: (gauss() * (1 - p.gkv) * 0.45) / D.gk };
+    if (!p.react) p.react = { t: ((0.4 - 0.2 * p.gkv) / D.gk) * T.aiReact * rnd(0.85, 1.5), err: (gauss() * (1 - p.gkv) * 0.45) / D.gk };
     if ((p.react.t -= dt) > 0) { p.mx = p.mz = 0; return true; }
     const dz = zk + p.react.err - p.z;
     if (Math.abs(dz) < 0.55) { // le llega al cuerpo
@@ -129,11 +129,18 @@
     if (lt && lt !== p && lt.team === team && b.kicker === lt) return false; // pase atrás: con el pie
     const diving = p.state === 'gkdive';
     if (!diving && p.state !== 'free') return false;
-    let cx = p.x, cz = p.z, cy = 1.1 + p.y, rh = 0.7 + 0.2 * p.gkv, rv = 1.3;
-    if (diving) { cx += p.dv.ux * 0.75; cz += p.dv.uz * 0.75; cy = 0.75 + p.y; rh = 1 + p.st.gkReach; rv = 0.7; }
+    let cx = p.x, cz = p.z, cy = 1.1 + p.y, rh = 0.7 + 0.2 * p.gkv, rv = 1.3, stretch = 0;
+    if (diving) { // cuerpo estirado: segmento desde la cadera hasta las manos
+      stretch = clamp((b.x - p.x) * p.dv.ux + (b.z - p.z) * p.dv.uz, -0.3, 1.1);
+      cx += p.dv.ux * stretch; cz += p.dv.uz * stretch; cy = 0.75 + p.y; rh = 0.45 + p.st.gkReach; rv = 0.75;
+    }
     if (hyp(b.x - cx, b.z - cz) > rh || Math.abs(b.y - cy) > rv) return false;
     if (o && !diving && hyp(o.x - b.x, o.z - b.z) < 0.9) return false;
-    const sp = hyp(b.vx, b.vy, b.vz), isCatch = sp < 14 + 13 * p.gkv - (diving ? 5 : 0) || Math.random() < 0.25;
+    const sp = hyp(b.vx, b.vy, b.vz);
+    if (stretch > 0.7 && Math.random() < (stretch - 0.7) * 1.6 + Math.max(0, sp - 18) * 0.025 - p.gkv * 0.15) { // estirado al límite: apenas la roza
+      b.vx *= 0.93; b.vz = b.vz * 0.93 + p.dv.uz * 1.2; b.kicker = p; b.kickT = 0; b.lastTouch = p; return true;
+    }
+    const isCatch = sp < 14 + 13 * p.gkv - (diving ? 5 : 0) || Math.random() < 0.25;
     b.owner = null; b.lastTouch = p; b.spin = 0;
     if (isCatch) {
       b.held = p; b.vx = b.vy = b.vz = 0; p.holdT = 0;
