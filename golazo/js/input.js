@@ -24,6 +24,12 @@
   addEventListener('keyup', (e) => { keys[e.code] = false; if (KEY[e.code]) set(KEY[e.code], false); });
   addEventListener('blur', () => { for (const k in keys) keys[k] = false; NAMES.forEach((n) => set(n, false)); tSprint = false; });
 
+  // Pantalla lógica: siempre horizontal. En un teléfono en vertical (o en una app que no gira) todo se rota 90°.
+  G.vp = function () { const w = innerWidth, h = innerHeight, rot = h > w && w < 820 && navigator.maxTouchPoints > 0; return { w: rot ? h : w, h: rot ? w : h, rot }; };
+  const loc = (e) => (G.vp().rot ? { x: e.clientY, y: innerWidth - e.clientX } : { x: e.clientX, y: e.clientY }); // punto de pantalla -> pantalla lógica
+  function layout() { const v = G.vp(), st = document.documentElement.style; document.body.classList.toggle('rot', v.rot); document.body.classList.toggle('short', v.h < 480); st.setProperty('--vw', v.w / 100 + 'px'); st.setProperty('--vh', v.h / 100 + 'px'); }
+  addEventListener('resize', layout); layout();
+
   // ---- táctil: joystick flotante a la izquierda (al borde = sprint) y botones a la derecha con gesto de deslizar ----
   let tx = 0, ty = 0, tEdge = false, tSprint = false;
   I.initTouch = function () {
@@ -33,12 +39,12 @@
     const end = (e) => { if (e.pointerId !== id) return; id = null; tx = ty = 0; tEdge = false; base.style.display = 'none'; };
     zone.addEventListener('pointerdown', (e) => {
       if (id !== null) return;
-      id = e.pointerId; zone.setPointerCapture(id); ox = e.clientX; oy = e.clientY; I.touch = true;
+      id = e.pointerId; zone.setPointerCapture(id); const q = loc(e); ox = q.x; oy = q.y; I.touch = true;
       base.style.display = 'block'; base.style.left = ox + 'px'; base.style.top = oy + 'px'; knob.style.transform = 'translate(-50%,-50%)'; e.preventDefault();
     });
     zone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== id) return;
-      const r = R(), dx = e.clientX - ox, dy = e.clientY - oy, len = Math.hypot(dx, dy) || 1, k = Math.min(1, len / r);
+      const r = R(), q = loc(e), dx = q.x - ox, dy = q.y - oy, len = Math.hypot(dx, dy) || 1, k = Math.min(1, len / r);
       tx = (dx / len) * k; ty = (-dy / len) * k; tEdge = len > r * 1.6;
       knob.style.transform = `translate(calc(-50% + ${(dx / len) * Math.min(len, r * 1.7)}px), calc(-50% + ${(dy / len) * Math.min(len, r * 1.7)}px))`;
       base.classList.toggle('sprint', tEdge);
@@ -51,8 +57,8 @@
         const dx = mx - sx, dy = my - sy, len = Math.hypot(dx, dy);
         if (n === 'sprint') tSprint = false; else set(n, false, len > Math.min(innerWidth, innerHeight) * 0.07 ? { x: dx / len, y: -dy / len } : null);
       };
-      el.addEventListener('pointerdown', (e) => { pid = e.pointerId; el.setPointerCapture(pid); sx = mx = e.clientX; sy = my = e.clientY; el.classList.add('on'); I.touch = true; if (n === 'sprint') tSprint = true; else set(n, true); e.preventDefault(); });
-      el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) { mx = e.clientX; my = e.clientY; } });
+      el.addEventListener('pointerdown', (e) => { pid = e.pointerId; el.setPointerCapture(pid); const q = loc(e); sx = mx = q.x; sy = my = q.y; el.classList.add('on'); I.touch = true; if (n === 'sprint') tSprint = true; else set(n, true); e.preventDefault(); });
+      el.addEventListener('pointermove', (e) => { if (e.pointerId === pid) { const q = loc(e); mx = q.x; my = q.y; } });
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
     });
   };

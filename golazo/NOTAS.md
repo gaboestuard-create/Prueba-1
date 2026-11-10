@@ -6,6 +6,8 @@ Juego de fútbol 3D para navegador (teléfono y PC). Todo vive en `golazo/`.
 
 - **PC**: doble clic en `golazo/index.html`. Funciona con `file://`, sin servidor ni internet.
 - **Teléfono**: hay que servir la carpeta (GitHub Pages, o `npx serve golazo` en la misma red wifi) y abrir la URL. Se juega en horizontal.
+- **Un solo archivo**: `node tools/build-single.js` genera `dist/golazo.html` con todo dentro (CSS, Three.js, código y el JSON de la base). Sirve para mandarlo por mensaje o subirlo a cualquier hosting. Hay que volver a ejecutarlo tras cada cambio.
+- **Teléfono en vertical**: la pantalla se gira sola 90° para jugar con el teléfono de lado, aunque la app donde se abra no rote. Si el navegador sí rota, se ve normal.
 - `index.html?jugar` salta el menú y entra directo al partido.
 - El menú muestra un partido IA vs IA de fondo; **JUGAR** arranca con la última selección.
 
@@ -83,6 +85,7 @@ js/figure.js          esqueleto y animaciones
 js/camera.js, render.js, audio.js, ui.js, main.js
 tools/sim.js          partidos IA vs IA sin gráficos (prueba de humo)
 tools/gen-db.js       genera la base de datos
+tools/build-single.js empaqueta todo en dist/golazo.html
 ```
 
 La simulación (`core, ball, player, gk, ai, match`) no toca el DOM ni Three.js; por eso corre en Node.

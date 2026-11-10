@@ -72,7 +72,7 @@
     Data.teams = [fallback('rojos', 'Rojos FC', 'ROJ', '#c8102e', '#ffffff', 78), fallback('azules', 'Azules FC', 'AZU', '#1d4ed8', '#0b1b4d', 78)];
     Data.leagues = [{ id: 'demo', name: 'Demo' }];
     use(window.GOLAZO_DB);
-    if (typeof fetch !== 'function' || typeof location === 'undefined' || location.protocol === 'file:') return done();
+    if (typeof fetch !== 'function' || typeof location === 'undefined' || location.protocol === 'file:' || window.GOLAZO_SINGLE) return done(); // archivo único: la base ya viene dentro
     fetch('data/db.json').then((r) => r.json()).then(use).catch(() => {}).then(done); // db.json manda si hay servidor
   };
   Data.byId = (id) => Data.teams.find((t) => t.id === id);

@@ -150,7 +150,7 @@
 
   Rn.resize = function () {
     if (!renderer) return;
-    const w = innerWidth, h = innerHeight, dpr = devicePixelRatio || 1;
+    const v = G.vp(), w = v.w, h = v.h, dpr = devicePixelRatio || 1;
     renderer.setPixelRatio(Math.min(dpr, [0.8, 1.25, 1.5, 2][Rn.q]));
     renderer.setSize(w, h, false);
     G.Cam.cam.aspect = w / h; G.Cam.cam.updateProjectionMatrix();
