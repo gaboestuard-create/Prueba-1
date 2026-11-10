@@ -29,7 +29,7 @@
   I.initTouch = function () {
     const zone = document.getElementById('joy'), base = document.getElementById('joy-base'), knob = document.getElementById('joy-knob');
     let id = null, ox = 0, oy = 0;
-    const R = () => Math.min(innerWidth, innerHeight) * 0.13;
+    const R = () => Math.min(innerWidth, innerHeight) * 0.15;
     const end = (e) => { if (e.pointerId !== id) return; id = null; tx = ty = 0; tEdge = false; base.style.display = 'none'; };
     zone.addEventListener('pointerdown', (e) => {
       if (id !== null) return;
@@ -39,8 +39,8 @@
     zone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== id) return;
       const r = R(), dx = e.clientX - ox, dy = e.clientY - oy, len = Math.hypot(dx, dy) || 1, k = Math.min(1, len / r);
-      tx = (dx / len) * k; ty = (-dy / len) * k; tEdge = len > r * 1.45;
-      knob.style.transform = `translate(calc(-50% + ${(dx / len) * Math.min(len, r * 1.5)}px), calc(-50% + ${(dy / len) * Math.min(len, r * 1.5)}px))`;
+      tx = (dx / len) * k; ty = (-dy / len) * k; tEdge = len > r * 1.6;
+      knob.style.transform = `translate(calc(-50% + ${(dx / len) * Math.min(len, r * 1.7)}px), calc(-50% + ${(dy / len) * Math.min(len, r * 1.7)}px))`;
       base.classList.toggle('sprint', tEdge);
     });
     zone.addEventListener('pointerup', end); zone.addEventListener('pointercancel', end);

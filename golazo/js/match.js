@@ -8,7 +8,7 @@
 
   function makeTeam(id, data, human, diff, formation) {
     const team = {
-      id, data, name: data.name, short: data.short, dir: id ? -1 : 1, human, D: human ? G.DIFFS.dificil : G.DIFFS[diff] || G.DIFFS.normal,
+      id, data, name: data.name, short: data.short, dir: id ? -1 : 1, human, D: human ? G.MATE : G.DIFFS[diff] || G.DIFFS.normal,
       score: 0, players: [], active: null, receiver: null, chaser: null, callPress: false, phase: 'def', offLine: 0, swCD: 0, lastP: null, lastPT: -99,
       formation: formation || data.formation || '4-4-2', stats: { shots: 0, onTarget: 0, poss: 0, fouls: 0, yellow: 0, red: 0, corners: 0, offsides: 0, passes: 0 },
     };
@@ -104,6 +104,7 @@
         for (const p of field(opp, [])) if (G.GK.inOwnBox(team, p.sx, p.sz, 1)) p.sx = -dir * (P.HL - P.BOXL - 3);
         break;
     }
+    taker = taker || team.players.find((p) => !p.off); // por si las expulsiones dejaron sin candidatos
     rs.taker = taker; rs.face = face;
     taker.sx = x - Math.cos(face) * 0.85; taker.sz = z - Math.sin(face) * 0.85;
     const minD = type === 'throwin' ? 3 : type === 'goalkick' ? 0 : 9.3; // distancia reglamentaria

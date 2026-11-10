@@ -79,7 +79,7 @@
     p.faceTo = null;
     if (mag < 0.12 && !o && !def && !ready && (team.chaser === p || team.receiver === p)) G.AI.moveTo(p, p.ix, p.iz, I.sprint ? 2 : hyp(p.ix - p.x, p.iz - p.z) > 6, 1); // sin tocar nada, va a recibir
     else { p.mx = wx; p.mz = wz; p.sprint = I.sprint; }
-    p.shield = I.shield && b.owner === p;
+    p.shield = b.owner === p && (I.shield || (G.Input.touch && mag > 0.12 && mag < 0.55 && (G.nearOpp(p), G.nd < 2.2))); // en táctil no hay botón: se protege al caminar con un rival encima
     for (const n of ['pass', 'shoot', 'lob']) if (B[n].press) pressCtx[n] = C.ctx;
     const dx = mag > 0.2 ? wx / mag : Math.cos(p.face), dz = mag > 0.2 ? wz / mag : Math.sin(p.face);
 

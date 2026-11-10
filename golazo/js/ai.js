@@ -64,7 +64,7 @@
 
   function shotK(p, pw) {
     const gk = p.team.opp.players[0], side = gk && !gk.off ? (gk.z > 0 ? -1 : 1) : Math.random() < 0.5 ? -1 : 1;
-    return { type: 'shot', power: pw, aimZ: clamp(side * rnd(0.5, 0.92) + G.gauss() * 0.15 * p.team.D.err, -1.1, 1.1), finesse: false };
+    return { type: 'shot', power: pw, aimZ: clamp(side * rnd(0.5, 0.92) * (1.25 - 0.25 * p.team.D.err) + G.gauss() * 0.15 * p.team.D.err, -1.1, 1.1), finesse: false };
   }
 
   // Mejor opción de pase para el poseedor (o null).
@@ -78,7 +78,7 @@
       if (m.x * dir > team.offLine + 0.3 && m.x * dir > 0 && Math.random() < D.vision) continue; // fuera de lugar
       const long = d > 26, space = oppDist(team, m.x, m.z);
       if (long ? space < 5 : !AI.lane(b.x, b.z, m.x, m.z, team, 1.5)) continue;
-      let s = 0.36 + prog * 0.02 + Math.min(space, 5) * 0.03 - d * 0.004 + p.st.pas + rnd(-0.06, 0.06) * D.err;
+      let s = 0.36 + prog * 0.02 * D.att + Math.min(space, 5) * 0.03 - d * 0.004 + p.st.pas + rnd(-0.06, 0.06) * D.err;
       if (prog < -3 && !pressed) s -= 0.15; // el pase atrás solo como salida
       if (long) s -= 0.12;
       if (prog < 0 && m.x * dir < -25) s -= 0.12;
@@ -105,7 +105,7 @@
     let sS = 0; const range = 26 + p.st.longShot;
     if (gd < range) {
       const ang = Math.atan2(Math.abs(p.z), Math.abs(gx - p.x));
-      sS = (1.3 - gd / range) * (1 - ang / 1.5) * (AI.lane(p.x, p.z, gx, 0, team, 1.1, true) ? 1 : 0.6) * 1.9 + p.st.sho + (gd < 14 ? 0.3 : 0) + noise();
+      sS = (1.3 - gd / range) * (1 - ang / 1.5) * (AI.lane(p.x, p.z, gx, 0, team, 1.1, true) ? 1 : 0.6) * 1.9 * D.att + p.st.sho + (gd < 14 ? 0.3 : 0) + noise();
     }
     // centrar
     let cS = 0;
@@ -126,7 +126,7 @@
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));
     if (top === cS) return G.act.kick(p, { type: 'cross', x: gx - dir * rnd(6, 11), z: -Math.sign(p.z) * rnd(-1, 5), spin: -Math.sign(p.z) * dir * 3 });
     if (top === pS) return doPass(p, ps);
-    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 5.5 && p.stamina > 30;
+    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 5.5 && p.stamina > 30 && D.att > 0.7;
     // filigrana si hay un defensa encima y el jugador sabe
     if (nd < 3.2 && nd > 1.5 && p.cd <= 0 && Math.random() < (0.12 + p.st.skill * 0.5) * (1.4 - D.err * 0.4)) {
       const k = Math.random(); G.act.skill(p, k < 0.45 ? 'croqueta' : k < 0.8 ? 'stepover' : 'roulette', Math.cos(dAng + (k < 0.45 ? 1.3 : 0)), Math.sin(dAng + (k < 0.45 ? 1.3 : 0)));
@@ -222,7 +222,10 @@
         if (s < s1) { s2 = s1; pr2 = pr1; s1 = s; pr1 = p; } else if (s < s2) { s2 = s; pr2 = p; }
       }
       const bxT = b.x * dir, ag = D.press * T.aiAggr;
-      if (team.human) { const ac = team.active; m1 = team.callPress ? 2 : !ac || hyp(ac.x - b.x, ac.z - b.z) > 7 ? 1 : 0; }
+      if (team.human) { // si el jugador humano está lejos de la jugada, un compañero se encarga; cerca del área propia siempre meten la pierna
+        const ac = team.active, far = !ac || hyp(ac.x - b.x, ac.z - b.z) > 6 || (ac.x - b.x) * dir > 1 || ac.state !== 'free'; // lejos, superado o en el suelo
+        m1 = team.callPress || bxT < -30 || (far && bxT < 5) ? 2 : 1; m2 = bxT < -15 ? 1 : 0;
+      }
       else { m1 = bxT < -10 + 35 * (ag - 0.55) || bxT < -18 ? 2 : 1; m2 = ag >= 1 && bxT < 0 ? (bxT < -25 ? 2 : 1) : 0; }
     }
     for (const p of ps) {

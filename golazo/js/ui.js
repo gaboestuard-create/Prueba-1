@@ -237,6 +237,7 @@
     const pw = Math.round(G.Control.power * 50);
     set('power', 'pw', pw, (e, v) => { e.style.visibility = v ? 'visible' : 'hidden'; e.firstChild.style.width = v * 2 + '%'; });
     set('touch', 'ctx', G.Control.ctx, (e, v) => { const L = v === 'def' ? DEF_LABEL : ATT_LABEL; for (const k in L) $('tb-' + k).textContent = L[k]; });
+    if (M.state === 'ready' && a && M.rs.taker === a && M.stateT > 2.5 && msgT <= 0) UI.msg('Tu saque', M.rs.type === 'penalty' ? 'TIRO: apunta con el stick' : 'PASE o LARGO para sacar', '', 2.5);
     if ((radarT -= dt) <= 0) { radarT = 0.066; radar(M, a); }
   };
 

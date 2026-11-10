@@ -1,4 +1,4 @@
-// Simulador sin gráficos: juega partidos IA vs IA y saca estadísticas. Uso: node tools/sim.js [partidos] [dificultad]
+// Simulador sin gráficos: juega partidos IA vs IA y saca estadísticas. Uso: node tools/sim.js [partidos] [dificultad] [idLocal] [idVisitante]
 // Sirve de prueba de humo: falla (exit 1) si aparece un NaN, el partido se cuelga o no pasa nada.
 global.window = global;
 const path = require('path');
@@ -11,7 +11,7 @@ let bad = false;
 G.Data.load(() => {
   const T = G.Data.teams;
   for (let i = 0; i < n; i++) {
-    const home = T[(i * 2) % T.length], away = T[(i * 2 + 1) % T.length];
+    const home = G.Data.byId(process.argv[4]) || T[(i * 2) % T.length], away = G.Data.byId(process.argv[5]) || T[(i * 2 + 1) % T.length];
     G.Match.start({ home, away, human: -1, diff, halfLen: 180 });
     let steps = 0, stuck = 0, maxStuck = 0;
     while (M.state !== 'fulltime' && steps < 60 * 60 * 12) {

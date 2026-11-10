@@ -210,7 +210,7 @@
     if (!b.held && b.y < 0.7 && hyp(b.x - fx, b.z - fz) < (slide ? 1.05 : 0.8) + p.def * 0.15 + p.st.tackle * 0.5) {
       let ch = 1;
       if (o) {
-        ch = (slide ? 0.72 : 0.62) + (p.def - o.dri) * 0.45 + p.st.tackle + (o.sprint ? 0.1 : 0);
+        ch = (slide ? 0.72 : 0.62) + (p.def - o.dri) * 0.45 + p.st.tackle + (o.sprint ? 0.1 : 0) + (isHuman(p) ? 0.1 : 0); // pequeña ayuda al jugador: acertar el momento ya es difícil
         if (behind) ch *= 0.45;
         if (o.state === 'skill') ch *= 0.25;
         if (o.shield) ch *= 0.6 - o.st.shield * 0.5;

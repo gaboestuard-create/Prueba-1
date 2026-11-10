@@ -28,7 +28,7 @@
 
   // Qué posiciones sirven para cada puesto de la formación, de mejor a peor.
   const FIT = {
-    GK: ['GK'], CB: ['CB', 'DM', 'LB', 'RB'], LB: ['LB', 'RB', 'CB', 'LM'], RB: ['RB', 'LB', 'CB', 'RM'], DM: ['DM', 'CM', 'CB'], CM: ['CM', 'DM', 'AM'],
+    GK: ['GK'], CB: ['CB', 'DM', 'LB', 'RB'], LB: ['LB', 'RB', 'CB', 'LM'], RB: ['RB', 'LB', 'CB', 'RM'], DM: ['DM', 'CM', 'CB'], CM: ['CM', 'AM', 'DM'],
     AM: ['AM', 'CM', 'LW', 'RW', 'ST'], LM: ['LM', 'LW', 'RM', 'RW', 'LB', 'CM', 'AM'], RM: ['RM', 'RW', 'LM', 'LW', 'RB', 'CM', 'AM'],
     LW: ['LW', 'LM', 'RW', 'RM', 'ST', 'AM'], RW: ['RW', 'RM', 'LW', 'LM', 'ST', 'AM'], ST: ['ST', 'LW', 'RW', 'AM'],
   };
@@ -38,7 +38,7 @@
       let best = null, bs = -1e9;
       for (const pl of team.players) {
         if (used.has(pl)) continue;
-        const i = FIT[slot.r].indexOf(pl.pos), s = pl.ovr - (i < 0 ? (slot.r === 'GK' || pl.pos === 'GK' ? 200 : 25) : i * 4);
+        const i = FIT[slot.r].indexOf(pl.pos), s = pl.ovr - (i < 0 ? (slot.r === 'GK' || pl.pos === 'GK' ? 200 : 25) : i * 3);
         if (s > bs) { bs = s; best = pl; }
       }
       used.add(best);
