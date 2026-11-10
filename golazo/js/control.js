@@ -2,8 +2,9 @@
 (function () {
   'use strict';
   const G = window.G, P = G.P, b = G.ball, hyp = Math.hypot, clamp = G.clamp;
-  const C = (G.Control = { ctx: 'att', power: 0, target: null });
-  const pressCtx = {};
+  const C = (G.Control = { ctx: 'att', power: 0, target: null, autoTackle: true });
+  try { C.autoTackle = localStorage.getItem('golazo.auto') !== '0'; } catch (e) {}
+  let autoCD = 0;
   let lastOwner = null;
 
   // Pase asistido: el raso siempre encuentra a alguien (el mejor alineado con el stick, con línea libre);
@@ -93,12 +94,17 @@
     if (!o && !def && !ready && (recv || (mag < 0.12 && team.chaser === p))) G.AI.moveTo(p, p.ix, p.iz, recv || I.sprint ? 2 : id > 6, 1); // el receptor ataca el balón: no espera a que le llegue
     else { p.mx = wx; p.mz = wz; p.sprint = I.sprint; }
     p.shield = b.owner === p && (I.shield || (G.Input.touch && mag > 0.12 && mag < 0.55 && (G.nearOpp(p), G.nd < 2.2))); // en táctil no hay botón: se protege al caminar con un rival encima
-    for (const n of ['pass', 'shoot', 'lob']) if (B[n].press) pressCtx[n] = C.ctx;
     const dx = mag > 0.2 ? wx / mag : Math.cos(p.face), dz = mag > 0.2 ? wz / mag : Math.sin(p.face);
 
     if (def) { // defensa: pase = cambiar jugador, tiro = entrada, largo = barrida, hueco/filigrana = pedir presión
       if (B.sw.press || B.pass.press) G.Match.setActive(team, defender(team, p));
       if (B.shoot.press) G.act.tackle(p);
+      // Ayuda (se puede apagar en pausa): si llegas de frente o de lado con el balón al alcance, la entrada sale sola.
+      autoCD -= dt;
+      if (C.autoTackle && o && !b.held && autoCD <= 0 && p.state === 'free' && p.cd <= 0) {
+        const ex = b.x - p.x, ez = b.z - p.z, ed = hyp(ex, ez);
+        if (ed < 1.25 && b.y < 0.5 && (ex * Math.cos(p.face) + ez * Math.sin(p.face)) / (ed + 0.01) > 0.4 && (p.x - o.x) * Math.cos(o.face) + (p.z - o.z) * Math.sin(o.face) > -0.2) { G.act.tackle(p); autoCD = 0.9; }
+      }
       if (B.lob.press) G.act.slide(p);
       team.callPress = B.through.down || B.skill.down;
       p.charge = null; C.power = 0;
@@ -106,16 +112,16 @@
       return;
     }
     team.callPress = false;
-    if (o === p || ready) C.target = pickMate(p, dx, dz, 'pass', B.pass.down ? clamp(B.pass.held / 0.6, 0, 1) : 0); // el aro blanco
+    if (o === p || ready) C.target = pickMate(p, dx, dz, 'pass', 0.2); // el aro blanco
     if (B.sw.press && !ready) G.Match.setActive(team, defender(team, p));
     if (B.shoot.press) p.charge = { t: 0 }; // mantener = potencia
     if (p.charge) {
       p.charge.t += dt; C.power = clamp(0.3 + p.charge.t * 0.9, 0.3, 1);
       if (B.shoot.release || !B.shoot.down || p.charge.t > 0.85) { shoot(p, C.power, I.fin || !!B.shoot.swipe, B.shoot.swipe, wz, mag); p.charge = null; }
     } else C.power = 0;
-    if (B.pass.release && pressCtx.pass === 'att') pass(p, B.pass.swipe ? 'through' : 'pass', clamp(B.pass.held / 0.6, 0, 1), dx, dz);
+    if (B.pass.press) pass(p, 'pass', 0.2, dx, dz); // sale al pulsar, sin esperar a soltar: el destino ya lo marca el aro
     if (B.through.press) pass(p, 'through', 0.5, dx, dz);
-    if (B.lob.release && pressCtx.lob === 'att') pass(p, 'lob', clamp(B.lob.held / 0.6, 0, 1), dx, dz);
+    if (B.lob.press) pass(p, 'lob', 0.3, dx, dz);
     if (B.skill.press && !ready) { // filigrana según el stick respecto a donde mira: adelante = bicicleta, al lado = bola cruzada, atrás = giro
       let sx = I.rx * cb.rx + I.ry * cb.ux, sz = I.rx * cb.rz + I.ry * cb.uz, sm = hyp(sx, sz);
       if (sm < 0.3) { sx = wx; sz = wz; sm = mag; }

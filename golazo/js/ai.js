@@ -84,6 +84,7 @@
       if (long) s -= 0.12;
       if (prog < 0 && m.x * dir < -25) s -= 0.12;
       if (m.ai.runT > 0 && prog > 5) s += 0.15;
+      if (p.x * dir > P.HL - 14 && Math.abs(p.z) > 7 && m.x * dir > P.HL - 18 && Math.abs(m.z) < 9) s += 0.3; // desde la línea de fondo, pase atrás al que llega
       if (s > bs) { bs = s; best = { m, s, long, prog, space }; }
     }
     return best;
@@ -121,7 +122,7 @@
       const sp = Math.min(oppDist(team, x, z), 8), s = sp * 0.05 + Math.cos(off) * 0.2;
       if (s > dS) { dS = s; dAng = an; dSpace = sp; }
     }
-    dS = 0.28 + dS + p.st.drib - (pressed ? 0.18 : 0) - (gd < 20 ? 0.2 : 0) + noise();
+    dS = 0.28 + dS + p.st.drib - (pressed ? 0.18 : 0) - (gd < 20 ? 0.2 : 0) - (p.slot.l === 'D' && xT < 0 ? 0.15 : 0) + noise(); // un defensa en campo propio no se complica
     const top = Math.max(sS, cS, pS, dS);
     if (top < 0.3 && pressed && xT < -15) { a.plan = null; return G.act.kick(p, { type: 'clear', x: p.x + dir * 30, z: p.z * 1.2 }); }
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));
@@ -163,7 +164,8 @@
     if (d < 4.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
     if (mode !== 2 || p.cd > 0 || p.state !== 'free' || p.freeze > 0) return;
     const ag = T.aiAggr;
-    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * (exposed ? 4 : 0.7) * ag * dt) G.act.tackle(p); }
+    const front = (p.x - c.x) * Math.cos(c.face) + (p.z - c.z) * Math.sin(c.face) > 0.6; // el poseedor viene de frente
+    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * (exposed ? 4 : front ? 2 : 0.6) * ag * dt) G.act.tackle(p); }
     else if (d > 2 && d < 4.2 && c.sprint && c.x * team.dir < -18 && Math.random() < 0.2 * ag * D.press * dt) G.act.slide(p);
   }
 
@@ -185,6 +187,7 @@
         a.ov = Math.random() < 0.3;
       }
       x += a.ox; z += a.oz;
+      if (team.pressed && s.l !== 'D' && a.runT <= 0) { const dc = hyp(bxT - x, bzT - z); if (dc > 9 && dc < 26) { x = lerp(x, bxT, 0.28); z = lerp(z, bzT, 0.28); } } // el poseedor está apretado: acercarse a ofrecer el pase
       if (a.runT > 0) { a.runT -= dt; x = team.offLine - 0.4; z -= Math.sign(z) * 3; sprint = true; }
       if (s.l === 'D' && Math.abs(s.z) > 0.6 && bzT * s.z > 0 && bxT > -8 && (p.st.overlap || a.ov)) { x = bxT + 8; z = Math.sign(s.z) * (P.HW - 2.5); sprint = true; } // el lateral dobla
       if (s.l === 'F' && bxT > 30 && Math.abs(bzT) > 12) { x = P.HL - 8; z = s.z > 0.1 ? 4 : s.z < -0.1 ? -4 : 0; } // al área a esperar el centro
@@ -213,6 +216,7 @@
     const mine = !!o && o.team === team, theirs = !!o && !mine;
     team.phase = mine ? 'att' : theirs ? 'def' : G.M.lastPoss === team ? 'att' : 'def';
     team.offLine = offLine(team);
+    team.pressed = mine && oppDist(team, b.x, b.z) < 3.2;
     team.chaser = null;
     if (!o) { // balón suelto: va el que llega antes (o el destinatario del pase)
       let be = 1e9;

@@ -161,7 +161,7 @@
     if (b.held) return heldBall();
     const n = clamp(Math.ceil((hyp(b.vx, b.vy, b.vz) * dt) / 0.07), 1, 14), h = dt / n, ps = M.players;
     for (let i = 0; i < n && !b.held; i++) {
-      const px = b.x, py = b.y, pz = b.z;
+      const px = b.x, py = b.y, pz = b.z; G.subDt = h;
       G.Ball.integrate(b, h); G.Ball.collideGoal(px, py, pz);
       if (M.state !== 'play') continue;
       for (let j = 0; j < ps.length && !b.held && M.state === 'play'; j++) G.ballContact(ps[j]);
@@ -178,6 +178,8 @@
       if (d >= 0.6 || d < 1e-3 || a.state === 'down' || c.state === 'down' || a.state === 'setpiece' || c.state === 'setpiece') continue;
       const push = 0.6 - d, wa = clamp(0.5 + (c.phy + c.st.shield + (c.shield ? 0.3 : 0) - a.phy - a.st.shield - (a.shield ? 0.3 : 0)) * 0.4, 0.15, 0.85);
       a.x -= (dx / d) * push * wa; a.z -= (dz / d) * push * wa; c.x += (dx / d) * push * (1 - wa); c.z += (dz / d) * push * (1 - wa);
+      const nx = dx / d, nz = dz / d, rv = (c.vx - a.vx) * nx + (c.vz - a.vz) * nz; // choque: el impulso se reparte según el físico (el fuerte casi no se frena)
+      if (rv < 0) { a.vx += nx * rv * wa; a.vz += nz * rv * wa; c.vx -= nx * rv * (1 - wa); c.vz -= nz * rv * (1 - wa); }
     }
   }
 

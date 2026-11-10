@@ -44,7 +44,7 @@
     });
     zone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== id) return;
-      const r = R(), q = loc(e), dx = q.x - ox, dy = q.y - oy, len = Math.hypot(dx, dy) || 1, k = Math.min(1, len / r);
+      const r = R(), q = loc(e), dx = q.x - ox, dy = q.y - oy, len = Math.hypot(dx, dy) || 1, k = Math.min(1, Math.max(0, (len / r - 0.1) / 0.75)); // zona muerta pequeña y tope antes del borde
       tx = (dx / len) * k; ty = (-dy / len) * k; tEdge = len > r * 1.6;
       knob.style.transform = `translate(calc(-50% + ${(dx / len) * Math.min(len, r * 1.7)}px), calc(-50% + ${(dy / len) * Math.min(len, r * 1.7)}px))`;
       base.classList.toggle('sprint', tEdge);

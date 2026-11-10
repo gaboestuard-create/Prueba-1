@@ -119,8 +119,8 @@
   function help() {
     const pn = $('panel');
     pn.innerHTML = `<h2>Controles</h2><div class="help">
-      <div><h3>Teclado</h3><p><kbd>WASD</kbd> / flechas: moverse</p><p><kbd>J</kbd> pase · <kbd>K</kbd> tiro (mantener = potencia)</p><p><kbd>L</kbd> pase largo / centro · <kbd>I</kbd> pase al hueco</p><p><kbd>U</kbd>+<kbd>K</kbd> tiro colocado · <kbd>Shift</kbd> sprint</p><p><kbd>Espacio</kbd> filigrana · <kbd>O</kbd> proteger balón</p><p><kbd>Q</kbd> cambiar jugador · <kbd>C</kbd> cámara · <kbd>Esc</kbd> pausa</p><p><kbd>F2</kbd> o <kbd>\`</kbd>: panel de afinado</p></div>
-      <div><h3>Defendiendo</h3><p><kbd>J</kbd> / PASE: cambiar de jugador</p><p><kbd>K</kbd> / TIRO: entrada</p><p><kbd>L</kbd> / LARGO: barrida (riesgo de falta y tarjeta)</p><p><kbd>I</kbd> o <kbd>Espacio</kbd> / FILIGRANA: un compañero presiona</p><p>Sin sprint, tu jugador se perfila hacia el balón.</p></div>
+      <div><h3>Teclado</h3><p><kbd>WASD</kbd> / flechas: moverse</p><p><kbd>J</kbd> pase (sale al pulsar) · <kbd>K</kbd> tiro (mantener = potencia)</p><p><kbd>L</kbd> pase largo / centro · <kbd>I</kbd> pase al hueco</p><p><kbd>U</kbd>+<kbd>K</kbd> tiro colocado · <kbd>Shift</kbd> sprint</p><p><kbd>Espacio</kbd> filigrana · <kbd>O</kbd> proteger balón</p><p><kbd>Q</kbd> cambiar jugador · <kbd>C</kbd> cámara · <kbd>Esc</kbd> pausa</p><p><kbd>F2</kbd> o <kbd>\`</kbd>: panel de afinado</p></div>
+      <div><h3>Defendiendo</h3><p><kbd>J</kbd> / PASE: cambiar de jugador</p><p><kbd>K</kbd> / TIRO: entrada</p><p><kbd>L</kbd> / LARGO: barrida (riesgo de falta y tarjeta)</p><p><kbd>I</kbd> o <kbd>Espacio</kbd> / FILIGRANA: un compañero presiona</p><p>Sin sprint, tu jugador se perfila hacia el balón. Si llegas de frente con el balón al alcance, la entrada sale sola (se apaga en Pausa).</p></div>
       <div><h3>Táctil</h3><p>Joystick: mitad izquierda. Llévalo al borde para sprintar.</p><p>PASE: va al compañero marcado con el aro blanco. AL HUECO: pase filtrado al espacio por delante del compañero.</p><p>TIRO: mantener = potencia. <b>Deslizar</b> sobre TIRO = tiro colocado hacia donde deslizas.</p><p>LARGO: pase aéreo; desde la banda es centro.</p><p>FILIGRANA + joystick: adelante bicicleta, al lado bola cruzada, atrás giro.</p></div>
       <div><h3>Gamepad</h3><p>A pase · B tiro · X largo · Y al hueco</p><p>RT sprint · LT proteger · RB tiro colocado</p><p>LB cambiar · stick derecho: filigrana</p><p>Start pausa · Select cámara</p></div>
       <div><h3>Consejos</h3><p>Apunta el tiro con el stick hacia un palo; sin dirección va al palo lejano.</p><p>En sprint los toques son largos: suelta el sprint para regatear en corto.</p><p>Puedes pedir pase o tiro antes de que llegue el balón: saldrá de primera.</p><p>Toca 3 veces el reloj para abrir el panel de afinado.</p></div>
@@ -138,6 +138,7 @@
       <button class="btn" data-a="pcam">Cámara: ${G.Cam.names[G.Cam.mode]}</button>
       <button class="btn" data-a="pdiff">Dificultad: ${G.DIFFS[S.diff].name}</button>
       <button class="btn" data-a="mute2">${G.Audio.muted ? 'Sonido: no' : 'Sonido: sí'}</button>
+      <button class="btn" data-a="auto">Entrada automática: ${G.Control.autoTackle ? 'sí' : 'no'}</button>
       <button class="btn" data-a="help">Controles</button>
       <button class="btn" data-a="tune">Panel de afinado</button>
       <button class="btn" data-a="restart">Reiniciar partido</button>
@@ -161,6 +162,7 @@
     if (a === 'resume') return UI.pause(false);
     if (a === 'pcam') { G.Cam.next(); return UI.pause(true); }
     if (a === 'pdiff') { S.diff = cyc(DIFF, S.diff, 1); save(); for (const t of G.M.teams) if (!t.human) t.D = G.DIFFS[S.diff]; return UI.pause(true); }
+    if (a === 'auto') { G.Control.autoTackle = !G.Control.autoTackle; try { localStorage.setItem('golazo.auto', G.Control.autoTackle ? '1' : '0'); } catch (e) {} return UI.pause(true); }
     if (a === 'mute2') { G.Audio.mute(!G.Audio.muted); return UI.pause(true); }
     if (a === 'tune') { UI.pause(false); return debug(true); }
     if (a === 'restart') { $('end').classList.add('hide'); return play(); }

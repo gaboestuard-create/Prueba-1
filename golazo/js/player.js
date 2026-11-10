@@ -56,9 +56,18 @@
     const wx = mx * top, wz = mz * top, sp = hyp(p.vx, p.vz);
     let acc = (8.5 + 5 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
     acc *= wx * p.vx + wz * p.vz < sp * sp * 0.6 ? 1.5 : 1.15 - 0.6 * Math.min(1, sp / (top + 0.01));
-    let dx = wx - p.vx, dz = wz - p.vz; const dl = hyp(dx, dz), md = acc * dt;
-    if (dl > md) { dx *= md / dl; dz *= md / dl; }
-    p.vx += dx; p.vz += dz; p.x += p.vx * dt; p.z += p.vz * dt;
+    const turn = sp > 1.6 && mag > 0.15 ? G.angDiff(Math.atan2(p.vz, p.vx), Math.atan2(mz, mx)) : 9;
+    if (Math.abs(turn) < 2.3) { // en carrera se gira describiendo un arco (más cerrado cuanto más lento y más ágil), no derrapando
+      const w = ((10 + 4 * p.dri + 2 * p.pac) * (own ? 0.85 : 1) * T.accel) / (1 + sp * 0.33), na = Math.atan2(p.vz, p.vx) + clamp(turn, -w * dt, w * dt);
+      const tgt = top * mag * (1 - 0.3 * Math.min(1, Math.abs(turn) / 1.6)), base = (8.5 + 5 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
+      const ns = sp + clamp(tgt - sp, -base * 1.5 * dt, base * (1.15 - 0.6 * Math.min(1, sp / (top + 0.01))) * dt);
+      p.vx = Math.cos(na) * ns; p.vz = Math.sin(na) * ns;
+    } else { // arrancar, frenar o darse la vuelta: plantar el pie
+      let dx = wx - p.vx, dz = wz - p.vz; const dl = hyp(dx, dz), md = acc * dt;
+      if (dl > md) { dx *= md / dl; dz *= md / dl; }
+      p.vx += dx; p.vz += dz;
+    }
+    p.x += p.vx * dt; p.z += p.vz * dt;
     if (sprinting) { const dr = (10 - 4.5 * p.phy) * p.st.stam * dt; p.stamina = Math.max(0, p.stamina - dr); p.maxSt = Math.max(55, p.maxSt - dr * 0.03); }
     else p.stamina = Math.min(p.maxSt, p.stamina + (mag < 0.3 ? 9 : 4.5) * dt);
     const sp2 = hyp(p.vx, p.vz), tf = p.faceTo != null ? p.faceTo : sp2 > 0.6 ? Math.atan2(p.vz, p.vx) : p.face, mr = (own ? 7.5 : 10.5) * dt;
@@ -94,7 +103,7 @@
         if (k.target && k.type === 'pass') { const m = k.target, tf = hyp(m.x - b.x, m.z - b.z) / 14; tx = m.x + m.vx * tf; tz = m.z + m.vz * tf; } // al pie de donde va a estar
         const d = hyp(tx - b.x, tz - b.z);
         vh = clamp(G.Ball.speedForRoll(d, k.type === 'pass' ? 8.5 : 5.5) * T.pass, 7, 30); // firme: llega con vida
-        if (air) { vh *= 0.85; vy = b.y > 1.4 ? -1 : 1.5; }
+        if (air) { vh *= 0.85; vy = b.y > 1.4 ? -1 : 1.5; } else if (vh > 15) vy = (vh - 15) * 0.12; // el pase fuerte sale rasante y botando un poco
         sig = (0.012 + (1 - p.pas) * 0.05) * errM; break;
       }
       case 'lob': case 'cross': case 'throw': {
@@ -143,15 +152,26 @@
   // ---------- Conducción y control ----------
   // El balón es un objeto libre: el dueño lo empuja a toques. En sprint los toques son largos (riesgo).
   function dribble(p, d) {
-    if (p.state !== 'free' || b.y > 0.5 || p.touchCD > 0 || p.freeze > 0) return;
-    if (d > 0.78 + 0.1 * p.dri) return;
-    let mx = p.mx, mz = p.mz; const mag = hyp(mx, mz), sp = hyp(p.vx, p.vz);
+    if (p.state !== 'free' || b.y > 0.5 || p.freeze > 0) return;
+    let mx = p.mx, mz = p.mz; const mag = hyp(mx, mz), sp = hyp(p.vx, p.vz), top = topSpeed(p), sprint = p.sprint && p.stamina > 1 && mag > 0.5;
+    if (!sprint && !p.shield && d < 1.2) {
+      // Control cercano: sin sprint el balón acompaña al pie de forma continua, un paso por delante de hacia donde se gira.
+      // Sigue siendo un objeto físico (se retrasa en los giros según el regate del jugador), pero no hay toques a saltos.
+      let dx = Math.cos(p.face), dz = Math.sin(p.face);
+      if (mag > 0.15) { const vx = sp > 0.5 ? p.vx / sp : mx / mag, vz = sp > 0.5 ? p.vz / sp : mz / mag; dx = vx * 0.4 + (mx / mag) * 0.6; dz = vz * 0.4 + (mz / mag) * 0.6; const l = hyp(dx, dz) || 1; dx /= l; dz /= l; }
+      const lead = (mag > 0.15 ? 0.5 + 0.035 * sp : 0.4) * (0.7 + 0.3 * T.touch) + (1 - p.dri) * 0.12, k = 6 + 5 * p.dri + 3 * p.st.ctrl;
+      let tvx = p.vx + (p.x + dx * lead - b.x) * k, tvz = p.vz + (p.z + dz * lead - b.z) * k;
+      const tl = hyp(tvx, tvz), cap = top + 3; if (tl > cap) { tvx *= cap / tl; tvz *= cap / tl; }
+      const bl = Math.min(1, (G.subDt || 1 / 60) * (10 + 8 * p.dri));
+      b.vx += (tvx - b.vx) * bl; b.vz += (tvz - b.vz) * bl; b.vy = 0; b.spin = 0; b.lastTouch = p;
+      return;
+    }
+    if (p.touchCD > 0 || d > 0.78 + 0.1 * p.dri) return;
     if (mag < 0.15) { // pisarla
       if (hyp(b.vx - p.vx, b.vz - p.vz) > 0.5) { b.vx = p.vx * 0.6; b.vz = p.vz * 0.6; p.touchCD = 0.1; }
       return;
     }
     mx /= mag; mz /= mag;
-    const top = topSpeed(p), sprint = p.sprint && p.stamina > 1;
     let push;
     if (p.shield) { // protección: el balón va al lado contrario del rival
       const o = G.nearOpp(p);
@@ -186,7 +206,7 @@
     const rvx = b.vx - p.vx, rvz = b.vz - p.vz;
     // el rival solo corta un pase fuerte si el balón le pasa muy cerca: los pases firmes y bien dirigidos llegan
     const rival = b.kicker && b.kicker.team !== p.team && !b.owner && hyp(b.vx, b.vz) > 9;
-    if (p.state === 'free' && p.touchCD <= 0 && d < (rival ? 0.55 : 0.8) && b.y < 1.35 + p.y) {
+    if (p.state === 'free' && p.touchCD <= 0 && d < (rival ? 0.55 : p.team.receiver === p ? 1.0 : 0.8) && b.y < 1.35 + p.y) { // el destinatario estira la pierna
       const o = b.owner;
       if (o && (o.team === p.team || hyp(o.x - b.x, o.z - b.z) < 1.15 || o.state === 'skill')) return; // solo se roba con entrada o si el toque fue largo
       const rs = hyp(rvx, rvz, b.vy), max = 13 + 12 * (p.dri + p.pas) * 0.5 + (b.kicker && b.kicker.team === p.team ? 8 : 0);
@@ -304,7 +324,7 @@
         if (b.owner === p) { // si el balón se alejó, primero va por él
           const fx = b.x + b.vx * 0.12 - p.x, fz = b.z + b.vz * 0.12 - p.z, fd = hyp(fx, fz), mag = hyp(mx, mz);
           if (fd > 4.5) b.owner = null;
-          else if (fd > 0.7 && (mag < 0.15 || (fx * mx + fz * mz) / (fd * mag) < 0.75)) { const m2 = Math.max(mag, 0.75); mx = (fx / fd) * m2; mz = (fz / fd) * m2; }
+          else if (fd > 1.25 && (mag < 0.15 || (fx * mx + fz * mz) / (fd * mag) < 0.75)) { const m2 = Math.max(mag, 0.75); mx = (fx / fd) * m2; mz = (fz / fd) * m2; }
         }
         locomote(p, dt, mx, mz, p.sprint, 1);
         break;

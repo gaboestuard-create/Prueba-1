@@ -17,8 +17,8 @@ Juego de fútbol 3D para navegador (teléfono y PC). Todo vive en `golazo/`.
 |---|---|---|---|
 | Moverse | WASD / flechas | stick izq. | joystick (mitad izquierda) |
 | Sprint | Shift | RT | botón SPRINT o joystick al borde |
-| Pase | J | A | PASE |
-| Pase al hueco (filtrado) | I | Y | botón AL HUECO (o deslizar sobre PASE) |
+| Pase (sale al pulsar) | J | A | PASE |
+| Pase al hueco (filtrado) | I | Y | botón AL HUECO |
 | Pase largo / centro | L | X | LARGO (desde la banda en campo rival = centro) |
 | Tiro (mantener = potencia) | K | B | TIRO |
 | Tiro colocado | U + K | RB + B | **deslizar** sobre TIRO (hacia donde apuntas) |
@@ -130,6 +130,18 @@ Lo pedido y lo que se cambió:
 - **Cuerpos**: modelo nuevo con pelvis, abdomen, pecho con hombros, cuello, cabeza con mandíbula, nariz, orejas, ojos y cejas, manos, rodillas, gemelos y botines; tobillos articulados. Zancada real (la pierna que vuela recoge el talón y sube la rodilla; la de apoyo empuja de puntera), cadera y hombros en contragiro, el cuerpo se inclina al acelerar y frenar, la cabeza sigue al balón y la pierna se arma mientras cargas el tiro.
 
 No se hizo: física de cuerpo completo (ragdoll) ni colisión del balón con cada segmento del cuerpo; el contacto sigue siendo un cilindro por jugador más la zona de manos del portero. Tampoco captura de movimiento: toda la animación es procedural.
+
+## Tercera pasada: sensación tipo consola
+
+- **Giros en arco**: en carrera el jugador ya no derrapa en diagonal; gira describiendo una curva, más cerrada cuanto más lento va y más regate/ritmo tiene. Para darse la vuelta planta el pie. Está en `locomote` (`js/player.js`).
+- **Control cercano continuo**: sin sprint el balón acompaña al pie (a ~0.6 m, medido) en vez de ir a toques; en los giros se retrasa según el regate del jugador. En sprint siguen los toques largos, que es cuando te la pueden quitar.
+- **Pase al pulsar**: PASE y LARGO salen al pulsar, no al soltar (unos 100 ms menos de espera). Solo el tiro se carga.
+- **El destinatario estira la pierna** (1 m de alcance) y los pases fuertes salen rasantes con un pequeño bote.
+- **Cuerpos con peso**: al chocar, el impulso se reparte según el físico; el fuerte casi no se frena.
+- **Entrada automática** (se apaga en Pausa): si llegas de frente o de lado con el balón al alcance, la entrada sale sola. Nunca desde atrás.
+- **IA**: el defensor entra más si el poseedor le viene de frente; los defensas con balón en campo propio no se complican; desde la línea de fondo buscan el pase atrás; si el poseedor está apretado, los cercanos se acercan a ofrecerse.
+
+Medido tras esta pasada: 79 % de pases completos y 57 % de filtrados con direcciones al azar; IA vs IA ≈ 2 goles por partido en Normal; el jugador guionizado torpe ya gana algún partido en Normal.
 
 ## Qué falta
 
