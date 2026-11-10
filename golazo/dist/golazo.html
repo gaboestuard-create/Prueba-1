@@ -26,17 +26,17 @@ button:focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; }
 #sc { background: #fff; color: #10151f; padding: 1px 9px; border-radius: 6px; font-size: 17px; min-width: 56px; text-align: center; }
 #clock { color: var(--ac); font-variant-numeric: tabular-nums; margin-left: 5px; min-width: 44px; }
 #btn-pause { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 46px; height: 40px; border-radius: 9px; background: var(--panel); pointer-events: auto; font-size: 15px; }
-#msg { position: absolute; top: 17%; left: 50%; transform: translateX(-50%); text-align: center; font-weight: 800; font-size: clamp(20px, calc(var(--vh) * 5), 40px); text-shadow: 0 2px 10px #000, 0 0 3px #000; opacity: 0; transition: opacity 0.25s; white-space: nowrap; }
+#msg { position: absolute; top: 27%; left: 50%; transform: translateX(-50%); text-align: center; font-weight: 800; font-size: clamp(20px, calc(var(--vh) * 5), 40px); text-shadow: 0 2px 10px #000, 0 0 3px #000; opacity: 0; transition: opacity 0.25s; white-space: nowrap; }
 #msg.on { opacity: 1; }
 #msg small { display: block; font-size: 0.5em; font-weight: 600; color: var(--ac); }
 #msg.goal { font-size: clamp(34px, calc(var(--vh) * 11), 84px); color: var(--ac); letter-spacing: 2px; }
-#bottom { position: absolute; bottom: max(6px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; }
-#pname { font-weight: 700; font-size: 13px; text-shadow: 0 1px 4px #000; }
-#stam, #power { width: 130px; height: 5px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; }
+#bottom { position: absolute; top: calc(max(8px, env(safe-area-inset-top)) + 40px); left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+#pname { font-weight: 700; font-size: 12px; text-shadow: 0 1px 4px #000; opacity: 0.9; }
+#stam, #power { width: 92px; height: 4px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; }
 #stam i { display: block; height: 100%; width: 100%; background: var(--ac2); }
-#power { height: 9px; width: 150px; visibility: hidden; border: 1px solid rgba(255, 255, 255, 0.5); }
+#power { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); height: 9px; width: 150px; visibility: hidden; border: 1px solid rgba(255, 255, 255, 0.5); }
 #power i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2fd16a, #ffe14a 65%, #ff4a3a); }
-#radar { width: clamp(120px, calc(var(--vh) * 21), 210px); height: auto; opacity: 0.9; border-radius: 5px; }
+#radar { position: absolute; top: max(6px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: clamp(96px, calc(var(--vh) * 17), 168px); height: auto; opacity: 0.7; border-radius: 5px; }
 
 /* ---------- Controles táctiles ---------- */
 #touch { position: absolute; inset: 0; pointer-events: none; }
@@ -50,9 +50,9 @@ button:focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; }
 #tb-sprint { right: calc(3vmin + env(safe-area-inset-right)); bottom: 5vmin; width: 22vmin; height: 22vmin; border-color: #ff8a3a; }
 #tb-pass { right: calc(28vmin + env(safe-area-inset-right)); bottom: 4vmin; width: 21vmin; height: 21vmin; border-color: #2fd16a; }
 #tb-shoot { right: calc(20vmin + env(safe-area-inset-right)); bottom: 28vmin; width: 22vmin; height: 22vmin; border-color: #ff4a3a; }
-#tb-lob { right: calc(46vmin + env(safe-area-inset-right)); bottom: 24vmin; width: 17vmin; height: 17vmin; border-color: #35c9e8; }
+#tb-lob { right: calc(44vmin + env(safe-area-inset-right)); bottom: 27vmin; width: 17vmin; height: 17vmin; border-color: #35c9e8; }
+#tb-through { right: calc(51vmin + env(safe-area-inset-right)); bottom: 5vmin; width: 18vmin; height: 18vmin; border-color: #b6e04a; }
 #tb-skill { right: calc(2vmin + env(safe-area-inset-right)); bottom: 30vmin; width: 16vmin; height: 16vmin; border-color: #e84fb0; font-size: clamp(7px, 2vmin, 12px); }
-body.touch #bottom { bottom: max(4px, env(safe-area-inset-bottom)); }
 
 /* ---------- Pantallas ---------- */
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: calc(var(--vh) * 1.6); padding-block: calc(var(--vh) * 2); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: linear-gradient(180deg, rgba(8, 13, 28, 0.55), rgba(8, 13, 28, 0.86)); overflow: auto; touch-action: pan-x pan-y; }
@@ -144,11 +144,11 @@ body.short .btn { min-height: 40px; padding: 6px 14px; min-width: 104px; }
   <button id="btn-pause" aria-label="Pausa">❚❚</button>
   <div id="msg"></div>
   <div id="bottom">
-    <div id="power"><i></i></div>
     <div id="pname"></div>
     <div id="stam"><i></i></div>
-    <canvas id="radar" width="210" height="136"></canvas>
   </div>
+  <canvas id="radar" width="210" height="136"></canvas>
+  <div id="power"><i></i></div>
 </div>
 
 <div id="touch" class="hide">
@@ -158,6 +158,7 @@ body.short .btn { min-height: 40px; padding: 6px 14px; min-width: 104px; }
   <div class="tb" data-b="pass" id="tb-pass">PASE</div>
   <div class="tb" data-b="shoot" id="tb-shoot">TIRO</div>
   <div class="tb" data-b="lob" id="tb-lob">LARGO</div>
+  <div class="tb" data-b="through" id="tb-through">AL HUECO</div>
   <div class="tb" data-b="skill" id="tb-skill">FILIGRANA</div>
 </div>
 
@@ -752,12 +753,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   // La dificultad cambia reacción, precisión, presión, lectura y ambición ofensiva (att). Nunca la velocidad de los jugadores.
   G.DIFFS = {
-    facil: { name: 'Fácil', react: 0.55, err: 2.1, press: 0.55, tackle: 0.32, gk: 0.72, vision: 0.6, att: 0.5 },
-    normal: { name: 'Normal', react: 0.34, err: 1.4, press: 0.8, tackle: 0.55, gk: 0.9, vision: 0.8, att: 0.8 },
-    dificil: { name: 'Difícil', react: 0.22, err: 1.0, press: 1.0, tackle: 0.78, gk: 1.0, vision: 1.0, att: 1 },
-    leyenda: { name: 'Leyenda', react: 0.13, err: 0.75, press: 1.2, tackle: 0.95, gk: 1.08, vision: 1.15, att: 1.15 },
+    facil: { name: 'Fácil', react: 0.6, err: 2.1, press: 0.55, tackle: 0.32, gk: 0.72, vision: 0.6, att: 0.5 },
+    normal: { name: 'Normal', react: 0.42, err: 1.4, press: 0.8, tackle: 0.55, gk: 0.9, vision: 0.8, att: 0.8 },
+    dificil: { name: 'Difícil', react: 0.3, err: 1.0, press: 1.0, tackle: 0.78, gk: 1.0, vision: 1.0, att: 1 },
+    leyenda: { name: 'Leyenda', react: 0.2, err: 0.75, press: 1.2, tackle: 0.95, gk: 1.08, vision: 1.15, att: 1.15 },
   };
-  G.MATE = { react: 0.22, err: 1, press: 0.8, tackle: 0.5, gk: 1, vision: 1, att: 1 }; // compañeros de la IA en el equipo humano: ayudan sin jugar solos
+  G.MATE = { react: 0.3, err: 1, press: 0.8, tackle: 0.5, gk: 1, vision: 1, att: 1 }; // compañeros de la IA en el equipo humano: ayudan sin jugar solos
 
   const L = {};
   G.on = function (n, fn) { (L[n] = L[n] || []).push(fn); };
@@ -899,7 +900,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   };
 
   const setState = (G.setState = function (p, s, dur) { p.state = s; p.stateT = 0; p.dur = dur || 0; });
-  const topSpeed = (G.topSpeed = (p) => (6.5 + 2.1 * p.pac) * T.speed * (0.88 + 0.12 * Math.min(1, p.stamina / 30)));
+  const topSpeed = (G.topSpeed = (p) => (6.0 + 2.0 * p.pac) * T.speed * (0.88 + 0.12 * Math.min(1, p.stamina / 30)));
   const isHuman = (G.isHuman = (p) => p.team.human && p.team.active === p);
 
   G.nd = 0; // distancia del último nearOpp
@@ -919,14 +920,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (p.shield) top *= 0.55;
     if (p.boost > 0) top *= 1.07;
     const wx = mx * top, wz = mz * top, sp = hyp(p.vx, p.vz);
-    let acc = (10 + 6 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
+    let acc = (8.5 + 5 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
     acc *= wx * p.vx + wz * p.vz < sp * sp * 0.6 ? 1.5 : 1.15 - 0.6 * Math.min(1, sp / (top + 0.01));
     let dx = wx - p.vx, dz = wz - p.vz; const dl = hyp(dx, dz), md = acc * dt;
     if (dl > md) { dx *= md / dl; dz *= md / dl; }
     p.vx += dx; p.vz += dz; p.x += p.vx * dt; p.z += p.vz * dt;
     if (sprinting) { const dr = (10 - 4.5 * p.phy) * p.st.stam * dt; p.stamina = Math.max(0, p.stamina - dr); p.maxSt = Math.max(55, p.maxSt - dr * 0.03); }
     else p.stamina = Math.min(p.maxSt, p.stamina + (mag < 0.3 ? 9 : 4.5) * dt);
-    const sp2 = hyp(p.vx, p.vz), tf = p.faceTo != null ? p.faceTo : sp2 > 0.6 ? Math.atan2(p.vz, p.vx) : p.face, mr = (own ? 9 : 13) * dt;
+    const sp2 = hyp(p.vx, p.vz), tf = p.faceTo != null ? p.faceTo : sp2 > 0.6 ? Math.atan2(p.vz, p.vx) : p.face, mr = (own ? 7.5 : 10.5) * dt;
     p.face += clamp(G.angDiff(p.face, tf), -mr, mr);
   }
 
@@ -956,9 +957,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     let tx = k.x, tz = k.z, vh, vy = 0, spin = 0, sig, sigV = 0;
     switch (k.type) {
       case 'pass': case 'through': {
-        if (k.target) { const m = k.target, tf = hyp(m.x - b.x, m.z - b.z) / 15; tx = m.x + m.vx * tf * 0.8; tz = m.z + m.vz * tf * 0.8; }
+        if (k.target && k.type === 'pass') { const m = k.target, tf = hyp(m.x - b.x, m.z - b.z) / 14; tx = m.x + m.vx * tf; tz = m.z + m.vz * tf; } // al pie de donde va a estar
         const d = hyp(tx - b.x, tz - b.z);
-        vh = clamp(G.Ball.speedForRoll(d, k.type === 'pass' ? 6 : 4) * T.pass, 5, 27);
+        vh = clamp(G.Ball.speedForRoll(d, k.type === 'pass' ? 8.5 : 5.5) * T.pass, 7, 30); // firme: llega con vida
         if (air) { vh *= 0.85; vy = b.y > 1.4 ? -1 : 1.5; }
         sig = (0.012 + (1 - p.pas) * 0.05) * errM; break;
       }
@@ -1049,7 +1050,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (b.owner === p) { dribble(p, d); return; }
     if (b.kicker === p && b.kickT < 0.3) return;
     const rvx = b.vx - p.vx, rvz = b.vz - p.vz;
-    if (p.state === 'free' && p.touchCD <= 0 && d < 0.8 && b.y < 1.35 + p.y) {
+    // el rival solo corta un pase fuerte si el balón le pasa muy cerca: los pases firmes y bien dirigidos llegan
+    const rival = b.kicker && b.kicker.team !== p.team && !b.owner && hyp(b.vx, b.vz) > 9;
+    if (p.state === 'free' && p.touchCD <= 0 && d < (rival ? 0.55 : 0.8) && b.y < 1.35 + p.y) {
       const o = b.owner;
       if (o && (o.team === p.team || hyp(o.x - b.x, o.z - b.z) < 1.15 || o.state === 'skill')) return; // solo se roba con entrada o si el toque fue largo
       const rs = hyp(rvx, rvz, b.vy), max = 13 + 12 * (p.dri + p.pas) * 0.5 + (b.kicker && b.kicker.team === p.team ? 8 : 0);
@@ -1430,6 +1433,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
   AI.offLine = offLine;
 
+  AI.oppDist = oppDist;
   function oppDist(team, x, z) { const os = team.opp.players; let md = 99; for (let i = 0; i < os.length; i++) { const o = os[i]; if (!o.off) md = Math.min(md, hyp(o.x - x, o.z - z)); } return md; }
 
   function shotK(p, pw) {
@@ -1481,7 +1485,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     let cS = 0;
     if (xT > 30 && Math.abs(p.z) > 13) { let n = 0; for (const m of team.players) if (m !== p && !m.off && m.x * dir > P.HL - 16 && Math.abs(m.z) < 12) n++; if (n) cS = 0.5 + n * 0.08 + noise(); }
     // pasar
-    const ps = a.hold > 0.3 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s + (nd < 2.5 ? 0.15 : nd < 4.5 ? 0.06 : 0) : 0; // con un rival encima, soltarla antes
+    const ps = a.hold > 0.45 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s + (nd < 2.5 ? 0.15 : nd < 4.5 ? 0.06 : 0) : 0; // con un rival encima, soltarla antes
     // conducir: la dirección con más espacio, con preferencia por el arco
     const base = Math.atan2(-p.z * 0.4, gx - p.x); let dS = -1, dAng = base, dSpace = 0;
     for (let i = 0; i < 7; i++) {
@@ -1496,7 +1500,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));
     if (top === cS) return G.act.kick(p, { type: 'cross', x: gx - dir * rnd(6, 11), z: -Math.sign(p.z) * rnd(-1, 5), spin: -Math.sign(p.z) * dir * 3 });
     if (top === pS) return doPass(p, ps);
-    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 5.5 && p.stamina > 30 && D.att > 0.7;
+    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 7 && p.stamina > 30 && D.att > 0.7;
     // filigrana si hay un defensa encima y el jugador sabe
     if (nd < 3.2 && nd > 1.5 && p.cd <= 0 && Math.random() < (0.12 + p.st.skill * 0.5) * (1.4 - D.err * 0.4)) {
       const k = Math.random(); G.act.skill(p, k < 0.45 ? 'croqueta' : k < 0.8 ? 'stepover' : 'roulette', Math.cos(dAng + (k < 0.45 ? 1.3 : 0)), Math.sin(dAng + (k < 0.45 ? 1.3 : 0)));
@@ -1522,17 +1526,18 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
   }
 
-  // contain = solo temporiza a distancia; si no, va a quitar.
-  function press(p, c, contain, dt) {
+  // Presión con cabeza: 1 = temporiza lejos, 2 = encima (aguanta a 2 m y muerde cuando el balón se separa del pie), 3 = cobertura detrás del que presiona.
+  function press(p, c, mode, dt) {
     const team = p.team, D = team.D, gx = -team.dir * P.HL;
     let ux = gx - c.x, uz = -c.z; const ul = hyp(ux, uz) + 0.01; ux /= ul; uz /= ul;
-    const d = hyp(b.x - p.x, b.z - p.z), stand = contain ? 3.2 : 0.8;
-    AI.moveTo(p, b.x + c.vx * 0.25 + ux * stand, b.z + c.vz * 0.25 + uz * stand, d > 4, 1.2);
-    if (d < 3.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
-    if (contain || p.cd > 0 || p.state !== 'free' || p.freeze > 0) return;
+    const d = hyp(b.x - p.x, b.z - p.z), exposed = hyp(c.x - b.x, c.z - b.z) > 0.85 || c.state !== 'free';
+    const stand = mode === 3 ? 6.5 : mode === 1 ? 3.4 : exposed || ul < 24 ? 0.9 : 1.9; // cerca del área no se regala espacio
+    AI.moveTo(p, b.x + c.vx * 0.3 + ux * stand, b.z + c.vz * 0.3 + uz * stand, d > 5 || (exposed && mode === 2 && d > 2.5), 1.2);
+    if (d < 4.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
+    if (mode !== 2 || p.cd > 0 || p.state !== 'free' || p.freeze > 0) return;
     const ag = T.aiAggr;
-    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * 5 * ag * dt) G.act.tackle(p); }
-    else if (d > 2 && d < 4.2 && c.sprint && c.x * team.dir < -15 && Math.random() < 0.3 * ag * D.press * dt) G.act.slide(p);
+    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * (exposed ? 4 : 0.7) * ag * dt) G.act.tackle(p); }
+    else if (d > 2 && d < 4.2 && c.sprint && c.x * team.dir < -18 && Math.random() < 0.2 * ag * D.press * dt) G.act.slide(p);
   }
 
   const OFF = [[0, 0], [0, 6], [0, -6], [5, 3], [5, -3]], sp = { x: 0, z: 0 };
@@ -1549,7 +1554,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
           const sc = Math.min(oppDist(team, wx, wz), 8) + (AI.lane(b.x, b.z, wx, wz, team, 1.2) ? 3 : 0) - hyp(ox, oz) * 0.25;
           if (sc > bs) { bs = sc; a.ox = ox; a.oz = oz; }
         }
-        if (a.runT <= 0 && (s.l === 'F' || p.st.run > 1.3) && bxT > -15 && Math.random() < 0.22 * p.st.run) a.runT = rnd(1.8, 3); // desmarque de ruptura
+        if (a.runT <= 0 && (s.l === 'F' || p.st.run > 1.3) && bxT > -15 && Math.random() < 0.3 * p.st.run) a.runT = rnd(1.8, 3); // desmarque de ruptura
         a.ov = Math.random() < 0.3;
       }
       x += a.ox; z += a.oz;
@@ -1565,8 +1570,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         const ox = -o.x * opp.dir, oz = -o.z * opp.dir; if (ox < x - 4) continue;
         const d = hyp(ox - x, oz - z); if (d < md) { md = d; mo = o; }
       }
-      if (mo) { const ox = mo.x * dir, oz = mo.z * dir, gl = hyp(-P.HL - ox, oz) + 0.01, w = bxT < -18 ? 0.75 : 0.5; x = lerp(x, ox + ((-P.HL - ox) / gl) * 1.4, w); z = lerp(z, oz - (oz / gl) * 1.4, w); }
-      sprint = p.x * dir - x > 6;
+      if (mo) { // del lado del arco y un paso hacia el balón: tapa la línea de pase sin perder la espalda; si su hombre rompe, lo sigue
+        const ox = mo.x * dir, oz = mo.z * dir, gl = hyp(-P.HL - ox, oz) + 0.01, bl = hyp(bxT - ox, bzT - oz) + 0.01, run = mo.ai.runT > 0, w = run ? 0.9 : bxT < -18 ? 0.75 : 0.5;
+        x = lerp(x, ox + ((-P.HL - ox) / gl) * 1.4 + ((bxT - ox) / bl) * 0.8, w); z = lerp(z, oz - (oz / gl) * 1.4 + ((bzT - oz) / bl) * 0.8, w);
+        if (run) sprint = true;
+      }
+      sprint = sprint || p.x * dir - x > 6;
     }
     x = clamp(x, -P.HL + 4, P.HL - 3); z = clamp(z, -P.HW + 1.5, P.HW - 1.5);
     if (AI.moveTo(p, x * dir, z * dir, sprint, 3) < 1.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
@@ -1582,6 +1591,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       let be = 1e9;
       for (const p of ps) { if (p.off || p.gk) continue; p.eta = AI.eta(p) + (p.state === 'free' ? 0 : 0.5); if (p.eta < be) { be = p.eta; team.chaser = p; } }
       const r = team.receiver; if (r && !r.off && r.eta < be + 0.7) team.chaser = r;
+      const kk = b.kicker; if (kk && kk.team !== team && b.kickT < 0.2 + D.react * T.aiReact) team.chaser = null; // leer el pase rival lleva un instante: no se anticipan por telepatía
     }
     let pr1 = null, pr2 = null, m1 = 0, m2 = 0; // presión: 1 = temporizar, 2 = ir a quitar
     if (theirs && !b.held) {
@@ -1596,7 +1606,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         const ac = team.active, far = !ac || hyp(ac.x - b.x, ac.z - b.z) > 6 || (ac.x - b.x) * dir > 1 || ac.state !== 'free'; // lejos, superado o en el suelo
         m1 = team.callPress || bxT < -30 || (far && bxT < 5) ? 2 : 1; m2 = bxT < -15 ? 1 : 0;
       }
-      else { m1 = bxT < -10 + 35 * (ag - 0.55) || bxT < -18 ? 2 : 1; m2 = ag >= 1 && bxT < 0 ? (bxT < -25 ? 2 : 1) : 0; }
+      else { m1 = bxT < -10 + 35 * (ag - 0.55) || bxT < -18 ? 2 : 1; m2 = bxT < 8 ? 1 : 0; }
     }
     for (const p of ps) {
       if (p.off) continue;
@@ -1605,11 +1615,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       p.faceTo = null; p.shield = false;
       if (o === p) carrier(p, dt);
       else if (p === team.chaser) chase(p, team);
-      else if (p === pr1 && m1) press(p, o, m1 === 1, dt);
-      else if (p === pr2 && m2) press(p, o, m2 === 1, dt);
+      else if (p === pr1 && m1) press(p, o, m1, dt);
+      else if (p === pr2 && m2) press(p, o, 3, dt);
       else position(p, team, dt);
     }
   };
+
+  G.on('turnover', (t) => { for (const p of t.players) if (p.slot.l === 'F' && !p.off) p.ai.runT = 3; }); // recuperación: los de arriba salen a la contra
 
   // Cobro de balón parado por la IA.
   AI.setPiece = function (p, rs) {
@@ -1960,6 +1972,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
     if (k.type === 'shot') { team.stats.shots++; M.excite = Math.max(M.excite, 0.75); b.shotBy = p; b.shotT = M.time; }
     else if (k.type !== 'clear') team.stats.passes++;
+    if ((k.type === 'pass' || k.type === 'through') && !p.gk && p.slot.l !== 'D' && b.x * dir > -15) p.ai.runT = 2.2; // pasa y va
     if (team.human && k.target && !k.target.gk) Match.setActive(team, k.target);
   };
 
@@ -2113,21 +2126,22 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 (function () {
   'use strict';
   const G = window.G, P = G.P, b = G.ball, hyp = Math.hypot, clamp = G.clamp;
-  const C = (G.Control = { ctx: 'att', power: 0 });
+  const C = (G.Control = { ctx: 'att', power: 0, target: null });
   const pressCtx = {};
   let lastOwner = null;
 
-  // Pase asistido: el compañero mejor alineado con el stick; mantener el botón prefiere al más lejano.
+  // Pase asistido: el raso siempre encuentra a alguien (el mejor alineado con el stick, con línea libre);
+  // al hueco y largo solo buscan hacia donde se apunta. Mantener el botón prefiere al más lejano.
   function pickMate(p, dx, dz, type, power) {
-    const team = p.team, dir = team.dir, pref = type === 'lob' ? 28 + power * 20 : 9 + power * 22;
+    const team = p.team, dir = team.dir, pref = type === 'lob' ? 28 + power * 20 : 10 + power * 20;
     let best = null, bs = 1e9;
     for (const m of team.players) {
       if (m === p || m.off) continue;
-      const ex = m.x - b.x, ez = m.z - b.z, d = hyp(ex, ez); if (d < 3) continue;
+      const ex = m.x - b.x, ez = m.z - b.z, d = hyp(ex, ez); if (d < 3 || d > 55) continue;
       const ang = Math.acos(clamp((ex * dx + ez * dz) / d, -1, 1));
-      if (ang > (type === 'lob' ? 0.6 : 0.85)) continue;
-      let s = ang * 28 + Math.abs(d - pref) * 0.45 + (d > 45 ? 50 : 0);
-      if (type === 'pass' && !G.AI.lane(b.x, b.z, m.x, m.z, team, 1)) s += 6;
+      if (type !== 'pass' && ang > 0.9) continue;
+      let s = ang * 30 + Math.abs(d - pref) * 0.4 + (ang > 1.3 ? 20 : 0) + (m.gk ? 12 : 0) + (type === 'pass' && d > pref + 12 ? (d - pref - 12) * 1.2 : 0); // el raso largo es lento: para eso está el pase largo
+      if (type === 'pass' && !G.AI.lane(b.x, b.z, m.x, m.z, team, 1.1)) s += 16; // con un rival en la línea, mejor otro compañero
       if (type === 'through' && (m.x - p.x) * dir < -3) s += 15;
       if (s < bs) { bs = s; best = m; }
     }
@@ -2160,7 +2174,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 
   function pass(p, type, power, dx, dz) {
-    const M = G.M, team = p.team, dir = team.dir, m = pickMate(p, dx, dz, type, power), far = (a) => ({ type, x: p.x + dx * a, z: p.z + dz * a });
+    const M = G.M, team = p.team, dir = team.dir, m = pickMate(p, dx, dz, type, power) || (type === 'through' ? pickMate(p, dx, dz, 'pass', power) : null), far = (a) => ({ type, x: p.x + dx * a, z: p.z + dz * a });
     let k;
     if (M.state === 'ready' && M.rs.type === 'throwin') k = m ? { type: 'throw', x: m.x, z: m.z, target: m } : { type: 'throw', x: p.x + dx * 12, z: p.z + dz * 12 };
     else if (type === 'lob') {
@@ -2171,8 +2185,15 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       } else k = m ? { type: 'lob', x: m.x + m.vx * 0.9, z: m.z + m.vz * 0.9, target: m } : far(25 + power * 20);
     } else if (type === 'through') {
       if (m) {
-        const L = 7 + power * 9, rl = hyp(m.vx, m.vz), rx = rl > 1 ? m.vx / rl : dir, rz = rl > 1 ? m.vz / rl : 0;
-        k = { type, x: clamp(m.x + (dir * 0.6 + rx * 0.4) * L, -P.HL + 3, P.HL - 3), z: clamp(m.z + rz * 0.4 * L, -P.HW + 2, P.HW - 2), target: m };
+        // pase filtrado: de varios puntos por delante del compañero, el más libre de rivales y con línea limpia
+        let bx = m.x + dir * 9, bz = m.z, best = -1e9;
+        for (const L of [6, 10, 14 + power * 5]) for (const lat of [-4, 0, 4]) {
+          const x = clamp(m.x + dir * L, -P.HL + 3, P.HL - 3), z = clamp(m.z + lat + m.vz * 0.6, -P.HW + 2, P.HW - 2);
+          const sc = Math.min(G.AI.oppDist(team, x, z), 8) + (G.AI.lane(b.x, b.z, x, z, team, 1.1) ? 4 : 0) - Math.abs(lat) * 0.2 + L * 0.12;
+          if (sc > best) { best = sc; bx = x; bz = z; }
+        }
+        m.ai.runT = 2.8; // el compañero arranca al espacio
+        k = { type, x: bx, z: bz, target: m };
       } else k = far(14 + power * 14);
     } else k = m ? { type, target: m } : far(10 + power * 16);
     G.act.kick(p, k);
@@ -2181,6 +2202,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   C.update = function (dt) {
     const M = G.M; if (M.human < 0) return;
     const team = M.teams[M.human], I = G.Input.s, B = I.b, ready = M.state === 'ready';
+    C.target = null;
     if (M.state !== 'play' && !ready) { if (team.active) team.active.charge = null; C.power = 0; return; }
     if (!ready) autoSwitch(team, dt);
     const p = team.active; if (!p || (ready && M.rs.taker !== p)) return;
@@ -2188,7 +2210,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const def = !ready && ((o && o.team !== team) || (!o && M.lastPoss !== team && hyp(p.x - b.x, p.z - b.z) > 3.5));
     C.ctx = def ? 'def' : 'att';
     p.faceTo = null;
-    if (mag < 0.12 && !o && !def && !ready && (team.chaser === p || team.receiver === p)) G.AI.moveTo(p, p.ix, p.iz, I.sprint ? 2 : hyp(p.ix - p.x, p.iz - p.z) > 6, 1); // sin tocar nada, va a recibir
+    // El destinatario de un pase va solo al encuentro del balón (como en los juegos de consola); el stick manda de nuevo
+    // cuando el balón está cerca, o si se empuja claramente en contra.
+    const ix = p.ix - p.x, iz = p.iz - p.z, id = hyp(ix, iz);
+    const recv = team.receiver === p && hyp(b.x - p.x, b.z - p.z) > 3 && (mag < 0.12 || (wx * ix + wz * iz) / (mag * id + 0.01) > -0.3);
+    if (!o && !def && !ready && (recv || (mag < 0.12 && team.chaser === p))) G.AI.moveTo(p, p.ix, p.iz, recv || I.sprint ? 2 : id > 6, 1); // el receptor ataca el balón: no espera a que le llegue
     else { p.mx = wx; p.mz = wz; p.sprint = I.sprint; }
     p.shield = b.owner === p && (I.shield || (G.Input.touch && mag > 0.12 && mag < 0.55 && (G.nearOpp(p), G.nd < 2.2))); // en táctil no hay botón: se protege al caminar con un rival encima
     for (const n of ['pass', 'shoot', 'lob']) if (B[n].press) pressCtx[n] = C.ctx;
@@ -2204,6 +2230,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       return;
     }
     team.callPress = false;
+    if (o === p || ready) C.target = pickMate(p, dx, dz, 'pass', B.pass.down ? clamp(B.pass.held / 0.6, 0, 1) : 0); // el aro blanco
     if (B.sw.press && !ready) G.Match.setActive(team, defender(team, p));
     if (B.shoot.press) p.charge = { t: 0 }; // mantener = potencia
     if (p.charge) {
@@ -2223,136 +2250,177 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   };
 })();
 </script>
-<script>// Figuras: esqueleto procedural (cadera, torso, cabeza, brazos y piernas de dos segmentos) y sus animaciones.
-// Todas las figuras comparten 9 InstancedMesh (una por tipo de pieza): ~10 draw calls para los 23 en cancha.
+<script>// Figuras: cuerpo articulado (pelvis, abdomen, pecho, cuello, cabeza con rostro, hombros, codos, manos, caderas, rodillas, tobillos)
+// con animación procedural. Todas comparten 14 InstancedMesh (una por pieza), así que los 23 en cancha cuestan pocas llamadas de dibujo.
 (function () {
   'use strict';
-  const G = window.G, THREE = window.THREE, clamp = G.clamp, b = G.ball;
+  const G = window.G, THREE = window.THREE, clamp = G.clamp, b = G.ball, PI = Math.PI;
   const Fig = (G.Figure = {});
   const parts = {}, col = new THREE.Color();
 
-  function geo(name) {
-    let g;
-    switch (name) {
-      case 'torso': g = new THREE.CylinderGeometry(0.21, 0.16, 0.48, 10); g.scale(1, 1, 0.6); g.translate(0, 0.24, 0); break;
-      case 'hips': g = new THREE.CylinderGeometry(0.165, 0.175, 0.27, 10); g.scale(1, 1, 0.66); g.translate(0, -0.06, 0); break;
-      case 'head': g = new THREE.SphereGeometry(0.105, 10, 8); g.scale(0.92, 1.08, 1); break;
-      case 'hair': g = new THREE.SphereGeometry(0.112, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.52); g.translate(0, 0.012, -0.012); break;
-      case 'uarm': g = new THREE.CylinderGeometry(0.052, 0.045, 0.28, 7); g.translate(0, -0.14, 0); break;
-      case 'farm': g = new THREE.CylinderGeometry(0.042, 0.034, 0.27, 7); g.translate(0, -0.135, 0); break;
-      case 'thigh': g = new THREE.CylinderGeometry(0.078, 0.058, 0.42, 8); g.translate(0, -0.21, 0); break;
-      case 'shin': g = new THREE.CylinderGeometry(0.054, 0.04, 0.4, 8); g.translate(0, -0.2, 0); break;
-      default: g = new THREE.BoxGeometry(0.09, 0.07, 0.24); g.translate(0, -0.42, 0.06); // foot
-    }
+  function merge(list) { // une varias geometrías en una sola pieza
+    const pos = [], nor = [];
+    for (const g0 of list) { const g = g0.index ? g0.toNonIndexed() : g0; for (const v of g.attributes.position.array) pos.push(v); for (const v of g.attributes.normal.array) nor.push(v); }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
     return g;
   }
+  const cyl = (rt, rb, h, y, sz) => { const g = new THREE.CylinderGeometry(rt, rb, h, 10); g.scale(1, 1, sz || 1); g.translate(0, y, 0); return g; };
+  const sph = (r, x, y, z, sx, sy, sz) => { const g = new THREE.SphereGeometry(r, 10, 8); g.scale(sx || 1, sy || 1, sz || 1); g.translate(x, y, z); return g; };
+  const box = (w, h, d, x, y, z) => { const g = new THREE.BoxGeometry(w, h, d); g.translate(x, y, z); return g; };
+
+  // Cada pieza se modela alrededor de su articulación (origen = punto de giro).
+  const GEO = {
+    pelvis: () => merge([cyl(0.165, 0.175, 0.2, -0.02, 0.68), sph(0.172, 0, -0.12, 0, 1, 0.45, 0.68)]),
+    abdomen: () => cyl(0.152, 0.162, 0.22, 0.1, 0.66),
+    chest: () => merge([cyl(0.198, 0.155, 0.3, 0.15, 0.6), sph(0.078, 0.2, 0.265, 0), sph(0.078, -0.2, 0.265, 0), sph(0.1, 0, 0.29, 0, 1.55, 0.5, 0.78)]), // con hombros y trapecio
+    neck: () => cyl(0.046, 0.052, 0.1, 0.355),
+    head: () => merge([sph(0.1, 0, 0, 0, 0.93, 1.13, 1.02), sph(0.072, 0, -0.058, 0.018, 0.95, 0.8, 1), box(0.024, 0.036, 0.03, 0, -0.014, 0.098), sph(0.021, 0.094, -0.004, 0, 0.5, 1.2, 0.8), sph(0.021, -0.094, -0.004, 0, 0.5, 1.2, 0.8)]), // cráneo, mandíbula, nariz, orejas
+    hair: () => { const g = new THREE.SphereGeometry(0.106, 10, 6, 0, PI * 2, 0, PI * 0.5); g.scale(0.96, 1.1, 1.06); g.translate(0, 0.022, -0.014); return g; },
+    eyes: () => merge([sph(0.013, 0.036, 0.014, 0.088), sph(0.013, -0.036, 0.014, 0.088), box(0.03, 0.007, 0.012, 0.036, 0.036, 0.09), box(0.03, 0.007, 0.012, -0.036, 0.036, 0.09)]), // ojos y cejas
+    sleeve: () => cyl(0.059, 0.055, 0.17, -0.07),
+    uarm: () => merge([cyl(0.047, 0.04, 0.17, -0.215), sph(0.041, 0, -0.29, 0)]),
+    farm: () => merge([cyl(0.04, 0.031, 0.24, -0.12), sph(0.04, 0, -0.285, 0, 0.7, 1.15, 1)]), // antebrazo y mano
+    shortleg: () => cyl(0.096, 0.089, 0.21, -0.09),
+    thigh: () => merge([cyl(0.086, 0.06, 0.42, -0.21), sph(0.061, 0, -0.42, 0)]), // muslo y rodilla
+    shin: () => merge([cyl(0.057, 0.061, 0.14, -0.07), cyl(0.061, 0.04, 0.27, -0.275)]), // gemelo y media
+    foot: () => merge([box(0.086, 0.062, 0.14, 0, -0.04, 0.02), sph(0.046, 0, -0.045, 0.115, 0.95, 0.62, 1.35)]), // botín con puntera
+  };
+  const SINGLE = ['pelvis', 'abdomen', 'chest', 'neck', 'head', 'hair', 'eyes'];
 
   Fig.init = function (scene, n) {
     const mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-    ['torso', 'hips', 'head', 'hair', 'uarm', 'farm', 'thigh', 'shin', 'foot'].forEach((name, i) => {
-      const m = new THREE.InstancedMesh(geo(name), mat, n * (i < 4 ? 1 : 2));
-      m.castShadow = true; m.frustumCulled = false;
+    for (const name in GEO) {
+      const m = new THREE.InstancedMesh(GEO[name](), mat, n * (SINGLE.indexOf(name) < 0 ? 2 : 1));
+      m.castShadow = name !== 'eyes' && name !== 'neck'; m.userData.sh = m.castShadow; m.frustumCulled = false;
       m.setColorAt(0, col.set(0xffffff)); // crea instanceColor
       scene.add(m); parts[name] = m;
-    });
+    }
   };
 
   // kit: { shirt, sleeves, shorts, socks, skin, hair, boots }
   Fig.create = function (i, kit) {
-    const N = () => new THREE.Object3D(), root = N(), hips = N(), spine = N(), head = N();
-    root.add(hips); hips.add(spine); spine.add(head); hips.position.y = 0.92; spine.position.y = 0.08; head.position.y = 0.6;
-    const f = { root, hips, spine, head, arm: [], elb: [], leg: [], knee: [], map: [], ph: Math.random() * 6, pf: 0, c: null, i };
+    const N = () => new THREE.Object3D(), root = N(), hips = N(), spine = N(), chest = N(), head = N();
+    root.add(hips); hips.add(spine); spine.add(chest); chest.add(head);
+    hips.position.y = 0.95; spine.position.y = 0.08; chest.position.y = 0.2; head.position.y = 0.47;
+    const f = { root, hips, spine, chest, head, arm: [], elb: [], leg: [], knee: [], ank: [], map: [], ph: Math.random() * 6, pf: 0, ps: 0, acc: 0, gw: 1, i, c: {} };
     for (let s = 0; s < 2; s++) {
-      const sg = s ? -1 : 1, arm = N(), elb = N(), leg = N(), knee = N();
-      spine.add(arm); arm.add(elb); hips.add(leg); leg.add(knee);
-      arm.position.set(sg * 0.25, 0.44, 0); elb.position.y = -0.28; leg.position.set(sg * 0.095, -0.06, 0); knee.position.y = -0.42;
-      f.arm.push(arm); f.elb.push(elb); f.leg.push(leg); f.knee.push(knee);
-      f.map.push(['uarm', i * 2 + s, arm, kit.sleeves], ['farm', i * 2 + s, elb, kit.skin], ['thigh', i * 2 + s, leg, kit.skin], ['shin', i * 2 + s, knee, kit.socks], ['foot', i * 2 + s, knee, kit.boots]);
+      const sg = s ? -1 : 1, arm = N(), elb = N(), leg = N(), knee = N(), ank = N(), j = i * 2 + s;
+      chest.add(arm); arm.add(elb); hips.add(leg); leg.add(knee); knee.add(ank);
+      arm.position.set(sg * 0.215, 0.265, 0); elb.position.y = -0.29; leg.position.set(sg * 0.095, -0.06, 0); knee.position.y = -0.42; ank.position.y = -0.4;
+      f.arm.push(arm); f.elb.push(elb); f.leg.push(leg); f.knee.push(knee); f.ank.push(ank);
+      f.map.push(['sleeve', j, arm, kit.sleeves], ['uarm', j, arm, kit.skin], ['farm', j, elb, kit.skin], ['shortleg', j, leg, kit.shorts], ['thigh', j, leg, kit.skin], ['shin', j, knee, kit.socks], ['foot', j, ank, kit.boots]);
     }
-    f.map.push(['torso', i, spine, kit.shirt], ['hips', i, hips, kit.shorts], ['head', i, head, kit.skin], ['hair', i, head, kit.hair]);
+    f.map.push(['pelvis', i, hips, kit.shorts], ['abdomen', i, spine, kit.shirt], ['chest', i, chest, kit.shirt], ['neck', i, chest, kit.skin], ['head', i, head, kit.skin], ['hair', i, head, kit.hair], ['eyes', i, head, '#1a1410']);
     for (const m of f.map) { parts[m[0]].setColorAt(m[1], col.set(m[3])); parts[m[0]].instanceColor.needsUpdate = true; }
-    // pose actual: se interpola hacia la pose objetivo para que no haya saltos
-    f.c = { y: 0, lean: 0, roll: 0, tw: 0, hd: 0, a0f: 0, a1f: 0, a0s: 0, a1s: 0, e0: 0.3, e1: 0.3, l0f: 0, l1f: 0, l0s: 0, l1s: 0, k0: 0, k1: 0 };
+    for (const k of KEYS) f.c[k] = 0;
     return f;
   };
 
-  const t = {}; // pose objetivo (reutilizada)
-  const KEYS = ['y', 'lean', 'roll', 'tw', 'hd', 'a0f', 'a1f', 'a0s', 'a1s', 'e0', 'e1', 'l0f', 'l1f', 'l0s', 'l1s', 'k0', 'k1'];
+  // Pose: y (altura de cadera), lean/roll/pyaw (pelvis), bend (columna), tw (giro del pecho), hd/hy (cabeza),
+  // aNf/aNs (hombro adelante/abierto), eN (codo), lNf/lNs (cadera), kN (rodilla), nN (tobillo). Lado 0 = +x del modelo, 1 = pierna hábil.
+  const KEYS = ['y', 'lean', 'roll', 'pyaw', 'bend', 'tw', 'hd', 'hy', 'a0f', 'a1f', 'a0s', 'a1s', 'e0', 'e1', 'l0f', 'l1f', 'l0s', 'l1s', 'k0', 'k1', 'n0', 'n1'];
+  const t = {}, g = {};
 
-  // p: jugador de la simulación (o el árbitro). Lado 0 = izquierda del modelo, 1 = derecha (pierna hábil).
+  // Zancada: no es un vaivén simétrico. La pierna de apoyo empuja extendida; la que vuela recoge el talón, sube la rodilla y se estira para caer.
+  function gait(f, p, dt, sp) {
+    for (const k of KEYS) g[k] = 0;
+    const cf = Math.cos(p.face), sf = Math.sin(p.face), vf = p.vx * cf + p.vz * sf, vs = -p.vx * sf + p.vz * cf;
+    const back = vf < -0.35 * sp, ff = sp > 0.3 ? Math.abs(vf) / sp : 1, fs = sp > 0.3 ? vs / sp : 0;
+    f.ph += ((sp * dt * 6.283) / (1.45 + 0.21 * sp)) * (back ? -1 : 1);
+    const run = clamp((sp - 1.5) / 5, 0, 1), A = Math.min(1, 0.14 + sp * 0.105) * (sp < 0.25 ? sp * 4 : 1);
+    for (let i = 0; i < 2; i++) {
+      const ph = f.ph + i * PI, s = Math.sin(ph), c = Math.cos(ph), L = i ? 'l1' : 'l0', K = i ? 'k1' : 'k0', Nn = i ? 'n1' : 'n0', Ar = i ? 'a1' : 'a0', E = i ? 'e1' : 'e0';
+      g[L + 'f'] = A * (0.16 * run + 0.95 * s) * ff;                       // el muslo sube más adelante de lo que se extiende atrás
+      g[L + 's'] = A * 0.5 * s * fs * (i ? 1 : -1);                         // paso lateral
+      g[K] = 0.1 + 0.12 * run + (0.45 + 1.5 * run) * A * Math.pow(Math.max(0, Math.cos(ph - 0.35)), 1.3) * ff + Math.abs(fs) * 0.3 * A; // recoge el talón al pasar
+      g[Nn] = 0.5 * A * Math.max(0, Math.sin(-ph - 0.3)) - 0.25 * A * Math.max(0, c); // empuja de puntera, cae de talón
+      g[Ar + 'f'] = -A * (0.7 + 0.25 * run) * s * ff;                       // brazo contrario a la pierna
+      g[Ar + 's'] = 0.1 + 0.06 * run;
+      g[E] = 0.3 + 1.2 * run - 0.25 * A * s;
+    }
+    const s0 = Math.sin(f.ph);
+    g.y = -0.03 * A + 0.045 * A * Math.abs(Math.sin(f.ph + 0.6)) * (0.5 + run); // dos botes por ciclo
+    g.pyaw = 0.13 * A * s0 * ff; g.tw = -0.36 * A * s0 * ff; g.roll = 0.04 * A * Math.cos(f.ph);
+    // el cuerpo se inclina con la aceleración: se echa adelante al arrancar y atrás al frenar
+    f.acc += (clamp((sp - f.ps) / Math.max(dt, 0.001), -30, 30) - f.acc) * Math.min(1, dt * 7); f.ps = sp;
+    const lean = (0.03 + 0.022 * sp * ff) * (back ? -0.5 : 1) + clamp(f.acc * 0.011, -0.2, 0.22);
+    g.lean = lean * 0.45; g.bend = lean * 0.55;
+    if (sp < 0.4) { g.y += Math.sin(f.ph * 0.2 + f.i) * 0.004; g.e0 = g.e1 = 0.22; g.k0 = g.k1 = 0.07; g.bend += 0.02; }
+  }
+
+  // p: jugador de la simulación (o el árbitro).
   Fig.pose = function (f, p, dt) {
     const sp = Math.hypot(p.vx, p.vz), st = p.state, T = p.stateT, own = b.owner === p;
     for (const k of KEYS) t[k] = 0;
-    let rate = 16, yaw = 0;
-    // ciclo de carrera, guiado por la distancia recorrida
-    f.ph += (sp * dt * 6.283) / (1.5 + 0.22 * sp);
-    const A = Math.min(1.05, 0.12 + sp * 0.118), s = Math.sin(f.ph), c = Math.cos(f.ph);
-    const fwd = sp > 0.5 ? (p.vx * Math.cos(p.face) + p.vz * Math.sin(p.face)) / sp : 1;
-    if (sp < 0.4) { t.e0 = t.e1 = 0.25; t.a0s = t.a1s = 0.08; t.k0 = t.k1 = 0.06; t.y = Math.sin(f.ph * 0.3 + f.i) * 0.004; }
-    else if (fwd < 0.35) { // paso lateral / de espaldas (marca, portero)
-      t.l0s = 0.35 * s; t.l1s = -0.35 * s; t.k0 = t.k1 = 0.45; t.y = -0.09; t.a0s = t.a1s = 0.5; t.e0 = t.e1 = 0.7; t.lean = 0.12;
-    } else {
-      t.l0f = A * s; t.l1f = -A * s; t.k0 = Math.max(0, c) * A * 1.5 + 0.08; t.k1 = Math.max(0, -c) * A * 1.5 + 0.08;
-      t.a0f = -A * 0.85 * s; t.a1f = A * 0.85 * s; t.e0 = t.e1 = 0.35 + A * 0.95;
-      t.lean = 0.04 + sp * 0.026; t.y = -0.03 * A + Math.abs(s) * 0.035 * A; t.tw = 0.14 * A * s;
-      if (own) { t.a0s = t.a1s = 0.3; t.lean += 0.05; }
-    }
-    // inclinación en el giro
+    let rate = 12, legs = 1, arms = 1; // cuánto de la zancada se mezcla con la pose del estado
+    gait(f, p, dt, sp);
     const df = G.angDiff(f.pf, p.face); f.pf = p.face;
-    t.roll = clamp((df / Math.max(dt, 0.001)) * sp * 0.012, -0.32, 0.32);
-    if (p.gk && st === 'free' && sp < 2.5) { t.y -= 0.1; t.k0 += 0.35; t.k1 += 0.35; t.a0s = t.a1s = 0.65; t.e0 = t.e1 = 0.5; t.lean = 0.15; }
-    if (p.shield) { t.y -= 0.08; t.a0s = t.a1s = 0.9; t.lean = 0.2; }
+    t.roll = clamp((df / Math.max(dt, 0.001)) * sp * 0.012, -0.32, 0.32); // se acuesta en el giro
+    const look = G.angDiff(p.face, Math.atan2(b.z - p.z, b.x - p.x));
+    t.hy = -clamp(look, -1, 1) * 0.8; // la cabeza sigue al balón
+    if (own) { t.a0s = t.a1s = 0.22; t.bend = 0.07; t.hd = 0.18; }
+    if (p.gk && st === 'free' && sp < 2.5) { t.y = -0.1; t.k0 = t.k1 = 0.35; t.a0s = t.a1s = 0.6; t.e0 = t.e1 = 0.35; t.bend = 0.14; }
+    if (p.shield) { t.y = -0.08; t.a0s = t.a1s = 0.85; t.bend = 0.18; }
+    if (p.charge && st === 'free') { const u = Math.min(1, p.charge.t / 0.35); t.l1f = -0.55 * u; t.k1 = 0.7 * u; t.a0f = 0.5 * u; t.a0s = 0.4; t.tw = -0.25 * u; t.lean = -0.05 * u; } // arma la pierna mientras se carga el tiro
 
     switch (st) {
       case 'kick': {
-        const k = p.k, pre = T < k.wind; rate = 34;
-        if (b.held === p || (k.type === 'throw' && !pre)) { // saque con las manos
-          t.a0f = t.a1f = pre ? 3.3 : 1.2; t.e0 = t.e1 = pre ? 0.6 : 0.1; t.lean = pre ? -0.2 : 0.3;
-        } else if (k.air && p.y > 0.05) { t.lean = pre ? -0.25 : 0.45; t.hd = pre ? -0.3 : 0.5; t.a0s = t.a1s = 0.8; t.k0 = t.k1 = 0.5; } // cabezazo
-        else {
-          t.l1f = pre ? -1.0 : 1.3; t.k1 = pre ? 1.4 : 0.05; t.l0f = pre ? 0.25 : -0.3; t.k0 = 0.2;
-          t.lean = pre ? -0.08 : 0.16; t.a0f = pre ? 0.9 : -0.5; t.a1f = pre ? -0.7 : 0.4; t.a0s = 0.5; t.tw = pre ? -0.3 : 0.35;
+        const k = p.k, pre = T < k.wind; rate = 30; legs = arms = 0;
+        if (b.held === p || (k.type === 'throw' && !pre)) { t.a0f = t.a1f = pre ? 3.3 : 1.2; t.e0 = t.e1 = pre ? 0.6 : 0.1; t.lean = pre ? -0.2 : 0.3; t.k0 = t.k1 = 0.1; } // saque con las manos
+        else if (k.air && p.y > 0.05) { t.lean = pre ? -0.25 : 0.3; t.bend = pre ? -0.1 : 0.3; t.hd = pre ? -0.3 : 0.5; t.a0s = t.a1s = 0.8; t.e0 = t.e1 = 0.6; t.k0 = t.k1 = 0.5; } // cabezazo
+        else { // pierna de apoyo firme, cadera abierta, brazo contrario al frente
+          t.l1f = pre ? -1.0 : 1.25; t.k1 = pre ? 1.45 : 0.08; t.n1 = pre ? 0.2 : 0.6; t.l0f = pre ? 0.22 : -0.28; t.k0 = 0.22;
+          t.lean = pre ? -0.06 : 0.1; t.bend = pre ? -0.05 : 0.12; t.pyaw = pre ? 0.3 : -0.35; t.tw = pre ? -0.5 : 0.55;
+          t.a0f = pre ? 0.9 : -0.5; t.a1f = pre ? -0.7 : 0.4; t.a0s = 0.55; t.a1s = 0.3; t.e0 = t.e1 = 0.5;
         }
         break;
       }
-      case 'setpiece': if (b.held === p) { t.a0f = t.a1f = 3.1; t.e0 = t.e1 = 0.5; t.l0f = t.l1f = 0; t.k0 = t.k1 = 0.05; } break;
-      case 'tackle': t.l1f = 1.15; t.k1 = 0.1; t.l0f = -0.5; t.k0 = 0.9; t.y = -0.26; t.lean = 0.3; t.a0s = t.a1s = 0.7; rate = 26; break;
-      case 'slide': t.y = -0.58; t.lean = -1.15; t.l1f = 1.4; t.k1 = 0.05; t.l0f = 0.9; t.k0 = 1.5; t.a0f = t.a1f = -0.7; t.a0s = t.a1s = 0.5; t.hd = 0.5; rate = 22; break;
-      case 'stun': t.lean = 0.5; t.a0s = 1.1; t.a1s = 0.9; t.y -= 0.08; break;
-      case 'down': t.y = -0.74; t.lean = -1.45; t.k0 = 0.7; t.k1 = 0.3; t.l0f = 0.5; t.a0s = t.a1s = 1.2; t.hd = 0.3; rate = 9; break;
-      case 'celebrate': t.a0s = t.a1s = 2.5; t.e0 = t.e1 = 0.2; if (sp < 1) { t.y = Math.abs(Math.sin(T * 7)) * 0.22; t.k0 = t.k1 = 0.3; } break;
+      case 'setpiece': legs = arms = 0; t.k0 = t.k1 = 0.06; t.e0 = t.e1 = 0.2; t.a0s = t.a1s = 0.08; if (b.held === p) { t.a0f = t.a1f = 3.1; t.e0 = t.e1 = 0.5; } break;
+      case 'tackle': legs = arms = 0; rate = 24; t.l1f = 1.15; t.k1 = 0.1; t.n1 = -0.3; t.l0f = -0.5; t.k0 = 0.9; t.y = -0.26; t.lean = 0.2; t.bend = 0.15; t.a0s = t.a1s = 0.7; t.e0 = t.e1 = 0.5; break;
+      case 'slide': legs = arms = 0; rate = 20; t.y = -0.6; t.lean = -1.15; t.bend = 0.35; t.l1f = 1.4; t.k1 = 0.05; t.n1 = -0.4; t.l0f = 0.9; t.k0 = 1.5; t.a0f = t.a1f = -0.7; t.a0s = t.a1s = 0.5; t.e0 = t.e1 = 0.3; t.hd = 0.3; break;
+      case 'stun': legs = 0.6; arms = 0; t.lean = 0.25; t.bend = 0.3; t.a0s = 1.1; t.a1s = 0.9; t.e0 = t.e1 = 0.6; t.y = -0.08; break;
+      case 'down': legs = arms = 0; rate = 8; t.y = -0.76; t.lean = -1.45; t.k0 = 0.7; t.k1 = 0.3; t.l0f = 0.5; t.a0s = t.a1s = 1.2; t.e0 = t.e1 = 0.3; t.hd = 0.3; break;
+      case 'celebrate': arms = 0; t.a0s = t.a1s = 2.5; t.e0 = t.e1 = 0.25; t.bend = -0.08; t.hd = -0.2; if (sp < 1) { t.y = Math.abs(Math.sin(T * 7 + f.i)) * 0.22; t.k0 = t.k1 = 0.3; } break;
       case 'skill': {
-        const k = p.sk.kind; rate = 30;
-        if (k === 'stepover') { const w = Math.sin(T * 24); t.l0s = Math.max(0, w) * 0.7; t.l1s = Math.max(0, -w) * 0.7; t.l0f = 0.3 * Math.max(0, w); t.l1f = 0.3 * Math.max(0, -w); t.y = -0.07; t.a0s = t.a1s = 0.7; t.roll = w * 0.15; }
+        const k = p.sk.kind; rate = 26; legs = 0.3; arms = 0;
+        if (k === 'stepover') { const w = Math.sin(T * 24); t.l0s = Math.max(0, w) * 0.7; t.l1s = Math.max(0, -w) * 0.7; t.l0f = 0.3 * Math.max(0, w); t.l1f = 0.3 * Math.max(0, -w); t.y = -0.07; t.a0s = t.a1s = 0.7; t.roll = w * 0.15; t.pyaw = w * 0.3; }
         else if (k === 'croqueta') { t.roll = 0.3; t.l0s = 0.5; t.l1s = 0.5; t.y = -0.06; t.a0s = t.a1s = 0.8; }
-        else { t.a0s = t.a1s = 1.0; t.y = -0.05; t.lean = 0.1; }
+        else { t.a0s = t.a1s = 1.0; t.y = -0.05; t.bend = 0.12; }
+        t.e0 = t.e1 = 0.6; t.k0 = t.k1 = 0.3;
         break;
       }
       case 'gkdive': {
-        const u = Math.min(1, T / 0.28); rate = 30;
-        t.roll = p.dv.s * 1.38 * u; t.y = -0.55 * u; t.a0f = t.a1f = 2.9; t.e0 = t.e1 = 0.1; t.l0f = -0.2; t.l1f = 0.3; t.k0 = 0.3; t.k1 = 0.5; t.lean = 0; t.tw = 0;
+        const u = Math.min(1, T / 0.28); rate = 26; legs = arms = 0;
+        t.roll = p.dv.s * 1.38 * u; t.y = -0.55 * u; t.a0f = t.a1f = 2.9; t.e0 = t.e1 = 0.1; t.l0f = -0.2; t.l1f = 0.3; t.k0 = 0.3; t.k1 = 0.5; t.hy = 0;
         break;
       }
-      case 'gkhold': t.a0f = t.a1f = 1.15; t.e0 = t.e1 = 1.0; t.a0s = t.a1s = -0.1; break;
+      case 'gkhold': arms = 0; break;
     }
-    if (b.held === p && p.gk && st !== 'kick') { t.a0f = t.a1f = 1.15; t.e0 = t.e1 = 1.0; }
+    if (b.held === p && p.gk && st !== 'kick') { arms = 0; t.a0f = t.a1f = 1.15; t.e0 = t.e1 = 1.0; t.a0s = t.a1s = -0.08; }
 
+    // la pose del estado se interpola (sin saltos); la zancada se suma directa para no perder amplitud ni ritmo
     const cu = f.c, kk = 1 - Math.exp(-dt * rate);
     for (const k of KEYS) cu[k] += (t[k] - cu[k]) * kk;
-    f.root.position.set(p.x, p.y, p.z); f.root.rotation.y = Math.PI / 2 - p.face + yaw;
-    f.hips.position.y = 0.92 + cu.y; f.hips.rotation.set(cu.lean, 0, cu.roll);
-    f.spine.rotation.set(cu.lean * 0.25, cu.tw, 0); f.head.rotation.x = cu.hd - cu.lean * 0.7;
-    f.arm[0].rotation.set(-cu.a0f, 0, cu.a0s); f.arm[1].rotation.set(-cu.a1f, 0, -cu.a1s);
-    f.elb[0].rotation.x = -cu.e0; f.elb[1].rotation.x = -cu.e1;
-    f.leg[0].rotation.set(-cu.l0f, 0, cu.l0s); f.leg[1].rotation.set(-cu.l1f, 0, -cu.l1s);
-    f.knee[0].rotation.x = cu.k0; f.knee[1].rotation.x = cu.k1;
+    f.gw += (legs - f.gw) * Math.min(1, dt * 14); f.aw = (f.aw === undefined ? arms : f.aw + (arms - f.aw) * Math.min(1, dt * 14));
+    const w = f.gw, wa = f.aw, V = (k) => cu[k] + g[k] * w, VA = (k) => cu[k] + g[k] * wa;
+    const lean = V('lean'), bend = V('bend'), roll = V('roll'), pyaw = V('pyaw');
+    f.root.position.set(p.x, p.y, p.z); f.root.rotation.y = PI / 2 - p.face;
+    f.hips.position.y = 0.95 + V('y'); f.hips.rotation.set(lean, pyaw, roll);
+    f.spine.rotation.set(bend * 0.5, -pyaw * 0.5, -roll * 0.5); f.chest.rotation.set(bend * 0.5, V('tw') - pyaw * 0.5, 0);
+    f.head.rotation.set(cu.hd - (lean + bend) * 0.85, cu.hy - V('tw') * 0.8, 0);
+    f.arm[0].rotation.set(-VA('a0f'), 0, VA('a0s')); f.arm[1].rotation.set(-VA('a1f'), 0, -VA('a1s'));
+    f.elb[0].rotation.x = -VA('e0'); f.elb[1].rotation.x = -VA('e1');
+    f.leg[0].rotation.set(-V('l0f'), 0, V('l0s')); f.leg[1].rotation.set(-V('l1f'), 0, -V('l1s'));
+    f.knee[0].rotation.x = V('k0'); f.knee[1].rotation.x = V('k1');
+    f.ank[0].rotation.x = V('n0'); f.ank[1].rotation.x = V('n1');
     f.root.updateMatrixWorld(true);
     for (const m of f.map) parts[m[0]].setMatrixAt(m[1], m[2].matrixWorld);
   };
 
   Fig.hide = function (f) { f.root.position.set(0, -50, 0); f.root.updateMatrixWorld(true); for (const m of f.map) parts[m[0]].setMatrixAt(m[1], m[2].matrixWorld); };
   Fig.flush = function () { for (const k in parts) parts[k].instanceMatrix.needsUpdate = true; };
-  Fig.shadows = function (on) { for (const k in parts) parts[k].castShadow = on; };
+  Fig.shadows = function (on) { for (const k in parts) parts[k].castShadow = on && parts[k].userData.sh; };
 })();
 </script>
 <script>// Cámaras: transmisión (por defecto), alta/táctica y detrás del jugador. Expone la base para que el stick sea relativo a la cámara.
@@ -2369,20 +2437,20 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   Cam.update = function (dt) {
     const M = G.M, cam = Cam.cam, B = Cam.basis; t += dt;
-    let tx = b.x + clamp(b.vx * 0.35, -6, 6), tz = b.z + clamp(b.vz * 0.35, -4, 4), zoom = 1;
+    let tx = b.x + clamp(b.vx * 0.5, -7, 7), tz = b.z + clamp(b.vz * 0.4, -4, 4), zoom = 1;
     if (M.state === 'goal' && M.goalInfo.scorer && !M.goalInfo.own) { tx = M.goalInfo.scorer.x; tz = M.goalInfo.scorer.z; zoom = 0.6; }
     else if ((M.state === 'ready' || M.state === 'setup') && M.rs && (M.rs.type === 'corner' || M.rs.type === 'penalty')) { tx = b.x * 0.75 + Math.sign(b.x) * 10; tz = b.z * 0.45; zoom = 1.15; } // encuadra el área
-    const k = Cam.snap ? 1 : 1 - Math.exp(-dt * 4.5);
+    const k = Cam.snap ? 1 : 1 - Math.exp(-dt * 2.6); // seguimiento suave: la cámara no persigue cada toque
     fx += (tx - fx) * k; fz += (tz - fz) * k;
     let wx, wy, wz, lx, lz, f;
     if (Cam.orbit) { wx = Math.sin(t * 0.1) * 75; wy = 26; wz = Math.cos(t * 0.1) * 62; lx = fx * 0.5; lz = fz * 0.5; f = 34; B.rx = 1; B.rz = 0; B.ux = 0; B.uz = -1; }
     else if (Cam.mode === 'alta') { wx = fx * 0.78; wy = 58; wz = 46; lx = fx * 0.86; lz = fz * 0.3; f = 33; B.rx = 1; B.rz = 0; B.ux = 0; B.uz = -1; }
     else if (Cam.mode === 'pro') {
       const d = M.human >= 0 ? M.teams[M.human].dir : 1;
-      wx = fx - d * 25; wy = 12.5; wz = fz * 0.75; lx = fx + d * 9; lz = fz * 0.82; f = 40; B.rx = 0; B.rz = d; B.ux = d; B.uz = 0;
-    } else { const nz = Math.max(0, fz); wx = clamp(fx * 0.9, -44, 44); wy = 19 + nz * 0.12; wz = 48 + nz * 0.42; lx = fx; lz = fz * 0.55 - 1; f = 21.5; B.rx = 1; B.rz = 0; B.ux = 0; B.uz = -1; }
+      wx = clamp(fx - d * 25, -56, 56); wy = 12.5; wz = fz * 0.75; lx = fx + d * 9; lz = fz * 0.82; f = 40; B.rx = 0; B.rz = d; B.ux = d; B.uz = 0;
+    } else { wx = clamp(fx * 0.9, -44, 44); wy = 22 + Math.max(0, fz) * 0.1; wz = 52; lx = fx; lz = fz * 0.5 - 2; f = 23.5; B.rx = 1; B.rz = 0; B.ux = 0; B.uz = -1; }
     f = f * zoom * Math.max(1, 1.7 / cam.aspect); // pantallas angostas: abre el campo para no perder ancho
-    const k2 = Cam.snap ? 1 : 1 - Math.exp(-dt * 6);
+    const k2 = Cam.snap ? 1 : 1 - Math.exp(-dt * 3.5);
     px += (wx - px) * k2; py += (wy - py) * k2; pz += (wz - pz) * k2; fov += (f - fov) * (Cam.snap ? 1 : 1 - Math.exp(-dt * 2.5));
     Cam.snap = false;
     cam.position.set(px, py, pz); cam.lookAt(lx, 0.5, lz);
@@ -2395,7 +2463,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   'use strict';
   const G = window.G, THREE = window.THREE, P = G.P, b = G.ball;
   const Rn = (G.Render = { q: 3, renderer: null, scene: null });
-  let renderer, scene, sun, ballMesh, ballSh, ring, arrow, blobs, figs = [], ref, crowd = [], time = 0, grass;
+  let renderer, scene, sun, ballMesh, ballSh, ring, ring2, arrow, blobs, figs = [], ref, crowd = [], hide = [], time = 0, grass;
   const mobile = (Rn.mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 900));
   const up = new THREE.Vector3(), m4 = new THREE.Matrix4(), col = new THREE.Color();
 
@@ -2456,11 +2524,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       const bg = ['#0b3d91', '#b3121d', '#111', '#e0a80f', '#0a7a3c', '#111'];
       for (let i = 0; i < 6; i++) { c.fillStyle = bg[i]; c.fillRect((i * w) / 6, 0, w / 6, h); c.fillStyle = '#fff'; c.font = 'bold 40px sans-serif'; c.textAlign = 'center'; c.fillText(['GOLAZO', 'FÚTBOL 3D', 'GOLAZO', '¡VAMOS!', 'GOLAZO', 'LA LIGA DEL BARRIO'][i], (i + 0.5) * (w / 6), 46, w / 6 - 10); }
     }, [2, 1]) });
-    crowd = [];
+    crowd = []; hide = [];
     // cuatro tribunas inclinadas: [centro x, centro z, ancho, giro]
     const S = [[0, -(P.HW + 8), 150, 0], [0, P.HW + 8, 150, Math.PI], [-(P.HL + 9), 0, 100, Math.PI / 2], [P.HL + 9, 0, 100, -Math.PI / 2]];
     S.forEach((s, i) => {
       const st = new THREE.Group(); st.position.set(s[0], 0, s[1]); st.rotation.y = s[3];
+      hide.push({ o: st, ax: i < 2 ? 'z' : 'x', sg: i % 2 ? 1 : -1, lim: (i < 2 ? P.HW : P.HL) + 3 });
       const slope = Math.atan2(13, 22), len = Math.hypot(13, 22);
       for (let L = 0; L < 2; L++) {
         const geo = new THREE.PlaneGeometry(s[2], len); const m = new THREE.Mesh(geo, L ? matB : matA);
@@ -2475,7 +2544,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     });
     const lampM = new THREE.MeshBasicMaterial({ color: 0xfff6d8 }), poleM = new THREE.MeshLambertMaterial({ color: 0x3a3f4a });
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) { // torres de luz
-      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.8, 34, 0.8), poleM); pole.position.set(sx * 68, 17, sz * 50); g.add(pole);
+      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.8, 34, 0.8), poleM); pole.position.set(sx * 68, 17, sz * 50); g.add(pole); hide.push({ o: pole, ax: 'z', sg: sz, lim: 40 });
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(7, 3.5, 0.5), lampM); lamp.position.set(sx * 68, 35, sz * 50); lamp.lookAt(0, 0, 0); g.add(lamp);
     }
     return g;
@@ -2520,7 +2589,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     const shM = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false });
     ballSh = new THREE.Mesh(new THREE.CircleGeometry(0.17, 12), shM.clone()); ballSh.rotation.x = -Math.PI / 2; scene.add(ballSh);
     blobs = new THREE.InstancedMesh(new THREE.CircleGeometry(0.42, 12).rotateX(-Math.PI / 2), shM, 23); blobs.frustumCulled = false; scene.add(blobs);
-    ring = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.6, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe14a, transparent: true, opacity: 0.9, depthWrite: false })); scene.add(ring);
+    ring = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.68, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe14a, transparent: true, opacity: 0.9, depthWrite: false })); scene.add(ring);
+    ring2 = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.74, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false })); scene.add(ring2);
     arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xffe14a })); scene.add(arrow);
 
     G.Figure.init(scene, 23);
@@ -2601,6 +2671,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     // marcador del jugador activo
     const t = M.human >= 0 ? M.teams[M.human] : null, a = t && t.active;
     ring.visible = arrow.visible = !!a && (M.state === 'play' || M.state === 'ready' || M.state === 'setup');
+    const pt = G.Control.target; ring2.visible = ring.visible && !!pt; // a quién iría el pase ahora mismo
+    if (pt) { ring2.position.set(pt.x, 0.045, pt.z); ring2.scale.setScalar(1 + Math.sin(time * 7) * 0.08); }
+    const cp = G.Cam.cam.position; for (const h of hide) h.o.visible = G.Cam.orbit || h.sg * cp[h.ax] < h.lim; // nada entre la cámara y la cancha
     if (a) { ring.position.set(a.x, 0.04, a.z); arrow.position.set(a.x, 2.25 + a.y + Math.sin(time * 5) * 0.06, a.z); arrow.rotation.y = time * 2; }
     // público: salta más cuanto más emoción
     if (Rn.q > 0) for (const c of crowd) c.m.position.y = c.y + Math.abs(Math.sin(time * (2.2 + M.excite * 5) + c.ph)) * (0.06 + M.excite * 0.55);
@@ -2830,7 +2903,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     pn.innerHTML = `<h2>Controles</h2><div class="help">
       <div><h3>Teclado</h3><p><kbd>WASD</kbd> / flechas: moverse</p><p><kbd>J</kbd> pase · <kbd>K</kbd> tiro (mantener = potencia)</p><p><kbd>L</kbd> pase largo / centro · <kbd>I</kbd> pase al hueco</p><p><kbd>U</kbd>+<kbd>K</kbd> tiro colocado · <kbd>Shift</kbd> sprint</p><p><kbd>Espacio</kbd> filigrana · <kbd>O</kbd> proteger balón</p><p><kbd>Q</kbd> cambiar jugador · <kbd>C</kbd> cámara · <kbd>Esc</kbd> pausa</p><p><kbd>F2</kbd> o <kbd>\`</kbd>: panel de afinado</p></div>
       <div><h3>Defendiendo</h3><p><kbd>J</kbd> / PASE: cambiar de jugador</p><p><kbd>K</kbd> / TIRO: entrada</p><p><kbd>L</kbd> / LARGO: barrida (riesgo de falta y tarjeta)</p><p><kbd>I</kbd> o <kbd>Espacio</kbd> / FILIGRANA: un compañero presiona</p><p>Sin sprint, tu jugador se perfila hacia el balón.</p></div>
-      <div><h3>Táctil</h3><p>Joystick: mitad izquierda. Llévalo al borde para sprintar.</p><p>PASE: toque. <b>Deslizar</b> sobre PASE = pase al hueco.</p><p>TIRO: mantener = potencia. <b>Deslizar</b> sobre TIRO = tiro colocado hacia donde deslizas.</p><p>LARGO: pase aéreo; desde la banda es centro.</p><p>FILIGRANA + joystick: adelante bicicleta, al lado bola cruzada, atrás giro.</p></div>
+      <div><h3>Táctil</h3><p>Joystick: mitad izquierda. Llévalo al borde para sprintar.</p><p>PASE: va al compañero marcado con el aro blanco. AL HUECO: pase filtrado al espacio por delante del compañero.</p><p>TIRO: mantener = potencia. <b>Deslizar</b> sobre TIRO = tiro colocado hacia donde deslizas.</p><p>LARGO: pase aéreo; desde la banda es centro.</p><p>FILIGRANA + joystick: adelante bicicleta, al lado bola cruzada, atrás giro.</p></div>
       <div><h3>Gamepad</h3><p>A pase · B tiro · X largo · Y al hueco</p><p>RT sprint · LT proteger · RB tiro colocado</p><p>LB cambiar · stick derecho: filigrana</p><p>Start pausa · Select cámara</p></div>
       <div><h3>Consejos</h3><p>Apunta el tiro con el stick hacia un palo; sin dirección va al palo lejano.</p><p>En sprint los toques son largos: suelta el sprint para regatear en corto.</p><p>Puedes pedir pase o tiro antes de que llegue el balón: saldrá de primera.</p><p>Toca 3 veces el reloj para abrir el panel de afinado.</p></div>
     </div><button class="btn" data-a="back">Volver</button>`;
@@ -2928,7 +3001,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   // ---------- HUD por cuadro ----------
   let last = {}, radarT = 0;
-  const DEF_LABEL = { pass: 'CAMBIAR', shoot: 'ENTRADA', lob: 'BARRIDA', skill: 'PRESIÓN' }, ATT_LABEL = { pass: 'PASE', shoot: 'TIRO', lob: 'LARGO', skill: 'FILIGRANA' };
+  const DEF_LABEL = { pass: 'CAMBIAR', shoot: 'ENTRADA', lob: 'BARRIDA', through: 'PRESIÓN', skill: 'PRESIÓN' }, ATT_LABEL = { pass: 'PASE', shoot: 'TIRO', lob: 'LARGO', through: 'AL HUECO', skill: 'FILIGRANA' };
   function set(id, key, val, fn) { if (last[key] !== val) { last[key] = val; fn($(id), val); } }
   UI.update = function (dt) {
     if (msgT > 0 && (msgT -= dt) <= 0) $('msg').className = '';

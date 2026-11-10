@@ -16,17 +16,17 @@ button:focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; }
 #sc { background: #fff; color: #10151f; padding: 1px 9px; border-radius: 6px; font-size: 17px; min-width: 56px; text-align: center; }
 #clock { color: var(--ac); font-variant-numeric: tabular-nums; margin-left: 5px; min-width: 44px; }
 #btn-pause { position: absolute; top: max(8px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 46px; height: 40px; border-radius: 9px; background: var(--panel); pointer-events: auto; font-size: 15px; }
-#msg { position: absolute; top: 17%; left: 50%; transform: translateX(-50%); text-align: center; font-weight: 800; font-size: clamp(20px, calc(var(--vh) * 5), 40px); text-shadow: 0 2px 10px #000, 0 0 3px #000; opacity: 0; transition: opacity 0.25s; white-space: nowrap; }
+#msg { position: absolute; top: 27%; left: 50%; transform: translateX(-50%); text-align: center; font-weight: 800; font-size: clamp(20px, calc(var(--vh) * 5), 40px); text-shadow: 0 2px 10px #000, 0 0 3px #000; opacity: 0; transition: opacity 0.25s; white-space: nowrap; }
 #msg.on { opacity: 1; }
 #msg small { display: block; font-size: 0.5em; font-weight: 600; color: var(--ac); }
 #msg.goal { font-size: clamp(34px, calc(var(--vh) * 11), 84px); color: var(--ac); letter-spacing: 2px; }
-#bottom { position: absolute; bottom: max(6px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; }
-#pname { font-weight: 700; font-size: 13px; text-shadow: 0 1px 4px #000; }
-#stam, #power { width: 130px; height: 5px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; }
+#bottom { position: absolute; top: calc(max(8px, env(safe-area-inset-top)) + 40px); left: max(12px, env(safe-area-inset-left)); display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+#pname { font-weight: 700; font-size: 12px; text-shadow: 0 1px 4px #000; opacity: 0.9; }
+#stam, #power { width: 92px; height: 4px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; }
 #stam i { display: block; height: 100%; width: 100%; background: var(--ac2); }
-#power { height: 9px; width: 150px; visibility: hidden; border: 1px solid rgba(255, 255, 255, 0.5); }
+#power { position: absolute; top: 22%; left: 50%; transform: translateX(-50%); height: 9px; width: 150px; visibility: hidden; border: 1px solid rgba(255, 255, 255, 0.5); }
 #power i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #2fd16a, #ffe14a 65%, #ff4a3a); }
-#radar { width: clamp(120px, calc(var(--vh) * 21), 210px); height: auto; opacity: 0.9; border-radius: 5px; }
+#radar { position: absolute; top: max(6px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: clamp(96px, calc(var(--vh) * 17), 168px); height: auto; opacity: 0.7; border-radius: 5px; }
 
 /* ---------- Controles táctiles ---------- */
 #touch { position: absolute; inset: 0; pointer-events: none; }
@@ -40,9 +40,9 @@ button:focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; }
 #tb-sprint { right: calc(3vmin + env(safe-area-inset-right)); bottom: 5vmin; width: 22vmin; height: 22vmin; border-color: #ff8a3a; }
 #tb-pass { right: calc(28vmin + env(safe-area-inset-right)); bottom: 4vmin; width: 21vmin; height: 21vmin; border-color: #2fd16a; }
 #tb-shoot { right: calc(20vmin + env(safe-area-inset-right)); bottom: 28vmin; width: 22vmin; height: 22vmin; border-color: #ff4a3a; }
-#tb-lob { right: calc(46vmin + env(safe-area-inset-right)); bottom: 24vmin; width: 17vmin; height: 17vmin; border-color: #35c9e8; }
+#tb-lob { right: calc(44vmin + env(safe-area-inset-right)); bottom: 27vmin; width: 17vmin; height: 17vmin; border-color: #35c9e8; }
+#tb-through { right: calc(51vmin + env(safe-area-inset-right)); bottom: 5vmin; width: 18vmin; height: 18vmin; border-color: #b6e04a; }
 #tb-skill { right: calc(2vmin + env(safe-area-inset-right)); bottom: 30vmin; width: 16vmin; height: 16vmin; border-color: #e84fb0; font-size: clamp(7px, 2vmin, 12px); }
-body.touch #bottom { bottom: max(4px, env(safe-area-inset-bottom)); }
 
 /* ---------- Pantallas ---------- */
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: calc(var(--vh) * 1.6); padding-block: calc(var(--vh) * 2); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: linear-gradient(180deg, rgba(8, 13, 28, 0.55), rgba(8, 13, 28, 0.86)); overflow: auto; touch-action: pan-x pan-y; }

@@ -34,7 +34,7 @@
   };
 
   const setState = (G.setState = function (p, s, dur) { p.state = s; p.stateT = 0; p.dur = dur || 0; });
-  const topSpeed = (G.topSpeed = (p) => (6.5 + 2.1 * p.pac) * T.speed * (0.88 + 0.12 * Math.min(1, p.stamina / 30)));
+  const topSpeed = (G.topSpeed = (p) => (6.0 + 2.0 * p.pac) * T.speed * (0.88 + 0.12 * Math.min(1, p.stamina / 30)));
   const isHuman = (G.isHuman = (p) => p.team.human && p.team.active === p);
 
   G.nd = 0; // distancia del último nearOpp
@@ -54,14 +54,14 @@
     if (p.shield) top *= 0.55;
     if (p.boost > 0) top *= 1.07;
     const wx = mx * top, wz = mz * top, sp = hyp(p.vx, p.vz);
-    let acc = (10 + 6 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
+    let acc = (8.5 + 5 * p.pac) * T.accel * accMul * (own ? 0.85 : 1) * (p.boost > 0 ? 1.5 : 1);
     acc *= wx * p.vx + wz * p.vz < sp * sp * 0.6 ? 1.5 : 1.15 - 0.6 * Math.min(1, sp / (top + 0.01));
     let dx = wx - p.vx, dz = wz - p.vz; const dl = hyp(dx, dz), md = acc * dt;
     if (dl > md) { dx *= md / dl; dz *= md / dl; }
     p.vx += dx; p.vz += dz; p.x += p.vx * dt; p.z += p.vz * dt;
     if (sprinting) { const dr = (10 - 4.5 * p.phy) * p.st.stam * dt; p.stamina = Math.max(0, p.stamina - dr); p.maxSt = Math.max(55, p.maxSt - dr * 0.03); }
     else p.stamina = Math.min(p.maxSt, p.stamina + (mag < 0.3 ? 9 : 4.5) * dt);
-    const sp2 = hyp(p.vx, p.vz), tf = p.faceTo != null ? p.faceTo : sp2 > 0.6 ? Math.atan2(p.vz, p.vx) : p.face, mr = (own ? 9 : 13) * dt;
+    const sp2 = hyp(p.vx, p.vz), tf = p.faceTo != null ? p.faceTo : sp2 > 0.6 ? Math.atan2(p.vz, p.vx) : p.face, mr = (own ? 7.5 : 10.5) * dt;
     p.face += clamp(G.angDiff(p.face, tf), -mr, mr);
   }
 
@@ -91,9 +91,9 @@
     let tx = k.x, tz = k.z, vh, vy = 0, spin = 0, sig, sigV = 0;
     switch (k.type) {
       case 'pass': case 'through': {
-        if (k.target) { const m = k.target, tf = hyp(m.x - b.x, m.z - b.z) / 15; tx = m.x + m.vx * tf * 0.8; tz = m.z + m.vz * tf * 0.8; }
+        if (k.target && k.type === 'pass') { const m = k.target, tf = hyp(m.x - b.x, m.z - b.z) / 14; tx = m.x + m.vx * tf; tz = m.z + m.vz * tf; } // al pie de donde va a estar
         const d = hyp(tx - b.x, tz - b.z);
-        vh = clamp(G.Ball.speedForRoll(d, k.type === 'pass' ? 6 : 4) * T.pass, 5, 27);
+        vh = clamp(G.Ball.speedForRoll(d, k.type === 'pass' ? 8.5 : 5.5) * T.pass, 7, 30); // firme: llega con vida
         if (air) { vh *= 0.85; vy = b.y > 1.4 ? -1 : 1.5; }
         sig = (0.012 + (1 - p.pas) * 0.05) * errM; break;
       }
@@ -184,7 +184,9 @@
     if (b.owner === p) { dribble(p, d); return; }
     if (b.kicker === p && b.kickT < 0.3) return;
     const rvx = b.vx - p.vx, rvz = b.vz - p.vz;
-    if (p.state === 'free' && p.touchCD <= 0 && d < 0.8 && b.y < 1.35 + p.y) {
+    // el rival solo corta un pase fuerte si el balón le pasa muy cerca: los pases firmes y bien dirigidos llegan
+    const rival = b.kicker && b.kicker.team !== p.team && !b.owner && hyp(b.vx, b.vz) > 9;
+    if (p.state === 'free' && p.touchCD <= 0 && d < (rival ? 0.55 : 0.8) && b.y < 1.35 + p.y) {
       const o = b.owner;
       if (o && (o.team === p.team || hyp(o.x - b.x, o.z - b.z) < 1.15 || o.state === 'skill')) return; // solo se roba con entrada o si el toque fue largo
       const rs = hyp(rvx, rvz, b.vy), max = 13 + 12 * (p.dri + p.pas) * 0.5 + (b.kicker && b.kicker.team === p.team ? 8 : 0);

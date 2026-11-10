@@ -3,7 +3,7 @@
   'use strict';
   const G = window.G, THREE = window.THREE, P = G.P, b = G.ball;
   const Rn = (G.Render = { q: 3, renderer: null, scene: null });
-  let renderer, scene, sun, ballMesh, ballSh, ring, arrow, blobs, figs = [], ref, crowd = [], time = 0, grass;
+  let renderer, scene, sun, ballMesh, ballSh, ring, ring2, arrow, blobs, figs = [], ref, crowd = [], hide = [], time = 0, grass;
   const mobile = (Rn.mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && Math.min(screen.width, screen.height) < 900));
   const up = new THREE.Vector3(), m4 = new THREE.Matrix4(), col = new THREE.Color();
 
@@ -64,11 +64,12 @@
       const bg = ['#0b3d91', '#b3121d', '#111', '#e0a80f', '#0a7a3c', '#111'];
       for (let i = 0; i < 6; i++) { c.fillStyle = bg[i]; c.fillRect((i * w) / 6, 0, w / 6, h); c.fillStyle = '#fff'; c.font = 'bold 40px sans-serif'; c.textAlign = 'center'; c.fillText(['GOLAZO', 'FÚTBOL 3D', 'GOLAZO', '¡VAMOS!', 'GOLAZO', 'LA LIGA DEL BARRIO'][i], (i + 0.5) * (w / 6), 46, w / 6 - 10); }
     }, [2, 1]) });
-    crowd = [];
+    crowd = []; hide = [];
     // cuatro tribunas inclinadas: [centro x, centro z, ancho, giro]
     const S = [[0, -(P.HW + 8), 150, 0], [0, P.HW + 8, 150, Math.PI], [-(P.HL + 9), 0, 100, Math.PI / 2], [P.HL + 9, 0, 100, -Math.PI / 2]];
     S.forEach((s, i) => {
       const st = new THREE.Group(); st.position.set(s[0], 0, s[1]); st.rotation.y = s[3];
+      hide.push({ o: st, ax: i < 2 ? 'z' : 'x', sg: i % 2 ? 1 : -1, lim: (i < 2 ? P.HW : P.HL) + 3 });
       const slope = Math.atan2(13, 22), len = Math.hypot(13, 22);
       for (let L = 0; L < 2; L++) {
         const geo = new THREE.PlaneGeometry(s[2], len); const m = new THREE.Mesh(geo, L ? matB : matA);
@@ -83,7 +84,7 @@
     });
     const lampM = new THREE.MeshBasicMaterial({ color: 0xfff6d8 }), poleM = new THREE.MeshLambertMaterial({ color: 0x3a3f4a });
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) { // torres de luz
-      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.8, 34, 0.8), poleM); pole.position.set(sx * 68, 17, sz * 50); g.add(pole);
+      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.8, 34, 0.8), poleM); pole.position.set(sx * 68, 17, sz * 50); g.add(pole); hide.push({ o: pole, ax: 'z', sg: sz, lim: 40 });
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(7, 3.5, 0.5), lampM); lamp.position.set(sx * 68, 35, sz * 50); lamp.lookAt(0, 0, 0); g.add(lamp);
     }
     return g;
@@ -128,7 +129,8 @@
     const shM = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false });
     ballSh = new THREE.Mesh(new THREE.CircleGeometry(0.17, 12), shM.clone()); ballSh.rotation.x = -Math.PI / 2; scene.add(ballSh);
     blobs = new THREE.InstancedMesh(new THREE.CircleGeometry(0.42, 12).rotateX(-Math.PI / 2), shM, 23); blobs.frustumCulled = false; scene.add(blobs);
-    ring = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.6, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe14a, transparent: true, opacity: 0.9, depthWrite: false })); scene.add(ring);
+    ring = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.68, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffe14a, transparent: true, opacity: 0.9, depthWrite: false })); scene.add(ring);
+    ring2 = new THREE.Mesh(new THREE.RingGeometry(0.52, 0.74, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false })); scene.add(ring2);
     arrow = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xffe14a })); scene.add(arrow);
 
     G.Figure.init(scene, 23);
@@ -209,6 +211,9 @@
     // marcador del jugador activo
     const t = M.human >= 0 ? M.teams[M.human] : null, a = t && t.active;
     ring.visible = arrow.visible = !!a && (M.state === 'play' || M.state === 'ready' || M.state === 'setup');
+    const pt = G.Control.target; ring2.visible = ring.visible && !!pt; // a quién iría el pase ahora mismo
+    if (pt) { ring2.position.set(pt.x, 0.045, pt.z); ring2.scale.setScalar(1 + Math.sin(time * 7) * 0.08); }
+    const cp = G.Cam.cam.position; for (const h of hide) h.o.visible = G.Cam.orbit || h.sg * cp[h.ax] < h.lim; // nada entre la cámara y la cancha
     if (a) { ring.position.set(a.x, 0.04, a.z); arrow.position.set(a.x, 2.25 + a.y + Math.sin(time * 5) * 0.06, a.z); arrow.rotation.y = time * 2; }
     // público: salta más cuanto más emoción
     if (Rn.q > 0) for (const c of crowd) c.m.position.y = c.y + Math.abs(Math.sin(time * (2.2 + M.excite * 5) + c.ph)) * (0.06 + M.excite * 0.55);

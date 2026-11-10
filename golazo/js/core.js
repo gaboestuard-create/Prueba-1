@@ -13,12 +13,12 @@
 
   // La dificultad cambia reacción, precisión, presión, lectura y ambición ofensiva (att). Nunca la velocidad de los jugadores.
   G.DIFFS = {
-    facil: { name: 'Fácil', react: 0.55, err: 2.1, press: 0.55, tackle: 0.32, gk: 0.72, vision: 0.6, att: 0.5 },
-    normal: { name: 'Normal', react: 0.34, err: 1.4, press: 0.8, tackle: 0.55, gk: 0.9, vision: 0.8, att: 0.8 },
-    dificil: { name: 'Difícil', react: 0.22, err: 1.0, press: 1.0, tackle: 0.78, gk: 1.0, vision: 1.0, att: 1 },
-    leyenda: { name: 'Leyenda', react: 0.13, err: 0.75, press: 1.2, tackle: 0.95, gk: 1.08, vision: 1.15, att: 1.15 },
+    facil: { name: 'Fácil', react: 0.6, err: 2.1, press: 0.55, tackle: 0.32, gk: 0.72, vision: 0.6, att: 0.5 },
+    normal: { name: 'Normal', react: 0.42, err: 1.4, press: 0.8, tackle: 0.55, gk: 0.9, vision: 0.8, att: 0.8 },
+    dificil: { name: 'Difícil', react: 0.3, err: 1.0, press: 1.0, tackle: 0.78, gk: 1.0, vision: 1.0, att: 1 },
+    leyenda: { name: 'Leyenda', react: 0.2, err: 0.75, press: 1.2, tackle: 0.95, gk: 1.08, vision: 1.15, att: 1.15 },
   };
-  G.MATE = { react: 0.22, err: 1, press: 0.8, tackle: 0.5, gk: 1, vision: 1, att: 1 }; // compañeros de la IA en el equipo humano: ayudan sin jugar solos
+  G.MATE = { react: 0.3, err: 1, press: 0.8, tackle: 0.5, gk: 1, vision: 1, att: 1 }; // compañeros de la IA en el equipo humano: ayudan sin jugar solos
 
   const L = {};
   G.on = function (n, fn) { (L[n] = L[n] || []).push(fn); };

@@ -121,7 +121,7 @@
     pn.innerHTML = `<h2>Controles</h2><div class="help">
       <div><h3>Teclado</h3><p><kbd>WASD</kbd> / flechas: moverse</p><p><kbd>J</kbd> pase · <kbd>K</kbd> tiro (mantener = potencia)</p><p><kbd>L</kbd> pase largo / centro · <kbd>I</kbd> pase al hueco</p><p><kbd>U</kbd>+<kbd>K</kbd> tiro colocado · <kbd>Shift</kbd> sprint</p><p><kbd>Espacio</kbd> filigrana · <kbd>O</kbd> proteger balón</p><p><kbd>Q</kbd> cambiar jugador · <kbd>C</kbd> cámara · <kbd>Esc</kbd> pausa</p><p><kbd>F2</kbd> o <kbd>\`</kbd>: panel de afinado</p></div>
       <div><h3>Defendiendo</h3><p><kbd>J</kbd> / PASE: cambiar de jugador</p><p><kbd>K</kbd> / TIRO: entrada</p><p><kbd>L</kbd> / LARGO: barrida (riesgo de falta y tarjeta)</p><p><kbd>I</kbd> o <kbd>Espacio</kbd> / FILIGRANA: un compañero presiona</p><p>Sin sprint, tu jugador se perfila hacia el balón.</p></div>
-      <div><h3>Táctil</h3><p>Joystick: mitad izquierda. Llévalo al borde para sprintar.</p><p>PASE: toque. <b>Deslizar</b> sobre PASE = pase al hueco.</p><p>TIRO: mantener = potencia. <b>Deslizar</b> sobre TIRO = tiro colocado hacia donde deslizas.</p><p>LARGO: pase aéreo; desde la banda es centro.</p><p>FILIGRANA + joystick: adelante bicicleta, al lado bola cruzada, atrás giro.</p></div>
+      <div><h3>Táctil</h3><p>Joystick: mitad izquierda. Llévalo al borde para sprintar.</p><p>PASE: va al compañero marcado con el aro blanco. AL HUECO: pase filtrado al espacio por delante del compañero.</p><p>TIRO: mantener = potencia. <b>Deslizar</b> sobre TIRO = tiro colocado hacia donde deslizas.</p><p>LARGO: pase aéreo; desde la banda es centro.</p><p>FILIGRANA + joystick: adelante bicicleta, al lado bola cruzada, atrás giro.</p></div>
       <div><h3>Gamepad</h3><p>A pase · B tiro · X largo · Y al hueco</p><p>RT sprint · LT proteger · RB tiro colocado</p><p>LB cambiar · stick derecho: filigrana</p><p>Start pausa · Select cámara</p></div>
       <div><h3>Consejos</h3><p>Apunta el tiro con el stick hacia un palo; sin dirección va al palo lejano.</p><p>En sprint los toques son largos: suelta el sprint para regatear en corto.</p><p>Puedes pedir pase o tiro antes de que llegue el balón: saldrá de primera.</p><p>Toca 3 veces el reloj para abrir el panel de afinado.</p></div>
     </div><button class="btn" data-a="back">Volver</button>`;
@@ -219,7 +219,7 @@
 
   // ---------- HUD por cuadro ----------
   let last = {}, radarT = 0;
-  const DEF_LABEL = { pass: 'CAMBIAR', shoot: 'ENTRADA', lob: 'BARRIDA', skill: 'PRESIÓN' }, ATT_LABEL = { pass: 'PASE', shoot: 'TIRO', lob: 'LARGO', skill: 'FILIGRANA' };
+  const DEF_LABEL = { pass: 'CAMBIAR', shoot: 'ENTRADA', lob: 'BARRIDA', through: 'PRESIÓN', skill: 'PRESIÓN' }, ATT_LABEL = { pass: 'PASE', shoot: 'TIRO', lob: 'LARGO', through: 'AL HUECO', skill: 'FILIGRANA' };
   function set(id, key, val, fn) { if (last[key] !== val) { last[key] = val; fn($(id), val); } }
   UI.update = function (dt) {
     if (msgT > 0 && (msgT -= dt) <= 0) $('msg').className = '';

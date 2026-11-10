@@ -18,7 +18,7 @@ Juego de fútbol 3D para navegador (teléfono y PC). Todo vive en `golazo/`.
 | Moverse | WASD / flechas | stick izq. | joystick (mitad izquierda) |
 | Sprint | Shift | RT | botón SPRINT o joystick al borde |
 | Pase | J | A | PASE |
-| Pase al hueco | I | Y | **deslizar** sobre PASE |
+| Pase al hueco (filtrado) | I | Y | botón AL HUECO (o deslizar sobre PASE) |
 | Pase largo / centro | L | X | LARGO (desde la banda en campo rival = centro) |
 | Tiro (mantener = potencia) | K | B | TIRO |
 | Tiro colocado | U + K | RB + B | **deslizar** sobre TIRO (hacia donde apuntas) |
@@ -27,6 +27,8 @@ Juego de fútbol 3D para navegador (teléfono y PC). Todo vive en `golazo/`.
 | Cambiar jugador | Q | LB | (en defensa) PASE |
 | Pausa / cámara | Esc o P / C | Start / Select | botón ❚❚ |
 | Panel de afinado | F2 o \` | — | 3 toques al marcador |
+
+**El aro blanco** bajo un compañero marca a quién iría el pase raso si lo das ahora; cambia al mover el stick. El aro amarillo es tu jugador.
 
 **Defendiendo** los botones cambian: PASE = cambiar jugador, TIRO = entrada, LARGO = barrida, I/Espacio/FILIGRANA (mantener) = un compañero va a presionar.
 
@@ -48,7 +50,7 @@ El tiro se apunta con el stick hacia un palo; sin dirección va al palo lejano a
 - 4 dificultades: cambian reacción, precisión, presión, acierto en la entrada, portero, visión y ambición ofensiva. Nunca la velocidad.
 - 3 cámaras (transmisión, alta/táctica, detrás del jugador) y el stick es relativo a la cámara.
 - Audio sintetizado: murmullo de estadio que sigue la emoción, rugido de gol, «uuuh», palmas, silbato, golpes, poste, red, música de menú.
-- HUD: marcador con reloj, radar, nombre y estamina del jugador activo, barra de potencia, mensajes.
+- HUD: marcador con reloj, radar, nombre y estamina del jugador activo, barra de potencia, mensajes, aro de destino del pase.
 - Panel de afinado en vivo (se guarda en el navegador): velocidad, aceleración, fricción y rebote del balón, fuerza de tiro y pase, efecto, largo del toque, agresividad y reacción de la IA, velocidad del juego, calidad gráfica.
 - Calidad automática: 4 niveles (sombras 2048 / 1024 / sin sombras / resolución reducida). Baja sola si no llega al objetivo; nunca sube sola.
 
@@ -113,6 +115,21 @@ La simulación (`core, ball, player, gk, ai, match`) no toca el DOM ni Three.js;
 - **Nombres reales, sin fotos ni logos**. Las plantillas son aproximadas a 2025; las medias y estilos son estimaciones mías. Guatemala está incluida.
 - **Sin expulsión del portero** (no hay cambios): la roja se le rebaja a amarilla.
 - El juego no toca el `index.html` de la raíz del repositorio (es otra app).
+
+## Segunda pasada de jugabilidad (tras la primera prueba en teléfono)
+
+Lo pedido y lo que se cambió:
+
+- **Cámara que estorba**: la tribuna, el techo y las torres del lado de la cámara ya no se dibujan (antes la cámara retrocedía y quedaba dentro de la tribuna). La transmisión es más abierta y sigue el balón con más suavidad.
+- **HUD que tapa**: el centro-abajo queda libre. Radar pequeño arriba al centro; nombre y estamina bajo el marcador.
+- **Pases que no iban a ningún lado**: el pase raso siempre elige compañero (el mejor alineado con el stick y con línea libre) y lo muestra con el aro blanco antes de darlo. Sale más firme y apuntado a donde va a estar el receptor, y el receptor ataca el balón solo hasta que lo tiene cerca. Medido con direcciones al azar: 80 % de pases completos (antes 51 %), 0 % de balones muertos.
+- **Pase filtrado**: botón propio en táctil. Elige, entre varios puntos por delante del compañero, el más libre de rivales, y el compañero arranca al espacio. 65 % completos con direcciones al azar.
+- **Menos frenetismo**: jugadores ~7 % más lentos, aceleración y giro más progresivos, la IA piensa un poco más cada decisión y no pasa de primera sin motivo.
+- **Defensa táctica**: el que presiona aguanta a 2 m y muerde cuando el balón se separa del pie; un segundo defensor da cobertura detrás; los marcadores se ponen del lado del arco y un paso hacia el balón, y siguen al que rompe. Leer un pase rival lleva un instante (más largo en dificultades bajas).
+- **Ataque**: «pasa y va» (el que pasa sale al espacio), los de arriba salen a la contra al recuperar, más desmarques de ruptura.
+- **Cuerpos**: modelo nuevo con pelvis, abdomen, pecho con hombros, cuello, cabeza con mandíbula, nariz, orejas, ojos y cejas, manos, rodillas, gemelos y botines; tobillos articulados. Zancada real (la pierna que vuela recoge el talón y sube la rodilla; la de apoyo empuja de puntera), cadera y hombros en contragiro, el cuerpo se inclina al acelerar y frenar, la cabeza sigue al balón y la pierna se arma mientras cargas el tiro.
+
+No se hizo: física de cuerpo completo (ragdoll) ni colisión del balón con cada segmento del cuerpo; el contacto sigue siendo un cilindro por jugador más la zona de manos del portero. Tampoco captura de movimiento: toda la animación es procedural.
 
 ## Qué falta
 

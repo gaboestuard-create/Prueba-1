@@ -2,21 +2,22 @@
 (function () {
   'use strict';
   const G = window.G, P = G.P, b = G.ball, hyp = Math.hypot, clamp = G.clamp;
-  const C = (G.Control = { ctx: 'att', power: 0 });
+  const C = (G.Control = { ctx: 'att', power: 0, target: null });
   const pressCtx = {};
   let lastOwner = null;
 
-  // Pase asistido: el compañero mejor alineado con el stick; mantener el botón prefiere al más lejano.
+  // Pase asistido: el raso siempre encuentra a alguien (el mejor alineado con el stick, con línea libre);
+  // al hueco y largo solo buscan hacia donde se apunta. Mantener el botón prefiere al más lejano.
   function pickMate(p, dx, dz, type, power) {
-    const team = p.team, dir = team.dir, pref = type === 'lob' ? 28 + power * 20 : 9 + power * 22;
+    const team = p.team, dir = team.dir, pref = type === 'lob' ? 28 + power * 20 : 10 + power * 20;
     let best = null, bs = 1e9;
     for (const m of team.players) {
       if (m === p || m.off) continue;
-      const ex = m.x - b.x, ez = m.z - b.z, d = hyp(ex, ez); if (d < 3) continue;
+      const ex = m.x - b.x, ez = m.z - b.z, d = hyp(ex, ez); if (d < 3 || d > 55) continue;
       const ang = Math.acos(clamp((ex * dx + ez * dz) / d, -1, 1));
-      if (ang > (type === 'lob' ? 0.6 : 0.85)) continue;
-      let s = ang * 28 + Math.abs(d - pref) * 0.45 + (d > 45 ? 50 : 0);
-      if (type === 'pass' && !G.AI.lane(b.x, b.z, m.x, m.z, team, 1)) s += 6;
+      if (type !== 'pass' && ang > 0.9) continue;
+      let s = ang * 30 + Math.abs(d - pref) * 0.4 + (ang > 1.3 ? 20 : 0) + (m.gk ? 12 : 0) + (type === 'pass' && d > pref + 12 ? (d - pref - 12) * 1.2 : 0); // el raso largo es lento: para eso está el pase largo
+      if (type === 'pass' && !G.AI.lane(b.x, b.z, m.x, m.z, team, 1.1)) s += 16; // con un rival en la línea, mejor otro compañero
       if (type === 'through' && (m.x - p.x) * dir < -3) s += 15;
       if (s < bs) { bs = s; best = m; }
     }
@@ -49,7 +50,7 @@
   }
 
   function pass(p, type, power, dx, dz) {
-    const M = G.M, team = p.team, dir = team.dir, m = pickMate(p, dx, dz, type, power), far = (a) => ({ type, x: p.x + dx * a, z: p.z + dz * a });
+    const M = G.M, team = p.team, dir = team.dir, m = pickMate(p, dx, dz, type, power) || (type === 'through' ? pickMate(p, dx, dz, 'pass', power) : null), far = (a) => ({ type, x: p.x + dx * a, z: p.z + dz * a });
     let k;
     if (M.state === 'ready' && M.rs.type === 'throwin') k = m ? { type: 'throw', x: m.x, z: m.z, target: m } : { type: 'throw', x: p.x + dx * 12, z: p.z + dz * 12 };
     else if (type === 'lob') {
@@ -60,8 +61,15 @@
       } else k = m ? { type: 'lob', x: m.x + m.vx * 0.9, z: m.z + m.vz * 0.9, target: m } : far(25 + power * 20);
     } else if (type === 'through') {
       if (m) {
-        const L = 7 + power * 9, rl = hyp(m.vx, m.vz), rx = rl > 1 ? m.vx / rl : dir, rz = rl > 1 ? m.vz / rl : 0;
-        k = { type, x: clamp(m.x + (dir * 0.6 + rx * 0.4) * L, -P.HL + 3, P.HL - 3), z: clamp(m.z + rz * 0.4 * L, -P.HW + 2, P.HW - 2), target: m };
+        // pase filtrado: de varios puntos por delante del compañero, el más libre de rivales y con línea limpia
+        let bx = m.x + dir * 9, bz = m.z, best = -1e9;
+        for (const L of [6, 10, 14 + power * 5]) for (const lat of [-4, 0, 4]) {
+          const x = clamp(m.x + dir * L, -P.HL + 3, P.HL - 3), z = clamp(m.z + lat + m.vz * 0.6, -P.HW + 2, P.HW - 2);
+          const sc = Math.min(G.AI.oppDist(team, x, z), 8) + (G.AI.lane(b.x, b.z, x, z, team, 1.1) ? 4 : 0) - Math.abs(lat) * 0.2 + L * 0.12;
+          if (sc > best) { best = sc; bx = x; bz = z; }
+        }
+        m.ai.runT = 2.8; // el compañero arranca al espacio
+        k = { type, x: bx, z: bz, target: m };
       } else k = far(14 + power * 14);
     } else k = m ? { type, target: m } : far(10 + power * 16);
     G.act.kick(p, k);
@@ -70,6 +78,7 @@
   C.update = function (dt) {
     const M = G.M; if (M.human < 0) return;
     const team = M.teams[M.human], I = G.Input.s, B = I.b, ready = M.state === 'ready';
+    C.target = null;
     if (M.state !== 'play' && !ready) { if (team.active) team.active.charge = null; C.power = 0; return; }
     if (!ready) autoSwitch(team, dt);
     const p = team.active; if (!p || (ready && M.rs.taker !== p)) return;
@@ -77,7 +86,11 @@
     const def = !ready && ((o && o.team !== team) || (!o && M.lastPoss !== team && hyp(p.x - b.x, p.z - b.z) > 3.5));
     C.ctx = def ? 'def' : 'att';
     p.faceTo = null;
-    if (mag < 0.12 && !o && !def && !ready && (team.chaser === p || team.receiver === p)) G.AI.moveTo(p, p.ix, p.iz, I.sprint ? 2 : hyp(p.ix - p.x, p.iz - p.z) > 6, 1); // sin tocar nada, va a recibir
+    // El destinatario de un pase va solo al encuentro del balón (como en los juegos de consola); el stick manda de nuevo
+    // cuando el balón está cerca, o si se empuja claramente en contra.
+    const ix = p.ix - p.x, iz = p.iz - p.z, id = hyp(ix, iz);
+    const recv = team.receiver === p && hyp(b.x - p.x, b.z - p.z) > 3 && (mag < 0.12 || (wx * ix + wz * iz) / (mag * id + 0.01) > -0.3);
+    if (!o && !def && !ready && (recv || (mag < 0.12 && team.chaser === p))) G.AI.moveTo(p, p.ix, p.iz, recv || I.sprint ? 2 : id > 6, 1); // el receptor ataca el balón: no espera a que le llegue
     else { p.mx = wx; p.mz = wz; p.sprint = I.sprint; }
     p.shield = b.owner === p && (I.shield || (G.Input.touch && mag > 0.12 && mag < 0.55 && (G.nearOpp(p), G.nd < 2.2))); // en táctil no hay botón: se protege al caminar con un rival encima
     for (const n of ['pass', 'shoot', 'lob']) if (B[n].press) pressCtx[n] = C.ctx;
@@ -93,6 +106,7 @@
       return;
     }
     team.callPress = false;
+    if (o === p || ready) C.target = pickMate(p, dx, dz, 'pass', B.pass.down ? clamp(B.pass.held / 0.6, 0, 1) : 0); // el aro blanco
     if (B.sw.press && !ready) G.Match.setActive(team, defender(team, p));
     if (B.shoot.press) p.charge = { t: 0 }; // mantener = potencia
     if (p.charge) {

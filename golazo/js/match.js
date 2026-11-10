@@ -249,6 +249,7 @@
     }
     if (k.type === 'shot') { team.stats.shots++; M.excite = Math.max(M.excite, 0.75); b.shotBy = p; b.shotT = M.time; }
     else if (k.type !== 'clear') team.stats.passes++;
+    if ((k.type === 'pass' || k.type === 'through') && !p.gk && p.slot.l !== 'D' && b.x * dir > -15) p.ai.runT = 2.2; // pasa y va
     if (team.human && k.target && !k.target.gk) Match.setActive(team, k.target);
   };
 

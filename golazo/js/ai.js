@@ -60,6 +60,7 @@
   }
   AI.offLine = offLine;
 
+  AI.oppDist = oppDist;
   function oppDist(team, x, z) { const os = team.opp.players; let md = 99; for (let i = 0; i < os.length; i++) { const o = os[i]; if (!o.off) md = Math.min(md, hyp(o.x - x, o.z - z)); } return md; }
 
   function shotK(p, pw) {
@@ -111,7 +112,7 @@
     let cS = 0;
     if (xT > 30 && Math.abs(p.z) > 13) { let n = 0; for (const m of team.players) if (m !== p && !m.off && m.x * dir > P.HL - 16 && Math.abs(m.z) < 12) n++; if (n) cS = 0.5 + n * 0.08 + noise(); }
     // pasar
-    const ps = a.hold > 0.3 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s + (nd < 2.5 ? 0.15 : nd < 4.5 ? 0.06 : 0) : 0; // con un rival encima, soltarla antes
+    const ps = a.hold > 0.45 || pressed ? bestPass(p, pressed) : null, pS = ps ? ps.s + (nd < 2.5 ? 0.15 : nd < 4.5 ? 0.06 : 0) : 0; // con un rival encima, soltarla antes
     // conducir: la dirección con más espacio, con preferencia por el arco
     const base = Math.atan2(-p.z * 0.4, gx - p.x); let dS = -1, dAng = base, dSpace = 0;
     for (let i = 0; i < 7; i++) {
@@ -126,7 +127,7 @@
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));
     if (top === cS) return G.act.kick(p, { type: 'cross', x: gx - dir * rnd(6, 11), z: -Math.sign(p.z) * rnd(-1, 5), spin: -Math.sign(p.z) * dir * 3 });
     if (top === pS) return doPass(p, ps);
-    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 5.5 && p.stamina > 30 && D.att > 0.7;
+    a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 7 && p.stamina > 30 && D.att > 0.7;
     // filigrana si hay un defensa encima y el jugador sabe
     if (nd < 3.2 && nd > 1.5 && p.cd <= 0 && Math.random() < (0.12 + p.st.skill * 0.5) * (1.4 - D.err * 0.4)) {
       const k = Math.random(); G.act.skill(p, k < 0.45 ? 'croqueta' : k < 0.8 ? 'stepover' : 'roulette', Math.cos(dAng + (k < 0.45 ? 1.3 : 0)), Math.sin(dAng + (k < 0.45 ? 1.3 : 0)));
@@ -152,17 +153,18 @@
     }
   }
 
-  // contain = solo temporiza a distancia; si no, va a quitar.
-  function press(p, c, contain, dt) {
+  // Presión con cabeza: 1 = temporiza lejos, 2 = encima (aguanta a 2 m y muerde cuando el balón se separa del pie), 3 = cobertura detrás del que presiona.
+  function press(p, c, mode, dt) {
     const team = p.team, D = team.D, gx = -team.dir * P.HL;
     let ux = gx - c.x, uz = -c.z; const ul = hyp(ux, uz) + 0.01; ux /= ul; uz /= ul;
-    const d = hyp(b.x - p.x, b.z - p.z), stand = contain ? 3.2 : 0.8;
-    AI.moveTo(p, b.x + c.vx * 0.25 + ux * stand, b.z + c.vz * 0.25 + uz * stand, d > 4, 1.2);
-    if (d < 3.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
-    if (contain || p.cd > 0 || p.state !== 'free' || p.freeze > 0) return;
+    const d = hyp(b.x - p.x, b.z - p.z), exposed = hyp(c.x - b.x, c.z - b.z) > 0.85 || c.state !== 'free';
+    const stand = mode === 3 ? 6.5 : mode === 1 ? 3.4 : exposed || ul < 24 ? 0.9 : 1.9; // cerca del área no se regala espacio
+    AI.moveTo(p, b.x + c.vx * 0.3 + ux * stand, b.z + c.vz * 0.3 + uz * stand, d > 5 || (exposed && mode === 2 && d > 2.5), 1.2);
+    if (d < 4.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
+    if (mode !== 2 || p.cd > 0 || p.state !== 'free' || p.freeze > 0) return;
     const ag = T.aiAggr;
-    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * 5 * ag * dt) G.act.tackle(p); }
-    else if (d > 2 && d < 4.2 && c.sprint && c.x * team.dir < -15 && Math.random() < 0.3 * ag * D.press * dt) G.act.slide(p);
+    if (d < 1.7 && b.y < 0.5) { if (Math.random() < D.tackle * (exposed ? 4 : 0.7) * ag * dt) G.act.tackle(p); }
+    else if (d > 2 && d < 4.2 && c.sprint && c.x * team.dir < -18 && Math.random() < 0.2 * ag * D.press * dt) G.act.slide(p);
   }
 
   const OFF = [[0, 0], [0, 6], [0, -6], [5, 3], [5, -3]], sp = { x: 0, z: 0 };
@@ -179,7 +181,7 @@
           const sc = Math.min(oppDist(team, wx, wz), 8) + (AI.lane(b.x, b.z, wx, wz, team, 1.2) ? 3 : 0) - hyp(ox, oz) * 0.25;
           if (sc > bs) { bs = sc; a.ox = ox; a.oz = oz; }
         }
-        if (a.runT <= 0 && (s.l === 'F' || p.st.run > 1.3) && bxT > -15 && Math.random() < 0.22 * p.st.run) a.runT = rnd(1.8, 3); // desmarque de ruptura
+        if (a.runT <= 0 && (s.l === 'F' || p.st.run > 1.3) && bxT > -15 && Math.random() < 0.3 * p.st.run) a.runT = rnd(1.8, 3); // desmarque de ruptura
         a.ov = Math.random() < 0.3;
       }
       x += a.ox; z += a.oz;
@@ -195,8 +197,12 @@
         const ox = -o.x * opp.dir, oz = -o.z * opp.dir; if (ox < x - 4) continue;
         const d = hyp(ox - x, oz - z); if (d < md) { md = d; mo = o; }
       }
-      if (mo) { const ox = mo.x * dir, oz = mo.z * dir, gl = hyp(-P.HL - ox, oz) + 0.01, w = bxT < -18 ? 0.75 : 0.5; x = lerp(x, ox + ((-P.HL - ox) / gl) * 1.4, w); z = lerp(z, oz - (oz / gl) * 1.4, w); }
-      sprint = p.x * dir - x > 6;
+      if (mo) { // del lado del arco y un paso hacia el balón: tapa la línea de pase sin perder la espalda; si su hombre rompe, lo sigue
+        const ox = mo.x * dir, oz = mo.z * dir, gl = hyp(-P.HL - ox, oz) + 0.01, bl = hyp(bxT - ox, bzT - oz) + 0.01, run = mo.ai.runT > 0, w = run ? 0.9 : bxT < -18 ? 0.75 : 0.5;
+        x = lerp(x, ox + ((-P.HL - ox) / gl) * 1.4 + ((bxT - ox) / bl) * 0.8, w); z = lerp(z, oz - (oz / gl) * 1.4 + ((bzT - oz) / bl) * 0.8, w);
+        if (run) sprint = true;
+      }
+      sprint = sprint || p.x * dir - x > 6;
     }
     x = clamp(x, -P.HL + 4, P.HL - 3); z = clamp(z, -P.HW + 1.5, P.HW - 1.5);
     if (AI.moveTo(p, x * dir, z * dir, sprint, 3) < 1.5) p.faceTo = Math.atan2(b.z - p.z, b.x - p.x);
@@ -212,6 +218,7 @@
       let be = 1e9;
       for (const p of ps) { if (p.off || p.gk) continue; p.eta = AI.eta(p) + (p.state === 'free' ? 0 : 0.5); if (p.eta < be) { be = p.eta; team.chaser = p; } }
       const r = team.receiver; if (r && !r.off && r.eta < be + 0.7) team.chaser = r;
+      const kk = b.kicker; if (kk && kk.team !== team && b.kickT < 0.2 + D.react * T.aiReact) team.chaser = null; // leer el pase rival lleva un instante: no se anticipan por telepatía
     }
     let pr1 = null, pr2 = null, m1 = 0, m2 = 0; // presión: 1 = temporizar, 2 = ir a quitar
     if (theirs && !b.held) {
@@ -226,7 +233,7 @@
         const ac = team.active, far = !ac || hyp(ac.x - b.x, ac.z - b.z) > 6 || (ac.x - b.x) * dir > 1 || ac.state !== 'free'; // lejos, superado o en el suelo
         m1 = team.callPress || bxT < -30 || (far && bxT < 5) ? 2 : 1; m2 = bxT < -15 ? 1 : 0;
       }
-      else { m1 = bxT < -10 + 35 * (ag - 0.55) || bxT < -18 ? 2 : 1; m2 = ag >= 1 && bxT < 0 ? (bxT < -25 ? 2 : 1) : 0; }
+      else { m1 = bxT < -10 + 35 * (ag - 0.55) || bxT < -18 ? 2 : 1; m2 = bxT < 8 ? 1 : 0; }
     }
     for (const p of ps) {
       if (p.off) continue;
@@ -235,11 +242,13 @@
       p.faceTo = null; p.shield = false;
       if (o === p) carrier(p, dt);
       else if (p === team.chaser) chase(p, team);
-      else if (p === pr1 && m1) press(p, o, m1 === 1, dt);
-      else if (p === pr2 && m2) press(p, o, m2 === 1, dt);
+      else if (p === pr1 && m1) press(p, o, m1, dt);
+      else if (p === pr2 && m2) press(p, o, 3, dt);
       else position(p, team, dt);
     }
   };
+
+  G.on('turnover', (t) => { for (const p of t.players) if (p.slot.l === 'F' && !p.off) p.ai.runT = 3; }); // recuperación: los de arriba salen a la contra
 
   // Cobro de balón parado por la IA.
   AI.setPiece = function (p, rs) {
