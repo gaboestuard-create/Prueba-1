@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b1326">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Golazo</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hide">
+  <div id="score">
+    <canvas class="crest" id="crA" width="64" height="64"></canvas><b id="nA"></b>
+    <span id="sc">0 - 0</span>
+    <b id="nB"></b><canvas class="crest" id="crB" width="64" height="64"></canvas>
+    <span id="clock">00:00</span>
+  </div>
+  <button id="btn-pause" aria-label="Pausa">❚❚</button>
+  <div id="msg"></div>
+  <div id="bottom">
+    <div id="power"><i></i></div>
+    <div id="pname"></div>
+    <div id="stam"><i></i></div>
+    <canvas id="radar" width="210" height="136"></canvas>
+  </div>
+</div>
+
+<div id="touch" class="hide">
+  <div id="joy"></div>
+  <div id="joy-base"><div id="joy-knob"></div></div>
+  <div class="tb" data-b="sprint" id="tb-sprint">SPRINT</div>
+  <div class="tb" data-b="pass" id="tb-pass">PASE</div>
+  <div class="tb" data-b="shoot" id="tb-shoot">TIRO</div>
+  <div class="tb" data-b="lob" id="tb-lob">LARGO</div>
+  <div class="tb" data-b="skill" id="tb-skill">FILIGRANA</div>
+</div>
+
+<div id="menu" class="screen"></div>
+<div id="pause" class="screen hide"></div>
+<div id="end" class="screen hide"></div>
+<div id="panel" class="screen hide"></div>
+<div id="debug" class="hide"></div>
+<div id="flash"></div>
+<div id="rotate"><div>↻<br>Gira el teléfono<br><small>Golazo se juega en horizontal</small></div></div>
+<div id="err" class="hide"></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="data/db.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ball.js"></script>
+<script src="js/player.js"></script>
+<script src="js/gk.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/data.js"></script>
+<script src="js/match.js"></script>
+<script src="js/input.js"></script>
+<script src="js/control.js"></script>
+<script src="js/figure.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/render.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
