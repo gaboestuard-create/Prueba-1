@@ -92,6 +92,7 @@ La simulación (`core, ball, player, gk, ai, match`) no toca el DOM ni Three.js;
 - `node tools/sim.js 6 normal` juega 6 partidos IA vs IA y falla si hay un NaN, un partido que no termina o el balón queda quieto. `node tools/sim.js 8 normal rma gua` enfrenta dos equipos concretos.
 - Con guiones de entrada se midió: conducción (el balón va a ~1 m al trote y ~1.4 m en sprint, sin perderse en giros), respuesta (50 % de la velocidad en 0.28 s, 90 % en 0.58 s, invertir un sprint 0.38 s) y acierto de tiro sin marca (≈60 % a 10 m, ≈40 % a 14 m, ≈15 % a 18 m, ≈5 % a 22 m).
 - En Chromium sin pantalla: carga con `file://` sin errores, menú, partido, pausa, cámaras, panel de afinado, descanso, final, revancha y vuelta al menú; capturas de cada balón parado y de la interfaz táctil.
+- Táctil con eventos de toque reales (emulando un Pixel 7): toque en PASE, mantener TIRO, deslizar sobre TIRO (sale colocado), deslizar sobre PASE (sale al hueco), joystick y botón a la vez.
 - Render: 29 draw calls y ~14 000 triángulos por cuadro.
 
 **No se pudo probar aquí**: jugarlo con manos humanas, el audio (solo que no da errores), un gamepad real, y el rendimiento en un teléfono real.
