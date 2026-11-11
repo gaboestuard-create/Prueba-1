@@ -201,7 +201,7 @@
     });
     G.on('msg', (e) => UI.msg(e.t, e.c ? e.c.name : ''));
     G.on('goal', (gi) => UI.msg('¡GOOOL!', (gi.own || !gi.scorer ? 'Autogol' : gi.scorer.name) + ' · ' + gi.minute + "'", 'goal', 4));
-    G.on('foul', (e) => UI.msg(e.pen ? '¡PENAL!' : 'Falta', (e.card === 'red' ? 'Tarjeta roja · ' : e.card === 'yellow' ? 'Tarjeta amarilla · ' : '') + e.p.name, '', 2.6));
+    G.on('foul', (e) => UI.msg(e.pen ? '¡PENAL!' : e.adv ? 'Ventaja' : 'Falta', (e.card === 'red' ? 'Tarjeta roja · ' : e.card === 'yellow' ? 'Tarjeta amarilla · ' : '') + e.p.name, '', 2.6));
     G.on('halftime', () => UI.inMatch && endScreen(false));
     G.on('fulltime', () => UI.inMatch && endScreen(true));
     G.on('cut', () => { const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on'))); });

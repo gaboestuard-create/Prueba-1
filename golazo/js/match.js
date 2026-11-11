@@ -284,6 +284,9 @@
     if (card === 'yellow') team.stats.yellow++;
     if (card === 'red') { team.stats.red++; p.off = true; p.x = 0; p.z = -P.HW - 40; if (team.active === p) team.active = null; }
     const pen = G.GK.inOwnBox(team, v.x, v.z, 0);
+    if (!pen && card !== 'red' && b.owner === v && v.x * v.team.dir > -15) { // ley de ventaja: si el agredido sigue con el balón en campo de ataque, se deja seguir
+      G.setState(v, 'stun', 0.2); G.emit('foul', { p, v, card, pen, adv: true }); return;
+    }
     G.emit('whistle', 1);
     restart(pen ? 'penalty' : 'freekick', v.team, pen ? -team.dir * (P.HL - P.PEN) : clamp(v.x, -P.HL + 1, P.HL - 1), pen ? 0 : clamp(v.z, -P.HW + 1, P.HW - 1));
     G.setState(v, 'down', 1.1);

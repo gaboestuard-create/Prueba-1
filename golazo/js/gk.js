@@ -147,7 +147,7 @@
       if (!diving) G.setState(p, 'gkhold');
     } else {
       const side = Math.sign(b.z - p.z) || (Math.random() < 0.5 ? 1 : -1), k = clamp(sp / 25, 0.5, 1.2);
-      b.vx = team.dir * rnd(2, 7) * k; b.vz = side * rnd(5, 10) * k; b.vy = rnd(2, 6); b.kicker = p; b.kickT = 0;
+      b.vx = team.dir * (diving && Math.random() < 0.4 ? -rnd(2, 6) : rnd(2, 7)) * k; b.vz = side * rnd(5, 10) * k; // estirado, a veces solo alcanza a mandarla al córner b.vy = rnd(2, 6); b.kicker = p; b.kickT = 0;
     }
     G.emit('save', { p, catch: isCatch, sp });
     G.Match.onTouch(p, isCatch);

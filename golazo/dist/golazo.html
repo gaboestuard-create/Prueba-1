@@ -1383,7 +1383,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if (!diving) G.setState(p, 'gkhold');
     } else {
       const side = Math.sign(b.z - p.z) || (Math.random() < 0.5 ? 1 : -1), k = clamp(sp / 25, 0.5, 1.2);
-      b.vx = team.dir * rnd(2, 7) * k; b.vz = side * rnd(5, 10) * k; b.vy = rnd(2, 6); b.kicker = p; b.kickT = 0;
+      b.vx = team.dir * (diving && Math.random() < 0.4 ? -rnd(2, 6) : rnd(2, 7)) * k; b.vz = side * rnd(5, 10) * k; // estirado, a veces solo alcanza a mandarla al córner b.vy = rnd(2, 6); b.kicker = p; b.kickT = 0;
     }
     G.emit('save', { p, catch: isCatch, sp });
     G.Match.onTouch(p, isCatch);
@@ -1474,7 +1474,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if (long ? space < 5 : !AI.lane(b.x, b.z, m.x, m.z, team, 1.5)) continue;
       let s = 0.36 + prog * 0.02 * D.att + Math.min(space, 5) * 0.03 - d * 0.004 + p.st.pas + rnd(-0.06, 0.06) * D.err;
       if (prog < -3 && !pressed) s -= 0.15; // el pase atrás solo como salida
-      if (long) s -= 0.12;
+      if (long) s -= 0.24; // el balón largo es recurso, no costumbre
       if (prog < 0 && m.x * dir < -25) s -= 0.12;
       if (m.ai.runT > 0 && prog > 5) s += 0.15;
       if (p.x * dir > P.HL - 14 && Math.abs(p.z) > 7 && m.x * dir > P.HL - 18 && Math.abs(m.z) < 9) s += 0.3; // desde la línea de fondo, pase atrás al que llega
@@ -1515,7 +1515,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       const sp = Math.min(oppDist(team, x, z), 8), s = sp * 0.05 + Math.cos(off) * 0.2;
       if (s > dS) { dS = s; dAng = an; dSpace = sp; }
     }
-    dS = 0.28 + dS + p.st.drib - (pressed ? 0.18 : 0) - (gd < 20 ? 0.2 : 0) - (p.slot.l === 'D' && xT < 0 ? 0.15 : 0) + noise(); // un defensa en campo propio no se complica
+    dS = 0.2 + dS + p.st.drib - (pressed ? 0.18 : 0) - (gd < 20 ? 0.2 : 0) - (p.slot.l === 'D' && xT < 0 ? 0.15 : 0) + noise(); // un defensa en campo propio no se complica
     const top = Math.max(sS, cS, pS, dS);
     if (top < 0.3 && pressed && xT < -15) { a.plan = null; return G.act.kick(p, { type: 'clear', x: p.x + dir * 30, z: p.z * 1.2 }); }
     if (top === sS) return G.act.kick(p, Object.assign(shotK(p, clamp(0.42 + gd / 50 + rnd(-0.08, 0.12), 0.4, 0.88)), { finesse: gd < 20 && Math.random() < 0.3 }));
@@ -1523,7 +1523,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (top === pS) return doPass(p, ps);
     a.plan = 'dribble'; a.ang = dAng; a.sprint = dSpace > 7 && p.stamina > 30 && D.att > 0.7;
     // filigrana si hay un defensa encima y el jugador sabe
-    if (nd < 3.2 && nd > 1.5 && p.cd <= 0 && Math.random() < (0.12 + p.st.skill * 0.5) * (1.4 - D.err * 0.4)) {
+    if (nd < 3.2 && nd > 1.5 && p.cd <= 0 && Math.random() < (0.05 + p.st.skill * 0.4) * (1.4 - D.err * 0.4)) {
       const k = Math.random(); G.act.skill(p, k < 0.45 ? 'croqueta' : k < 0.8 ? 'stepover' : 'roulette', Math.cos(dAng + (k < 0.45 ? 1.3 : 0)), Math.sin(dAng + (k < 0.45 ? 1.3 : 0)));
     }
   }
@@ -2031,6 +2031,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (card === 'yellow') team.stats.yellow++;
     if (card === 'red') { team.stats.red++; p.off = true; p.x = 0; p.z = -P.HW - 40; if (team.active === p) team.active = null; }
     const pen = G.GK.inOwnBox(team, v.x, v.z, 0);
+    if (!pen && card !== 'red' && b.owner === v && v.x * v.team.dir > -15) { // ley de ventaja: si el agredido sigue con el balón en campo de ataque, se deja seguir
+      G.setState(v, 'stun', 0.2); G.emit('foul', { p, v, card, pen, adv: true }); return;
+    }
     G.emit('whistle', 1);
     restart(pen ? 'penalty' : 'freekick', v.team, pen ? -team.dir * (P.HL - P.PEN) : clamp(v.x, -P.HL + 1, P.HL - 1), pen ? 0 : clamp(v.z, -P.HW + 1, P.HW - 1));
     G.setState(v, 'down', 1.1);
@@ -3015,7 +3018,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     });
     G.on('msg', (e) => UI.msg(e.t, e.c ? e.c.name : ''));
     G.on('goal', (gi) => UI.msg('¡GOOOL!', (gi.own || !gi.scorer ? 'Autogol' : gi.scorer.name) + ' · ' + gi.minute + "'", 'goal', 4));
-    G.on('foul', (e) => UI.msg(e.pen ? '¡PENAL!' : 'Falta', (e.card === 'red' ? 'Tarjeta roja · ' : e.card === 'yellow' ? 'Tarjeta amarilla · ' : '') + e.p.name, '', 2.6));
+    G.on('foul', (e) => UI.msg(e.pen ? '¡PENAL!' : e.adv ? 'Ventaja' : 'Falta', (e.card === 'red' ? 'Tarjeta roja · ' : e.card === 'yellow' ? 'Tarjeta amarilla · ' : '') + e.p.name, '', 2.6));
     G.on('halftime', () => UI.inMatch && endScreen(false));
     G.on('fulltime', () => UI.inMatch && endScreen(true));
     G.on('cut', () => { const f = $('flash'); f.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => f.classList.remove('on'))); });

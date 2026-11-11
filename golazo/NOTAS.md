@@ -141,11 +141,15 @@ No se hizo: física de cuerpo completo (ragdoll) ni colisión del balón con cad
 - **Entrada automática** (se apaga en Pausa): si llegas de frente o de lado con el balón al alcance, la entrada sale sola. Nunca desde atrás.
 - **IA**: el defensor entra más si el poseedor le viene de frente; los defensas con balón en campo propio no se complican; desde la línea de fondo buscan el pase atrás; si el poseedor está apretado, los cercanos se acercan a ofrecerse.
 
+- **Ley de ventaja**: si el que recibe la falta sigue con el balón en campo de ataque, el juego continúa (la tarjeta se muestra igual).
+- **Juego aéreo medido** (8 partidos IA vs IA): ~8 centros y ~4 remates de cabeza o volea por partido, de los que entra 1 de cada 5. El portero estirado a veces solo alcanza a mandarla al córner.
+- **IA con menos vicios**: menos balón largo (era el 28 % de sus pases), la mitad de filigranas, más pase que conducción.
+
 Medido tras esta pasada: 79 % de pases completos y 57 % de filtrados con direcciones al azar; IA vs IA ≈ 2 goles por partido en Normal; el jugador guionizado torpe ya gana algún partido en Normal.
 
 ## Qué falta
 
-- Ley de ventaja, cambios, tiempo extra y tanda de penales, repeticiones.
+- Cambios, tiempo extra y tanda de penales, repeticiones.
 - Controlar al portero a mano y elegir el saque del portero.
 - Camisetas con rayas, dorsales y nombres en la espalda.
 - Lesiones, clima, modos de carrera/torneo (fuera de alcance por ahora).
@@ -164,6 +168,5 @@ Jugué partidos completos simulados y con un «jugador» guionizado. Lo que vi, 
 8. **Cámara «detrás del jugador»**: gira 180° en el segundo tiempo y no la pude ver jugando; puede marear.
 9. **Táctil**: el sprint por «joystick al borde» puede activarse sin querer en pantallas chicas (umbral en `js/input.js`, `r * 1.6`).
 10. **Cambio de jugador automático en defensa**: elige al más cercano del lado del arco; a veces te cambia justo cuando ibas a entrar.
-11. **Sin ley de ventaja**: una falta corta siempre la jugada.
 
 Valores que más cambian la sensación, todos en el panel de afinado: fricción del balón, largo del toque, aceleración, fuerza de pase.
