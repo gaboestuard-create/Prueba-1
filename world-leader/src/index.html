@@ -1,0 +1,37 @@
+<title>World Leader</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&display=swap">
+<style>
+%%CSS%%
+</style>
+
+<div id="globe"></div>
+<div id="labels"></div>
+<div id="app"></div>
+<div id="tip" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="modal" hidden></div>
+<div id="cine" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- 0 · GEOGRAFÍA GENERADA (mapa de IDs + metadatos; ver build.js) -->
+<script>
+%%GEO%%
+</script>
+<!-- 1 · DATOS -->
+<script>
+%%DATA%%
+</script>
+<!-- 2 · ESTADO + 3 · LÓGICA (motor) -->
+<script>
+%%ENGINE%%
+</script>
+<!-- 4a · RENDER: globo -->
+<script>
+%%GLOBE%%
+</script>
+<!-- 4b · RENDER: interfaz -->
+<script>
+%%UI%%
+</script>
