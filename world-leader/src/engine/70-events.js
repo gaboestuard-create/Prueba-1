@@ -33,6 +33,11 @@ function applyFx(list, ctx) {
       case 'over': over(a); break;
       case 'do': if (OPS[a]) OPS[a](ctx && ctx.x ? Object.assign({}, b, ctx.x) : b || {}); break;
       case 'party': partyRel(a, b); break;
+      case 'inf': S.eco.inf = clamp(S.eco.inf + a, -5, 200); break;
+      case 'unemp': S.eco.unemp = clamp(S.eco.unemp + a, 1, 45); break;
+      case 'fxr': S.eco.fx = clamp(S.eco.fx + a, 20, 180); break;
+      case 'debt': S.eco.debt = Math.max(0, S.eco.debt + c.gdp * a / 100); break;
+      case 'chain': S.chain.push({ t: S.turn + a, id: b, T }); break;
     }
   }
 }
@@ -57,6 +62,11 @@ function describeFx(list, T) {
     else if (k === 'camp') out.push([`Campaña +${a} pts`, 1]);
     else if (k === 'sellRes') out.push([`Vendes el ${Math.round(a * 100)}% de tus reservas`, -1]);
     else if (k === 'over') out.push(['Pierdes el poder', -1]);
+    else if (k === 'inf') out.push(['Inflación ' + sg(a) + ' pts', -a]);
+    else if (k === 'unemp') out.push(['Desempleo ' + sg(a) + ' pts', -a]);
+    else if (k === 'fxr') out.push(['Moneda ' + sg(a), a]);
+    else if (k === 'debt') out.push(['Deuda ' + (a >= 0 ? '+' : '−') + money(Math.abs(P().gdp * a / 100)), -a]);
+    else if (k === 'party') out.push([(a === 'opp' ? 'Relación con la oposición ' : a === 'gov' ? 'Relación con tus socios ' : 'Relación con los partidos ') + sg(b), b]);
     else if (k === 'later') { out.push([`En ${a} turnos (${Math.round(b * 100)}%):`, 0]); sub(d); }
     else if (k === 'chance') { out.push([`${Math.round(a * 100)}% de probabilidad:`, 0]); sub(b); if (d && d.length) { out.push(['Si no:', 0]); sub(d); } }
     else if (k === 'chanceAppr') { out.push([`${Math.round(clamp(approval() / 100 + .1, .1, .9) * 100)}% de éxito (depende de tu aprobación):`, 0]); sub(a); out.push(['Si fracasa:', 0]); sub(b); }
@@ -77,7 +87,7 @@ function condOk(q) {
   if (q.turnGte && S.turn < q.turnGte) return false;
   if (q.stabLt && !(P().stab < q.stabLt)) return false;
   if (q.secLt && !(S.pol.sec[q.secLt[0]].a < q.secLt[1])) return false;
-  if (q.debt && !(P().tr < -P().gdp * .12)) return false;
+  if (q.debt && !(P().tr < -P().gdp * .12 || debtRatio() > .9)) return false;
   if (q.rival && !pickTarget('rival')) return false;
   if (q.ally && !alliesOf(S.player).length) return false;
   if (q.neighborTrouble && !pickTarget('troubledNeighbor')) return false;

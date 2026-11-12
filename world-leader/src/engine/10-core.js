@@ -229,7 +229,7 @@ function load(str) {
 /* ---- puerta única de acciones ---- */
 const ACT = {}, OPS = {}, HOOKS = {};
 const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); }, run = (name, a, b) => { for (const f of HOOKS[name] || []) f(a, b); };
-const FREE = { decide: 1, edit: 1, asylum: 1 };
+const FREE = { decide: 1, edit: 1, asylum: 1, unLobby: 1 };
 const fail = msg => ({ ok: false, msg });
 const canPay = x => P().tr - x >= -P().gdp * .15;
 function useCP(n) { if (S.pol.cp < n) return false; S.pol.cp -= n; return true; }

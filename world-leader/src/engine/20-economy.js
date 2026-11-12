@@ -46,6 +46,7 @@ function finance(dry) {
     if (!dry) c.stock[k] = st;
   }
   inc.mat = mat; inc.con = con; exp.imp = imp;
+  run('finance', { inc, exp, dry });
   let ti = 0, te = 0; for (const k in inc) ti += inc[k]; for (const k in exp) te += exp[k];
   const fin = { inc, exp, ti, te, net: ti - te };
   if (!dry) {
@@ -65,6 +66,7 @@ function growthOf(iso) {
   if (isP(iso)) {
     g += mod('growth') + lawSum('grow') + Math.min(.3, tradeIncome().n * .03) - (S.flags.oilShort ? .3 : 0) - (c.tr < -c.gdp * .2 ? .2 : 0);
     for (const m of S.gm) g += m.v;
+    g += ecoGrowth();
   }
   return g;
 }
