@@ -7,7 +7,7 @@
 function resFlow() {
   const c = P(), out = {};
   for (const k in D.COMMODITIES) {
-    const prod = D.PROD[Math.min(5, c.rec[k] || 0)] * (1 + lawSum('prodMul'));
+    const prod = regionProd(k) * (1 + lawSum('prodMul'));
     const cons = k === 'pet' ? c.gdp / 400 * (1 - lawSum('oilSave')) : k === 'gas' ? c.gdp / 800 : k === 'tri' ? Math.sqrt(c.pop * c.gdp) / 150 : 0;
     const exp = S.contracts.filter(x => x.com === k).reduce((s, x) => s + x.q, 0);
     out[k] = { prod, cons, exp, net: prod - cons - exp, stock: (c.stock && c.stock[k]) || 0, reserve: cons * 4 + 5 };

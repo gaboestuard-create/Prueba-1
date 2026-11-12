@@ -153,7 +153,7 @@ function initUnits(d) {
   u.fra = sea ? Math.round((Math.sqrt(d.gdp) * .35 + m * .02) * q) : 0; u.sub = Math.round(u.fra * .25); u.por = sea && d.gdp > 1500 ? Math.floor(d.gdp / 2500 * q) : 0;
   return u;
 }
-const mkTerr = iso => D.C[iso].terr.map(t => t.p ? { n: t.n, o: iso, p: t.p } : { n: t.n, o: iso }); // la geometría (la, lo) vive en DATA, por índice
+const mkTerr = iso => D.C[iso].terr.map(t => ({ n: t.n, o: iso, p: t.p || '', gob: t.gob || '', v: false })); // v = autoridad verificada // la geometría (la, lo) vive en DATA, por índice
 function mkCountry(iso) {
   const d = D.C[iso], o = D.PERSONALITY[iso] || {}, auth = d.reg !== 'dem';
   const base = { agres: auth ? .4 : .18, expan: auth ? .3 : .1, leal: auth ? .5 : .7, coop: auth ? .45 : .65, rencor: auth ? .65 : .45 }, per = {};
@@ -171,7 +171,7 @@ function mkCountry(iso) {
 function newGame(o) {
   const seed = (o.seed >>> 0) || 1;
   S = {
-    v: 1, geo: 2, seed, rng: seed | 0, turn: 0, year: 2027, q: 0, player: o.iso, wid: 0, nid: 0,
+    v: 1, geo: 3, seed, rng: seed | 0, turn: 0, year: 2027, q: 0, player: o.iso, wid: 0, nid: 0,
     leader: { n: o.name || 'Líder', traits: (o.traits || []).filter(t => TR[t]), img: o.img || '', pseed: o.pseed || 0 },
     c: {}, mods: {}, tr: [], wars: [], sanc: [], bases: [], contracts: [], news: [], pend: [], later: [], gm: [],
     mkt: { com: {}, co: {}, shocks: [], sent: 0 }, port: {}, auto: true, built: {},
@@ -202,6 +202,7 @@ function newGame(o) {
   const f = resFlow(); for (const k in f) c.stock[k] = Math.round(f[k].reserve);
   S.stats.gdp0 = c.gdp;
   news(`${S.leader.n} asume el poder en ${c.n}`, 'pol', o.iso, 3);
+  run('new', o);
   S.fin = finance(true);
   return S;
 }
@@ -214,18 +215,19 @@ function load(str) {
   for (const iso of ISOS) if (!o.c[iso]) return { ok: false, msg: 'A la partida le faltan países (' + iso + ')' };
   // migración de partidas de la Fase 1: estado nuevo y territorios con geometría real
   o.tech = o.tech || { done: [], cur: null, pts: 0, funded: -1 }; o.spy = o.spy || { net: {} };
-  if (o.geo !== 2) {
+  if (o.geo !== 3) {
     for (const iso of ISOS) { const c = o.c[iso], old = c.terr, occ = old.filter(t => t.o !== iso), nt = mkTerr(iso);
       if (!c.alive) nt.forEach(t => { t.o = c.owner; }); else { let k = Math.min(nt.length - 1, Math.round(occ.length / old.length * nt.length)); for (let i = nt.length - 1; k > 0 && occ.length; i--, k--) nt[i].o = occ[0].o; }
       c.terr = nt; }
-    o.geo = 2;
+    o.geo = 3;
   }
-  S = o; dirty(); Bus.emit('loaded'); Bus.emit('state');
+  S = o; dirty(); run('load'); Bus.emit('loaded'); Bus.emit('state');
   return { ok: true, msg: 'Partida cargada: ' + dateStr() };
 }
 
 /* ---- puerta única de acciones ---- */
-const ACT = {}, OPS = {};
+const ACT = {}, OPS = {}, HOOKS = {};
+const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); }, run = (name, a, b) => { for (const f of HOOKS[name] || []) f(a, b); };
 const FREE = { decide: 1, edit: 1, asylum: 1 };
 const fail = msg => ({ ok: false, msg });
 const canPay = x => P().tr - x >= -P().gdp * .15;

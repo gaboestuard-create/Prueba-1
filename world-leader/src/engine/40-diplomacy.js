@@ -156,7 +156,9 @@ ACT.base = a => {
 /* ---- territorio ---- */
 function moveTerr(victim, i, taker, k) { // k = fracción del PIB que sobrevive al cambio de manos
   const v = C(victim), t = v.terr[i], own = ownCount(victim); if (!t || t.o !== victim || !own) return false;
-  const g = v.gdp / own, pp = v.pop / own; v.gdp -= g; v.pop -= pp; t.o = taker; t.g = g; t.pp = pp; t.k = k;
+  // cada región pesa lo que pesa: su parte del PIB (e) y de la población (w) entre las que el país aún conserva
+  const G = D.C[victim].terr, sum = k => v.terr.reduce((a, x, j) => a + (x.o === victim ? G[j][k] || 0 : 0), 0) || 1;
+  const g = v.gdp * (G[i].e || 0) / sum('e'), pp = v.pop * (G[i].w || 0) / sum('w'); v.gdp -= g; v.pop -= pp; t.o = taker; t.g = g; t.pp = pp; t.k = k;
   C(taker).gdp += g * k; C(taker).pop += pp; dirty(); return true;
 }
 function restoreTerr(victim, i) {

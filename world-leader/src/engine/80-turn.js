@@ -16,16 +16,17 @@ ACT.endTurn = () => {
   const c = P(), g = growthOf(S.player);
   S.fin = finance(false);
   c.gdp *= 1 + (g + rr(-.2, .2)) / 100;
-  politicsTurn(g); techTurn();
+  politicsTurn(g); techTurn(); run('player', g);
   S.gm = S.gm.filter(m => --m.t > 0); S.built = {};
   for (const k in S.rep) S.rep[k] *= .985;
   // FASE 2 · IA
   for (const iso of shuffle(alive())) if (!isP(iso)) aiTurn(iso);
+  run('world');
   // FASE 3 · resolución
   for (const w of S.wars.slice()) warTurn(w);
   purgeWars(); marketTurn(); decayMods();
   S.turn++; S.q = (S.q + 1) % 4; if (!S.q) S.year++;
-  laterTurn(); electionTurn();
+  laterTurn(); electionTurn(); run('late');
   if (S.turn % 4 === 0) unSession();
   // FASE 4 · eventos
   worldEvents(); playerEvent();
@@ -62,6 +63,11 @@ ACT.edit = a => {
   }
   else if (k === 'ally') { const o = a.o || me; if (o === a.iso || !S.c[o]) return fail('Elige otro país'); if (hasExplicit('ali', a.iso, o)) endTreaties(a.iso, o, ['ali', 'def']); else { for (const w of S.wars.slice()) if ((w.att[0] === o && w.def[0] === a.iso) || (w.att[0] === a.iso && w.def[0] === o)) endWar(w, 'blanca'); addTreaty('ali', a.iso, o); } }
   else if (k === 'enemy') { const o = a.o || me; if (o === a.iso || !S.c[o]) return fail('Elige otro país'); const L = S.mods[key(o, a.iso)] || (S.mods[key(o, a.iso)] = []), i = L.findIndex(m => m.k === 'Enemistad (editor)'); if (i >= 0) L.splice(i, 1); else { endTreaties(a.iso, o); L.push({ k: 'Enemistad (editor)', v: -90, d: 0, g: 1 }); } }
+  else if (k0 === 'terr') { // regiones: terr.<índice>.<g|p|v|o|n>
+    const t = c.terr[+k1], f = k.split('.')[2]; if (!t) return fail('Región inválida');
+    if (f === 'o') { if (!S.c[v] || !S.c[v].alive) return fail('País inválido'); if (t.o !== v) { if (t.o !== a.iso) restoreTerr(a.iso, +k1); if (v !== a.iso) moveTerr(a.iso, +k1, v, 1); } }
+    else if (f === 'v') t.v = !!v; else if (f === 'gob' || f === 'p' || f === 'n') t[f] = String(v).slice(0, 60); else return fail('Campo inválido');
+  }
   else if (k === 'peace') { for (const w of S.wars.slice()) if (w.att.includes(a.iso) || w.def.includes(a.iso)) endWar(w, 'blanca'); }
   else return fail('Campo no editable: ' + k);
   dirty(); if (!S.over) S.fin = Object.assign(finance(true), { last: S.fin && S.fin.last });
@@ -76,6 +82,7 @@ WL.Game = {
     rel, relBreakdown, power, catPow, troops, upkeep, costLvl, canReach, nb, ownerOf, ownCount, alliesOf, enemiesOf, warsOf, atWar, inWar, hasT, hasExplicit, sanctioned, threat,
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
+    regionInfo, regionProd, rulingTag,
     researchRate, techOpen, fundCost, spyNet, spyCost, spyOdds, intel,
     treatyEval, unitCost, baseCost, capacity, warScoreFor, warById, repTitle, describeFx, dateStr, money, canPay,
     blocAllies: iso => C(iso).blocs.filter(b => D.BLOCS[b].def), TNAME, TCP, UNT, REPN

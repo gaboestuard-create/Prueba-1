@@ -30,7 +30,8 @@ function secAdd(id, v) {
 }
 function secBase(k) { let v = 50; for (const id in S.pol.laws) v += (LAW[id].sec || {})[k] || 0; for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
 /* control territorial: fracción de mis regiones gobernadas por mi partido (solo países con subdivisiones) */
-function localCtl() { const r = D.SUB_RULING[S.player]; if (!r || P().custom) return null; const mine = P().terr.filter(t => t.o === S.player && t.p); return mine.length ? mine.filter(t => t.p === r).length / mine.length : null; }
+const rulingTag = () => P().custom ? P().partido : D.SUB_RULING[S.player] || D.C[S.player].partido;
+function localCtl() { const r = rulingTag(), mine = P().terr.filter(t => t.o === S.player && t.p); return mine.length > 1 ? mine.filter(t => t.p === r).length / mine.length : null; }
 
 /* ---- votación de leyes ---- */
 const lawPop = l => Object.keys(l.sec || {}).reduce((s, k) => s + S.pol.sec[k].w * l.sec[k], 0);
@@ -103,7 +104,8 @@ function politicsTurn(g) {
     s.a = clamp(s.a + d, 0, 100);
   }
   const ap = approval();
-  const target = 32 + ap * .5 + lawSum('stab') + (g > 0 ? 3 : -4) - (war ? 6 : 0) - (c.tr < -c.gdp * .2 ? 8 : 0);
+  const lcS = localCtl();
+  const target = 32 + ap * .5 + (lcS == null ? 0 : (lcS - .5) * 4) + lawSum('stab') + (g > 0 ? 3 : -4) - (war ? 6 : 0) - (c.tr < -c.gdp * .2 ? 8 : 0);
   c.stab = clamp(c.stab + (target - c.stab) * .12 + mod('stabT') + rr(-1, 1), 0, 100);
   pol.cp = clamp(pol.cp + 3 + mod('cp') + (ap > 60 ? 1 : 0) - (ap < 35 ? 1 : 0), 0, 12);
   if (mod('repPazT') && !war) repAdd('paz', mod('repPazT'));
@@ -131,8 +133,8 @@ function electionTurn() {
     // el congreso y los gobiernos locales se recomponen según el resultado
     const d = (share - 50) * .5, gov = S.pol.seats[0], opp = S.pol.seats.filter(p => !p.g).sort((a, b) => b.s - a.s)[0];
     if (opp) { const x = clamp(d, -gov.s + 5, opp.s - 3); gov.s += x; opp.s -= x; }
-    const rul = D.SUB_RULING[S.player];
-    if (rul && !P().custom) for (const t of P().terr) if (t.o === S.player && t.p) { if (t.p !== rul && chance((share - 50) / 40)) t.p = rul; else if (t.p === rul && chance((54 - share) / 30)) t.p = 'Oposición'; }
+    const rul = rulingTag();
+    if (rul) for (const t of P().terr) if (t.o === S.player && t.p) { if (t.p !== rul && chance((share - 50) / 40)) t.p = rul; else if (t.p === rul && chance((54 - share) / 30)) t.p = 'Oposición'; }
     secAdd('all', 2);
     news(`${S.leader.n} gana la reelección con el ${share.toFixed(1)}% de los votos`, 'elec', S.player, 3);
   }

@@ -29,7 +29,8 @@ function refreshMap() {
   for (const iso in S().c) {
     const o = Q.ownerOf(iso); let col = own[o] || (own[o] = colorOf(o, UI.mode, ctx));
     const c = CC(iso), occ = c.alive ? c.terr.filter(t => t.o !== iso) : [];
-    if (occ.length) { wars[iso] = 1; over[iso] = {}; c.terr.forEach((t, i) => { if (t.o !== iso) { const k = Q.ownerOf(t.o); over[iso][i + 1] = own[k] || (own[k] = colorOf(k, UI.mode, ctx)); } }); } // cada provincia ocupada se pinta del ocupante
+    if (iso === UI.sel && c.alive && c.terr.length > 1) { over[iso] = {}; c.terr.forEach((t, i) => { if (t.o === iso) over[iso][i + 1] = partyColor(t.p); }); } // país seleccionado: regiones por partido
+    if (occ.length) { wars[iso] = 1; over[iso] = over[iso] || {}; c.terr.forEach((t, i) => { if (t.o !== iso) { const k = Q.ownerOf(t.o); over[iso][i + 1] = own[k] || (own[k] = colorOf(k, UI.mode, ctx)); } }); } // cada provincia ocupada se pinta del ocupante
     colors[iso] = col;
   }
   for (const w of S().wars) wars[w.def[0]] = 1; // franjas rojas solo donde se combate
@@ -73,8 +74,9 @@ H.closePanel = () => { UI.panel = null; UI.render(); };
 H.selMe = () => selectCountry(me());
 H.unsel = () => { UI.sel = null; UI.render(); refreshMap(); };
 H.sel = d => selectCountry(d.iso, true);
-function selectCountry(iso, fly) {
+function selectCountry(iso, fly, prov) {
   if (!iso || !S() || !S().c[iso]) return; const o = Q.ownerOf(iso);
+  UI.terrSel = o === iso && prov ? prov - 1 : UI.sel === o ? UI.terrSel : null; if (UI.terrSel != null) UI.terrOpen = true;
   UI.sel = o; UI.why = false; if (innerWidth < 1250) UI.panel = null;
   if (fly !== false) Globe.focus(iso);
   UI.render(); refreshMap();
@@ -105,7 +107,7 @@ function countryHTML(iso) {
   const cats = Object.keys(D.CATS).map(k => { const a = Q.catPow(iso, k), b = Q.catPow(p, k), mx = Math.max(a, b, 1); return `<div class="cmp"><small>${D.CATS[k]}</small>${bar(a, mx, mine ? 'gold' : 'red')}${mine ? '' : bar(b, mx, 'gold')}<b class="num">${Math.round(a)}</b></div>`; }).join('');
   const recs = Object.keys(c.rec).filter(k => c.rec[k] > 0).sort((a, b) => c.rec[b] - c.rec[a]).map(k => `<span class="chip" title="Nivel de producción ${c.rec[k]} de 5">${D.COMMODITIES[k].n} <i class="dots">${'●'.repeat(c.rec[k])}</i></span>`).join('') || '<span class="mut">Sin recursos de exportación</span>';
   const why = UI.why && !mine ? `<div class="why">${Q.relBreakdown(iso).map(x => `<div><span>${esc(x[0])}</span><b class="${x[1] >= 0 ? 'up' : 'down'}">${sgn(x[1])}</b></div>`).join('')}</div>` : '';
-  const terr = `<details ${UI.terrOpen ? 'open' : ''} data-keep="terr"><summary>${D.SUBS[iso] ? 'Estados y provincias' : 'Territorios'} · conserva ${own} de ${c.terr.length}${held ? ' · ocupa ' + held + ' ajenos' : ''}</summary><div class="terrs">${c.terr.map(t => `<span class="terr ${t.o !== iso ? 'occ' : ''}">${esc(t.n)}${t.p ? ` <em>${esc(t.p)}</em>` : ''}${t.o !== iso ? ` <b>→ ${cname(t.o)}</b>` : ''}</span>`).join('')}</div></details>`;
+  const terr = regionsHTML(iso);
   return `<aside class="cpanel glass" data-sc="cp"><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
     <header class="cp-head"><span class="flag xl">${flag(iso)}</span><div><h2>${cname(iso)}</h2><small class="mut">${esc(D.REGIONS[d.region])} · ${esc(D.REGIMES[c.reg])}${c.nuke ? ' · ☢ nuclear' : ''}</small></div></header>
     <div class="leader">${portrait(iso, true)}<div><b>${esc(c.lider.n)}</b><small>${esc(c.partido)} · ${esc(D.IDEO[c.ideo] || '')}</small>

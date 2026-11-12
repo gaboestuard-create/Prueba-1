@@ -18,10 +18,10 @@ document.addEventListener('toggle', e => { if (e.target.dataset && e.target.data
 
 /* ---- globo: clic y cursor ---- */
 function wireGlobe() {
-  Globe.onPick(iso => {
+  Globe.onPick((iso, prov) => {
     if (UI.screen === 'create') { if (iso && D.C[iso] && NG.step === 0) H.ngPick({ iso }); return; }
     if (UI.screen !== 'game') return;
-    if (iso) selectCountry(iso); else if (UI.sel) H.unsel();
+    if (iso) selectCountry(iso, UI.sel !== Q.ownerOf(iso), prov); else if (UI.sel) H.unsel();
   });
   const tip = $('#tip');
   Globe.onHover((iso, x, y, prov) => {

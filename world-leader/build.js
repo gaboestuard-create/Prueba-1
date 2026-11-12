@@ -13,7 +13,9 @@ const wc = require('world-countries');
 
 // Lista de países del juego (se lee de data.js, sin metadatos todavía)
 const sandbox = { globalThis: {} }; sandbox.globalThis = sandbox;
-vm.runInNewContext(read('data.js'), sandbox);
+const DATAFILES = ['data.js'].concat(fs.readdirSync(SRC).filter(f => /^data-.*\.js$/.test(f)).sort());
+for (const f of DATAFILES) vm.runInNewContext(read(f), sandbox);
+const DATA = sandbox.WL.DATA;
 const GAME = Object.keys(sandbox.WL.DATA.C);
 const missing = wc.filter(c => c.unMember && !GAME.includes(c.cca2)).map(c => c.cca2);
 if (missing.length) throw new Error('Faltan países miembros de la ONU en data.js: ' + missing);
@@ -80,7 +82,7 @@ for (const f of JSON.parse(fs.readFileSync(NEFILE, 'utf8')).features) {
   const q = f.properties; let iso = /^[A-Z]{2}$/.test(q.iso_a2) ? q.iso_a2 : A3[q.adm0_a3]; const src = iso;
   if (iso && !idxOf[iso]) iso = TERR[iso]; if (!idxOf[iso] || !f.geometry) continue;
   const id = provs.length, ci = idxOf[iso];
-  provs.push({ iso, src, n: q.name_es || q.name || 'Región', alt: [q.name_es, q.name, q.name_en, q.woe_name].filter(Boolean), lat: q.latitude, lon: q.longitude, px: 0 });
+  provs.push({ iso, src, reg: q.region, n: q.name_es || q.name || 'Región', alt: [q.name_es, q.name, q.name_en, q.woe_name].filter(Boolean), lat: q.latitude, lon: q.longitude, px: 0 });
   for (const rings of f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates) fill(rings, i => { if (map[i] === ci) pmap[i] = id; });
 }
 { // relleno de huecos: cada píxel de país sin provincia toma la del vecino más cercano del mismo país
@@ -102,17 +104,26 @@ for (const iso of GAME) {
   const c = by2[iso], list = provs.map((p, id) => p && p.iso === iso && p.px ? id : 0).filter(Boolean), cv = v3(c.latlng[0], c.latlng[1]);
   let groups;
   if (SUBS[iso]) {
-    const used = new Set();
+    // Nivel A. Las provincias pequeñas van primero: así "Ciudad de X" se queda con la capital y no con el estado homónimo.
+    const used = new Set(), RO = (DATA.REGION_OF || {})[iso], home = list.filter(id => provs[id].src === iso).sort((a, b) => provs[a].px - provs[b].px);
     const dep = {}; list.filter(id => provs[id].src !== iso).forEach(id => { (dep[provs[id].src] = dep[provs[id].src] || []).push(id); });
-    groups = list.filter(id => provs[id].src === iso).map(id => {
+    const bySub = new Map(), orphan = [], cen = ids => [0, 1, 2].map(j => ids.reduce((a, id) => a + v3(provs[id].lat, provs[id].lon)[j] * (provs[id].px + 1), 0));
+    for (const id of home) {
       const p = provs[id], keys = p.alt.map(norm);
-      const sub = SUBS[iso].find(s => !used.has(s) && (keys.includes(norm(s.n)) || ((ALIAS[iso] || {})[s.n] || []).some(a => keys.includes(norm(a)))));
-      if (sub) used.add(sub); return { ids: [id], n: sub ? sub.n : p.n, p: sub ? sub.p : (iso === 'RU' || iso === 'CN' ? RUL[iso] : 'Adm. central'), cap: sub === SUBS[iso][0], px: p.px, v: v3(p.lat, p.lon) };
-    });
-    for (const k in dep) { const m = dep[k], w = m.reduce((a, id) => a + provs[id].px, 0), s3 = [0, 1, 2].map(j => m.reduce((a, id) => a + v3(provs[id].lat, provs[id].lon)[j], 0)); groups.push({ ids: m, n: (by2[k] && by2[k].translations.spa.common) || provs[m[0]].n, p: 'Adm. central', px: w, v: s3 }); }
-    SUBS[iso].filter(s => !used.has(s)).forEach(s => subWarn.push(iso + ':' + s.n));
+      const sub = RO ? SUBS[iso].find(x => x.n === RO[p.reg]) : SUBS[iso].find(x => !used.has(x) && (keys.includes(norm(x.n)) || ((ALIAS[iso] || {})[x.n] || []).some(a => keys.includes(norm(a)))));
+      if (!sub) { orphan.push(id); continue; } used.add(sub); if (!bySub.has(sub)) bySub.set(sub, []); bySub.get(sub).push(id);
+    }
+    groups = [...bySub].map(([sub, ids]) => ({ ids, n: sub.n, p: sub.p, gob: sub.g || '', cap: sub === SUBS[iso][0], px: ids.reduce((a, id) => a + provs[id].px, 0), v: cen(ids) }));
+    const d3 = (a, b) => { const la = Math.hypot(...a) || 1, lb = Math.hypot(...b) || 1; return (a[0] / la - b[0] / lb) ** 2 + (a[1] / la - b[1] / lb) ** 2 + (a[2] / la - b[2] / lb) ** 2; };
+    for (const id of orphan) { // sin correspondencia: lo diminuto se une a la entidad más cercana; lo demás queda como entidad propia
+      const p = provs[id], v = v3(p.lat, p.lon);
+      if ((p.px < 40 || RO) && groups.length) { const g = groups.slice().sort((a, b) => d3(a.v, v) - d3(b.v, v))[0]; g.ids.push(id); g.px += p.px; }
+      else groups.push({ ids: [id], n: p.n, p: iso === 'RU' || iso === 'CN' ? RUL[iso] : 'Adm. central', gob: '', px: p.px, v });
+    }
+    for (const k in dep) { const m = dep[k]; groups.push({ ids: m, n: (by2[k] && by2[k].translations.spa.common) || provs[m[0]].n, p: 'Adm. central', gob: '', px: m.reduce((a, id) => a + provs[id].px, 0), v: cen(m) }); }
+    SUBS[iso].filter(x => !used.has(x)).forEach(x => subWarn.push(iso + ':' + x.n));
   } else if (list.length) {
-    const area = c.area; let N = Math.min(list.length, area < 2000 ? 1 : Math.max(2, Math.min(12, Math.round(Math.log10(area) * 1.3 - 2))));
+    const area = c.area; let N = Math.min(list.length, area < 2000 ? 1 : Math.max(3, Math.min(8, Math.round(Math.log10(area) * 1.3 - 2)))); // nivel B: 3 a 8 regiones
     const all = list.map(id => ({ id, v: v3(provs[id].lat, provs[id].lon), w: provs[id].px })), d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
     const isFar = p => provs[p.id].src !== iso || (area < 3e6 && d2(p.v, cv) > .18); // ~25° del centro del país
     let P = all.filter(p => !isFar(p)); if (!P.length) P = all; const far = all.filter(p => !P.includes(p)), d2x = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
@@ -130,7 +141,22 @@ for (const iso of GAME) {
   if (!groups.some(g => g.cap)) groups.slice().sort((a, b) => b.px - a.px)[0].cap = true;
   groups.sort((a, b) => (b.cap ? 1 : 0) - (a.cap ? 1 : 0) || b.px - a.px);
   if (groups.length > 255) throw new Error('Demasiadas provincias en ' + iso);
-  TERRS[iso] = groups.map((g, i) => { g.ids.forEach(id => { local[id] = i + 1; }); const [la, lo] = ll(g.v); const t = { n: g.n, la, lo }; if (g.p) t.p = g.p; return t; });
+  // partido aproximado de las regiones de nivel B: mayoría oficialista, resto para la principal oposición
+  const rulName = DATA.C[iso].partido, opp = ((DATA.PARTIES[iso] || []).find(x => !x[3]) || ['Oposición'])[0], hfrac = t => { let h = 2166136261; for (const ch of t) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 1000) / 1000; };
+  groups.forEach(g => { if (g.p == null) g.p = g.cap || hfrac(iso + g.n) < .65 ? rulName : opp; });
+  // peso demográfico (w) y económico (e) de cada región
+  const W8 = (DATA.SUBW || {})[iso] || {}, fixed = groups.reduce((a, g) => a + (W8[g.n] || 0), 0) / 100, free = groups.filter(g => W8[g.n] == null), fsum = free.reduce((a, g) => a + Math.sqrt(g.px + 1), 0) || 1;
+  groups.forEach(g => { g.w = W8[g.n] != null ? W8[g.n] / 100 : Math.max(.02, 1 - fixed) * Math.sqrt(g.px + 1) / fsum; });
+  const sw = groups.reduce((a, g) => a + g.w, 0); groups.forEach(g => { g.w /= sw; });
+  const se = groups.reduce((a, g) => a + g.w * (g.cap ? 1.5 : 1), 0); groups.forEach(g => { g.e = g.w * (g.cap ? 1.5 : 1) / se; });
+  // recursos locales: los indicados en D.SUBREC o, si no, las regiones más extensas por turnos
+  const REC = DATA.C[iso].rec, SR = (DATA.SUBREC || {})[iso] || {}, big = groups.slice().sort((a, b) => b.px - a.px); let rix = 0;
+  for (const k in REC) {
+    let names = (SR[k] || '').split(',').filter(n => groups.some(g => g.n === n));
+    if (!names.length) { const cnt = Math.min(3, Math.max(1, Math.round(REC[k] / 2)), big.length); for (let q = 0; q < cnt; q++) names.push(big[(rix + q) % big.length].n); rix++; }
+    names.forEach(n => { const g = groups.find(x => x.n === n); (g.r = g.r || []).push(k); });
+  }
+  TERRS[iso] = groups.map((g, i) => { g.ids.forEach(id => { local[id] = i + 1; }); const [la, lo] = ll(g.v); const t = { n: g.n, la, lo, p: g.p, w: +g.w.toFixed(4), e: +g.e.toFixed(4) }; if (g.gob) t.gob = g.gob; if (g.r) t.r = g.r; return t; });
 }
 if (subWarn.length) console.log('AVISO · subdivisiones de data.js sin geometría:', subWarn.join(', '));
 // canal 2 del mapa: índice local de provincia (1..n) dentro de su país
@@ -162,7 +188,7 @@ const geo = 'globalThis.WL=globalThis.WL||{};WL.META=' + JSON.stringify(META) + 
 // --- Ensamblado
 const dir = d => fs.readdirSync(path.join(SRC, d)).sort().map(f => `\n/* ---------- ${d}/${f} ---------- */\n` + read(d + '/' + f)).join('\n');
 const parts = {
-  CSS: read('styles.css'), GEO: geo, DATA: read('data.js'),
+  CSS: read('styles.css'), GEO: geo, DATA: DATAFILES.map(read).join('\n'),
   ENGINE: "(function(){'use strict';\nconst WL=globalThis.WL;\n" + dir('engine') + '\n})();',
   GLOBE: read('globe.js'), UI: "(function(){'use strict';\nconst WL=globalThis.WL;\n" + dir('ui') + '\n})();'
 };
