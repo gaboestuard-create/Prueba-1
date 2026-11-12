@@ -178,6 +178,7 @@ function newGame(o) {
     pol: { laws: {}, cool: {}, seats: [], sec: {}, cp: 6, tax: .22, spend: .2, nextElec: 8, camp: 0 },
     tech: { done: [], cur: null, pts: 0, funded: -1 }, spy: { net: {} },
     rep: { paz: 0, conf: 0, dem: 0, gen: 0 }, un: { queue: null, cur: null, last: null }, flags: {}, evSeen: {}, aiWarCd: 3,
+    diff: o.diff == null ? 1 : clamp(+o.diff, 0, 3), intel: {},
     over: null, stats: { laws: 0, wars: 0, annexed: 0, elections: 0, gdp0: 0 }, hist: { tr: [], appr: [], gdp: [] }, fin: null
   };
   dirty();

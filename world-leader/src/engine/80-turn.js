@@ -82,6 +82,7 @@ WL.Game = {
     rel, relBreakdown, power, catPow, troops, upkeep, costLvl, canReach, nb, ownerOf, ownCount, alliesOf, enemiesOf, warsOf, atWar, inWar, hasT, hasExplicit, sanctioned, threat,
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
+    intelList, planText, diffK,
     regionInfo, regionProd, rulingTag, secWhy, govSeats, axDist, lawAx, campaignPlan, msgFits,
     researchRate, techOpen, fundCost, spyNet, spyCost, spyOdds, intel,
     treatyEval, unitCost, baseCost, capacity, warScoreFor, warById, repTitle, describeFx, dateStr, money, canPay,

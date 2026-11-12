@@ -6,11 +6,12 @@
 const warById = id => S.wars.find(w => w.id === id);
 function warScoreFor(iso) { let s = 0; for (const w of warsOf(iso)) s += w.att.includes(iso) ? w.score : -w.score; return s; }
 
-function joinWar(w, iso, side) {
+function joinWar(w, iso, side, quiet) {
   if (w.att.includes(iso) || w.def.includes(iso) || !C(iso).alive) return;
   const foes = side === 'att' ? w.def : w.att; if (foes.some(f => alliesOf(iso).includes(f) && hasExplicit('def', iso, f))) return;
   w[side].push(iso); for (const f of foes) endTreaties(iso, f); dirty();
   addMod(iso, foes[0], 'Guerra entre ambos', -30, .25, 1);
+  if (quiet) { quiet.push(iso); return; }
   news(`${nm(iso)} entra en la guerra del lado de ${nm(w[side][0])}`, 'war', iso, isP(iso) || isP(w.att[0]) || isP(w.def[0]) ? 3 : 2);
 }
 function callToArms(w, ally, foe, side) {
@@ -41,23 +42,25 @@ function startWar(a, d) {
     if (isP(a)) repAdd('conf', -30 * k);
   }
   if (isP(a)) { repAdd('paz', casus ? -10 : -22); S.stats.wars++; }
+  const ja = [], jd = [], sumUp = (l, lead) => { if (l.length) news(`${l.length === 1 ? nm(l[0]) + ' entra' : l.length + ' países entran'} en la guerra del lado de ${nm(lead)}${l.length > 1 ? ': ' + l.slice(0, 5).map(nm).join(', ') + (l.length > 5 ? '…' : '') : ''}`, 'war', l[0], big); };
   // 1) los aliados del agredido deciden si intervienen
   for (const x of dAllies) {
     if (x === a || !C(x).alive || atWar(x, a) || aAllies.includes(x)) continue;
     if (isP(x)) { pushPend(callToArms(w, d, a, 'def')); continue; }
     const p = C(x).per, sc = (hasT('def', x, d) ? .45 : .25) + p.leal * .5 + rel(x, d) / 250 - rel(x, a) / 250 - (C(a).nuke && !C(x).nuke ? .15 : 0);
-    if (sc > .62) joinWar(w, x, 'def');
+    if (sc > .62) joinWar(w, x, 'def', jd);
     else if (sc < .42 && endTreaties(x, d, ['ali', 'def'])) { addMod(x, d, 'No acudió en su defensa', -30, .4, 1); news(`${nm(x)} abandona a ${nm(d)} y rompe su alianza`, 'dip', x, 2); }
   }
   // 2) los aliados del agresor: lo apoyan, se abstienen o lo abandonan
   for (const y of aAllies) {
     if (y === d || !C(y).alive || w.def.includes(y) || dAllies.includes(y)) continue;
     if (isP(y)) { pushPend(callToArms(w, a, d, 'att')); continue; }
-    const p = C(y).per, sc = p.leal * .45 + rel(y, a) / 220 - rel(y, d) / 220 + (casus ? .15 : -.15) - (C(y).reg === 'dem' && !casus ? .2 : 0) + p.agres * .2;
-    if (sc > .6) joinWar(w, y, 'att');
+    const p = C(y).per, sc = p.leal * .45 + rel(y, a) / 220 - rel(y, d) / 220 + (casus ? .15 : -.15) - (C(y).reg === 'dem' && !casus ? .2 : 0) + p.agres * .2 - (hasExplicit('ali', y, a) ? 0 : .3);
+    if (sc > .6) joinWar(w, y, 'att', ja);
     else if (!casus && sc < .3 && endTreaties(y, a, ['ali', 'def'])) { addMod(y, a, 'Rechazó una guerra de agresión', -20, .4, 1); news(`${nm(y)} rompe su alianza con ${nm(a)} por la invasión`, 'dip', y, 2); }
     else addMod(y, a, 'No se sumó a la guerra', -4, 1);
   }
+  sumUp(jd, d); sumUp(ja, a);
   // 3) terceros: sanciones al agresor
   let ns = 0;
   for (const z of alive()) {

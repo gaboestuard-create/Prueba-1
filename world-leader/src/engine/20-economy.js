@@ -25,7 +25,7 @@ const taxRate = () => clamp(S.pol.tax + lawSum('tax') / 100, .08, .45);
 /* Presupuesto del turno. dry=true solo calcula (para la UI); dry=false lo aplica. */
 function finance(dry) {
   const c = P(), inc = {}, exp = {}, war = inWar(S.player);
-  inc.imp = c.gdp * taxRate() / 4 * (.8 + c.stab / 500) * (1 + mod('income'));
+  inc.imp = c.gdp * taxRate() / 4 * (.8 + c.stab / 500) * (1 + mod('income')) * diffK('inc');
   inc.com = tradeIncome().v;
   inc.div = Object.keys(S.port).reduce((s, id) => s + S.port[id].q * S.mkt.co[id].p * CO[id].y / 400, 0) * (1 + mod('divid'));
   if (mod('graft')) inc.res = c.gdp * .0012;
@@ -59,7 +59,7 @@ function finance(dry) {
 function growthOf(iso) {
   const c = C(iso), gpc = c.gdp / Math.max(.001, c.pop);
   let g = gpc < 5 ? 1 : gpc < 15 ? .8 : gpc < 35 ? .5 : .35;
-  let s = 0; for (const x of S.sanc) if (x.on === iso && S.c[x.by].alive) s += .25 * clamp(S.c[x.by].gdp / c.gdp, .05, 1.5);
+  let s = 0; for (const x of S.sanc) if (x.on === iso && S.c[x.by].alive) s += (x.emb ? .5 : .25) * clamp(S.c[x.by].gdp / c.gdp, .05, 1.5);
   g -= Math.min(1.2, s);
   if (inWar(iso)) g -= .6; if (c.stab < 30) g -= .4;
   if (isP(iso)) {

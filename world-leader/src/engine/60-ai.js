@@ -50,7 +50,7 @@ function seekPact(iso) {
     const sc = r + Math.min(40, power(k) / 50); if (sc > bs) { bs = sc; best = k; }
   }
   if (!best) return;
-  c.cd = S.turn + 4;
+  c.cd = S.turn + 4; c.plan = { k: 'alianza', t: best, n: S.turn };
   if (best === me) {
     if (S.flags.offerT === S.turn || c.lastAsk + 8 > S.turn) return; S.flags.offerT = S.turn; c.lastAsk = S.turn;
     pushPend({ k: 'offer', t: `${c.n} busca tu protección`, iso, x: `${c.lider.n} se siente amenazado por ${nm(rival)} y te propone un pacto de defensa mutua. Si lo firmas y lo atacan, esperará tus tropas.`,
@@ -73,11 +73,11 @@ function considerWar(iso) {
     let def = power(t) * 1.25 + .6 * sumPow(alliesOf(t));
     for (const z of alive()) if (z !== iso && z !== t && C(z).gdp >= 800 && !alliesOf(t).includes(z) && rel(z, t) >= 40 && rel(z, iso) <= -25) def += .5 * power(z); // protectores
     let ratio = mine / (def + 1); if (T.stab < 35 || inWar(t)) ratio *= 1.3;
-    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1);
+    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1) / (.7 + (p.risk == null ? .5 : p.risk) * .6) * (isP(t) ? diffK('need') : 1); // nadie declara guerras suicidas
     if (isFar && T.stab > 45 && !inWar(t)) continue; // lejos solo se ataca a quien ya se tambalea
     if (ratio > need && ratio * -r > bs) { bs = ratio * -r; best = t; far = isFar; }
   }
-  if (best && chance((.1 + p.agres * .2) * (far ? .3 : 1))) { c.cd = S.turn + 10; S.aiWarCd = S.turn + 8; startWar(iso, best); }
+  if (best) { c.plan = { k: (c.esc || {})[best] >= 2 ? 'guerra' : 'presion', t: best, n: S.turn }; if (chance((.14 + p.agres * .25) * (far ? .4 : 1))) escalate(iso, best); } // primero presión económica, después las armas
 }
 OPS.sign = a => { addTreaty(a.t, S.player, a.iso); addMod(S.player, a.iso, 'Firma de tratado', gain(6), .5); news(`${P().n} y ${nm(a.iso)} firman: ${TNAME[a.t]}`, 'dip', a.iso, 2); Bus.emit('treaty', { t: a.t, a: S.player, b: a.iso, name: TNAME[a.t] }); };
 OPS.armed = a => { for (const z of enemiesOf(a.iso)) addMod(S.player, z, 'Armaste a su enemigo', -15, .3, 1); };
@@ -117,17 +117,18 @@ function aiTurn(iso) {
   const c = C(iso); if (!c.alive) return; const p = c.per, me = S.player;
   // economía y estabilidad
   c.gdp *= 1 + (growthOf(iso) + rr(-.3, .3)) / 100;
-  c.tr = Math.min(c.gdp * .06, c.tr + c.gdp * .004 * (1 + p.agres));
+  c.tr = Math.min(c.gdp * .06, c.tr + c.gdp * .004 * (1 + p.agres) * diffK('ai'));
   c.stab = clamp(c.stab + (c.stab0 - c.stab) * .05 + rr(-1.5, 1.5) - S.sanc.filter(x => x.on === iso).length * .15, 0, 100);
   // política interna
   if (S.turn > 1 && ((c.stab < 18 && chance(.12)) || ((c.reg === 'mil' || c.reg === 'hib') && c.stab < 38 && chance(.02)))) coup(iso);
   else if (c.nextElec && S.turn >= c.nextElec) aiElection(iso);
   const th = threat(iso), war = inWar(iso);
+  if (th > .9 && (!c.plan || c.plan.n < S.turn - 2)) c.plan = { k: 'rearme', n: S.turn };
   // rearme ante la amenaza
   if ((war || th > .8) && c.tr > 0 && aiBuy(iso) && th > 1 && c.gdp > 300 && chance(.12)) news(`${c.n} acelera su rearme`, 'mil', iso);
   if (!war) {
     if (th > 1.1 && c.cd <= S.turn) seekPact(iso);
-    if (S.turn > 2 && c.stab > 40 && c.cd <= S.turn && S.aiWarCd <= S.turn) considerWar(iso);
+    if (S.turn > 2 && c.stab > 40 && c.cd <= S.turn && (S.aiWarCd <= S.turn || Object.keys(c.esc || {}).length)) considerWar(iso);
     // cooperación: tratados comerciales con países afines
     if (chance(.05 * (.5 + p.coop))) {
       const k = pick(nb(iso).concat(shuffle(alive()).slice(0, 5)));
