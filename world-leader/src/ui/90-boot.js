@@ -24,12 +24,14 @@ function wireGlobe() {
     if (iso) selectCountry(iso); else if (UI.sel) H.unsel();
   });
   const tip = $('#tip');
-  Globe.onHover((iso, x, y) => {
-    if (!iso || !D.C[iso]) { tip.hidden = true; Globe.hover([]); UI.hov = null; return; }
+  Globe.onHover((iso, x, y, prov) => {
+    if (!iso || !D.C[iso]) { tip.hidden = true; Globe.hover([]); Globe.hoverProv(); UI.hov = null; return; }
+    const terr = D.C[iso].terr[(prov || 1) - 1], multi = D.C[iso].terr.length > 1; Globe.hoverProv(multi ? iso : null, prov);
     const game = UI.screen === 'game' && S(), o = game ? Q.ownerOf(iso) : iso;
     if (o !== UI.hov) { UI.hov = o; Globe.hover(game ? Object.keys(S().c).filter(i => Q.ownerOf(i) === o) : [iso]); }
     const r = game && o !== me() ? Q.rel(me(), o) : null;
-    tip.innerHTML = `${flag(o)} <b>${esc(game ? CC(o).n : D.C[o].n)}</b>${o !== iso && game ? ` <small>(${esc(D.C[iso].n)})</small>` : ''}${r != null ? ` <small class="${relCls(r)}">${relWord(r)} ${sgn(r)}</small>` : ''}`;
+    const holder = game && terr ? CC(iso).terr[(prov || 1) - 1].o : iso;
+    tip.innerHTML = `${flag(o)} <b>${esc(game ? CC(o).n : D.C[o].n)}</b>${o !== iso && game ? ` <small>(${esc(D.C[iso].n)})</small>` : ''}${multi && terr ? ` <small>· ${esc(terr.n)}${game && holder !== iso && CC(iso).alive ? ' — ocupada por ' + esc(CC(holder).n) : ''}</small>` : ''}${r != null ? ` <small class="${relCls(r)}">${relWord(r)} ${sgn(r)}</small>` : ''}`;
     tip.hidden = false; tip.style.transform = `translate(${Math.min(innerWidth - tip.offsetWidth - 8, x + 14)}px,${Math.max(4, y - 34)}px)`;
   });
 }

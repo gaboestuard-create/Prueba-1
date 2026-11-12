@@ -60,8 +60,8 @@ KN|0.05|1.1|0.3|Terrance Drew|Partido Laborista de San Cristóbal y Nieves|-1|de
 BR|212|2180|367|Luiz Inácio Lula da Silva|Partido de los Trabajadores|-1|dem|BRICS,MERCOSUR|hie5,pet4,caf5,tri4,oro2,lit1,tie2
 AR|46|640|77|Javier Milei|La Libertad Avanza|2|dem|MERCOSUR|lit4,tri4,gas3,pet2,cob1,oro1
 CL|19.8|340|69|José Antonio Kast|Partido Republicano|2|dem||cob5,lit4,hie1,oro1
-CO|52|420|260|Gustavo Petro|Pacto Histórico|-2|dem||pet2,car3,caf3,oro1
-PE|34|290|81|José Jerí|Somos Perú|1|hib||cob4,oro3,gas1,caf1
+CO|52|420|260|Abelardo de la Espriella|Defensores de la Patria|2|dem||pet2,car3,caf3,oro1
+PE|34|290|81|Keiko Fujimori|Fuerza Popular|2|dem||cob4,oro3,gas1,caf1
 VE|28|110|123|Delcy Rodríguez|PSUV|-2|aut||pet3,gas2,oro1,hie1
 EC|18|125|40|Daniel Noboa|Acción Democrática Nacional|1|dem||pet2,cob1,oro1,caf1
 BO|12.4|48|34|Rodrigo Paz|Partido Demócrata Cristiano|0|dem||gas2,lit3
@@ -94,7 +94,7 @@ RO|19|385|72|Nicușor Dan|Independiente|0|dem|OTAN,UE|gas1
 BG|6.4|115|37|Rosen Zhelyazkov|GERB|1|dem|OTAN,UE|
 GR|10.4|260|143|Kyriakos Mitsotakis|Nueva Democracia|1|dem|OTAN,UE|
 HR|3.9|93|17|Andrej Plenković|HDZ|1|dem|OTAN,UE|
-SI|2.1|73|7|Robert Golob|Movimiento Libertad|-1|dem|OTAN,UE|
+SI|2.1|73|7|Janez Janša|Partido Democrático Esloveno (SDS)|2|dem|OTAN,UE|
 RS|6.6|90|28|Aleksandar Vučić|SNS|1|hib||cob1,lit1
 BA|3.2|29|10|Denis Bećirović|SDP|0|dem||
 ME|0.62|8|2|Milojko Spajić|Europa Ahora|0|dem|OTAN|
@@ -124,7 +124,7 @@ PS|5.4|14|0|Mahmud Abás|Fatah|0|hib|LA|
 LB|5.4|28|60|Joseph Aoun|Independiente|0|hib|LA|
 SY|23|21|100|Ahmed al-Sharaa|Gobierno de transición|1|aut|LA|pet1
 JO|11.4|53|100|Abdalá II|Monarquía hachemita|1|mon|LA|
-IQ|45|265|193|Mohammed Shia al-Sudani|Marco de Coordinación|0|hib|LA|pet5,gas2
+IQ|45|265|193|Ali al-Zaidi|Marco de Coordinación|0|hib|LA|pet5,gas2
 IR|90|400|610|Mojtaba Jamenei|República Islámica|2|teo|BRICS,OCS|pet4,gas5,cob2,hie2,ura1
 SA|36|1100|257|Mohamed bin Salmán|Casa de Saúd|2|mon|LA|pet5,gas3,oro1
 AE|10|540|63|Mohamed bin Zayed|Monarquía federal|1|mon|LA,BRICS|pet4,gas3
@@ -232,6 +232,9 @@ MU|1.3|16|0|Navin Ramgoolam|Partido Laborista|-1|dem|UA|
 SC|0.1|2.2|0.4|Patrick Herminie|Seychelles Unidas|-1|dem|UA|
 KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 
+  // Líderes contrastados con prensa reciente (búsqueda web) en la fecha indicada. El resto sigue "sin verificar".
+  D.VERIFIED_ON = '12 nov 2026';
+  D.VERIFIED = ['US', 'BR', 'CO', 'PE', 'VE', 'HU', 'SI', 'NL', 'IR', 'IQ', 'JP', 'TH', 'NP', 'AM', 'ZM'];
   D.NUKES = ['US', 'RU', 'CN', 'FR', 'GB', 'IN', 'PK', 'KP', 'IL'];
   const STAB = { HT: 15, SD: 14, SS: 18, YE: 18, SY: 30, LY: 28, MM: 22, SO: 20, AF: 35, ML: 30, BF: 28, NE: 35, CD: 32, VE: 35, UA: 50, LB: 32, IQ: 42, PK: 40, ET: 38, NG: 42, CF: 22, TD: 35, GW: 30, MG: 35, PS: 25, KP: 55, IR: 40, CU: 42, BO: 45, PE: 38, EC: 42, CO: 48, MZ: 38, CM: 40, BD: 42, NP: 42, KE: 48, ZW: 40, BY: 55, RU: 58, CN: 72 };
   // Personalidad de IA (0-1). Lo no listado se deriva del régimen + ruido con semilla.
@@ -268,7 +271,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
   /* ---- PARTIDOS (congreso del jugador): [nombre, ideología, % escaños, 1 = coalición de gobierno] ----
      Países no listados usan un congreso genérico construido alrededor del partido gobernante real. */
   D.PARTIES = {
-    US: [['Partido Republicano', 2, 51, 1], ['Partido Demócrata', -1, 48], ['Independientes', 0, 1]],
+    US: [['Partido Republicano', 2, 46, 1], ['Partido Demócrata', -1, 53], ['Independientes', 0, 1]], // tras las legislativas de nov-2026
     MX: [['Morena', -1, 50, 1], ['PVEM', 0, 13, 1], ['PT', -2, 9, 1], ['PAN', 2, 14], ['PRI', 0, 8], ['Movimiento Ciudadano', -1, 6]],
     BR: [['PT', -1, 14, 1], ['PL', 2, 19], ['União Brasil', 1, 12], ['PP', 1, 10], ['MDB', 0, 9, 1], ['PSD', 0, 9, 1], ['Republicanos', 1, 8], ['PSB', -1, 4, 1], ['PSOL', -2, 3, 1], ['Otros', 0, 12]],
     DE: [['CDU/CSU', 1, 33, 1], ['SPD', -1, 19, 1], ['AfD', 2, 24], ['Los Verdes', -1, 14], ['Die Linke', -2, 10]],
@@ -282,8 +285,8 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     IT: [['Hermanos de Italia', 2, 30, 1], ['Partido Democrático', -1, 18], ['Movimiento 5 Estrellas', -1, 13], ['Lega', 2, 16, 1], ['Forza Italia', 1, 11, 1], ['Otros', 0, 12]],
     AR: [['La Libertad Avanza', 2, 37, 1], ['Unión por la Patria', -1, 38], ['PRO', 1, 9, 1], ['UCR', 0, 5], ['Otros', 0, 11]],
     CL: [['Partido Republicano', 2, 22, 1], ['Chile Vamos', 1, 18, 1], ['Nacional Libertario', 2, 5, 1], ['Unidad por Chile', -1, 40], ['Partido de la Gente', 0, 9], ['Otros', 0, 6]],
-    CO: [['Pacto Histórico', -2, 20, 1], ['Partido Liberal', 0, 17], ['Partido Conservador', 1, 14], ['Centro Democrático', 2, 9], ['Cambio Radical', 1, 9], ['Alianza Verde', -1, 8, 1], ['Partido de la U', 0, 8], ['Otros', 0, 15]],
-    PE: [['Somos Perú', 0, 8, 1], ['Fuerza Popular', 2, 18], ['Alianza para el Progreso', 1, 12, 1], ['Perú Libre', -2, 10], ['Renovación Popular', 2, 8], ['Acción Popular', 0, 8], ['Otros', 0, 36]],
+    CO: [['Defensores de la Patria', 2, 22, 1], ['Centro Democrático', 2, 12, 1], ['Partido Conservador', 1, 10, 1], ['Pacto Histórico', -2, 22], ['Partido Liberal', 0, 12], ['Cambio Radical', 1, 7], ['Alianza Verde', -1, 6], ['Otros', 0, 9]],
+    PE: [['Fuerza Popular', 2, 30, 1], ['Renovación Popular', 2, 20, 1], ['Juntos por el Perú', -2, 18], ['Otros', 0, 32]],
     VE: [['PSUV', -2, 90, 1], ['Oposición', 1, 10]],
     EC: [['ADN', 1, 44, 1], ['Revolución Ciudadana', -2, 44], ['Pachakutik', -1, 6], ['PSC', 1, 3], ['Otros', 0, 3]],
     GT: [['Movimiento Semilla', -1, 14, 1], ['Vamos', 1, 24], ['UNE', 0, 17], ['Cabal', 0, 11], ['Otros', 0, 34]],
@@ -303,11 +306,11 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 
   /* ---- SUBDIVISIONES con partido gobernante (Fase 1: 7 países). Formato "Nombre:Partido" ---- */
   const SUBS = {
-    US: 'Alabama:R,Alaska:R,Arizona:D,Arkansas:R,California:D,Colorado:D,Connecticut:D,Delaware:D,Florida:R,Georgia:R,Hawái:D,Idaho:R,Illinois:D,Indiana:R,Iowa:R,Kansas:D,Kentucky:D,Luisiana:R,Maine:D,Maryland:D,Massachusetts:D,Míchigan:D,Minnesota:D,Misisipi:R,Misuri:R,Montana:R,Nebraska:R,Nevada:R,Nuevo Hampshire:R,Nueva Jersey:D,Nuevo México:D,Nueva York:D,Carolina del Norte:D,Dakota del Norte:R,Ohio:R,Oklahoma:R,Oregón:D,Pensilvania:D,Rhode Island:D,Carolina del Sur:R,Dakota del Sur:R,Tennessee:R,Texas:R,Utah:R,Vermont:R,Virginia:D,Washington:D,Virginia Occidental:R,Wisconsin:D,Wyoming:R',
+    US: 'Distrito de Columbia:D,Alabama:R,Alaska:R,Arizona:D,Arkansas:R,California:D,Colorado:D,Connecticut:D,Delaware:D,Florida:R,Georgia:R,Hawái:D,Idaho:R,Illinois:D,Indiana:R,Iowa:R,Kansas:D,Kentucky:D,Luisiana:R,Maine:D,Maryland:D,Massachusetts:D,Míchigan:D,Minnesota:D,Misisipi:R,Misuri:R,Montana:R,Nebraska:R,Nevada:R,Nuevo Hampshire:R,Nueva Jersey:D,Nuevo México:D,Nueva York:D,Carolina del Norte:D,Dakota del Norte:R,Ohio:R,Oklahoma:R,Oregón:D,Pensilvania:D,Rhode Island:D,Carolina del Sur:R,Dakota del Sur:R,Tennessee:R,Texas:R,Utah:R,Vermont:R,Virginia:D,Washington:D,Virginia Occidental:R,Wisconsin:D,Wyoming:R',
     MX: 'Ciudad de México:Morena,Aguascalientes:PAN,Baja California:Morena,Baja California Sur:Morena,Campeche:Morena,Chiapas:Morena,Chihuahua:PAN,Coahuila:PRI,Colima:Morena,Durango:PRI,Guanajuato:PAN,Guerrero:Morena,Hidalgo:Morena,Jalisco:MC,Estado de México:Morena,Michoacán:Morena,Morelos:Morena,Nayarit:Morena,Nuevo León:MC,Oaxaca:Morena,Puebla:Morena,Querétaro:PAN,Quintana Roo:Morena,San Luis Potosí:PVEM,Sinaloa:Morena,Sonora:Morena,Tabasco:Morena,Tamaulipas:Morena,Tlaxcala:Morena,Veracruz:Morena,Yucatán:Morena,Zacatecas:Morena',
     BR: 'Distrito Federal:MDB,Acre:PP,Alagoas:MDB,Amapá:Solidariedade,Amazonas:União,Bahía:PT,Ceará:PT,Espírito Santo:PSB,Goiás:União,Maranhão:PSB,Mato Grosso:União,Mato Grosso del Sur:PP,Minas Gerais:Novo,Pará:MDB,Paraíba:PSB,Paraná:PSD,Pernambuco:PSD,Piauí:PT,Río de Janeiro:PL,Río Grande del Norte:PT,Río Grande del Sur:PSD,Rondonia:União,Roraima:PP,Santa Catarina:PL,São Paulo:Republicanos,Sergipe:PSD,Tocantins:Republicanos',
     DE: 'Berlín:CDU,Baden-Wurtemberg:Verdes,Baviera:CSU,Brandeburgo:SPD,Bremen:SPD,Hamburgo:SPD,Hesse:CDU,Mecklemburgo-Pomerania:SPD,Baja Sajonia:SPD,Renania del Norte-Westfalia:CDU,Renania-Palatinado:SPD,Sarre:SPD,Sajonia:CDU,Sajonia-Anhalt:CDU,Schleswig-Holstein:CDU,Turingia:CDU',
-    IN: 'Delhi:BJP,Andhra Pradesh:TDP,Arunachal Pradesh:BJP,Assam:BJP,Bihar:JD(U),Chhattisgarh:BJP,Goa:BJP,Guyarat:BJP,Haryana:BJP,Himachal Pradesh:INC,Jharkhand:JMM,Karnataka:INC,Kerala:CPI(M),Madhya Pradesh:BJP,Maharashtra:BJP,Manipur:BJP,Meghalaya:NPP,Mizoram:ZPM,Nagaland:NDPP,Odisha:BJP,Punyab:AAP,Rajastán:BJP,Sikkim:SKM,Tamil Nadu:DMK,Telangana:INC,Tripura:BJP,Uttar Pradesh:BJP,Uttarakhand:BJP,Bengala Occidental:AITC',
+    IN: 'Delhi:BJP,Andhra Pradesh:TDP,Arunachal Pradesh:BJP,Assam:BJP,Bihar:JD(U),Chhattisgarh:BJP,Goa:BJP,Guyarat:BJP,Haryana:BJP,Himachal Pradesh:INC,Jharkhand:JMM,Karnataka:INC,Kerala:CPI(M),Madhya Pradesh:BJP,Maharashtra:BJP,Manipur:BJP,Meghalaya:NPP,Mizoram:ZPM,Nagaland:NDPP,Odisha:BJP,Punyab:AAP,Rajastán:BJP,Sikkim:SKM,Tamil Nadu:DMK,Telangana:INC,Tripura:BJP,Uttar Pradesh:BJP,Uttarakhand:BJP,Bengala Occidental:AITC,Jammu y Cachemira:JKNC,Puducherry:AINRC',
     RU: 'Moscú:RU,San Petersburgo:RU,Óblast de Moscú:RU,Tartaristán:RU,Baskortostán:RU,Chechenia:RU,Daguestán:RU,Krasnodar:RU,Rostov:RU,Volgogrado:RU,Samara:RU,Nizhni Nóvgorod:RU,Sverdlovsk:RU,Cheliábinsk:RU,Tiumén:RU,Novosibirsk:RU,Omsk:RU,Krasnoyarsk:RU,Irkutsk:RU,Yakutia:RU,Jabárovsk:RU,Primorie:RU,Sajalín:RU,Kaliningrado:RU,Múrmansk:RU,Smolensk:RU,Jakasia:PCFR,Oriol:PCFR,Uliánovsk:PCFR,Chuvasia:RJ',
     CN: 'Pekín:PCCh,Tianjin:PCCh,Hebei:PCCh,Shanxi:PCCh,Mongolia Interior:PCCh,Liaoning:PCCh,Jilin:PCCh,Heilongjiang:PCCh,Shanghái:PCCh,Jiangsu:PCCh,Zhejiang:PCCh,Anhui:PCCh,Fujian:PCCh,Jiangxi:PCCh,Shandong:PCCh,Henan:PCCh,Hubei:PCCh,Hunan:PCCh,Cantón:PCCh,Guangxi:PCCh,Hainan:PCCh,Chongqing:PCCh,Sichuan:PCCh,Guizhou:PCCh,Yunnan:PCCh,Tíbet:PCCh,Shaanxi:PCCh,Gansu:PCCh,Qinghai:PCCh,Ningxia:PCCh,Xinjiang:PCCh'
   };
@@ -315,7 +318,6 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
   D.SUB_RULING = { US: 'R', MX: 'Morena', BR: 'PT', DE: 'CDU', IN: 'BJP', RU: 'RU', CN: 'PCCh' };
   D.SUBS = {};
   for (const k in SUBS) D.SUBS[k] = SUBS[k].split(',').map(s => { const [n, p] = s.split(':'); return { n, p }; });
-  D.TERR_NAMES = ['Capital', 'Norte', 'Sur', 'Este', 'Oeste', 'Centro', 'Noreste', 'Noroeste', 'Sureste', 'Suroeste', 'Litoral', 'Altiplano'];
 
   /* ---- SECTORES POBLACIONALES: w = peso electoral base ---- */
   D.SECTORS = {
@@ -337,13 +339,40 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     { id: 'belicista', b: 'pod', t: 1, n: 'Belicista', pro: '+15% de fuerza militar, unidades 15% más baratas; militares +10', con: '−20% a mejoras de relación', m: { atk: .15, unitCost: -.15, relGain: -.2 }, start: { sec: { mil: 10 } } },
     { id: 'estratega', b: 'pod', t: 2, n: 'Estratega', pro: '−25% de bajas y +5% de fuerza', con: '−3% de recaudación', m: { casual: -.25, atk: .05, income: -.03 } },
     { id: 'autoritario', b: 'pod', t: 3, n: 'Mano de hierro', pro: 'Puedes gobernar por decreto; +15% de votos en el congreso; estabilidad +0.15/turno', con: 'Reputación democrática −20; jóvenes −10', m: { lawVote: .15, decree: 1, stabT: .15 }, start: { rep: { dem: -20 }, sec: { jov: -10 } } },
-    { id: 'tecnocrata', b: 'int', t: 1, n: 'Tecnócrata', pro: '+0.08 pp de crecimiento por turno, +6% de recaudación', con: '−15% a mejoras de afinidad: no conectas', m: { growth: .08, income: .06, secGain: -.15 } },
+    { id: 'tecnocrata', b: 'int', t: 1, n: 'Tecnócrata', pro: '+0.08 pp de crecimiento por turno, +6% de recaudación', con: '−15% a mejoras de afinidad: no conectas', m: { growth: .08, income: .06, secGain: -.15, rp: 1 } },
     { id: 'economista', b: 'int', t: 2, n: 'Economista', pro: 'Dividendos +50%, comercio +10%, sin comisiones en bolsa', con: '−2 pts en elecciones', m: { divid: .5, tradeInc: .1, fee: 1, elect: -2 } },
-    { id: 'visionario', b: 'int', t: 3, n: 'Visionario', pro: '+0.08 pp de crecimiento y +1 capital político por turno', con: '−3 pts en elecciones: pocos entienden el plan', m: { growth: .08, cp: 1, elect: -3 } },
+    { id: 'visionario', b: 'int', t: 3, n: 'Visionario', pro: '+0.08 pp de crecimiento y +1 capital político por turno', con: '−3 pts en elecciones: pocos entienden el plan', m: { growth: .08, cp: 1, elect: -3, rp: 1 } },
     { id: 'corrupto', b: 'som', t: 1, n: 'Corrupto', pro: 'Fondos reservados: +0.12% del PIB por turno; comprar votos cuesta la mitad', con: 'Escándalos +80% más probables; confianza mundial −10', m: { graft: 1, bribe: .5, scandal: .8 }, start: { rep: { conf: -10 } } },
     { id: 'intrigante', b: 'som', t: 2, n: 'Intrigante', pro: 'Ves las consecuencias ocultas de cada decisión; traicionar cuesta 40% menos', con: '−10% a mejoras de relación', m: { spy: 1, betray: -.4, relGain: -.1 } },
     { id: 'titiritero', b: 'som', t: 3, n: 'Titiritero', pro: '+10% de votos en el congreso, +1 capital político por turno', con: 'Escándalos +40%; −5 a que acepten tus tratados', m: { lawVote: .1, cp: 1, scandal: .4, treatyAcc: -5 } }
   ];
+
+  /* ---- TECNOLOGÍA: 4 ramas × 3 niveles. per = efectos como los de una ley; m = modificadores como los de un rasgo ---- */
+  D.TECH_BRANCHES = { dig: 'Economía digital', ene: 'Energía y recursos', def: 'Defensa', est: 'Estado' };
+  D.TECH_COST = [0, 20, 45, 80]; // puntos de investigación por nivel
+  D.TECHS = [
+    { id: 'dig1', b: 'dig', t: 1, n: 'Banca digital', d: 'Pagos y crédito sin efectivo.', per: { grow: .05 } },
+    { id: 'dig2', b: 'dig', t: 2, n: 'Automatización industrial', d: 'Fábricas que exportan más con menos.', per: { grow: .08, trade: .1 } },
+    { id: 'dig3', b: 'dig', t: 3, n: 'Inteligencia artificial nacional', d: 'Modelos propios al servicio de la economía.', per: { grow: .12 }, m: { divid: .25 } },
+    { id: 'ene1', b: 'ene', t: 1, n: 'Redes inteligentes', d: 'La red eléctrica deja de desperdiciar.', per: { oilSave: .15 } },
+    { id: 'ene2', b: 'ene', t: 2, n: 'Minería de precisión', d: 'Más mineral de cada yacimiento.', per: { prodMul: .15 } },
+    { id: 'ene3', b: 'ene', t: 3, n: 'Fusión experimental', d: 'El primer reactor que da más de lo que gasta.', per: { oilSave: .3, cost: -.15 } },
+    { id: 'def1', b: 'def', t: 1, n: 'Guerra electrónica', d: 'Cegar al enemigo antes del primer disparo.', per: { mil: .06 } },
+    { id: 'def2', b: 'def', t: 2, n: 'Logística de precisión', d: 'Menos bajas y unidades más baratas.', m: { unitCost: -.1, casual: -.1 } },
+    { id: 'def3', b: 'def', t: 3, n: 'Enjambres autónomos', d: 'Drones que combaten en red.', per: { mil: .12 } },
+    { id: 'est1', b: 'est', t: 1, n: 'Gobierno electrónico', d: 'Trámites en línea y menos evasión.', per: { stab: 2 }, m: { income: .03 } },
+    { id: 'est2', b: 'est', t: 2, n: 'Contrainteligencia', d: 'Tus operaciones encubiertas aciertan más y los escándalos se filtran menos.', m: { spyOp: .15, scandal: -.2 } },
+    { id: 'est3', b: 'est', t: 3, n: 'Diplomacia de datos', d: 'Sabes lo que quiere cada cancillería antes de sentarte.', m: { treatyAcc: 5, cp: 1 } }
+  ];
+  /* ---- OPERACIONES ENCUBIERTAS: base = prob. de éxito, risk = prob. de ser descubierto si falla, k = factor de costo ---- */
+  D.SPYOPS = {
+    red: { n: 'Infiltrar una red', d: 'Sube tu red de agentes (máx. 3). Cada nivel da +12% a toda operación; desde el nivel 1 recibes su informe de inteligencia.', cp: 1, base: .75, risk: .3, k: 1 },
+    pro: { n: 'Campaña de imagen', d: 'Propaganda encubierta a tu favor: +10 de relación.', cp: 1, base: .7, risk: .25, k: 1 },
+    tec: { n: 'Robar tecnología', d: '+15 puntos de investigación. Solo sirve si son más ricos por habitante que tú.', cp: 1, base: .5, risk: .5, k: 2 },
+    des: { n: 'Desestabilizar', d: 'Financias protestas y rumores: su estabilidad cae entre 8 y 12 puntos.', cp: 2, base: .55, risk: .5, k: 2 },
+    sab: { n: 'Sabotear su ejército', d: 'Destruyes el 8% de sus unidades de una categoría al azar.', cp: 2, base: .45, risk: .6, k: 3 },
+    gol: { n: 'Fomentar un golpe', d: 'Solo con su estabilidad por debajo de 40. Si triunfa, el nuevo líder te debe el poder.', cp: 4, base: .3, risk: .8, k: 5 }
+  };
 
   /* ---- UNIDADES Y BASES. cost/up en miles de M$ (se escalan por nivel de costos del país) ---- */
   D.CATS = { tierra: 'Tierra', aire: 'Aire', mar: 'Mar' };
@@ -540,6 +569,10 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
       opts: [{ t: 'Disculparte personalmente', fx: [['rel', 'T', -6, 'Lo espiaste, pero te disculpaste'], ['sec', 'mil', -3], ['rep', 'conf', 2]] },
       { t: 'Negarlo todo', fx: [['rel', 'T', -14, 'Lo espiaste y lo negaste'], ['rep', 'conf', -6]] },
       { t: 'Culpar a un mando intermedio', fx: [['rel', 'T', -9, 'Espionaje entre aliados'], ['sec', 'mil', -6]] }] },
+    { id: 'espia', w: 6, if: { rival: 1, cool: 8 }, t: 'Un topo en el ministerio', x: 'Contrainteligencia detiene a un alto funcionario que llevaba meses pasando documentos a {T}.', tgt: 'rival',
+      opts: [{ t: 'Expulsar a sus diplomáticos', fx: [['rel', 'T', -12, 'Expulsaste a sus diplomáticos por espionaje'], ['sec', 'mil', 3], ['rep', 'conf', 2]] },
+      { t: 'Convertirlo en agente doble', fx: [['cp', -1]], hid: [['chance', .6, [['grow', .1, 4], ['sec', 'mil', 4]], [['rel', 'T', -10, 'Descubrió a tu agente doble'], ['stab', -3]]]] },
+      { t: 'Taparlo para no escalar', fx: [['sec', 'mil', -4]], hid: [['later', 3, .6, [['stab', -4], ['sec', 'all', -3]], 'Se filtra que tapaste un caso de espionaje extranjero']] }] },
     { id: 'fuga', w: 8, if: { secLt: ['emp', 34], cool: 6 }, t: 'Fuga de capitales', x: 'Las grandes fortunas sacan su dinero del país. La moneda cae cada mañana.',
       opts: [{ t: 'Control de capitales', fx: [['sec', 'emp', -8], ['stock', 'home', .85], ['rep', 'dem', -3], ['stab', 2]] },
       { t: 'Amnistía fiscal para que vuelvan', fx: [['$g', .8], ['sec', 'emp', 10], ['sec', 'obr', -7]] },
@@ -570,8 +603,8 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     const gpc = gdp / pop;
     const base = { dem: 62, hib: 50, aut: 52, com: 62, mon: 62, mil: 34, teo: 45 }[reg];
     D.C[iso] = {
-      iso, n: m.n, cap: m.cap, region: m.reg, lat: m.lat, lon: m.lon, area: m.area, land: m.land, bord: m.bord, px: m.px, idx: m.idx,
-      pop: +pop, gdp: +gdp, mil: +mil, lider: { n: lider, verificado: false }, partido, ideo: +ideo, reg,
+      iso, n: m.n, cap: m.cap, region: m.reg, lat: m.lat, lon: m.lon, area: m.area, land: m.land, bord: m.bord, px: m.px, idx: m.idx, terr: m.terr || [{ n: 'Capital', la: m.lat, lo: m.lon }],
+      pop: +pop, gdp: +gdp, mil: +mil, lider: { n: lider, verificado: D.VERIFIED.includes(iso) }, partido, ideo: +ideo, reg,
       blocs: blocs ? blocs.split(',') : [], rec: recursos, nuke: D.NUKES.includes(iso),
       stab: STAB[iso] || Math.round(base + Math.max(-12, Math.min(14, (gpc - 10) / 2)))
     };

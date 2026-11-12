@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'focus', 'setRoutes', 'trip', 'setWars', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -22,10 +22,10 @@
   const VERT = `varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     void main(){ vPos=position; vec4 mv=modelViewMatrix*vec4(position,1.); vV=mv.xyz; vN=normalMatrix*normal; gl_Position=projectionMatrix*mv; }`;
   const EARTH = `precision highp float;
-    uniform sampler2D uId, uPal, uState; uniform vec2 uSize; uniform vec3 uSun; uniform float uTime;
+    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime;
     varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     ${NOISE}
-    float idAt(vec2 t){ vec2 uv=(t+.5)/uSize; return floor(texture2D(uId,vec2(uv.x,clamp(uv.y,0.,1.))).r*255.+.5); }
+    vec2 idAt(vec2 t){ vec2 uv=(t+.5)/uSize; vec4 x=texture2D(uId,vec2(uv.x,clamp(uv.y,0.,1.))); return floor(vec2(x.r,x.a)*255.+.5); } // (país, provincia)
     void main(){
       vec3 n=normalize(vPos);
       float lon=atan(-n.z,n.x), lat=asin(clamp(n.y,-1.,1.));
@@ -34,15 +34,18 @@
       float fp=length(fwidth(vPos))*uSize.x/6.2831853;
       float s=exp2(floor(log2(max(fp*.75,1.))));
       vec2 q=st/s-.5, f=fract(q), c0=(floor(q)+.5)*s;
-      float i00=idAt(floor(c0)), i10=idAt(floor(c0+vec2(s,0.))), i01=idAt(floor(c0+vec2(0.,s))), i11=idAt(floor(c0+vec2(s,s)));
+      vec2 p00=idAt(floor(c0)), p10=idAt(floor(c0+vec2(s,0.))), p01=idAt(floor(c0+vec2(0.,s))), p11=idAt(floor(c0+vec2(s,s)));
+      float i00=p00.x*256.+p00.y, i10=p10.x*256.+p10.y, i01=p01.x*256.+p01.y, i11=p11.x*256.+p11.y;
       float w00=(1.-f.x)*(1.-f.y), w10=f.x*(1.-f.y), w01=(1.-f.x)*f.y, w11=f.x*f.y;
       float a00=w00+(i10==i00?w10:0.)+(i01==i00?w01:0.)+(i11==i00?w11:0.);
       float a10=w10+(i00==i10?w00:0.)+(i01==i10?w01:0.)+(i11==i10?w11:0.);
       float a01=w01+(i00==i01?w00:0.)+(i10==i01?w10:0.)+(i11==i01?w11:0.);
       float a11=w11+(i00==i11?w00:0.)+(i10==i11?w10:0.)+(i01==i11?w01:0.);
-      float id=i00, a=a00; if(a10>a){id=i10;a=a10;} if(a01>a){id=i01;a=a01;} if(a11>a){id=i11;a=a11;}
-      float edge=clamp((a-.5)/clamp(1.4*fp/s,.03,.35),0.,1.);   // 0 en la frontera, 1 dentro
-      vec4 pal=texture2D(uPal,vec2((id+.5)/256.,.5)), stt=texture2D(uState,vec2((id+.5)/256.,.5));
+      vec2 pid=p00; float a=a00; if(a10>a){pid=p10;a=a10;} if(a01>a){pid=p01;a=a01;} if(a11>a){pid=p11;a=a11;}
+      float id=pid.x, aC=(p00.x==id?w00:0.)+(p10.x==id?w10:0.)+(p01.x==id?w01:0.)+(p11.x==id?w11:0.), ew=clamp(1.4*fp/s,.03,.35);
+      float edge=clamp((aC-.5)/ew,0.,1.);                                  // frontera entre países: 0 en la línea, 1 dentro
+      float edgeP=mix(1.,clamp((a-.5)/ew,0.,1.),smoothstep(1.7,.9,fp));    // límite entre provincias: solo al acercarse
+      vec4 pal=texture2D(uPal,vec2((pid.y+.5)/256.,(id+.5)/256.)), stt=texture2D(uState,vec2((id+.5)/256.,.5));
       // relieve procedural: cordilleras por ruido "ridged" + normal perturbada por derivadas
       float hh=fbm(n*6.+2.), elev=pow(1.-abs(2.*hh-1.),2.)*.7+hh*.3;
       vec3 N=normalize(vN), V=normalize(-vV), L=normalize((viewMatrix*vec4(uSun,0.)).xyz);
@@ -57,12 +60,14 @@
         col=base*(.4+.14*day+.8*d*day) + base*.2*pow(max(dot(Nb,V),0.),2.)*(1.-day);
         float city=smoothstep(.86,.95,noise(n*260.))*smoothstep(.5,.75,noise(n*27.))*(1.-day)*(1.-snow);
         col+=vec3(1.,.8,.45)*city*.28;
+        col*=mix(.6,1.,edgeP);
         col=mix(col*.38,col,edge);                                          // fronteras
+        col+=base*.16*step(abs(id-uProv.x)+abs(pid.y-uProv.y),.5);          // provincia bajo el cursor
         col+=base*stt.b*.22;                                                // país bajo el cursor
         col=mix(col,vec3(1.,.83,.42),stt.g*(1.-edge)*.95);                  // contorno dorado de la selección
         col+=vec3(1.,.78,.3)*stt.g*(.11+.09*pulse);
         float stripe=smoothstep(.42,.58,fract((n.x+n.y*1.7+n.z*.6)*46.+uTime*.35));
-        col=mix(col,vec3(.95,.13,.08),stt.r*stripe*.5*(.55+.45*pulse));     // país en guerra
+        col=mix(col,vec3(.95,.13,.08),stt.r*stripe*.36*(.55+.45*pulse));     // país en guerra
       } else {
         float depth=fbm(n*3.+11.);
         float coast=clamp((1.-a)*2.,0.,1.);
@@ -118,17 +123,17 @@
       img.onload = () => {
         const W = GEO.W, H = GEO.H, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
         const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0);
-        const px = cx.getImageData(0, 0, W, H).data, ids = new Uint8Array(W * H);
-        for (let i = 0; i < ids.length; i++) ids[i] = px[i * 4];
+        const px = cx.getImageData(0, 0, W, H).data, ids = new Uint8Array(W * H * 2); // 2 bytes por píxel: país y provincia
+        for (let i = 0; i < W * H; i++) { ids[i * 2] = px[i * 4]; ids[i * 2 + 1] = px[i * 4 + 1]; }
         cv.width = cv.height = 1;
-        const idTex = new THREE.DataTexture(ids, W, H, THREE.LuminanceFormat, THREE.UnsignedByteType);
+        const idTex = new THREE.DataTexture(ids, W, H, THREE.LuminanceAlphaFormat, THREE.UnsignedByteType);
         idTex.minFilter = idTex.magFilter = THREE.NearestFilter; idTex.wrapS = THREE.RepeatWrapping; idTex.unpackAlignment = 1; idTex.needsUpdate = true;
-        const mk256 = () => { const d = new Uint8Array(256 * 4), t = new THREE.DataTexture(d, 256, 1, THREE.RGBAFormat, THREE.UnsignedByteType); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return [d, t]; };
-        const [pal, palTex] = mk256(), [stt, sttTex] = mk256();
-        for (let i = 0; i < 256; i++) { pal[i * 4] = 70; pal[i * 4 + 1] = 78; pal[i * 4 + 2] = 92; pal[i * 4 + 3] = 255; }
+        const mk256 = h => { const d = new Uint8Array(256 * h * 4), t = new THREE.DataTexture(d, 256, h, THREE.RGBAFormat, THREE.UnsignedByteType); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return [d, t]; };
+        const [pal, palTex] = mk256(256), [stt, sttTex] = mk256(1), uProv = new THREE.Vector2(-1, -1); // paleta: fila = país, columna = provincia
+        for (let i = 0; i < 65536; i++) { pal[i * 4] = 70; pal[i * 4 + 1] = 78; pal[i * 4 + 2] = 92; pal[i * 4 + 3] = 255; }
 
         const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 160, 80), new THREE.ShaderMaterial({
-          uniforms: Object.assign({ uId: { value: idTex }, uPal: { value: palTex }, uState: { value: sttTex }, uSize: { value: new THREE.Vector2(W, H) } }, U),
+          uniforms: Object.assign({ uId: { value: idTex }, uPal: { value: palTex }, uState: { value: sttTex }, uProv: { value: uProv }, uSize: { value: new THREE.Vector2(W, H) } }, U),
           vertexShader: VERT, fragmentShader: EARTH, extensions: { derivatives: true }
         }));
         scene.add(earth);
@@ -158,10 +163,10 @@
           const p = o.clone().addScaledVector(d, -b - Math.sqrt(h));
           let best = null, bd = .0125 * cur.dist; // primero los marcadores cercanos
           for (const iso of small) { const dd = p.angleTo(ll2v(C[iso].lat, C[iso].lon)); if (dd < bd) { bd = dd; best = iso; } }
-          if (best) return best;
+          if (best) return { iso: best, prov: 1 };
           const lon = Math.atan2(-p.z, p.x), lat = Math.asin(Math.max(-1, Math.min(1, p.y)));
           const tx = Math.min(W - 1, Math.floor((lon / 6.2831853 + .5) * W)), ty = Math.min(H - 1, Math.floor((.5 - lat / Math.PI) * H));
-          return GEO.iso[ids[ty * W + tx]] || null;
+          const k = (ty * W + tx) * 2, iso = GEO.iso[ids[k]]; return iso ? { iso, prov: ids[k + 1] } : null;
         };
         let cbPick = noop, cbHover = noop, hoverXY = null;
         el.addEventListener('pointerdown', e => { ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); dragDist = 0; G.spin = false; lastTouch = performance.now(); try { el.setPointerCapture(e.pointerId); } catch (_) { } });
@@ -172,7 +177,7 @@
           if (ptr.size === 1) { dragDist += Math.abs(dx) + Math.abs(dy); const k = .11 * (tgt.dist - .92) * (700 / Math.max(300, vh)); tgt.lon -= dx * k; tgt.lat = Math.max(-84, Math.min(84, tgt.lat + dy * k)); }
           else if (ptr.size === 2) { const a = [...ptr.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (pinch) tgt.dist = Math.max(1.3, Math.min(5, tgt.dist * pinch / d)); pinch = d; dragDist += 10; }
         });
-        const up = e => { if (!ptr.has(e.pointerId)) return; const was = ptr.size; ptr.delete(e.pointerId); pinch = 0; if (was === 1 && dragDist < 7 && e.type === 'pointerup') cbPick(pickAt(e.clientX, e.clientY)); };
+        const up = e => { if (!ptr.has(e.pointerId)) return; const was = ptr.size; ptr.delete(e.pointerId); pinch = 0; if (was === 1 && dragDist < 7 && e.type === 'pointerup') { const r = pickAt(e.clientX, e.clientY); cbPick(r && r.iso, r && r.prov); } };
         el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
         el.addEventListener('pointerleave', () => { hoverXY = null; cbHover(null); });
         el.addEventListener('wheel', e => { e.preventDefault(); tgt.dist = Math.max(1.3, Math.min(5, tgt.dist * (1 + Math.sign(e.deltaY) * .1))); G.spin = false; lastTouch = performance.now(); }, { passive: false });
@@ -216,10 +221,13 @@
 
         // --- API de pintado
         const idx = iso => (C[iso] || {}).idx || 0;
-        G.paint = (colors, wars) => {
-          for (const iso in C) { const i = C[iso].idx * 4, c = colors[iso] || [70, 78, 92]; pal[i] = c[0]; pal[i + 1] = c[1]; pal[i + 2] = c[2]; stt[i] = wars && wars[iso] ? 255 : 0; }
-          pal[255 * 4] = 96; pal[255 * 4 + 1] = 104; pal[255 * 4 + 2] = 116; palTex.needsUpdate = true; sttTex.needsUpdate = true;
+        // over = { iso: { nºprovincia: color } } para las provincias ocupadas por otro país
+        G.paint = (colors, wars, over) => {
+          const row = (ci, c, o) => { for (let p = 0; p < 256; p++) { const k = (ci * 256 + p) * 4, cc = (o && o[p]) || c; pal[k] = cc[0]; pal[k + 1] = cc[1]; pal[k + 2] = cc[2]; } };
+          for (const iso in C) { row(C[iso].idx, colors[iso] || [70, 78, 92], over && over[iso]); stt[C[iso].idx * 4] = wars && wars[iso] ? 255 : 0; }
+          row(255, [96, 104, 116]); palTex.needsUpdate = true; sttTex.needsUpdate = true;
         };
+        G.hoverProv = (iso, prov) => { uProv.set(iso && C[iso] ? C[iso].idx : -1, prov || -1); };
         const flag = (ch, list) => { for (let i = 0; i < 256; i++) stt[i * 4 + ch] = 0; (list || []).forEach(iso => { stt[idx(iso) * 4 + ch] = 255; }); sttTex.needsUpdate = true; };
         G.select = list => flag(1, list); G.hover = list => flag(2, list);
         G.focus = (iso, d) => { const c = C[iso]; if (!c) return; tgt.lat = Math.max(-80, Math.min(80, c.lat)); tgt.lon = c.lon; tgt.dist = d || Math.max(1.7, Math.min(2.9, 1.6 + Math.sqrt(c.px) / 110)); G.spin = false; lastTouch = performance.now(); };
@@ -228,7 +236,7 @@
         G.resize = () => { vw = host.clientWidth || innerWidth; vh = host.clientHeight || innerHeight; renderer.setSize(vw, vh, false); el.style.width = vw + 'px'; el.style.height = vh + 'px'; cam.aspect = vw / vh; cam.fov = vw < vh ? 52 : 38; cam.updateProjectionMatrix(); moved = true; };
         addEventListener('resize', G.resize); G.resize();
 
-        let last = performance.now(), hoverIso;
+        let last = performance.now();
         function frame(now) {
           requestAnimationFrame(frame);
           const dt = Math.min(.05, (now - last) / 1000); last = now; U.uTime.value += dt;
@@ -241,7 +249,7 @@
           cloudU.uFade.value = Math.max(.12, Math.min(1, (cur.dist - 1.5) / 1.3));
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
-          if (hoverXY && now - lastTouch > 120) { const iso = pickAt(hoverXY[0], hoverXY[1]); if (iso !== hoverIso) { hoverIso = iso; } cbHover(iso, hoverXY[0], hoverXY[1]); hoverXY = null; }
+          if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }
           if (moved) { cam.updateMatrixWorld(); updLabels(); moved = false; }
           renderer.render(scene, cam);
         }

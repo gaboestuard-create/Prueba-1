@@ -2,11 +2,11 @@
    INTERFAZ · paneles del gabinete: Economía, Política, Diplomacia,
    Ejército, Mundo, Editor (modo dios) y Partida
    ===================================================================== */
-const PT = { eco: 'Economía', pol: 'Política interna', dip: 'Diplomacia', mil: 'Fuerzas armadas', world: 'El mundo', edit: 'Editor · modo dios', sys: 'Partida' };
+const PT = { tec: 'Ciencia y tecnología', eco: 'Economía', pol: 'Política interna', dip: 'Diplomacia', mil: 'Fuerzas armadas', world: 'El mundo', edit: 'Editor · modo dios', sys: 'Partida' };
 const PTABS = {
   eco: [['pre', 'Presupuesto'], ['rec', 'Materias primas'], ['com', 'Comercio'], ['bol', 'Bolsa']],
   pol: [['ley', 'Leyes'], ['con', 'Congreso'], ['sec', 'Sectores'], ['reg', 'Regiones'], ['ele', 'Elecciones']],
-  dip: [['rel', 'Relaciones'], ['tra', 'Tratados'], ['onu', 'ONU'], ['rep', 'Reputación']],
+  dip: [['rel', 'Relaciones'], ['tra', 'Tratados'], ['onu', 'ONU'], ['rep', 'Reputación'], ['int', 'Inteligencia']],
   mil: [['fue', 'Fuerzas'], ['bas', 'Bases'], ['gue', 'Guerras']],
   world: [['ran', 'Ranking'], ['not', 'Noticias']]
 };
@@ -135,6 +135,12 @@ PANELS.dip = t => {
       <h4>Proponer una resolución · 3 CP</h4><div class="row wrap">${sel('un:t', Object.entries(Q.UNT), 'condena')}${needsT ? sel('un:x', cs, cs[0] && cs[0][0]) : ''}${ty === 'cese' ? (ws.length ? sel('un:w', ws, ws[0][0]) : '<span class="mut">No hay guerras en curso</span>') : ''}<button class="btn gold" data-a="unPropose">Llevar a la asamblea</button></div>
       <p class="mut fine">Cada país vota según su relación con el afectado, su régimen y sus intereses; los amigos del que propone lo acompañan. Tu voto queda registrado: el condenado y sus rivales lo recordarán.</p>`;
   }
+  if (t === 'int') {
+    const nets = Object.keys(s.spy.net).filter(i => s.spy.net[i] > 0 && CC(i).alive).sort((a, b) => s.spy.net[b] - s.spy.net[a]);
+    return `<p class="mut">Tus redes de agentes. Se crean y se usan desde “Diplomacia y guerra” de cada país; con red, el panel del país muestra su informe de inteligencia.</p>
+      <div class="list">${nets.map(i => { const x = Q.intel(i); return `<button class="li" data-a="sel" data-iso="${i}">${fl(i)}<span class="grow">${cname(i)}</span><small class="mut">agresividad ${Math.round(x.per.agres * 100)} · tesoro ${money(x.tr)}</small><span class="chip gold">Nivel ${x.net}</span></button>`; }).join('') || '<p class="mut pad">Aún no tienes agentes en ningún país.</p>'}</div>
+      <p class="mut fine">Cada nivel de red suma 12% a toda operación en ese país. Si te descubren, pierdes la red, la relación y parte de tu fama de confiable.</p>`;
+  }
   const AX = { paz: ['Belicista', 'Pacífico', 'Los países pacíficos confían en ti; los agresivos te respetan menos.'], conf: ['Traidor', 'Confiable', 'Decide si aceptan tus tratados. Romper pactos lo hunde.'], dem: ['Autoritario', 'Demócrata', 'Las democracias te quieren arriba; las autocracias, abajo.'], gen: ['Egoísta', 'Generoso', 'Sube con ayuda y acogida; un poco de buena voluntad de todos.'] };
   return `<div class="center"><p class="eyebrow">El mundo te conoce como</p><h2 class="gold-t">${esc(Q.repTitle())}</h2></div>
     ${Object.keys(AX).map(k => { const v = s.rep[k]; return `<div class="repax"><div class="row"><small>${AX[k][0]}</small><b class="num ${v >= 0 ? 'up' : 'down'}">${sgn(v)}</b><small>${AX[k][1]}</small></div>${relBar(v)}<small class="mut">${AX[k][2]}</small></div>`; }).join('')}
@@ -142,6 +148,20 @@ PANELS.dip = t => {
 };
 H.unPropose = () => { const s = S(), cs = Object.keys(s.c).filter(i => i !== me() && CC(i).alive).sort((a, b) => CC(a).n.localeCompare(CC(b).n)); act('unPropose', { type: fv('un:t', 'condena'), target: fv('un:x', cs[0]), war: fv('un:w', s.wars[0] && s.wars[0].id) }); };
 H['in:dp'] = () => { clearTimeout(UI.dpT); UI.dpT = setTimeout(UI.render, 180); }; H['in:un'] = () => UI.render();
+
+/* ---------- CIENCIA ---------- */
+const MODN = { divid: v => `Dividendos +${v * 100}%`, unitCost: v => `Unidades ${sgn(v * 100)}%`, casual: v => `Bajas ${sgn(v * 100)}%`, income: v => `Recaudación +${v * 100}%`, spyOp: v => `Operaciones encubiertas +${v * 100}%`, scandal: v => `Escándalos ${sgn(v * 100)}%`, treatyAcc: v => `Tratados +${v}`, cp: v => `+${v} capital político/turno` };
+PANELS.tec = () => {
+  const s = S(), T = s.tech, rate = Q.researchRate(), cur = D.TECHS.find(t => t.id === T.cur), cost = cur && D.TECH_COST[cur.t];
+  return `<div class="kvs big">${kv('Investigación', '+' + rate.toFixed(1) + ' pts/turno')}${kv('Acumulado', Math.floor(T.pts) + ' pts')}${kv('Dominadas', T.done.length + ' de ' + D.TECHS.length)}</div>
+    ${cur ? `<div class="card"><small>En curso</small><h3>${esc(cur.n)}</h3>${bar(T.pts, cost, 'gold')}<small class="mut">${Math.floor(T.pts)} de ${cost} puntos · faltan unos ${Math.max(1, Math.ceil((cost - T.pts) / rate))} turnos</small><div class="row"><button class="btn sm" data-a="fundRes" ${T.funded === s.turn ? 'disabled' : ''}>Inyectar fondos · ${money(Q.fundCost())} (+6 pts)</button></div></div>` : `<p class="warn-box">Tus laboratorios no tienen encargo. Elige una tecnología: sin proyecto, los puntos solo se acumulan hasta 30.</p>`}
+    <div class="tree">${Object.keys(D.TECH_BRANCHES).map(b => `<div class="branch"><h4>${D.TECH_BRANCHES[b]}</h4>${D.TECHS.filter(t => t.b === b).map(t => {
+      const done = T.done.includes(t.id), open = Q.techOpen(t), fx = Object.keys(t.per || {}).map(k => PERN[k](t.per[k])[0]).concat(Object.keys(t.m || {}).map(k => MODN[k](t.m[k])));
+      return `<button class="trait ${done ? 'on' : ''} ${t.id === T.cur ? 'cur' : ''} ${!done && !open ? 'locked' : ''}" data-a="research" data-id="${t.id}" ${done ? 'disabled' : ''}><b>${esc(t.n)}</b><small>${esc(t.d)}</small><small class="pro">${fx.join(' · ')}</small><small class="mut">${done ? 'Dominada' : t.id === T.cur ? 'Investigando…' : D.TECH_COST[t.t] + ' puntos'}</small></button>`;
+    }).join('')}</div>`).join('')}</div>
+    <p class="mut fine">La investigación crece con el tamaño de tu economía, con las leyes de educación pública (+1) y becas tecnológicas (+2), con los rasgos de Intelecto y robando tecnología a países más ricos.</p>`;
+};
+H.research = d => act('research', { id: d.id }); H.fundRes = () => act('fundResearch');
 
 /* ---------- EJÉRCITO ---------- */
 function warCard(w) {

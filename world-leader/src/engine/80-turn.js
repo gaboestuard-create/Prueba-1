@@ -16,7 +16,7 @@ ACT.endTurn = () => {
   const c = P(), g = growthOf(S.player);
   S.fin = finance(false);
   c.gdp *= 1 + (g + rr(-.2, .2)) / 100;
-  politicsTurn(g);
+  politicsTurn(g); techTurn();
   S.gm = S.gm.filter(m => --m.t > 0); S.built = {};
   for (const k in S.rep) S.rep[k] *= .985;
   // FASE 2 · IA
@@ -76,6 +76,7 @@ WL.Game = {
     rel, relBreakdown, power, catPow, troops, upkeep, costLvl, canReach, nb, ownerOf, ownCount, alliesOf, enemiesOf, warsOf, atWar, inWar, hasT, hasExplicit, sanctioned, threat,
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
+    researchRate, techOpen, fundCost, spyNet, spyCost, spyOdds, intel,
     treatyEval, unitCost, baseCost, capacity, warScoreFor, warById, repTitle, describeFx, dateStr, money, canPay,
     blocAllies: iso => C(iso).blocs.filter(b => D.BLOCS[b].def), TNAME, TCP, UNT, REPN
   }

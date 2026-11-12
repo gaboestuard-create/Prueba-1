@@ -86,6 +86,7 @@ ACT.declareWar = a => {
   return { msg: `Has declarado la guerra a ${nm(iso)}` };
 };
 
+const gdist = (t, c) => { const r = Math.PI / 180, dl = (t.lo - c.lon) * r; return Math.acos(clamp(Math.sin(t.la * r) * Math.sin(c.lat * r) + Math.cos(t.la * r) * Math.cos(c.lat * r) * Math.cos(dl), -1, 1)); };
 function casualties(iso, frac) {
   const c = C(iso), k = isP(iso) ? Math.max(.3, 1 + mod('casual')) : 1;
   for (const u in D.UNITS) if (c.u[u]) c.u[u] = Math.max(0, c.u[u] - Math.floor(c.u[u] * frac * k + rnd()));
@@ -93,8 +94,10 @@ function casualties(iso, frac) {
 /* el vencedor de la batalla avanza: primero libera lo suyo, luego conquista (la capital cae al final) */
 function capture(taker, victim, n) {
   const names = [], tk = C(taker), v = C(victim);
-  for (let i = tk.terr.length - 1; i >= 0 && n > 0; i--) if (tk.terr[i].o === victim) { restoreTerr(taker, i); names.push(tk.terr[i].n + ' (liberado)'); n--; }
-  for (let i = v.terr.length - 1; i >= 0 && n > 0; i--) if (v.terr[i].o === victim && !(i === 0 && v.nuke)) { moveTerr(victim, i, taker, .7); names.push(v.terr[i].n); n--; }
+  // orden: primero lo más cercano al atacante; la capital (índice 0) siempre al final
+  const near = (owner, from) => { const g = D.C[owner].terr, A = D.C[from]; return C(owner).terr.map((t, i) => i).filter(i => C(owner).terr[i].o === victim).sort((a, b) => (a === 0) - (b === 0) || gdist(g[a], A) - gdist(g[b], A)); };
+  for (const i of near(taker, victim)) { if (n <= 0) break; restoreTerr(taker, i); names.push(tk.terr[i].n + ' (liberado)'); n--; }
+  for (const i of near(victim, taker)) { if (n <= 0) break; if (i === 0 && v.nuke) continue; moveTerr(victim, i, taker, .7); names.push(v.terr[i].n); n--; }
   return names;
 }
 function returnOccupied(w) { // paz blanca: cada bando devuelve lo ocupado

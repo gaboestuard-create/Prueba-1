@@ -6,12 +6,12 @@ const hasSave = () => { try { return !!localStorage.getItem('wl_save'); } catch 
 
 function startHTML() {
   return `<div class="start"><div class="start-in">
-    <p class="eyebrow">Simulador de liderazgo mundial · Fase 1</p>
+    <p class="eyebrow">Simulador de liderazgo mundial · Fase 2</p>
     <h1 class="logo">WORLD<span>LEADER</span></h1>
-    <p class="tagline">197 países. Cada uno recuerda lo que hiciste.</p>
+    <p class="tagline">197 países, 1.084 provincias. Cada uno recuerda lo que hiciste.</p>
     <div class="start-btns"><button class="btn gold lg" data-a="ngStart">Nueva partida</button>
       ${hasSave() ? `<button class="btn lg" data-a="continue">Continuar</button>` : ''}<button class="btn ghost lg" data-a="importOpen">Importar partida</button></div>
-    <p class="fine">Datos aproximados. Todos los líderes llegan marcados “sin verificar”: puedes corregirlos en el Editor.</p></div></div>`;
+    <p class="fine">Datos aproximados. Casi todos los líderes llegan marcados “sin verificar”: puedes corregirlos en el Editor.</p></div></div>`;
 }
 const diff = c => c.gdp > 1500 && c.stab > 55 ? ['Potencia', 'good'] : c.gdp < 60 || c.stab < 36 ? ['Difícil', 'bad'] : ['Media', ''];
 function createHTML() {

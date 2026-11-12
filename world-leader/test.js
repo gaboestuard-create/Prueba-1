@@ -18,7 +18,7 @@ function play(iso, traits, turns, seed) {
       ['recruit', { k: pick(Object.keys(D.UNITS)), n: 2 }], ['buildBase', { k: pick(Object.keys(D.BASES)) }], ['buyStock', { id: pick(D.COMPANIES).id, amt: 1 }], ['sellStock', { id: pick(D.COMPANIES).id }],
       ['buyCom', { k: 'hie', q: 5 }], ['sellCom', { k: 'pet', q: 3 }], ['sanction', { iso: o }], ['lift', { iso: o }], ['giveAid', { iso: o, kind: 'eco', v: 1 }], ['giveAid', { iso: o, kind: 'mil', k: 'tierra', v: .1 }], ['askAid', { iso: o, kind: pick(['eco', 'mil', 'mat']), k: 'pet' }],
       ['base', { iso: o }], ['contract', { iso: o, k: 'pet', q: 1 }], ['buyTerr', { iso: pick(G.q.nb(iso).concat([o])), i: 1 }], ['cedeTerr', { iso: pick(G.q.nb(iso).concat([o])), i: 1 }], ['unPropose', { type: 'condena', target: o }],
-      ['repealLaw', { id: pick(D.LAWS).id }], ['breakTreaty', { iso: o, t: 'com' }], ['edit', { iso: o, k: 'stab', v: 50 }], ['edit', { iso: o, k: 'rel', v: 20 }], ['edit', { iso: o, k: 'ally' }]];
+      ['repealLaw', { id: pick(D.LAWS).id }], ['research', { id: pick(D.TECHS).id }], ['fundResearch', {}], ['spy', { iso: o, op: pick(Object.keys(D.SPYOPS)) }], ['breakTreaty', { iso: o, t: 'com' }], ['edit', { iso: o, k: 'stab', v: 50 }], ['edit', { iso: o, k: 'rel', v: 20 }], ['edit', { iso: o, k: 'ally' }]];
     for (let i = 0; i < 4; i++) { const a = pick(acts); G.act(a[0], a[1]); }
     if (t % 7 === 3) { const n = G.q.nb(iso); if (n.length) G.act('declareWar', { iso: pick(n) }); }
     if (t % 5 === 4) for (const w of G.q.warsOf(iso)) G.act('peace', { w: w.id, kind: pick(['blanca', 'actual']) });
@@ -39,6 +39,10 @@ G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 99 }); for (let i = 0; i < 6
 const snap = G.save(); while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); const a = G.save();
 assert(G.load(snap).ok); while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); assert.strictEqual(G.save(), a, 'guardar/cargar no es determinista');
 assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basura');
+// migración: una partida de la Fase 1 (sin geo/tech/spy y con otros territorios) debe cargar y seguir
+{ const o = JSON.parse(snap); delete o.geo; delete o.tech; delete o.spy; for (const i in o.c) o.c[i].terr = [{ n: 'Capital', o: i }, { n: 'Norte', o: i }, { n: 'Sur', o: i === 'UA' ? 'RU' : i }];
+  assert(G.load(JSON.stringify(o)).ok, 'no migra partidas de la Fase 1'); assert.strictEqual(G.S.c.MX.terr.length, D.C.MX.terr.length); assert(G.S.c.UA.terr.some(t => t.o === 'RU'), 'la migración pierde la ocupación');
+  while (G.S.pend.length) G.act('decide', { i: 0 }); assert(G.act('endTurn').ok); noNaN(G.S, 'S'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

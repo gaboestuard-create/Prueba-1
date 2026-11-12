@@ -8,8 +8,8 @@ const Bus = WL.Bus = { h: {}, on(e, f) { (this.h[e] = this.h[e] || []).push(f); 
 let S = null;
 
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const TR = {}, LAW = {}, CO = {};
-D.TRAITS.forEach(t => TR[t.id] = t); D.LAWS.forEach(l => LAW[l.id] = l); D.COMPANIES.forEach(c => CO[c.id] = c);
+const TR = {}, LAW = {}, CO = {}, TECH = {};
+D.TRAITS.forEach(t => TR[t.id] = t); D.LAWS.forEach(l => LAW[l.id] = l); D.COMPANIES.forEach(c => CO[c.id] = c); D.TECHS.forEach(t => TECH[t.id] = t);
 const ISOS = Object.keys(D.C);
 const QN = ['Ene–Mar', 'Abr–Jun', 'Jul–Sep', 'Oct–Dic'];
 
@@ -29,8 +29,8 @@ const dateStr = () => QN[S.q] + ' ' + S.year;
 function ownerOf(iso) { let c = S.c[iso], n = 0; while (!c.alive && c.owner !== c.iso && n++ < 8) c = S.c[c.owner]; return c.iso; }
 
 /* ---- modificadores del líder (rasgos) y de las leyes vigentes ---- */
-function mod(k) { let v = 0; for (const t of S.leader.traits) v += TR[t].m[k] || 0; return v; }
-function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k]) v += p[k]; } return v; }
+function mod(k) { let v = 0; for (const t of S.leader.traits) v += TR[t].m[k] || 0; for (const t of S.tech.done) v += (TECH[t].m || {})[k] || 0; return v; }
+function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k]) v += p[k]; } for (const t of S.tech.done) v += (TECH[t].per || {})[k] || 0; return v; }
 
 /* ---- noticias: p = importancia 1-3 (3 abre el resumen del turno) ---- */
 function news(x, k, iso, p) { const n = { id: ++S.nid, t: S.turn, x, k: k || 'world', i: iso || '', p: p || 1 }; S.news.push(n); if (S.news.length > 160) S.news.shift(); Bus.emit('news', n); }
@@ -153,17 +153,17 @@ function initUnits(d) {
   u.fra = sea ? Math.round((Math.sqrt(d.gdp) * .35 + m * .02) * q) : 0; u.sub = Math.round(u.fra * .25); u.por = sea && d.gdp > 1500 ? Math.floor(d.gdp / 2500 * q) : 0;
   return u;
 }
+const mkTerr = iso => D.C[iso].terr.map(t => t.p ? { n: t.n, o: iso, p: t.p } : { n: t.n, o: iso }); // la geometría (la, lo) vive en DATA, por índice
 function mkCountry(iso) {
   const d = D.C[iso], o = D.PERSONALITY[iso] || {}, auth = d.reg !== 'dem';
   const base = { agres: auth ? .4 : .18, expan: auth ? .3 : .1, leal: auth ? .5 : .7, coop: auth ? .45 : .65, rencor: auth ? .65 : .45 }, per = {};
   for (const k in base) per[k] = clamp(o[k] != null ? o[k] : base[k] + rr(-.15, .15), 0, 1);
-  const subs = D.SUBS[iso], nT = d.area < 2000 ? 1 : clamp(Math.round(Math.log10(d.area) * 1.3 - 2), 2, 12);
   const u = initUnits(d), pw = c => Object.keys(D.UNITS).filter(k => D.UNITS[k].cat === c).reduce((s, k) => s + u[k] * D.UNITS[k].pow, 0);
   return {
     iso, n: d.n, alive: true, owner: iso, gdp: d.gdp, pop: d.pop, stab: d.stab, stab0: d.stab, tr: d.gdp * .02,
-    lider: { n: d.lider.n, verificado: false, img: '' }, partido: d.partido, ideo: d.ideo, reg: d.reg, blocs: d.blocs.slice(), rec: Object.assign({}, d.rec), nuke: d.nuke,
+    lider: { n: d.lider.n, verificado: d.lider.verificado, img: '' }, partido: d.partido, ideo: d.ideo, reg: d.reg, blocs: d.blocs.slice(), rec: Object.assign({}, d.rec), nuke: d.nuke,
     u, bases: { cuartel: 1 + Math.floor(pw('tierra') / 150), aerea: u.caz ? 1 + Math.floor(pw('aire') / 400) : 0, naval: u.fra ? 1 + Math.floor(pw('mar') / 300) : 0 },
-    terr: subs ? subs.map(s => ({ n: s.n, o: iso, p: s.p })) : D.TERR_NAMES.slice(0, nT).map(n => ({ n, o: iso })),
+    terr: mkTerr(iso),
     per, nextElec: d.reg === 'dem' || d.reg === 'hib' ? ri(2, 16) : 0, cd: ri(0, 6), ask: {}, lastAsk: -9
   };
 }
@@ -171,11 +171,12 @@ function mkCountry(iso) {
 function newGame(o) {
   const seed = (o.seed >>> 0) || 1;
   S = {
-    v: 1, seed, rng: seed | 0, turn: 0, year: 2027, q: 0, player: o.iso, wid: 0, nid: 0,
+    v: 1, geo: 2, seed, rng: seed | 0, turn: 0, year: 2027, q: 0, player: o.iso, wid: 0, nid: 0,
     leader: { n: o.name || 'Líder', traits: (o.traits || []).filter(t => TR[t]), img: o.img || '', pseed: o.pseed || 0 },
     c: {}, mods: {}, tr: [], wars: [], sanc: [], bases: [], contracts: [], news: [], pend: [], later: [], gm: [],
     mkt: { com: {}, co: {}, shocks: [], sent: 0 }, port: {}, auto: true, built: {},
     pol: { laws: {}, cool: {}, seats: [], sec: {}, cp: 6, tax: .22, spend: .2, nextElec: 8, camp: 0 },
+    tech: { done: [], cur: null, pts: 0, funded: -1 }, spy: { net: {} },
     rep: { paz: 0, conf: 0, dem: 0, gen: 0 }, un: { queue: null, cur: null, last: null }, flags: {}, evSeen: {}, aiWarCd: 3,
     over: null, stats: { laws: 0, wars: 0, annexed: 0, elections: 0, gdp0: 0 }, hist: { tr: [], appr: [], gdp: [] }, fin: null
   };
@@ -211,6 +212,14 @@ function load(str) {
   let o; try { o = typeof str === 'string' ? JSON.parse(str) : str; } catch (e) { return { ok: false, msg: 'El archivo no es un JSON válido' }; }
   if (!o || o.v !== 1 || !o.c || !o.c[o.player] || !o.pol || !o.mkt) return { ok: false, msg: 'No es una partida de World Leader compatible' };
   for (const iso of ISOS) if (!o.c[iso]) return { ok: false, msg: 'A la partida le faltan países (' + iso + ')' };
+  // migración de partidas de la Fase 1: estado nuevo y territorios con geometría real
+  o.tech = o.tech || { done: [], cur: null, pts: 0, funded: -1 }; o.spy = o.spy || { net: {} };
+  if (o.geo !== 2) {
+    for (const iso of ISOS) { const c = o.c[iso], old = c.terr, occ = old.filter(t => t.o !== iso), nt = mkTerr(iso);
+      if (!c.alive) nt.forEach(t => { t.o = c.owner; }); else { let k = Math.min(nt.length - 1, Math.round(occ.length / old.length * nt.length)); for (let i = nt.length - 1; k > 0 && occ.length; i--, k--) nt[i].o = occ[0].o; }
+      c.terr = nt; }
+    o.geo = 2;
+  }
   S = o; dirty(); Bus.emit('loaded'); Bus.emit('state');
   return { ok: true, msg: 'Partida cargada: ' + dateStr() };
 }

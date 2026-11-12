@@ -1,8 +1,15 @@
 {
   "name": "world-leader",
   "private": true,
-  "version": "0.1.0",
-  "description": "WORLD LEADER · Fase 1 — juego de estrategia por turnos en un solo HTML",
-  "scripts": { "build": "node build.js", "test": "node build.js && node test.js" },
-  "devDependencies": { "world-atlas": "2.0.2", "world-countries": "5.1.0" }
+  "version": "0.2.0",
+  "description": "WORLD LEADER · Fase 2 — juego de estrategia por turnos en un solo HTML",
+  "scripts": {
+    "data": "mkdir -p data && curl -L -o data/ne_10m_admin_1_states_provinces.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_1_states_provinces.geojson",
+    "build": "node build.js",
+    "test": "node build.js && node test.js"
+  },
+  "devDependencies": {
+    "world-atlas": "2.0.2",
+    "world-countries": "5.1.0"
+  }
 }

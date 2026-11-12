@@ -44,6 +44,7 @@ Bus.on('consequence', c => { if (c.msg) scene(modalScene(`<p class="eyebrow">Con
 Bus.on('election', e => scene(modalScene(`<p class="eyebrow">Noche electoral</p><h2>${e.win ? 'Reelección' : 'Derrota en las urnas'}</h2>
   <div class="elec"><span class="bar ${e.win ? 'green' : 'red'} need tall grow-anim" style="--need:50%"><i style="width:${e.share}%"></i></span><b class="${e.win ? 'up' : 'down'}">${e.share.toFixed(1)}%</b></div>
   <p>${e.win ? 'El país te renueva la confianza por cuatro años más. El congreso se recompone a tu favor.' : 'No alcanzaste la mitad de los votos. El poder cambia de manos.'}</p>`, 'event')));
+Bus.on('tech', t => scene(cineScene(banner('peace', 'tec', 'Avance tecnológico', esc(t.n), 'Tus laboratorios lo han conseguido'), 2800)));
 Bus.on('route', r => Globe.trip({ a: r.a, b: r.b, cargo: 1 }));
 Bus.on('trip', t => Globe.trip(t));
 
@@ -74,6 +75,7 @@ function showPending() {
   if (!$('#modal').hidden && !UI.modalClosable) return; // ya hay una escena o decisión abierta
   const p = S().pend[0], spy = Q.mod('spy'), other = p.iso && p.iso !== me() && S().c[p.iso];
   if (other) Globe.focus(p.iso, 2.4);
+  Sfx.play('event');
   openModal(`<div class="ev-head">${other ? portrait(p.iso) : ic(p.k === 'un' ? 'un' : p.k === 'elec' ? 'elec' : 'coup', 'ev-ic')}<div><p class="eyebrow">${PK[p.k] || 'Decisión'}${other ? ' · ' + fl(p.iso) + ' ' + cname(p.iso) : ''}${S().pend.length > 1 ? ` · quedan ${S().pend.length}` : ''}</p><h2>${esc(p.t)}</h2></div></div>
     <p class="ev-text">${esc(p.x)}</p>
     <div class="opts">${p.opts.map((o, i) => { const dis = o.req && o.req.cp && S().pol.cp < o.req.cp; return `<button class="opt" data-a="decide" data-i="${i}" ${dis ? 'disabled' : ''}><b>${esc(o.t)}</b><span class="chips">${fxChips(Q.describeFx(o.fx, p.iso))}${spy && o.hid && o.hid.length ? `<span class="chip violet">Oculto:</span>${fxChips(Q.describeFx(o.hid, p.iso))}` : ''}</span></button>`; }).join('')}</div>

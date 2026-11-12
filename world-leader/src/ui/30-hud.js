@@ -14,7 +14,7 @@ const hexRgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), p
 
 function colorOf(iso, mode, ctx) { // iso = país vivo (dueño)
   const c = CC(iso), p = me();
-  if (mode === 'pol') return iso === p ? [250, 208, 72] : polColor(iso);
+  if (mode === 'pol') return iso === p ? [226, 180, 58] : polColor(iso);
   if (mode === 'rel') { if (iso === p) return [79, 216, 255]; const r = Q.rel(p, iso); return r <= -100 ? [120, 14, 18] : ramp([[205, 52, 44], [214, 150, 62], [176, 170, 96], [70, 190, 120]], (r + 100) / 200); }
   if (mode === 'mil') return ramp([[44, 40, 92], [120, 60, 150], [214, 84, 110], [255, 160, 60]], Math.log10(Q.power(iso) + 1) / ctx.maxPow);
   if (mode === 'eco') return ramp([[26, 52, 66], [36, 120, 124], [70, 196, 160], [214, 250, 208]], Math.log10(c.gdp / c.pop + .3) / 2.2 + .12);
@@ -22,18 +22,18 @@ function colorOf(iso, mode, ctx) { // iso = país vivo (dueño)
 }
 function refreshMap() {
   if (!Globe.ready) return;
-  const colors = {}, wars = {};
+  const colors = {}, wars = {}, over = {};
   if (!S()) { for (const iso in D.C) colors[iso] = polColor(iso); Globe.paint(colors, {}); return; }
   const ctx = { maxPow: Math.log10(Math.max(...Object.keys(S().c).map(i => Q.power(i))) + 1) };
   const own = {};
   for (const iso in S().c) {
     const o = Q.ownerOf(iso); let col = own[o] || (own[o] = colorOf(o, UI.mode, ctx));
     const c = CC(iso), occ = c.alive ? c.terr.filter(t => t.o !== iso) : [];
-    if (occ.length) { const k = occ[0].o; col = lerp3(col, own[k] || (own[k] = colorOf(Q.ownerOf(k), UI.mode, ctx)), Math.min(.75, occ.length / c.terr.length)); wars[iso] = 1; }
+    if (occ.length) { wars[iso] = 1; over[iso] = {}; c.terr.forEach((t, i) => { if (t.o !== iso) { const k = Q.ownerOf(t.o); over[iso][i + 1] = own[k] || (own[k] = colorOf(k, UI.mode, ctx)); } }); } // cada provincia ocupada se pinta del ocupante
     colors[iso] = col;
   }
-  for (const w of S().wars) w.att.concat(w.def).forEach(x => { for (const iso in S().c) if (Q.ownerOf(iso) === x) wars[iso] = 1; });
-  Globe.paint(colors, wars);
+  for (const w of S().wars) wars[w.def[0]] = 1; // franjas rojas solo donde se combate
+  Globe.paint(colors, wars, over);
   Globe.select(UI.sel ? Object.keys(S().c).filter(i => Q.ownerOf(i) === UI.sel) : []);
   const p = me(), routes = [];
   S().contracts.forEach(x => routes.push({ a: p, b: x.to, gold: 1 }));
@@ -56,11 +56,12 @@ function hudHTML() {
       ${stat('people', 'Aprobación ponderada de los sectores', pct(ap), Q.isDem() ? (left > 0 ? `elección en ${left} t` : 'elección') : 'aprobación', ap < 40 ? 'warn' : '', 'pol')}
       ${stat('stab', 'Estabilidad: por debajo de 30 hay ruido de sables', Math.round(c.stab), 'estabilidad', c.stab < 30 ? 'warn' : '', 'pol')}
     </div>
+    <button class="sndbtn" data-a="sound" aria-label="${Sfx.on ? 'Silenciar' : 'Activar sonido'}" title="Sonido">${ic(Sfx.on ? 'snd' : 'mute')}</button>
     <div class="hud-date"><b>${esc(Q.dateStr())}</b><small>Turno ${s.turn + 1}</small></div>
   </header>
   <nav class="modes" aria-label="Modo de mapa">${Object.keys(MODES).map(m => `<button data-a="mode" data-m="${m}" class="${UI.mode === m ? 'on' : ''}">${MODES[m]}</button>`).join('')}<small class="legend">${LEGEND[UI.mode]}</small></nav>`;
 }
-const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
+const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['tec', 'Ciencia'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
 function dockHTML() {
   const n = S().pend.length;
   return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${UI.panel === d[0] ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
@@ -108,16 +109,23 @@ function countryHTML(iso) {
   return `<aside class="cpanel glass" data-sc="cp"><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
     <header class="cp-head"><span class="flag xl">${flag(iso)}</span><div><h2>${cname(iso)}</h2><small class="mut">${esc(D.REGIONS[d.region])} · ${esc(D.REGIMES[c.reg])}${c.nuke ? ' · ☢ nuclear' : ''}</small></div></header>
     <div class="leader">${portrait(iso, true)}<div><b>${esc(c.lider.n)}</b><small>${esc(c.partido)} · ${esc(D.IDEO[c.ideo] || '')}</small>
-      <span class="chip ${c.lider.verificado ? 'good' : ''}" title="Los líderes parten de datos sin verificar: corrígelos en el Editor">${c.lider.verificado ? '✓ verificado' : c.lider.gen ? 'generado por el juego' : 'sin verificar'}</span></div></div>
+      <span class="chip ${c.lider.verificado ? 'good' : ''}" title="${c.lider.verificado && !c.lider.gen && iso !== p ? 'Contrastado con prensa el ' + D.VERIFIED_ON : 'Los líderes parten de datos sin verificar: corrígelos en el Editor'}">${c.lider.verificado ? '✓ verificado' : c.lider.gen ? 'generado por el juego' : 'sin verificar'}</span></div></div>
     ${mine ? '' : `<div class="relbox"><div class="row"><small>Amistad contigo</small><b class="${relCls(r)}">${relWord(r)} · ${sgn(r)}</b></div>${relBar(r)}<button class="lnk" data-a="why">${UI.why ? 'Ocultar motivos' : '¿Por qué?'}</button>${why}</div>`}
     <div class="chips">${statusChips(iso)}</div>
     <div class="kvs">${kv('PIB', money(c.gdp))}${kv('Población', c.pop >= 1 ? c.pop.toFixed(0) + ' M' : Math.round(c.pop * 1000) + ' mil')}${kv('Estabilidad', Math.round(c.stab), 'Por debajo de 18 hay riesgo de golpe')}${kv('Tropas', num(Q.troops(iso)), 'Personal aproximado')}</div>
     <h4>Fuerza militar <small class="mut">${mine ? '' : 'rojo: ellos · dorado: tú'}</small></h4><div class="cmps">${cats}</div>
+    ${intelHTML(iso)}
     <h4>Aliados</h4><div class="chips">${blocDef.map(b => `<span class="chip cyan">${D.BLOCS[b].n}</span>`).join('')}${expl.slice(0, 7).map(x => `<button class="chip good" data-a="sel" data-iso="${x}">${flag(x)} ${cname(x)}</button>`).join('')}${expl.length > 7 ? `<span class="chip">+${expl.length - 7}</span>` : ''}${!blocDef.length && !expl.length ? '<span class="mut">Ninguno</span>' : ''}</div>
     <h4>Enemigos</h4><div class="chips">${foes.map(x => `<button class="chip bad" data-a="sel" data-iso="${x}">${ic('war')} ${cname(x)}</button>`).join('')}${rivals.map(x => `<button class="chip" data-a="sel" data-iso="${x[0]}">${flag(x[0])} ${cname(x[0])} ${sgn(x[1])}</button>`).join('')}${!foes.length && !rivals.length ? '<span class="mut">Ninguno declarado</span>' : ''}</div>
     <h4>Recursos</h4><div class="chips">${recs}</div>
     ${terr}
     <footer class="cp-actions">${mine ? `<button class="btn" data-a="open" data-p="pol">Política</button><button class="btn" data-a="open" data-p="mil">Ejército</button>` : `<button class="btn gold" data-a="dipOpen" data-iso="${iso}">Diplomacia y guerra</button>`}<button class="btn ghost" data-a="editOpen" data-iso="${iso}">Editar</button></footer></aside>`;
+}
+function intelHTML(iso) {
+  const x = iso !== me() && Q.intel(iso); if (!x) return '';
+  const row = (l, v) => `<div class="cmp"><small>${l}</small>${bar(v * 100, 100, 'gold')}<b class="num">${Math.round(v * 100)}</b></div>`;
+  return `<h4>${ic('spy')} Informe de inteligencia <small class="mut">red nivel ${x.net}</small></h4><div class="cmps intel">${row('Agresivo', x.per.agres)}${row('Expansión', x.per.expan)}${row('Lealtad', x.per.leal)}${row('Rencor', x.per.rencor)}</div>
+    <div class="chips"><span class="chip">Tesoro ${money(x.tr)}</span><span class="chip ${x.threat > 1 ? 'bad' : ''}">Se siente ${x.threat > 1 ? 'amenazado' : 'seguro'}</span>${x.rival ? `<button class="chip" data-a="sel" data-iso="${x.rival}">Rival: ${flag(x.rival)} ${cname(x.rival)}</button>` : ''}${x.nextElec != null && x.nextElec > 0 ? `<span class="chip">Elecciones en ${x.nextElec} t</span>` : ''}${x.grudge < -10 ? `<span class="chip bad">Te guarda rencor (${sgn(x.grudge)})</span>` : ''}</div>`;
 }
 H.why = () => { UI.why = !UI.why; UI.render(); };
 H.editOpen = d => { UI.form['ed:iso'] = d.iso; UI.panel = 'edit'; UI.render(); };
@@ -161,6 +169,8 @@ function sheetHTML(iso) {
     ${myT.length > 1 ? row('Ceder territorio', 'Les entregas una región tuya: +35 de relación, y un disgusto serio en casa.', `${sel('sh:ct', myT, myT[0][0])}${B('Ceder', 'cedeTerr', '', 'red', 1)}`) : ''}
     <h4>Guerra</h4>
     ${row('Declarar la guerra', reach ? `Tu fuerza: ${Math.round(Q.power(p))}. La suya defendiendo: ${Math.round(their)}${defenders.length ? ` contando a ${defenders.length} aliado${defenders.length > 1 ? 's' : ''} que pueden intervenir` : ''}. ${Q.hasExplicit('pna', p, iso) || Q.alliesOf(p).includes(iso) ? 'Romperías un pacto: el mundo entero lo recordará.' : ''}` : 'Fuera de tu alcance: necesitas frontera común, una armada mayor o una base en su región.', B('Declarar guerra · 4 CP', 'declareWar', reach ? '' : 'disabled', 'red', 1))}
+    <h4>Operaciones encubiertas <small class="mut">tu red aquí: nivel ${Q.spyNet(iso)} de 3</small></h4>
+    ${Object.keys(D.SPYOPS).map(k => { const o = D.SPYOPS[k]; return row(`${o.n} <span class="chip ${Q.spyOdds(iso, k) >= .6 ? 'good' : Q.spyOdds(iso, k) < .4 ? 'bad' : ''}">${Math.round(Q.spyOdds(iso, k) * 100)}% de éxito</span>`, `${o.d} Si falla, ${Math.round(o.risk * 100)}% de que te descubran.`, B(`${money(Q.spyCost(iso, k))} · ${o.cp} CP`, 'spy', `data-op="${k}"`, k === 'gol' || k === 'sab' || k === 'des' ? 'red' : '', k === 'gol')); }).join('')}
     <h4>Salida personal</h4>
     ${row('Pedir asilo', 'Abdicas y te exilias aquí. Termina la partida. Necesitas relación de 30.', B('Pedir asilo', 'asylum', '', 'ghost', 1))}`}
   </div>`;
@@ -179,3 +189,4 @@ H.cedeTerr = d => { const def = CC(me()).terr.findIndex((t, i) => i > 0 && t.o =
 H.declareWar = d => { closeModal(); act('declareWar', { iso: d.iso }); };
 H.peace = d => { sheetAct('peace', { w: +d.w, kind: d.k }); if (!Q.atWar(me(), d.iso)) closeModal(); };
 H.asylum = d => { closeModal(); act('asylum', { iso: d.iso }); };
+H.spy = d => sheetAct('spy', { iso: d.iso, op: d.op });

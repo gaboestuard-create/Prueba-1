@@ -73,10 +73,11 @@ function considerWar(iso) {
     let def = power(t) * 1.25 + .6 * sumPow(alliesOf(t));
     for (const z of alive()) if (z !== iso && z !== t && C(z).gdp >= 800 && !alliesOf(t).includes(z) && rel(z, t) >= 40 && rel(z, iso) <= -25) def += .5 * power(z); // protectores
     let ratio = mine / (def + 1); if (T.stab < 35 || inWar(t)) ratio *= 1.3;
-    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 1.5 : 1);
+    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1);
+    if (isFar && T.stab > 45 && !inWar(t)) continue; // lejos solo se ataca a quien ya se tambalea
     if (ratio > need && ratio * -r > bs) { bs = ratio * -r; best = t; far = isFar; }
   }
-  if (best && chance((.1 + p.agres * .2) * (far ? .5 : 1))) { c.cd = S.turn + 8; S.aiWarCd = S.turn + 6; startWar(iso, best); }
+  if (best && chance((.1 + p.agres * .2) * (far ? .3 : 1))) { c.cd = S.turn + 10; S.aiWarCd = S.turn + 8; startWar(iso, best); }
 }
 OPS.sign = a => { addTreaty(a.t, S.player, a.iso); addMod(S.player, a.iso, 'Firma de tratado', gain(6), .5); news(`${P().n} y ${nm(a.iso)} firman: ${TNAME[a.t]}`, 'dip', a.iso, 2); Bus.emit('treaty', { t: a.t, a: S.player, b: a.iso, name: TNAME[a.t] }); };
 OPS.armed = a => { for (const z of enemiesOf(a.iso)) addMod(S.player, z, 'Armaste a su enemigo', -15, .3, 1); };
