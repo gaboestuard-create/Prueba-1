@@ -43,7 +43,7 @@ Bus.on('annex', a => { if (near(a.v) || near(a.t) || CC(a.t).gdp > 800) scene(ci
 Bus.on('consequence', c => { if (c.msg) scene(modalScene(`<p class="eyebrow">Consecuencia de una decisión anterior</p><h2>${esc(c.msg)}</h2><div class="chips">${fxChips(c.shown)}</div>`, 'event')); });
 Bus.on('election', e => scene(modalScene(`<p class="eyebrow">Noche electoral</p><h2>${e.win ? 'Reelección' : 'Derrota en las urnas'}</h2>
   <div class="elec"><span class="bar ${e.win ? 'green' : 'red'} need tall grow-anim" style="--need:50%"><i style="width:${e.share}%"></i></span><b class="${e.win ? 'up' : 'down'}">${e.share.toFixed(1)}%</b></div>
-  <p>${e.win ? 'El país te renueva la confianza por cuatro años más. El congreso se recompone a tu favor.' : 'No alcanzaste la mitad de los votos. El poder cambia de manos.'}</p>`, 'event')));
+  ${e.regs ? electionRegsHTML(e) : ''}<p>${e.win ? 'El país te renueva la confianza por cuatro años más. El congreso se recompone a tu favor.' : 'No alcanzaste la mitad de los votos. El poder cambia de manos.'}</p>`, 'event')));
 Bus.on('tech', t => scene(cineScene(banner('peace', 'tec', 'Avance tecnológico', esc(t.n), 'Tus laboratorios lo han conseguido'), 2800)));
 Bus.on('route', r => Globe.trip({ a: r.a, b: r.b, cargo: 1 }));
 Bus.on('trip', t => Globe.trip(t));
@@ -74,6 +74,7 @@ function showPending() {
   if (!S() || S().over || sqRun || SQ.length || !S().pend.length || UI.screen !== 'game') return;
   if (!$('#modal').hidden && !UI.modalClosable) return; // ya hay una escena o decisión abierta
   const p = S().pend[0], spy = Q.mod('spy'), other = p.iso && p.iso !== me() && S().c[p.iso];
+  if (p.k === 'camp') return campaignModal(p);
   if (other) Globe.focus(p.iso, 2.4);
   Sfx.play('event');
   openModal(`<div class="ev-head">${other ? portrait(p.iso) : ic(p.k === 'un' ? 'un' : p.k === 'elec' ? 'elec' : 'coup', 'ev-ic')}<div><p class="eyebrow">${PK[p.k] || 'Decisión'}${other ? ' · ' + fl(p.iso) + ' ' + cname(p.iso) : ''}${S().pend.length > 1 ? ` · quedan ${S().pend.length}` : ''}</p><h2>${esc(p.t)}</h2></div></div>

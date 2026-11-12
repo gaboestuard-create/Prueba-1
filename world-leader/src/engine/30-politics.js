@@ -25,7 +25,7 @@ function initPolitics() {
 const approval = () => Object.keys(S.pol.sec).reduce((s, k) => s + S.pol.sec[k].a * S.pol.sec[k].w, 0);
 function secAdd(id, v) {
   if (v > 0) v *= Math.max(.2, 1 + mod('secGain'));
-  const one = k => { S.pol.sec[k].a = clamp(S.pol.sec[k].a + v, 0, 100); };
+  const one = k => { logSec(k, v); S.pol.sec[k].a = clamp(S.pol.sec[k].a + v, 0, 100); };
   if (id === 'all') Object.keys(S.pol.sec).forEach(one); else if (S.pol.sec[id]) one(id);
 }
 function secBase(k) { let v = 50; for (const id in S.pol.laws) v += (LAW[id].sec || {})[k] || 0; for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
@@ -38,8 +38,8 @@ const lawPop = l => Object.keys(l.sec || {}).reduce((s, k) => s + S.pol.sec[k].w
 function lawForecast(l, extra) {
   const ap = approval(), pop = lawPop(l), lc = localCtl(), by = []; let yes = 0;
   for (const p of S.pol.seats) {
-    const dist = Math.abs((l.eco || 0) - p.ideo);
-    let x = (p.g ? .75 : -.1) - .22 * dist * (p.g ? .5 : 1) + (ap - 50) / 80 + pop / 30 + mod('lawVote') + (extra || 0) + (lc == null ? 0 : (lc - .5) * .1);
+    const dist = axDist(l, p);
+    let x = (p.g ? .75 : -.1) + ((p.rel == null ? 50 : p.rel) - 50) / 120 + (S.pol.pledge && l.id && S.pol.pledge[p.n] === l.id ? .3 : 0) - .22 * dist * (p.g ? .5 : 1) + (ap - 50) / 80 + pop / 30 + mod('lawVote') + (extra || 0) + (lc == null ? 0 : (lc - .5) * .1);
     if (!p.g && (l.auth || 0) > 0 && isDem()) x -= .2 * l.auth;
     const f = clamp(.5 + x, .03, .97); by.push({ n: p.n, s: p.s, f, g: p.g, ideo: p.ideo }); yes += p.s * f;
   }
@@ -50,13 +50,13 @@ const bribeCost = () => P().gdp * .002 * Math.max(.2, 1 - mod('bribe'));
 function runVote(l, extra, title) {
   const f = lawForecast(l, extra); let yes = 0;
   const by = f.by.map(p => { const y = Math.round(p.s * clamp(p.f + rr(-.12, .12), 0, 1)); yes += y; return { n: p.n, s: Math.round(p.s), yes: y, g: p.g, ideo: p.ideo }; });
-  const res = { title, by, yes, need: f.need, pass: yes > f.need };
+  const res = { title, by, yes, need: f.need, pass: yes > f.need, law: l };
   Bus.emit('vote', res); return res;
 }
 function enactLaw(l) {
   for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { delete S.pol.laws[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); }
   S.pol.laws[l.id] = S.turn; S.stats.laws++;
-  for (const k in l.sec || {}) secAdd(k, l.sec[k]);
+  why('Ley: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, l.sec[k]); });
   for (const k in l.rep || {}) repAdd(k, l.rep[k]);
   if (l.once) applyFx(l.once, {});
 }
@@ -101,7 +101,7 @@ function politicsTurn(g) {
     if (g > .7 && (k === 'emp' || k === 'med' || k === 'obr')) d += .5; if (g < 0) d -= .6;
     if (c.tr < -c.gdp * .1) d -= .5;
     if (war) { const sc = warScoreFor(S.player); d += k === 'jov' ? -1.2 : k === 'mil' ? (sc >= 0 ? 1 : -1.5) : -.25; }
-    s.a = clamp(s.a + d, 0, 100);
+    logSec(k, d, war ? 'Desgaste de la guerra' : 'Economía y tendencia natural'); s.a = clamp(s.a + d, 0, 100);
   }
   const ap = approval();
   const lcS = localCtl();
@@ -115,7 +115,7 @@ function politicsTurn(g) {
 function electionTurn() {
   if (!isDem() || S.over) return;
   const left = S.pol.nextElec - S.turn;
-  if (left === 2) {
+  if (left === 2 && !HOOKS.campaign) {
     const opts = [
       { t: 'Campaña millonaria', fx: [['$g', -.6], ['camp', 5]] },
       { t: 'Prometerlo todo', fx: [['camp', 6]], hid: [['later', 4, .8, [['sec', 'all', -6]], 'Las promesas de campaña incumplidas te pasan factura']] },
@@ -127,7 +127,7 @@ function electionTurn() {
     const lc = localCtl();
     const share = clamp(50 + (approval() - 50) * .9 + mod('elect') + lawSum('elect') + S.pol.camp + 2 + (P().reg === 'hib' ? 5 : 0) + (lc == null ? 0 : (lc - .5) * 4) - (S.flags.scandal ? 4 : 0) + rr(-4, 4), 5, 95);
     const win = share >= 50; S.pol.camp = 0; delete S.flags.scandal;
-    Bus.emit('election', { share, win });
+    Bus.emit('election', { share, win, regs: electionRegs(share) });
     if (!win) { news(`${S.leader.n} pierde las elecciones con el ${share.toFixed(1)}% de los votos`, 'elec', S.player, 3); return over('eleccion'); }
     S.pol.nextElec = S.turn + 16; S.stats.elections++;
     // el congreso y los gobiernos locales se recomponen según el resultado

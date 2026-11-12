@@ -31,7 +31,8 @@ function applyFx(list, ctx) {
       case 'chance': applyFx(chance(a) ? b : d, ctx); break;
       case 'chanceAppr': applyFx(chance(clamp(approval() / 100 + .1, .1, .9)) ? a : b, ctx); break;
       case 'over': over(a); break;
-      case 'do': if (OPS[a]) OPS[a](b || {}); break;
+      case 'do': if (OPS[a]) OPS[a](ctx && ctx.x ? Object.assign({}, b, ctx.x) : b || {}); break;
+      case 'party': partyRel(a, b); break;
     }
   }
 }
@@ -104,7 +105,7 @@ ACT.decide = a => {
   if (o.req && o.req.cp && S.pol.cp < o.req.cp) return fail(`Necesitas ${o.req.cp} de capital político`);
   S.pend.shift();
   const shown = describeFx(o.fx, p.iso);
-  applyFx(o.fx, { T: p.iso }); applyFx(o.hid, { T: p.iso });
+  why(p.t, () => { applyFx(o.fx, { T: p.iso, x: a.x }); applyFx(o.hid, { T: p.iso }); });
   if (p.k === 'event') news(`${p.t}: ${o.t.charAt(0).toLowerCase() + o.t.slice(1)}`, 'pol', S.player);
   Bus.emit('decided', { p, o, shown });
   return {};
@@ -128,7 +129,7 @@ function worldEvents() {
 }
 function laterTurn() {
   const due = S.later.filter(l => l.t <= S.turn); S.later = S.later.filter(l => l.t > S.turn);
-  for (const l of due) if (chance(l.p)) { applyFx(l.fx, { T: l.T }); if (l.msg) news(l.msg, 'pol', S.player, 3); Bus.emit('consequence', { msg: l.msg, shown: describeFx(l.fx, l.T) }); }
+  for (const l of due) if (chance(l.p)) { why(l.msg || 'Consecuencia diferida', () => applyFx(l.fx, { T: l.T })); if (l.msg) news(l.msg, 'pol', S.player, 3); Bus.emit('consequence', { msg: l.msg, shown: describeFx(l.fx, l.T) }); }
 }
 
 /* ---- Asamblea de la ONU: una resolución cada 4 turnos ---- */
