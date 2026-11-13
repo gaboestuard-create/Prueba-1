@@ -1,7 +1,7 @@
 /* =====================================================================
    INTERFAZ · pantalla de inicio, creación de líder y tutorial
    ===================================================================== */
-const NG = { step: 0, iso: 'MX', custom: false, cname: '', creg: 'dem', cideo: '0', name: '', partido: '', pseed: 0, img: '', traits: [], seed: '', q: '' };
+const NG = { diff: '1', step: 0, iso: 'MX', custom: false, cname: '', creg: 'dem', cideo: '0', name: '', partido: '', pseed: 0, img: '', traits: [], seed: '', q: '' };
 const hasSave = () => { try { return !!localStorage.getItem('wl_save'); } catch (e) { return false; } };
 
 function startHTML() {
@@ -34,6 +34,7 @@ function createHTML() {
         <button class="btn sm" data-a="ngReroll">Otro retrato</button></div></div>
       <label>Partido${inp('ng:partido', NG.partido || (NG.custom ? '' : c.partido), 'maxlength="50" placeholder="Nombre del partido"')}</label>
       <label>Retrato propio (URL de imagen, opcional)${inp('ng:img', NG.img, 'placeholder="https://… o data:image/…" inputmode="url"')}</label>
+      <label>Dificultad${sel('ng:diff', [[0, 'Relajado: las IAs te respetan y recaudas más'], [1, 'Normal'], [2, 'Realista: IAs más audaces, menos margen'], [3, 'Despiadado: te atacarán en cuanto flaquees']], NG.diff)}</label>
       <label>Semilla del mundo (opcional)${inp('ng:seed', NG.seed, 'placeholder="Vacío = aleatoria" inputmode="numeric"')}</label>
       <p class="mut fine">El retrato se dibuja por código a partir del nombre. Si pegas una URL se usará tu imagen; dentro del visor de Claude las imágenes externas pueden bloquearse, pero funcionan al abrir el HTML en tu navegador.</p>`;
   } else {
@@ -66,7 +67,7 @@ H.ngGo = () => {
   if (!NG.name.trim()) { NG.step = 1; UI.render(); return toast('Ponle nombre a tu líder', false); }
   if (NG.custom && !NG.cname.trim()) { NG.step = 0; UI.render(); return toast('Ponle nombre a tu país', false); }
   const seed = parseInt(NG.seed, 10) || (Date.now() % 2147483647);
-  G.newGame({ iso: NG.iso, name: NG.name.trim(), traits: NG.traits, seed, img: NG.img.trim(), pseed: NG.pseed, partido: NG.partido.trim() || (NG.custom ? 'Partido Fundador' : ''), custom: NG.custom ? { n: NG.cname.trim(), reg: NG.creg, ideo: NG.cideo } : null });
+  G.newGame({ diff: +NG.diff, iso: NG.iso, name: NG.name.trim(), traits: NG.traits, seed, img: NG.img.trim(), pseed: NG.pseed, partido: NG.partido.trim() || (NG.custom ? 'Partido Fundador' : ''), custom: NG.custom ? { n: NG.cname.trim(), reg: NG.creg, ideo: NG.cideo } : null });
   enterGame(true);
 };
 function enterGame(fresh) {

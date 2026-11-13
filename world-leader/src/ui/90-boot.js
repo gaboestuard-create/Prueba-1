@@ -8,7 +8,7 @@ UI.render = () => {
   app.className = 'scr-' + UI.screen;
   if (UI.screen === 'start') app.innerHTML = startHTML();
   else if (UI.screen === 'create') app.innerHTML = createHTML();
-  else app.innerHTML = hudHTML() + dockHTML() + (UI.panel ? panelHTML() : '') + (UI.sel && S().c[UI.sel] ? countryHTML(UI.sel) : '');
+  else app.innerHTML = hudHTML() + dockHTML() + (UI.panel ? panelHTML() : '') + (UI.sel && S().c[UI.sel] ? countryHTML(UI.sel) : '') + (UI.alertsOpen ? alertsHTML() : '');
   app.querySelectorAll('[data-sc]').forEach(e => { if (sc[e.dataset.sc]) e.scrollTop = sc[e.dataset.sc]; });
   if (fid) { const e = document.getElementById(fid); if (e) { e.focus(); if (pos && e.setSelectionRange) try { e.setSelectionRange(pos[0], pos[1]); } catch (_) { } } }
 };

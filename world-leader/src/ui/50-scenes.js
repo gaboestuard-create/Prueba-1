@@ -30,6 +30,7 @@ Bus.on('turn', t => {
   const html = `<div class="turnfx"><div class="tf-in"><p class="eyebrow">Turno ${S().turn + 1}</p><h1>${esc(t.date)}</h1>
     <div class="tf-deltas">${d('Caja', a.tr - b.tr, (a.tr - b.tr >= 0 ? '+' : '−') + money(Math.abs(a.tr - b.tr)).slice(1))}${d('PIB', a.gdp - b.gdp, sgn((a.gdp / b.gdp - 1) * 100, 2) + '%')}${d('Aprobación', a.appr - b.appr, sgn(a.appr - b.appr, 1))}${d('Estabilidad', a.stab - b.stab, sgn(a.stab - b.stab, 1))}${a.terr !== b.terr ? d('Territorios', a.terr - b.terr, sgn(a.terr - b.terr)) : ''}</div>
     <ul class="tf-news">${top.map((n, i) => `<li class="p${n.p}" style="animation-delay:${.25 + i * .12}s">${ic(NEWS_IC[n.k] || 'world')}<span>${esc(n.x)}</span></li>`).join('') || '<li style="animation-delay:.25s"><span>Un trimestre tranquilo. Demasiado tranquilo.</span></li>'}</ul>
+    ${turnExtra()}
     <button class="btn gold lg" data-a="cineDone">Continuar ${ic('next')}</button></div></div>`;
   SQ.push(cineScene(html, 0), ...buf); autosave(); refreshMap(); runSQ();
 });
@@ -75,6 +76,7 @@ function showPending() {
   if (!$('#modal').hidden && !UI.modalClosable) return; // ya hay una escena o decisión abierta
   const p = S().pend[0], spy = Q.mod('spy'), other = p.iso && p.iso !== me() && S().c[p.iso];
   if (p.k === 'camp') return campaignModal(p);
+  if (p.k === 'un' && Q.unBrief()) return unModal(p);
   if (other) Globe.focus(p.iso, 2.4);
   Sfx.play('event');
   openModal(`<div class="ev-head">${other ? portrait(p.iso) : ic(p.k === 'un' ? 'un' : p.k === 'elec' ? 'elec' : 'coup', 'ev-ic')}<div><p class="eyebrow">${PK[p.k] || 'Decisión'}${other ? ' · ' + fl(p.iso) + ' ' + cname(p.iso) : ''}${S().pend.length > 1 ? ` · quedan ${S().pend.length}` : ''}</p><h2>${esc(p.t)}</h2></div></div>

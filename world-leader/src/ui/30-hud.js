@@ -58,6 +58,7 @@ function hudHTML() {
       ${stat('stab', 'Estabilidad: por debajo de 30 hay ruido de sables', Math.round(c.stab), 'estabilidad', c.stab < 30 ? 'warn' : '', 'pol')}
     </div>
     <button class="sndbtn" data-a="sound" aria-label="${Sfx.on ? 'Silenciar' : 'Activar sonido'}" title="Sonido">${ic(Sfx.on ? 'snd' : 'mute')}</button>
+    ${alertBtn()}
     <div class="hud-date"><b>${esc(Q.dateStr())}</b><small>Turno ${s.turn + 1}</small></div>
   </header>
   <nav class="modes" aria-label="Modo de mapa">${Object.keys(MODES).map(m => `<button data-a="mode" data-m="${m}" class="${UI.mode === m ? 'on' : ''}">${MODES[m]}</button>`).join('')}<small class="legend">${LEGEND[UI.mode]}</small></nav>`;
@@ -173,6 +174,7 @@ function sheetHTML(iso) {
     ${row('Declarar la guerra', reach ? `Tu fuerza: ${Math.round(Q.power(p))}. La suya defendiendo: ${Math.round(their)}${defenders.length ? ` contando a ${defenders.length} aliado${defenders.length > 1 ? 's' : ''} que pueden intervenir` : ''}. ${Q.hasExplicit('pna', p, iso) || Q.alliesOf(p).includes(iso) ? 'Romperías un pacto: el mundo entero lo recordará.' : ''}` : 'Fuera de tu alcance: necesitas frontera común, una armada mayor o una base en su región.', B('Declarar guerra · 4 CP', 'declareWar', reach ? '' : 'disabled', 'red', 1))}
     <h4>Operaciones encubiertas <small class="mut">tu red aquí: nivel ${Q.spyNet(iso)} de 3</small></h4>
     ${Object.keys(D.SPYOPS).map(k => { const o = D.SPYOPS[k]; return row(`${o.n} <span class="chip ${Q.spyOdds(iso, k) >= .6 ? 'good' : Q.spyOdds(iso, k) < .4 ? 'bad' : ''}">${Math.round(Q.spyOdds(iso, k) * 100)}% de éxito</span>`, `${o.d} Si falla, ${Math.round(o.risk * 100)}% de que te descubran.`, B(`${money(Q.spyCost(iso, k))} · ${o.cp} CP`, 'spy', `data-op="${k}"`, k === 'gol' || k === 'sab' || k === 'des' ? 'red' : '', k === 'gol')); }).join('')}
+    ${sheetExtra(iso)}
     <h4>Salida personal</h4>
     ${row('Pedir asilo', 'Abdicas y te exilias aquí. Termina la partida. Necesitas relación de 30.', B('Pedir asilo', 'asylum', '', 'ghost', 1))}`}
   </div>`;

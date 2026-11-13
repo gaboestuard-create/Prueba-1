@@ -199,3 +199,22 @@ details summary { cursor: pointer; font: 600 12px var(--fc); letter-spacing: .1e
   #toasts { top: calc(150px + var(--st)); left: 16px; right: 16px; align-items: stretch; max-width: none; }
   .mbox { padding: 16px; } .branch { grid-template-columns: 1fr; } .cmp { grid-template-columns: 40px 1fr 1fr 38px; } .glabel { font-size: 9.5px; }
 }
+
+/* --- Fase 2: gráficas, alertas, periódico, Asamblea --- */
+.chartc { gap: 4px; } .chart { width: 100%; height: 90px; display: block; color: var(--cyan); } .chart.gold { color: var(--gold); } .chart.red { color: var(--red); }
+.chart .grid { stroke: rgba(255, 255, 255, .08); stroke-width: 1; fill: none; } .chart .area { fill: currentColor; opacity: .14; } .chart circle { fill: currentColor; }
+.chart .line { fill: none; stroke: currentColor; stroke-width: 2; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.1s cubic-bezier(.2, .8, .2, 1) forwards; display: initial; padding: 0; border: 0; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.sndbtn { position: relative; } .sndbtn.hot { color: var(--red); animation: pulse .9s infinite alternate; } .badge { position: absolute; top: 0; right: 0; min-width: 16px; height: 16px; border-radius: 9px; background: var(--red); color: #fff; font: 600 10px/16px var(--fb); text-align: center; font-style: normal; }
+.alerts { position: fixed; top: calc(76px + var(--st)); right: var(--sr); width: min(380px, calc(100vw - 32px)); max-height: 60vh; overflow-y: auto; padding: 10px; z-index: 6; display: flex; flex-direction: column; gap: 4px; animation: drop .25s both; } .alerts header { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px; }
+.alert { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; border-radius: 9px; background: rgba(255, 255, 255, .05); border-left: 3px solid rgba(255, 255, 255, .25); width: 100%; text-align: left; transition: background .12s; } button.alert:hover { background: rgba(255, 255, 255, .12); } .alert .ic { width: 15px; height: 15px; margin-top: 2px; }
+.alert.p5, .alert.p4 { border-left-color: var(--red); } .alert.p5 .ic, .alert.p4 .ic { color: var(--red); } .alert.p3 { border-left-color: var(--gold); } .alert.p3 .ic { color: var(--gold); }
+.tf-alerts { width: 100%; display: flex; flex-direction: column; gap: 5px; text-align: left; animation: rise .5s .5s both; }
+.paper { background: #efe6d2; color: #1c1710; border-radius: 6px; padding: 22px clamp(14px, 4vw, 34px); font-family: Georgia, 'Times New Roman', serif; } .paper header { text-align: center; border-bottom: 3px double #1c1710; padding-bottom: 8px; margin-bottom: 14px; } .paper header small { letter-spacing: .14em; text-transform: uppercase; font: 600 11px var(--fc); color: #5a4d38; }
+.paper h1 { font: 900 clamp(26px, 6vw, 46px)/1 'Cinzel', Georgia, serif; letter-spacing: .04em; color: #1c1710; } .paper .headline { font: 700 clamp(19px, 3.6vw, 28px)/1.15 Georgia, serif; margin-bottom: 14px; letter-spacing: 0; color: #1c1710; }
+.paper .cols { columns: 2 220px; column-gap: 26px; column-rule: 1px solid #b9ab8c; } .paper section { break-inside: avoid; margin-bottom: 12px; } .paper h4 { color: #7a2e1c; margin: 0 0 6px; border-bottom: 1px solid #b9ab8c; padding-bottom: 3px; } .paper p { font-size: 14px; line-height: 1.4; margin-bottom: 7px; } .paper p.p3 { font-weight: 700; } .paper .mut { color: #5a4d38; }
+.mbox.paperbox { background: #efe6d2; padding: 6px; } .mbox.paperbox .xbtn { background: rgba(0, 0, 0, .12); color: #1c1710; }
+.debate { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px; } .say { display: flex; gap: 8px; padding: 8px 10px; border-radius: 9px; background: rgba(255, 255, 255, .05); border-left: 3px solid #6b7890; font-size: 13px; } .say.y { border-left-color: var(--green); } .say.n { border-left-color: var(--red); }
+.lobby { max-height: 210px; overflow-y: auto; scrollbar-width: thin; } .lobby .li { flex-wrap: wrap; } .li.intel { align-items: flex-start; } .li.intel small { display: block; } .conf { width: 96px; display: flex; flex-direction: column; gap: 3px; flex: none; }
+kbd { font: 600 12px var(--fc); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .08); }
+@media (max-width: 760px) { .alerts { top: calc(112px + var(--st)); left: 8px; right: 8px; width: auto; } .sndbtn { order: 2; } }
