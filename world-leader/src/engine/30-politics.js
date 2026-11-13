@@ -57,7 +57,7 @@ function runVote(l, extra, title) {
 function enactLaw(l) {
   for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { const age = S.turn - S.pol.laws[id], flip = age < 8; delete S.pol.laws[id]; delete (S.pol.lx || {})[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); if (flip) { repAdd('conf', -4); why('Volantazo legislativo', () => secAdd('all', -2)); news(`${S.leader.n} da un volantazo: tumba "${LAW[id].n}", que apenas tenía ${age} trimestres`, 'pol', S.player, 2); } }
   if (l.grp) S.pol.grpLock = Object.assign(S.pol.grpLock || {}, { [l.grp]: S.turn + D.GOV.flipLock });
-  S.pol.laws[l.id] = S.turn; S.stats.laws++;
+  S.pol.laws[l.id] = S.turn; S.stats.laws++; S.pol.last = S.turn;
   why('Ley: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, l.sec[k]); });
   for (const k in l.rep || {}) repAdd(k, l.rep[k]);
   if (l.once) applyFx(l.once, {});

@@ -15,6 +15,7 @@ function cpRegen() { // desglose del capital político por turno (la UI lo muest
 function initGov() {
   const pol = S.pol; pol.lx = pol.lx || {}; pol.grpLock = pol.grpLock || {}; pol.dem = pol.dem || []; pol.comm = pol.comm || {}; if (pol.oppT == null) pol.oppT = S.turn + 3; if (pol.demT == null) pol.demT = S.turn + 2; if (pol.cab == null) pol.cab = -9;
   for (const id in pol.laws) if (!pol.lx[id]) pol.lx[id] = {}; if (!pol.rev) pol.rev = {};
+  if (pol.last == null) pol.last = Math.max(S.turn, ...Object.values(pol.laws)); // partidas migradas: la parálisis cuenta desde hoy
   // calendario electoral regional escalonado
   P().terr.forEach((t, i) => { if (t.el == null && i > 0) t.el = S.turn + 3 + ((i * 7) % D.GOV.regionEvery); });
 }
@@ -107,4 +108,6 @@ ACT.cabinet = () => { // remodelación del gabinete: aire fresco, pero solo cada
   pol.cab = S.turn; P().stab = clamp(P().stab + 3, 0, 100); why('Remodelación del gabinete', () => secAdd('all', 3)); partyRel('gov', 5); delete S.flags.scandal;
   news(`${S.leader.n} remodela su gabinete`, 'pol', S.player, 2); return { msg: 'Nuevo gabinete: +3 a todos los sectores, +3 de estabilidad y el escándalo queda atrás' };
 };
-const govInfo = () => ({ regen: cpRegen(), parts: S.cpParts || [], load: lawLoad(), laws: Object.keys(S.pol.laws).length, dem: S.pol.dem, lx: S.pol.lx, lock: S.pol.grpLock, cab: S.pol.cab, comm: S.pol.comm });
+/* parálisis: un gobierno que no legisla ni hace nada se desgasta */
+hook('player', () => { const pol = S.pol, idle = S.turn - (pol.last == null ? (pol.last = S.turn) : pol.last); if (idle > 6 && S.turn > 6) { why('Parálisis de gobierno', () => secAdd('all', -.35 * Math.min(3, (idle - 6) / 3 + 1))); if (idle === 7) news(`La prensa acusa a ${S.leader.n} de gobernar en piloto automático`, 'pol', S.player, 2); } });
+const govInfo = () => ({ idle: S.turn - (S.pol.last || 0), regen: cpRegen(), parts: S.cpParts || [], load: lawLoad(), laws: Object.keys(S.pol.laws).length, dem: S.pol.dem, lx: S.pol.lx, lock: S.pol.grpLock, cab: S.pol.cab, comm: S.pol.comm });

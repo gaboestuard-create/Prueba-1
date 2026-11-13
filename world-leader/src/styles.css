@@ -218,3 +218,12 @@ details summary { cursor: pointer; font: 600 12px var(--fc); letter-spacing: .1e
 .lobby { max-height: 210px; overflow-y: auto; scrollbar-width: thin; } .lobby .li { flex-wrap: wrap; } .li.intel { align-items: flex-start; } .li.intel small { display: block; } .conf { width: 96px; display: flex; flex-direction: column; gap: 3px; flex: none; }
 kbd { font: 600 12px var(--fc); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .08); }
 @media (max-width: 760px) { .alerts { top: calc(112px + var(--st)); left: 8px; right: 8px; width: auto; } .sndbtn { order: 2; } }
+
+/* --- pulido: capital político, agenda, teletipo --- */
+.cpcard { margin-bottom: 10px; border-color: rgba(232, 195, 106, .35); } .cpcard h3 { font-size: 17px; } .demand { border-left: 3px solid var(--gold); padding-left: 10px; }
+.ticker { position: fixed; left: calc(var(--sl) + 86px); right: calc(var(--sr) + 230px); bottom: calc(18px + var(--sb)); height: 34px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 10px; background: rgba(6, 10, 20, .72); border: 1px solid var(--line); overflow: hidden; backdrop-filter: blur(8px); font-size: 13px; color: #c5cfdf; pointer-events: none; }
+.ticker b { color: var(--red); font: 600 11px var(--fc); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; flex: none; }
+.tk { overflow: hidden; flex: 1; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.tk span { display: inline-block; white-space: nowrap; padding-left: 100%; animation: tick 70s linear infinite; }
+@keyframes tick { to { transform: translateX(-100%); } }
+@media (max-width: 1100px) { .ticker { display: none; } }

@@ -34,7 +34,7 @@
   Object.assign(D.LAW_AX, { tren_rapido: [0, 0, 1], central_nuclear: [0, 1, 1], muro: [1, 2, 1], espacio: [0, 2, 1], vivienda: [-1, 0, 2], carbono: [-1, -1, 1], subsidio_comb: [0, 1, 2], banca_publica: [0, 0, 2], zonas_francas: [0, -1, -1], semana4: [-1, 0, 1], transparencia: [-1, 0, 0], autonomia: [-1, -1, -1], centralizar: [1, 1, 2], regula_ia: [-1, 0, 1], matrimonio: [-2, -1], cannabis: [-2, -1, -1], pena_muerte: [2, 1, 1], sueldo_militar: [0, 2, 1], control_medios: [1, 1, 2] });
 
   // Ritmo político
-  D.GOV = { cpBase: 2, lawLoad: 6, review: 16, sunset: 8, flipLock: 6, demandEvery: 4, oppEvery: 5, regionEvery: 16 };
+  D.GOV = { cpBase: 2, lawLoad: 6, review: 16, sunset: 8, flipLock: 6, demandEvery: 3, oppEvery: 5, regionEvery: 16 };
   // Misiones militares (com = parte de tus fuerzas que inmovilizan)
   D.MISSIONS = {
     frontera: { n: 'Patrulla fronteriza', d: 'Tropas en la frontera con un vecino: disuade un ataque, pero lo tensa.', com: .12, tgt: 'vecino' },

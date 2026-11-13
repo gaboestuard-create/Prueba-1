@@ -81,7 +81,7 @@ function marketTurn() {
   }
   for (const id in M.co) {
     const m = M.co[id], d = CO[id], home = ownerOf(d.home), h = S.c[home];
-    let f = 1.008 + M.sent + rr(-.06, .06) + (h.stab - 55) / 2500;
+    let f = 1.004 + M.sent + rr(-.06, .06) + (h.stab - 55) / 2500;
     if (inWar(home)) f += d.sec === 'def' ? .03 : -.04;
     f -= Math.min(.05, S.sanc.filter(x => x.on === home).length * .01);
     for (const s of M.shocks) if (s.k === d.sec || s.k === 'all' || (s.k === 'home' && home === S.player)) f *= s.m;

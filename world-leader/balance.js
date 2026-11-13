@@ -12,7 +12,7 @@ const BOT = {
 };
 const res = {};
 for (const bot in BOT) { res[bot] = { vivos: 0, turnos: 0, pib: 0, apr: 0, n: 0 };
-  for (const iso of ['MX', 'DE', 'AR', 'TR', 'NG']) for (const seed of [3, 17, 41]) {
+  for (const iso of (process.argv[2] || 'MX,DE,AR,TR,NG').split(',')) for (const seed of [3, 17, 41]) {
     G.newGame({ iso, name: 'Bot', traits: [], seed }); const g0 = G.S.c[iso].gdp;
     for (let t = 0; t < 40 && !G.S.over; t++) { let k = 0; while (G.S.pend.length && k++ < 40) G.act('decide', { i: 0 }); if (G.S.over) break; BOT[bot](G.S, iso); k = 0; while (G.S.pend.length && k++ < 40) G.act('decide', { i: 0 }); G.act('endTurn'); }
     const r = res[bot], S = G.S; r.n++; r.turnos += S.turn; if (!S.over) r.vivos++; r.pib += (S.c[iso].gdp / g0 - 1) * 100 + (q.portValue() / g0) * 100; r.apr += q.approval(); } }
