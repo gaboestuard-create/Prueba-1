@@ -30,7 +30,8 @@ function ownerOf(iso) { let c = S.c[iso], n = 0; while (!c.alive && c.owner !== 
 
 /* ---- modificadores del líder (rasgos) y de las leyes vigentes ---- */
 function mod(k) { let v = 0; for (const t of S.leader.traits) v += TR[t].m[k] || 0; for (const t of S.tech.done) v += (TECH[t].m || {})[k] || 0; return v; }
-function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k]) v += p[k]; } for (const t of S.tech.done) v += (TECH[t].per || {})[k] || 0; return v; }
+// lawSum: una obra en construcción ya cuesta, pero aún no rinde
+function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k] && (k === 'cost' || !lawBuilding(id))) v += p[k]; } for (const t of S.tech.done) v += (TECH[t].per || {})[k] || 0; return v; }
 
 /* ---- noticias: p = importancia 1-3 (3 abre el resumen del turno) ---- */
 function news(x, k, iso, p) { const n = { id: ++S.nid, t: S.turn, x, k: k || 'world', i: iso || '', p: p || 1 }; S.news.push(n); if (S.news.length > 160) S.news.shift(); Bus.emit('news', n); }
@@ -79,7 +80,7 @@ function power(iso) {
   const c = C(iso); if (!c.alive) return 0;
   let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow;
   v *= (.7 + .3 * Math.min(1, c.gdp / Math.max(.001, c.pop) / 40)) * (.75 + c.stab / 400);
-  if (isP(iso)) v *= Math.max(.3, 1 + mod('atk') + lawSum('mil')) * (S.flags.oilShort ? .75 : 1);
+  if (isP(iso)) v *= Math.max(.3, 1 + mod('atk') + lawSum('mil')) * (S.flags.oilShort ? .75 : 1) * readyMult() * (1 - committed());
   return v;
 }
 const troops = iso => { let v = 0; const u = C(iso).u; for (const k in D.UNITS) v += (u[k] || 0) * D.UNITS[k].men; return v; };

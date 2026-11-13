@@ -73,7 +73,7 @@ function considerWar(iso) {
     let def = power(t) * 1.25 + .6 * sumPow(alliesOf(t));
     for (const z of alive()) if (z !== iso && z !== t && C(z).gdp >= 800 && !alliesOf(t).includes(z) && rel(z, t) >= 40 && rel(z, iso) <= -25) def += .5 * power(z); // protectores
     let ratio = mine / (def + 1); if (T.stab < 35 || inWar(t)) ratio *= 1.3;
-    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1) / (.7 + (p.risk == null ? .5 : p.risk) * .6) * (isP(t) ? diffK('need') : 1); // nadie declara guerras suicidas
+    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1) / (.7 + (p.risk == null ? .5 : p.risk) * .6) * (isP(t) ? diffK('need') * (S.mil && S.mil.miss.some(x => x.k === 'frontera' && x.t === iso) ? 1.3 : 1) : 1); // nadie declara guerras suicidas
     if (isFar && T.stab > 45 && !inWar(t)) continue; // lejos solo se ataca a quien ya se tambalea
     if (ratio > need && ratio * -r > bs) { bs = ratio * -r; best = t; far = isFar; }
   }

@@ -1117,6 +1117,53 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 })();
 
 /* =====================================================================
+   WORLD LEADER · DATOS · LEYES Y GOBIERNO (pulido)
+   Leyes nuevas, megaproyectos (build = turnos de obra: pagan desde el
+   primer día y rinden al terminar), misiones militares y ritmo político.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA;
+  D.LAWCATS.obr = 'Grandes obras';
+  D.LAWS.push(
+    // --- grandes obras: cuestan desde el inicio y solo rinden al terminar
+    { id: 'tren_rapido', cat: 'obr', n: 'Red de trenes de alta velocidad', d: 'Conecta las grandes ciudades. Seis trimestres de obras.', build: 6, eco: -1, sec: { obr: 5, rur: 3, med: 3 }, per: { cost: .35, grow: .14 } },
+    { id: 'central_nuclear', cat: 'obr', n: 'Central nuclear', d: 'Energía propia para medio siglo. Ocho trimestres de obras.', build: 8, eco: 0, sec: { tec: 5, jov: -4, emp: 4 }, per: { cost: .3, oilSave: .2, grow: .05 } },
+    { id: 'presa', cat: 'obr', n: 'Gran presa y regadío', d: 'Agua para el campo y luz para las ciudades.', build: 5, eco: -1, sec: { rur: 9, min: -3 }, per: { cost: .2, prodMul: .08, grow: .04 } },
+    { id: 'espacio', cat: 'obr', n: 'Programa espacial', d: 'Lanzadores propios y satélites. Prestigio y ciencia.', build: 10, eco: 0, sec: { tec: 9, jov: 5, mil: 4 }, rep: { gen: 3 }, per: { cost: .4, grow: .05, mil: .03 } },
+    { id: 'muro', cat: 'obr', n: 'Muro fronterizo', d: 'Cientos de kilómetros de valla y vigilancia.', build: 4, eco: 1, auth: 1, sec: { rur: 6, obr: 3, min: -10, jov: -4 }, rep: { gen: -6 }, per: { cost: .15, stab: 2 } },
+    { id: 'vivienda', cat: 'obr', n: 'Plan nacional de vivienda', d: 'Un millón de viviendas asequibles.', build: 5, eco: -1, sec: { jov: 8, obr: 6, emp: 2 }, per: { cost: .35, stab: 3, grow: .05 } },
+    // --- economía y Estado
+    { id: 'carbono', cat: 'imp', n: 'Impuesto al carbono', d: 'Quien contamina, paga.', eco: -1, sec: { jov: 6, emp: -5, rur: -4, obr: -2 }, rep: { gen: 4 }, per: { tax: 1, oilSave: .1 } },
+    { id: 'subsidio_comb', cat: 'eco', n: 'Subsidio a los combustibles', d: 'Gasolina barata para todos.', eco: -1, grp: 'comb', sec: { rur: 8, obr: 6, jov: -3 }, per: { cost: .4, stab: 2 } },
+    { id: 'banca_publica', cat: 'eco', n: 'Banca pública de desarrollo', d: 'Crédito barato para pymes y regiones pobres.', eco: -2, sec: { emp: -3, rur: 5, med: 3, sin: 3 }, per: { cost: .15, grow: .06 } },
+    { id: 'zonas_francas', cat: 'ext', n: 'Zonas francas industriales', d: 'Impuestos mínimos para quien fabrique y exporte.', eco: 2, sec: { emp: 7, sin: -5, obr: 2 }, per: { tax: -.6, trade: .12, grow: .06 } },
+    { id: 'semana4', cat: 'eco', n: 'Semana laboral de cuatro días', d: 'Mismo sueldo, un día menos.', eco: -1, sec: { obr: 8, jov: 7, sin: 6, emp: -9 }, per: { grow: -.05, stab: 2 } },
+    { id: 'transparencia', cat: 'soc', n: 'Ley de transparencia', d: 'Contratos y cuentas públicas abiertas a todos.', eco: 0, auth: -.5, sec: { med: 6, pre: 6, emp: -2 }, rep: { conf: 6, dem: 4 }, per: { scandal: .2, stab: 1 } },
+    { id: 'autonomia', cat: 'soc', n: 'Más autonomía regional', d: 'Las regiones recaudan y deciden más.', eco: 0, grp: 'terr', sec: { min: 6, rur: 4, mil: -4 }, per: { stab: 2, tax: -.4 } },
+    { id: 'centralizar', cat: 'soc', n: 'Centralización del Estado', d: 'El gobierno nacional recupera competencias.', eco: 0, auth: .5, grp: 'terr', sec: { min: -8, mil: 4, rur: -3 }, per: { tax: .6, stab: -1 } },
+    { id: 'regula_ia', cat: 'net', n: 'Regulación de la inteligencia artificial', d: 'Límites, auditorías y responsables con nombre.', eco: 0, sec: { tec: -6, med: 4, sin: 4 }, rep: { dem: 2 } },
+    // --- sociedad y seguridad
+    { id: 'matrimonio', cat: 'soc', n: 'Matrimonio igualitario', d: 'Mismos derechos para todas las parejas.', eco: 0, auth: -.5, sec: { jov: 7, min: 8, rel: -10 }, rep: { dem: 4 } },
+    { id: 'cannabis', cat: 'sal', n: 'Legalización del cannabis', d: 'Venta regulada y con impuestos.', eco: 0, auth: -.5, sec: { jov: 8, rel: -8, jub: -4 }, per: { tax: .3, stab: 1 } },
+    { id: 'pena_muerte', cat: 'seg', n: 'Pena de muerte', d: 'Para los crímenes más graves.', eco: 1, auth: 1, maj: .66, sec: { jub: 5, rur: 4, min: -8, jov: -6, rel: -2 }, rep: { dem: -12, gen: -6 } },
+    { id: 'sueldo_militar', cat: 'mil', n: 'Aumento salarial a las Fuerzas Armadas', d: 'Soldados mejor pagados, cuarteles más leales.', eco: 0, sec: { mil: 14 }, per: { cost: .15, mil: .03 } },
+    { id: 'control_medios', cat: 'soc', n: 'Ley de medios', d: 'Licencias, cuotas y un regulador del gobierno.', eco: 0, auth: 1, grp: 'prensa', sec: { pre: -14, rur: 3 }, rep: { dem: -10 }, per: { stab: 2, scandal: -.3 } }
+  );
+  Object.assign(D.LAW_AX, { tren_rapido: [0, 0, 1], central_nuclear: [0, 1, 1], muro: [1, 2, 1], espacio: [0, 2, 1], vivienda: [-1, 0, 2], carbono: [-1, -1, 1], subsidio_comb: [0, 1, 2], banca_publica: [0, 0, 2], zonas_francas: [0, -1, -1], semana4: [-1, 0, 1], transparencia: [-1, 0, 0], autonomia: [-1, -1, -1], centralizar: [1, 1, 2], regula_ia: [-1, 0, 1], matrimonio: [-2, -1], cannabis: [-2, -1, -1], pena_muerte: [2, 1, 1], sueldo_militar: [0, 2, 1], control_medios: [1, 1, 2] });
+
+  // Ritmo político
+  D.GOV = { cpBase: 2, lawLoad: 6, review: 16, sunset: 8, flipLock: 6, demandEvery: 4, oppEvery: 5, regionEvery: 16 };
+  // Misiones militares (com = parte de tus fuerzas que inmovilizan)
+  D.MISSIONS = {
+    frontera: { n: 'Patrulla fronteriza', d: 'Tropas en la frontera con un vecino: disuade un ataque, pero lo tensa.', com: .12, tgt: 'vecino' },
+    interior: { n: 'Seguridad interior', d: 'Militares en las calles: más orden, menos libertades.', com: .1, tgt: '' },
+    ayuda: { n: 'Ayuda humanitaria', d: 'Ingenieros, hospitales y víveres para un país en apuros.', com: .05, tgt: 'cualquiera' },
+    paz: { n: 'Misión de paz', d: 'Cascos azules entre dos ejércitos: enfría la guerra y da prestigio.', com: .1, tgt: 'guerra' },
+    ejercicio: { n: 'Maniobras conjuntas', d: 'Entrenar con un aliado: más preparación y una alianza más sólida.', com: .06, tgt: 'aliado' }
+  };
+})();
+
+/* =====================================================================
    WORLD LEADER · DATOS · SUBDIVISIONES (Fase 2)
    Nivel A: 15 países con todas sus entidades, autoridad regional y partido.
    Nivel B: el resto se reparte en 3-8 regiones en el build (partido aproximado).
@@ -1231,7 +1278,8 @@ function ownerOf(iso) { let c = S.c[iso], n = 0; while (!c.alive && c.owner !== 
 
 /* ---- modificadores del líder (rasgos) y de las leyes vigentes ---- */
 function mod(k) { let v = 0; for (const t of S.leader.traits) v += TR[t].m[k] || 0; for (const t of S.tech.done) v += (TECH[t].m || {})[k] || 0; return v; }
-function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k]) v += p[k]; } for (const t of S.tech.done) v += (TECH[t].per || {})[k] || 0; return v; }
+// lawSum: una obra en construcción ya cuesta, pero aún no rinde
+function lawSum(k) { let v = 0; for (const id in S.pol.laws) { const p = LAW[id].per; if (p && p[k] && (k === 'cost' || !lawBuilding(id))) v += p[k]; } for (const t of S.tech.done) v += (TECH[t].per || {})[k] || 0; return v; }
 
 /* ---- noticias: p = importancia 1-3 (3 abre el resumen del turno) ---- */
 function news(x, k, iso, p) { const n = { id: ++S.nid, t: S.turn, x, k: k || 'world', i: iso || '', p: p || 1 }; S.news.push(n); if (S.news.length > 160) S.news.shift(); Bus.emit('news', n); }
@@ -1280,7 +1328,7 @@ function power(iso) {
   const c = C(iso); if (!c.alive) return 0;
   let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow;
   v *= (.7 + .3 * Math.min(1, c.gdp / Math.max(.001, c.pop) / 40)) * (.75 + c.stab / 400);
-  if (isP(iso)) v *= Math.max(.3, 1 + mod('atk') + lawSum('mil')) * (S.flags.oilShort ? .75 : 1);
+  if (isP(iso)) v *= Math.max(.3, 1 + mod('atk') + lawSum('mil')) * (S.flags.oilShort ? .75 : 1) * readyMult() * (1 - committed());
   return v;
 }
 const troops = iso => { let v = 0; const u = C(iso).u; for (const k in D.UNITS) v += (u[k] || 0) * D.UNITS[k].men; return v; };
@@ -1633,7 +1681,8 @@ function secAdd(id, v) {
   const one = k => { logSec(k, v); S.pol.sec[k].a = clamp(S.pol.sec[k].a + v, 0, 100); };
   if (id === 'all') Object.keys(S.pol.sec).forEach(one); else if (S.pol.sec[id]) one(id);
 }
-function secBase(k) { let v = 50; for (const id in S.pol.laws) v += (LAW[id].sec || {})[k] || 0; for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
+// los beneficios de una ley se dan por sentados con los años (bajan hasta el 40%); los agravios no se olvidan
+function secBase(k) { let v = 50; for (const id in S.pol.laws) { const x = (LAW[id].sec || {})[k] || 0; v += x > 0 ? x * Math.max(.4, 1 - (S.turn - S.pol.laws[id]) / 20) : x; } for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
 /* control territorial: fracción de mis regiones gobernadas por mi partido (solo países con subdivisiones) */
 const rulingTag = () => P().custom ? P().partido : D.SUB_RULING[S.player] || D.C[S.player].partido;
 function localCtl() { const r = rulingTag(), mine = P().terr.filter(t => t.o === S.player && t.p); return mine.length > 1 ? mine.filter(t => t.p === r).length / mine.length : null; }
@@ -1659,7 +1708,8 @@ function runVote(l, extra, title) {
   Bus.emit('vote', res); return res;
 }
 function enactLaw(l) {
-  for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { delete S.pol.laws[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); }
+  for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { const age = S.turn - S.pol.laws[id], flip = age < 8; delete S.pol.laws[id]; delete (S.pol.lx || {})[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); if (flip) { repAdd('conf', -4); why('Volantazo legislativo', () => secAdd('all', -2)); news(`${S.leader.n} da un volantazo: tumba "${LAW[id].n}", que apenas tenía ${age} trimestres`, 'pol', S.player, 2); } }
+  if (l.grp) S.pol.grpLock = Object.assign(S.pol.grpLock || {}, { [l.grp]: S.turn + D.GOV.flipLock });
   S.pol.laws[l.id] = S.turn; S.stats.laws++;
   why('Ley: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, l.sec[k]); });
   for (const k in l.rep || {}) repAdd(k, l.rep[k]);
@@ -1669,6 +1719,8 @@ ACT.proposeLaw = a => {
   const l = LAW[a.id], pol = S.pol, mode = a.mode || 'normal'; if (!l) return fail('Ley desconocida');
   if (pol.laws[l.id] != null) return fail('Esa ley ya está vigente');
   if ((pol.cool[l.id] || 0) > S.turn) return fail(`El congreso no la volverá a discutir hasta dentro de ${pol.cool[l.id] - S.turn} turnos`);
+  if (l.grp && ((pol.grpLock || {})[l.grp] || 0) > S.turn) return fail(`El congreso acaba de legislar sobre esto: no reabrirá el tema hasta dentro de ${pol.grpLock[l.grp] - S.turn} turnos`);
+  if (l.build && !canPay(P().gdp * (l.per.cost || 0) / 100)) return fail('No hay caja para arrancar la obra');
   if (mode === 'decree') {
     if (!mod('decree') && isDem()) return fail('Solo un líder de Mano de hierro puede gobernar por decreto en democracia');
     if (!useCP(3)) return fail('Necesitas 3 de capital político');
@@ -1678,12 +1730,13 @@ ACT.proposeLaw = a => {
   }
   let extra = 0, cp = 2;
   if (mode === 'lobby') { cp = 3; extra = .12; }
+  if (a.sunset) extra += .1; // con fecha de caducidad convence a más
   if (pol.cp < cp) return fail(`Necesitas ${cp} de capital político`);
   if (mode === 'bribe') { const cost = bribeCost(); if (!canPay(cost)) return fail('No tienes fondos para comprar votos'); P().tr -= cost; extra = .2; }
   useCP(cp);
   if (mode === 'bribe' && chance(.25 * (1 + mod('scandal')))) S.later.push({ t: S.turn + ri(1, 3), p: 1, fx: [['sec', 'all', -7], ['rep', 'conf', -5], ['flag', 'scandal']], msg: `Se destapa la compra de votos para aprobar "${l.n}"` });
   const res = runVote(l, extra, l.n);
-  if (res.pass) { enactLaw(l); news(`El congreso aprueba: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2); return { vote: res, msg: `Aprobada: ${l.n}` }; }
+  if (res.pass) { enactLaw(l); if (a.sunset) (pol.lx = pol.lx || {})[l.id] = { exp: S.turn + D.GOV.sunset }; news(`El congreso aprueba: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2); return { vote: res, msg: `Aprobada: ${l.n}` }; }
   pol.cool[l.id] = S.turn + 4; secAdd('all', -1);
   news(`El congreso tumba tu propuesta: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2);
   return { vote: res, ok: false, msg: `Rechazada: ${l.n}. No podrás reintentarlo en 4 turnos.` };
@@ -1712,7 +1765,7 @@ function politicsTurn(g) {
   const lcS = localCtl();
   const target = 32 + ap * .5 + (lcS == null ? 0 : (lcS - .5) * 4) + lawSum('stab') + (g > 0 ? 3 : -4) - (war ? 6 : 0) - (c.tr < -c.gdp * .2 ? 8 : 0);
   c.stab = clamp(c.stab + (target - c.stab) * .12 + mod('stabT') + rr(-1, 1), 0, 100);
-  pol.cp = clamp(pol.cp + 3 + mod('cp') + (ap > 60 ? 1 : 0) - (ap < 35 ? 1 : 0), 0, 12);
+  pol.cp = clamp(pol.cp + cpRegen(), 0, 12);
   if (mod('repPazT') && !war) repAdd('paz', mod('repPazT'));
 }
 
@@ -2252,7 +2305,7 @@ function considerWar(iso) {
     let def = power(t) * 1.25 + .6 * sumPow(alliesOf(t));
     for (const z of alive()) if (z !== iso && z !== t && C(z).gdp >= 800 && !alliesOf(t).includes(z) && rel(z, t) >= 40 && rel(z, iso) <= -25) def += .5 * power(z); // protectores
     let ratio = mine / (def + 1); if (T.stab < 35 || inWar(t)) ratio *= 1.3;
-    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1) / (.7 + (p.risk == null ? .5 : p.risk) * .6) * (isP(t) ? diffK('need') : 1); // nadie declara guerras suicidas
+    const isFar = !nb(iso).includes(t), need = (p.agres > .8 ? 1.6 : 2) * (isFar ? 2 : 1) / (.7 + (p.risk == null ? .5 : p.risk) * .6) * (isP(t) ? diffK('need') * (S.mil && S.mil.miss.some(x => x.k === 'frontera' && x.t === iso) ? 1.3 : 1) : 1); // nadie declara guerras suicidas
     if (isFar && T.stab > 45 && !inWar(t)) continue; // lejos solo se ataca a quien ya se tambalea
     if (ratio > need && ratio * -r > bs) { bs = ratio * -r; best = t; far = isFar; }
   }
@@ -3164,6 +3217,175 @@ ACT.importData = a => importData(a.json); FREE.importData = 1;
 Object.assign(WL, { exportData });
 
 
+/* ---------- engine/75-governance.js ---------- */
+/* =====================================================================
+   SISTEMA · GOBIERNO A LARGO PLAZO (pulido)
+   - Capital político escaso: base 2/turno y cada ley vigente pesa (carga legislativa).
+   - Las leyes viven: grandes obras que tardan en rendir, leyes con caducidad,
+     revisiones periódicas en el congreso y volantazos con coste.
+   - Agenda viva: los sectores exigen leyes con plazo y la oposición presenta las suyas.
+   - Elecciones regionales escalonadas y nuevas formas de gastar capital.
+   ===================================================================== */
+const lawBuilding = id => { const l = LAW[id]; return !!(l && l.build && S.pol.laws[id] != null && S.turn - S.pol.laws[id] < l.build); };
+const lawLoad = () => Math.max(0, Object.keys(S.pol.laws).length - D.GOV.lawLoad);
+function cpRegen() { // desglose del capital político por turno (la UI lo muestra)
+  const ap = approval(), parts = [['Base', D.GOV.cpBase], ['Tus rasgos', mod('cp')], ['Aprobación', ap > 60 ? 1 : ap < 35 ? -1 : 0], ['Carga legislativa', -Math.floor(lawLoad() / 3)], ['Gobierno en minoría', S.flags.minority ? -1 : 0]];
+  S.cpParts = parts.filter(x => x[1]); return Math.max(0, parts.reduce((a, x) => a + x[1], 0));
+}
+function initGov() {
+  const pol = S.pol; pol.lx = pol.lx || {}; pol.grpLock = pol.grpLock || {}; pol.dem = pol.dem || []; pol.comm = pol.comm || {}; if (pol.oppT == null) pol.oppT = S.turn + 3; if (pol.demT == null) pol.demT = S.turn + 2; if (pol.cab == null) pol.cab = -9;
+  for (const id in pol.laws) if (!pol.lx[id]) pol.lx[id] = {}; if (!pol.rev) pol.rev = {};
+  // calendario electoral regional escalonado
+  P().terr.forEach((t, i) => { if (t.el == null && i > 0) t.el = S.turn + 3 + ((i * 7) % D.GOV.regionEvery); });
+}
+hook('new', initGov); hook('load', initGov);
+
+/* ---- revisiones, caducidades y obras terminadas ---- */
+hook('late', () => {
+  if (S.over) return; const pol = S.pol;
+  for (const id in pol.laws) {
+    const l = LAW[id], age = S.turn - pol.laws[id], x = pol.lx[id] || (pol.lx[id] = {});
+    if (l.build && age === l.build) { news(`Inaugurada: ${l.n}`, 'eco', S.player, 3); why('Inauguración: ' + l.n, () => secAdd('all', 2)); Bus.emit('treaty', { t: 'obra', a: S.player, b: S.player, name: 'Inaugurada: ' + l.n }); }
+    if (x.exp && S.turn >= x.exp && !S.pend.some(p => p.law === id)) pushPend({ k: 'event', law: id, t: 'Caduca una ley', iso: S.player, x: `"${l.n}" se aprobó con fecha de caducidad y vence este trimestre. Puedes pedir al congreso que la prorrogue o dejarla morir.`,
+      opts: [{ t: 'Pedir la prórroga (votación · 1 CP)', req: { cp: 1 }, fx: [['cp', -1], ['do', 'renew', { id }]] }, { t: 'Dejarla caducar', fx: [['do', 'lapse', { id }]] }] });
+  }
+  // revisión: cada ley se vuelve a examinar cada ~4 años; si el congreso actual la tumbaría, la oposición fuerza el debate
+  if (isDem() && !S.pend.some(p => p.k === 'review')) {
+    const due = Object.keys(pol.laws).filter(id => !lawBuilding(id) && S.turn - (pol.rev[id] || pol.laws[id]) >= D.GOV.review).sort((a, b) => (pol.rev[a] || pol.laws[a]) - (pol.rev[b] || pol.laws[b]))[0];
+    if (due) { pol.rev[due] = S.turn; const l = LAW[due], f = lawForecast(invLaw(l));
+      if (f.yes > f.need) pushPend({ k: 'review', law: due, t: 'La oposición quiere derogar una ley', iso: S.player, x: `Cumple años "${l.n}" y el congreso de hoy ya no es el que la aprobó: hay ${Math.round(f.yes)} votos para derogarla (hacen falta ${Math.round(f.need) + 1}).`,
+        opts: [{ t: 'Defenderla en el pleno (2 CP)', req: { cp: 2 }, fx: [['cp', -2], ['do', 'defend', { id: due }]] }, { t: 'Reformarla para salvarla', fx: [['$g', -.3], ['do', 'defend', { id: due, soft: 1 }]] }, { t: 'Dejar que la deroguen', fx: [['do', 'lapse', { id: due, by: 'el congreso' }]] }] });
+      else news(`El congreso ratifica: ${l.n}`, 'pol', S.player); }
+  }
+});
+OPS.renew = a => { const l = LAW[a.id]; if (!l) return; const r = runVote(l, .05, 'Prórroga: ' + l.n); if (r.pass) { S.pol.lx[a.id] = { exp: S.turn + D.GOV.sunset }; news(`Prorrogada: ${l.n}`, 'pol', S.player, 2); } else OPS.lapse({ id: a.id, by: 'el congreso' }); };
+OPS.lapse = a => { const l = LAW[a.id]; if (!l || S.pol.laws[a.id] == null) return; delete S.pol.laws[a.id]; delete S.pol.lx[a.id]; why('Fin de: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, -l.sec[k] * .5); }); news(a.by ? `${a.by.charAt(0).toUpperCase() + a.by.slice(1)} deroga: ${l.n}` : `Caduca: ${l.n}`, 'pol', S.player, 2); };
+OPS.defend = a => { const l = LAW[a.id], r = runVote(invLaw(l), a.soft ? -.1 : -.18, 'Derogar: ' + l.n); if (r.pass) OPS.lapse({ id: a.id, by: 'el congreso' }); else { news(`Sobrevive a la revisión: ${l.n}`, 'pol', S.player, 2); if (a.soft) for (const k in l.sec || {}) if (l.sec[k] > 0) secAdd(k, -1); } };
+
+/* ---- agenda: lo que te exigen los sectores, con plazo ---- */
+hook('late', () => {
+  const pol = S.pol; if (S.over) return;
+  for (const d of pol.dem.slice()) {
+    if (pol.laws[d.law] != null) { pol.dem.splice(pol.dem.indexOf(d), 1); why(`Cumpliste con ${D.SECTORS[d.k].n.toLowerCase()}`, () => { secAdd(d.k, 8); secAdd('all', 1); }); news(`${D.SECTORS[d.k].n}: «Ha cumplido». Se aprueba lo que exigían`, 'pol', S.player, 2); continue; }
+    if (S.turn >= d.until) { pol.dem.splice(pol.dem.indexOf(d), 1); why(`Ignoraste a ${D.SECTORS[d.k].n.toLowerCase()}`, () => secAdd(d.k, -9)); news(`${D.SECTORS[d.k].n} se sienten traicionados: no aprobaste ${LAW[d.law].n.toLowerCase()}`, 'pol', S.player, 2); }
+  }
+  if (S.turn < pol.demT || pol.dem.length >= 2) return; pol.demT = S.turn + D.GOV.demandEvery;
+  const ks = Object.keys(pol.sec).filter(k => !pol.dem.some(d => d.k === k)).sort((a, b) => pol.sec[a].a - pol.sec[b].a);
+  for (const k of ks.slice(0, 4)) {
+    const cand = D.LAWS.filter(l => pol.laws[l.id] == null && (l.sec || {})[k] >= 5 && !(l.grp && Object.keys(pol.laws).some(id => LAW[id].grp === l.grp && (LAW[id].sec || {})[k] > 0))).sort((a, b) => b.sec[k] - a.sec[k]);
+    if (!cand.length) continue; const l = cand[Math.min(cand.length - 1, ri(0, 2))];
+    pol.dem.push({ k, law: l.id, until: S.turn + 5 }); news(`${D.SECTORS[k].n} exigen: ${l.n} (plazo: 5 trimestres)`, 'pol', S.player, 2); break;
+  }
+});
+/* ---- iniciativas de la oposición: también legislan, y a veces te imponen sus leyes ---- */
+hook('late', () => {
+  const pol = S.pol; if (S.over || !isDem() || S.turn < pol.oppT || S.pend.some(p => p.k === 'oppbill')) return; pol.oppT = S.turn + D.GOV.oppEvery + ri(0, 2);
+  const opp = pol.seats.map((p, i) => [p, i]).filter(x => !x[0].g).sort((a, b) => b[0].s - a[0].s)[0]; if (!opp) return;
+  const l = D.LAWS.filter(x => pol.laws[x.id] == null && !x.build && !x.maj && !(x.grp && (pol.grpLock[x.grp] || 0) > S.turn)).map(x => [x, axDist(x, opp[0])]).sort((a, b) => a[1] - b[1])[ri(0, 2)];
+  if (!l) return; const f = oppForecast(l[0]);
+  pushPend({ k: 'oppbill', law: l[0].id, t: `${opp[0].n} presenta una ley`, iso: S.player, x: `${opp[0].n} lleva al pleno "${l[0].n}". ${l[0].d} Previsión: ${Math.round(f)} votos a favor de 100${f > 50 ? '. Podría salir adelante aunque te opongas.' : '.'}`,
+    opts: [{ t: 'Apoyarla', fx: [['do', 'oppbill', { id: l[0].id, i: opp[1], how: 'si' }], ['party', opp[1], 10], ['party', 'gov', -4]] },
+    { t: 'Votar en contra', fx: [['do', 'oppbill', { id: l[0].id, i: opp[1], how: 'no' }]] },
+    { t: 'Negociar que la retiren (2 CP)', req: { cp: 2 }, fx: [['cp', -2], ['party', opp[1], 4]] }] });
+});
+function oppForecast(l) { return S.pol.seats.reduce((a, p) => a + p.s * clamp(.5 + (p.g ? -.3 : .2) - .22 * axDist(l, p) + (p.g ? 0 : (50 - approval()) / 150), .03, .97), 0); }
+OPS.oppbill = a => {
+  const l = LAW[a.id], pol = S.pol, opp = pol.seats[a.i]; if (!l || pol.laws[l.id] != null) return;
+  let yes = 0; const by = pol.seats.map(p => { const f = a.how === 'si' ? clamp(.5 + .3 - .15 * axDist(l, p), .1, .97) : clamp(.5 + (p.g ? -.3 : .2) - .22 * axDist(l, p) + rr(-.08, .08), .03, .97), y = Math.round(p.s * f); yes += y; return { n: p.n, s: Math.round(p.s), yes: y, g: p.g, ideo: p.ideo }; });
+  const pass = yes > 50; Bus.emit('vote', { title: `${l.n} (iniciativa de ${opp ? opp.n : 'la oposición'})`, by, yes, need: 50, pass });
+  if (pass) { enactLaw(l); news(`${a.how === 'no' ? 'Derrota en el congreso: la oposición aprueba' : 'Aprobada con apoyo de todos'}: ${l.n}`, 'pol', S.player, a.how === 'no' ? 3 : 2); if (a.how === 'no') { pol.cp = Math.max(0, pol.cp - 1); S.flags.defeat = S.turn; } }
+  else news(`El congreso tumba la iniciativa de ${opp ? opp.n : 'la oposición'}: ${l.n}`, 'pol', S.player, 2);
+};
+
+/* ---- elecciones regionales escalonadas ---- */
+hook('late', () => {
+  if (S.over || !isDem()) return; const rul = rulingTag(), opp = (S.pol.seats.filter(p => !p.g).sort((a, b) => b.s - a.s)[0] || { n: 'Oposición' }).n;
+  const due = P().terr.map((t, i) => [t, i]).filter(x => x[1] > 0 && x[0].o === S.player && x[0].el != null && x[0].el <= S.turn);
+  const won = [], lost = [];
+  for (const [t, i] of due) {
+    const mine = t.p === rul, share = approval() + (mine ? 4 : -4) + (t.camp || 0) + (S.flags.scandal ? -4 : 0) + rr(-9, 9);
+    t.el = S.turn + D.GOV.regionEvery; t.camp = 0;
+    if (mine && share < 47) { t.p = opp; t.gob = genLeader(S.player); t.v = false; lost.push(t.n); } else if (!mine && share > 54) { t.p = rul; t.gob = genLeader(S.player); t.v = false; won.push(t.n); }
+  }
+  if (won.length || lost.length) { news(`Elecciones regionales: ${won.length ? 'tu partido gana ' + won.slice(0, 3).join(', ') + (won.length > 3 ? ' y ' + (won.length - 3) + ' más' : '') : ''}${won.length && lost.length ? '; ' : ''}${lost.length ? 'pierdes ' + lost.slice(0, 3).join(', ') + (lost.length > 3 ? ' y ' + (lost.length - 3) + ' más' : '') : ''}`, 'elec', S.player, 3); }
+  else if (due.length) news(`Elecciones regionales en ${due.map(x => x[0].n).slice(0, 3).join(', ')}: sin cambios`, 'elec', S.player);
+});
+ACT.regCampaign = a => {
+  const t = P().terr[+a.i]; if (!t || t.o !== S.player || !+a.i) return fail('Región inválida'); if (t.el == null || t.el - S.turn > 3) return fail('Allí no hay elecciones en los próximos 3 trimestres');
+  if (t.camp) return fail('Ya hiciste campaña allí'); const cost = P().gdp * .0008 * (D.C[S.player].terr[+a.i].w * 10 + .5); if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(1)) return fail('Necesitas 1 de capital político');
+  P().tr -= cost; t.camp = 7; return { msg: `Tu partido vuelca la campaña en ${t.n}: +7 puntos para las elecciones de dentro de ${t.el - S.turn} trimestres` };
+};
+
+/* ---- más usos del capital político ---- */
+ACT.commSector = a => { // campaña de comunicación dirigida a un sector
+  const k = a.k, pol = S.pol; if (!pol.sec[k]) return fail('Sector inválido'); if ((pol.comm[k] || 0) > S.turn) return fail(`Ya les hablaste hace poco: espera ${pol.comm[k] - S.turn} turnos`);
+  const cost = P().gdp * .0004; if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(1)) return fail('Necesitas 1 de capital político');
+  P().tr -= cost; pol.comm[k] = S.turn + 3; why('Campaña de comunicación', () => secAdd(k, 4)); return { msg: `Campaña dirigida a ${D.SECTORS[k].n.toLowerCase()}: +4` };
+};
+ACT.cabinet = () => { // remodelación del gabinete: aire fresco, pero solo cada 8 turnos
+  const pol = S.pol; if (S.turn - pol.cab < 8) return fail(`Remodelaste el gabinete hace poco: espera ${8 - (S.turn - pol.cab)} turnos`); if (!useCP(3)) return fail('Necesitas 3 de capital político');
+  pol.cab = S.turn; P().stab = clamp(P().stab + 3, 0, 100); why('Remodelación del gabinete', () => secAdd('all', 3)); partyRel('gov', 5); delete S.flags.scandal;
+  news(`${S.leader.n} remodela su gabinete`, 'pol', S.player, 2); return { msg: 'Nuevo gabinete: +3 a todos los sectores, +3 de estabilidad y el escándalo queda atrás' };
+};
+const govInfo = () => ({ regen: cpRegen(), parts: S.cpParts || [], load: lawLoad(), laws: Object.keys(S.pol.laws).length, dem: S.pol.dem, lx: S.pol.lx, lock: S.pol.grpLock, cab: S.pol.cab, comm: S.pol.comm });
+
+
+/* ---------- engine/76-military2.js ---------- */
+/* =====================================================================
+   SISTEMA · EJÉRCITO EN TIEMPO DE PAZ (pulido)
+   Preparación que se pierde sin maniobras, misiones que dan uso a las
+   tropas (frontera, interior, ayuda, paz, maniobras conjuntas) y una
+   lectura de disuasión: quién podría atacarte y quién no se atreve.
+   ===================================================================== */
+function readyMult() { return S && S.mil ? (.65 + .35 * S.mil.ready / 100) / .895 : 1; } // .895 = preparación media de las IAs (70)
+function committed() { return S && S.mil ? Math.min(.45, S.mil.miss.reduce((a, m) => a + D.MISSIONS[m.k].com, 0)) : 0; }
+hook('new', () => { S.mil = { ready: 70, miss: [], drill: -9 }; }); hook('load', () => { S.mil = S.mil || { ready: 70, miss: [], drill: -9 }; });
+ACT.drill = () => {
+  const m = S.mil; if (m.drill === S.turn) return fail('Ya hiciste maniobras este turno'); const cost = upkeep(S.player) * .6 + .2;
+  if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(1)) return fail('Necesitas 1 de capital político');
+  P().tr -= cost; m.drill = S.turn; m.ready = clamp(m.ready + 15, 0, 100); why('Maniobras militares', () => secAdd('mil', 2));
+  for (const z of nb(S.player)) if (rel(S.player, z) < -20) addMod(S.player, z, 'Tus maniobras en la frontera', -2, 1);
+  return { msg: `Maniobras: preparación ${Math.round(m.ready)}/100 (${money(cost)})` };
+};
+ACT.mission = a => {
+  const m = S.mil, M = D.MISSIONS[a.k], me = S.player; if (!M) return fail('Misión desconocida');
+  if (a.end != null) { const x = m.miss[+a.end]; if (!x) return fail('Esa misión ya no existe'); m.miss.splice(+a.end, 1); return { msg: `Termina: ${D.MISSIONS[x.k].n}${x.t ? ' en ' + nm(x.t) : ''}` }; }
+  if (m.miss.length >= 3) return fail('Tus fuerzas ya tienen tres misiones: termina una antes'); if (m.miss.some(x => x.k === a.k && x.t === a.t)) return fail('Esa misión ya está en marcha');
+  let t = a.t || '';
+  if (M.tgt === 'vecino' && !nb(me).includes(t)) return fail('Elige un país vecino');
+  if (M.tgt === 'aliado' && !alliesOf(me).includes(t)) return fail('Solo puedes hacer maniobras con un aliado');
+  if (M.tgt === 'cualquiera' && (!S.c[t] || !S.c[t].alive || t === me || atWar(me, t))) return fail('Elige un país');
+  if (M.tgt === 'guerra') { const w = warById(+a.w); if (!w || w.att.includes(me) || w.def.includes(me)) return fail('Elige una guerra en la que no participes'); t = String(w.id); if (!useCP(1)) return fail('Necesitas 1 de capital político'); }
+  m.miss.push({ k: a.k, t, s: S.turn });
+  if (a.k === 'frontera') addMod(me, t, 'Tropas en su frontera', -6, .3);
+  news(`${P().n} despliega: ${M.n}${t && S.c[t] ? ' (' + nm(t) + ')' : ''}`, 'mil', t && S.c[t] ? t : me, 2);
+  return { msg: `${M.n} en marcha: inmoviliza el ${Math.round(M.com * 100)}% de tus fuerzas` };
+};
+hook('player', () => {
+  const m = S.mil, me = S.player, war = inWar(me);
+  m.ready = clamp(m.ready + (war ? 1 : -1.5) + (m.miss.some(x => x.k === 'ejercicio') ? 1.5 : 0), 20, 100);
+  for (const x of m.miss.slice()) {
+    const T = x.t && S.c[x.t]; if (x.k !== 'paz' && x.k !== 'interior' && (!T || !T.alive || (x.k !== 'frontera' && atWar(me, x.t)))) { m.miss.splice(m.miss.indexOf(x), 1); continue; }
+    if (x.k === 'frontera') { addMod(me, x.t, 'Tropas en su frontera', -.5, .3); why('Patrulla fronteriza', () => { secAdd('mil', .3); secAdd('rur', .2); }); }
+    if (x.k === 'interior') { P().stab = clamp(P().stab + .6, 0, 100); repAdd('dem', -.3); why('Militares en las calles', () => { secAdd('jub', .3); secAdd('med', .2); secAdd('jov', -.4); secAdd('min', -.3); }); }
+    if (x.k === 'ayuda') { addMod(me, x.t, 'Tu ayuda humanitaria', gain(2), .3); repAdd('gen', .5); T.stab = clamp(T.stab + .8, 0, 100); P().tr -= P().gdp * .0004; }
+    if (x.k === 'ejercicio') addMod(me, x.t, 'Maniobras conjuntas', gain(1.5), .3);
+    if (x.k === 'paz') { const w = warById(+x.t); if (!w) { m.miss.splice(m.miss.indexOf(x), 1); news('Tus cascos azules vuelven a casa: la guerra ha terminado', 'peace', me, 2); repAdd('paz', 4); continue; }
+      repAdd('paz', .6); w.score *= .85; for (const z of [w.att[0], w.def[0]]) addMod(me, z, 'Tus cascos azules', gain(1), .3);
+      if (chance(.15)) { casualties(me, .01); news('Bajas entre tus cascos azules', 'war', me, 2); why('Bajas en la misión de paz', () => secAdd('all', -1)); }
+      if (S.turn - w.s > 4 && chance(.12)) endWar(w, 'blanca'); }
+  }
+});
+/* las IAs miden la disuasión: patrullas y preparación cuentan */
+function deterrence() {
+  const me = S.player, mine = power(me) + .5 * sumPow(alliesOf(me)), out = [];
+  for (const z of new Set(nb(me).concat(RIVALS[me] || []))) { const c = S.c[z]; if (!c || !c.alive || alliesOf(me).includes(z)) continue;
+    const r = rel(z, me), ratio = (power(z) + .5 * sumPow(alliesOf(z))) / (mine * 1.25 + 1), need = (c.per.agres > .8 ? 1.6 : 2) * (S.mil.miss.some(x => x.k === 'frontera' && x.t === z) ? 1.3 : 1);
+    out.push({ iso: z, rel: r, ratio, risk: r < -20 && c.per.agres * (.5 + c.per.expan) >= .32 ? (ratio > need ? 'alto' : ratio > need * .6 ? 'medio' : 'bajo') : 'nulo' }); }
+  return out.sort((a, b) => b.ratio - a.ratio);
+}
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -3249,6 +3471,7 @@ WL.Game = {
     rel, relBreakdown, power, catPow, troops, upkeep, costLvl, canReach, nb, ownerOf, ownCount, alliesOf, enemiesOf, warsOf, atWar, inWar, hasT, hasExplicit, sanctioned, threat,
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
+    govInfo, lawBuilding, oppForecast, deterrence, readyMult, committed,
     arcInfo, alerts, paper, memOf, exportData, GOALS, DIFF, EV: () => EV,
     intelList, planText, diffK, unBrief, ecoInfo, debtRatio, indInfo, blocCheck,
     regionInfo, regionProd, rulingTag, secWhy, govSeats, axDist, lawAx, campaignPlan, msgFits,

@@ -28,7 +28,8 @@ function secAdd(id, v) {
   const one = k => { logSec(k, v); S.pol.sec[k].a = clamp(S.pol.sec[k].a + v, 0, 100); };
   if (id === 'all') Object.keys(S.pol.sec).forEach(one); else if (S.pol.sec[id]) one(id);
 }
-function secBase(k) { let v = 50; for (const id in S.pol.laws) v += (LAW[id].sec || {})[k] || 0; for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
+// los beneficios de una ley se dan por sentados con los años (bajan hasta el 40%); los agravios no se olvidan
+function secBase(k) { let v = 50; for (const id in S.pol.laws) { const x = (LAW[id].sec || {})[k] || 0; v += x > 0 ? x * Math.max(.4, 1 - (S.turn - S.pol.laws[id]) / 20) : x; } for (const t of S.leader.traits) v += ((TR[t].start || {}).sec || {})[k] || 0; return clamp(v, 10, 90); }
 /* control territorial: fracción de mis regiones gobernadas por mi partido (solo países con subdivisiones) */
 const rulingTag = () => P().custom ? P().partido : D.SUB_RULING[S.player] || D.C[S.player].partido;
 function localCtl() { const r = rulingTag(), mine = P().terr.filter(t => t.o === S.player && t.p); return mine.length > 1 ? mine.filter(t => t.p === r).length / mine.length : null; }
@@ -54,7 +55,8 @@ function runVote(l, extra, title) {
   Bus.emit('vote', res); return res;
 }
 function enactLaw(l) {
-  for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { delete S.pol.laws[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); }
+  for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { const age = S.turn - S.pol.laws[id], flip = age < 8; delete S.pol.laws[id]; delete (S.pol.lx || {})[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); if (flip) { repAdd('conf', -4); why('Volantazo legislativo', () => secAdd('all', -2)); news(`${S.leader.n} da un volantazo: tumba "${LAW[id].n}", que apenas tenía ${age} trimestres`, 'pol', S.player, 2); } }
+  if (l.grp) S.pol.grpLock = Object.assign(S.pol.grpLock || {}, { [l.grp]: S.turn + D.GOV.flipLock });
   S.pol.laws[l.id] = S.turn; S.stats.laws++;
   why('Ley: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, l.sec[k]); });
   for (const k in l.rep || {}) repAdd(k, l.rep[k]);
@@ -64,6 +66,8 @@ ACT.proposeLaw = a => {
   const l = LAW[a.id], pol = S.pol, mode = a.mode || 'normal'; if (!l) return fail('Ley desconocida');
   if (pol.laws[l.id] != null) return fail('Esa ley ya está vigente');
   if ((pol.cool[l.id] || 0) > S.turn) return fail(`El congreso no la volverá a discutir hasta dentro de ${pol.cool[l.id] - S.turn} turnos`);
+  if (l.grp && ((pol.grpLock || {})[l.grp] || 0) > S.turn) return fail(`El congreso acaba de legislar sobre esto: no reabrirá el tema hasta dentro de ${pol.grpLock[l.grp] - S.turn} turnos`);
+  if (l.build && !canPay(P().gdp * (l.per.cost || 0) / 100)) return fail('No hay caja para arrancar la obra');
   if (mode === 'decree') {
     if (!mod('decree') && isDem()) return fail('Solo un líder de Mano de hierro puede gobernar por decreto en democracia');
     if (!useCP(3)) return fail('Necesitas 3 de capital político');
@@ -73,12 +77,13 @@ ACT.proposeLaw = a => {
   }
   let extra = 0, cp = 2;
   if (mode === 'lobby') { cp = 3; extra = .12; }
+  if (a.sunset) extra += .1; // con fecha de caducidad convence a más
   if (pol.cp < cp) return fail(`Necesitas ${cp} de capital político`);
   if (mode === 'bribe') { const cost = bribeCost(); if (!canPay(cost)) return fail('No tienes fondos para comprar votos'); P().tr -= cost; extra = .2; }
   useCP(cp);
   if (mode === 'bribe' && chance(.25 * (1 + mod('scandal')))) S.later.push({ t: S.turn + ri(1, 3), p: 1, fx: [['sec', 'all', -7], ['rep', 'conf', -5], ['flag', 'scandal']], msg: `Se destapa la compra de votos para aprobar "${l.n}"` });
   const res = runVote(l, extra, l.n);
-  if (res.pass) { enactLaw(l); news(`El congreso aprueba: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2); return { vote: res, msg: `Aprobada: ${l.n}` }; }
+  if (res.pass) { enactLaw(l); if (a.sunset) (pol.lx = pol.lx || {})[l.id] = { exp: S.turn + D.GOV.sunset }; news(`El congreso aprueba: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2); return { vote: res, msg: `Aprobada: ${l.n}` }; }
   pol.cool[l.id] = S.turn + 4; secAdd('all', -1);
   news(`El congreso tumba tu propuesta: ${l.n} (${res.yes}–${100 - res.yes})`, 'pol', S.player, 2);
   return { vote: res, ok: false, msg: `Rechazada: ${l.n}. No podrás reintentarlo en 4 turnos.` };
@@ -107,7 +112,7 @@ function politicsTurn(g) {
   const lcS = localCtl();
   const target = 32 + ap * .5 + (lcS == null ? 0 : (lcS - .5) * 4) + lawSum('stab') + (g > 0 ? 3 : -4) - (war ? 6 : 0) - (c.tr < -c.gdp * .2 ? 8 : 0);
   c.stab = clamp(c.stab + (target - c.stab) * .12 + mod('stabT') + rr(-1, 1), 0, 100);
-  pol.cp = clamp(pol.cp + 3 + mod('cp') + (ap > 60 ? 1 : 0) - (ap < 35 ? 1 : 0), 0, 12);
+  pol.cp = clamp(pol.cp + cpRegen(), 0, 12);
   if (mod('repPazT') && !war) repAdd('paz', mod('repPazT'));
 }
 
