@@ -38,6 +38,8 @@ function applyFx(list, ctx) {
       case 'fxr': S.eco.fx = clamp(S.eco.fx + a, 20, 180); break;
       case 'debt': S.eco.debt = Math.max(0, S.eco.debt + c.gdp * a / 100); break;
       case 'chain': S.chain.push({ t: S.turn + a, id: b, T }); break;
+      case 'arc': if (S.arc && S.arc[a]) S.arc[a].st += b; break;
+      case 'ind': S.eco.ind[a] = Math.max(0, (S.eco.ind[a] || 0) + b); break;
     }
   }
 }
@@ -62,6 +64,7 @@ function describeFx(list, T) {
     else if (k === 'camp') out.push([`Campaña +${a} pts`, 1]);
     else if (k === 'sellRes') out.push([`Vendes el ${Math.round(a * 100)}% de tus reservas`, -1]);
     else if (k === 'over') out.push(['Pierdes el poder', -1]);
+    else if (k === 'ind') out.push([`Industria (${D.INDUSTRY[a].n.toLowerCase()}) ${sg(b)}`, b]);
     else if (k === 'inf') out.push(['Inflación ' + sg(a) + ' pts', -a]);
     else if (k === 'unemp') out.push(['Desempleo ' + sg(a) + ' pts', -a]);
     else if (k === 'fxr') out.push(['Moneda ' + sg(a), a]);
