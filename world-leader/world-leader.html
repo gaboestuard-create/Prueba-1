@@ -2518,6 +2518,9 @@ hook('late', () => {
 });
 /* resultado región por región para la noche electoral */
 function electionRegs(share) { const r = rulingTag(); return P().terr.map((t, i) => t.o === S.player ? { n: t.n, v: clamp(share + (t.p === r ? 6 : -5) + rr(-6, 6), 3, 97), w: D.C[S.player].terr[i].w } : null).filter(Boolean).sort((a, b) => b.w - a.w).slice(0, 14); }
+/* balance: una guerra que se gana da réditos en casa; una que se pierde, no */
+hook('player', () => { if (!inWar(S.player)) return; const sc = warScoreFor(S.player); if (sc > 15) why('Victorias en el frente', () => { secAdd('mil', .8); secAdd('rur', .6); secAdd('jub', .6); secAdd('obr', .5); secAdd('med', .4); }); });
+Bus.on('annex', a => { if (a.t === S.player) why(`Anexión de ${D.C[a.v].n}`, () => { secAdd('all', 4); secAdd('mil', 6); secAdd('min', -5); secAdd('pre', -3); }); });
 
 
 /* ---------- engine/68-brain.js ---------- */
@@ -3673,7 +3676,7 @@ function startHTML() {
   return `<div class="start"><div class="start-in">
     <p class="eyebrow">Simulador de liderazgo mundial · Fase 2</p>
     <h1 class="logo">WORLD<span>LEADER</span></h1>
-    <p class="tagline">197 países, 1.084 provincias. Cada uno recuerda lo que hiciste.</p>
+    <p class="tagline">197 países, 1.196 regiones. Cada uno recuerda lo que hiciste.</p>
     <div class="start-btns"><button class="btn gold lg" data-a="ngStart">Nueva partida</button>
       ${hasSave() ? `<button class="btn lg" data-a="continue">Continuar</button>` : ''}<button class="btn ghost lg" data-a="importOpen">Importar partida</button></div>
     <p class="fine">Datos aproximados. Casi todos los líderes llegan marcados “sin verificar”: puedes corregirlos en el Editor.</p></div></div>`;

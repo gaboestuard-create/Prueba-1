@@ -8,7 +8,7 @@ function startHTML() {
   return `<div class="start"><div class="start-in">
     <p class="eyebrow">Simulador de liderazgo mundial · Fase 2</p>
     <h1 class="logo">WORLD<span>LEADER</span></h1>
-    <p class="tagline">197 países, 1.084 provincias. Cada uno recuerda lo que hiciste.</p>
+    <p class="tagline">197 países, 1.196 regiones. Cada uno recuerda lo que hiciste.</p>
     <div class="start-btns"><button class="btn gold lg" data-a="ngStart">Nueva partida</button>
       ${hasSave() ? `<button class="btn lg" data-a="continue">Continuar</button>` : ''}<button class="btn ghost lg" data-a="importOpen">Importar partida</button></div>
     <p class="fine">Datos aproximados. Casi todos los líderes llegan marcados “sin verificar”: puedes corregirlos en el Editor.</p></div></div>`;

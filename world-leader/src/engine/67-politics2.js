@@ -111,3 +111,6 @@ hook('late', () => {
 });
 /* resultado región por región para la noche electoral */
 function electionRegs(share) { const r = rulingTag(); return P().terr.map((t, i) => t.o === S.player ? { n: t.n, v: clamp(share + (t.p === r ? 6 : -5) + rr(-6, 6), 3, 97), w: D.C[S.player].terr[i].w } : null).filter(Boolean).sort((a, b) => b.w - a.w).slice(0, 14); }
+/* balance: una guerra que se gana da réditos en casa; una que se pierde, no */
+hook('player', () => { if (!inWar(S.player)) return; const sc = warScoreFor(S.player); if (sc > 15) why('Victorias en el frente', () => { secAdd('mil', .8); secAdd('rur', .6); secAdd('jub', .6); secAdd('obr', .5); secAdd('med', .4); }); });
+Bus.on('annex', a => { if (a.t === S.player) why(`Anexión de ${D.C[a.v].n}`, () => { secAdd('all', 4); secAdd('mil', 6); secAdd('min', -5); secAdd('pre', -3); }); });
