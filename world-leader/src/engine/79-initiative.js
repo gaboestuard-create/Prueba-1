@@ -1,0 +1,67 @@
+/* =====================================================================
+   SISTEMA · INICIATIVA DE LOS DEMÁS PAÍSES
+   Te buscan, te presionan y actúan contra ti por su cuenta: piden bases,
+   pactos y leyes, te denuncian, te sancionan, te espían, provocan
+   incidentes, te venden armas o tecnología. Un segundo cupo de mensajes
+   por turno, aparte del de las ofertas clásicas.
+   ===================================================================== */
+hook('new', () => { S.fdem = []; }); hook('load', () => { S.fdem = S.fdem || []; });
+const INITW = () => { const me = S.player, al = alive().filter(z => z !== me && S.c[z].lastAsk + 6 <= S.turn), r = z => rel(me, z), big = z => S.c[z].gdp > P().gdp * .5 || S.c[z].gdp > 1500, out = [];
+  const add = (z, t, x, opts) => z && out.push([z, t, x, opts]);
+  // 1) pacto de no agresión con un vecino receloso
+  { const z = pick(al.filter(z => nb(me).includes(z) && r(z) > -25 && r(z) < 30 && !hasT('pna', me, z) && !atWar(me, z))); z && add(z, `${nm(z)} propone no agredirse`, `${S.c[z].lider.n} quiere un pacto de no agresión: ninguno atacará al otro. Romperlo después saldrá caro.`, [{ t: 'Firmar el pacto', fx: [['do', 'sign', { t: 'pna', iso: z }]] }, { t: 'Rechazar', fx: [['rel', 'T', -6, 'Rechazaste no agredirnos'], ['sec', 'mil', 2]] }]); }
+  // 2) un aliado fuerte pide una base en tu suelo (paga alquiler)
+  { const z = pick(al.filter(z => alliesOf(me).includes(z) && r(z) > 35 && S.c[z].gdp > P().gdp && !S.bases.some(b => b.by === z && b.in === me))); if (z) { const rent = Math.max(.2, S.c[z].gdp * .0003), foes = foesOf(z).length;
+    add(z, `${nm(z)} quiere una base en tu país`, `${S.c[z].lider.n} pide instalar una base militar en tu territorio y pagaría ${money(rent)} por trimestre de alquiler. Te protege de tus vecinos, pero ${foes ? `sus ${foes} enemigos te verán como un peón suyo` : 'tus nacionalistas protestarán'}.`, [{ t: `Aceptar · +${money(rent)}/t`, fx: [['do', 'hostBase', { iso: z, rent }], ['rel', 'T', 10, 'Les cediste una base'], ['sec', 'rur', -3], ['sec', 'jov', -3]] }, { t: 'Rechazar', fx: [['rel', 'T', -7, 'Les negaste una base'], ['sec', 'mil', 2]] }]); } }
+  // 3) un aliado te ofrece una base en su territorio
+  { const z = pick(al.filter(z => alliesOf(me).includes(z) && r(z) > 45 && !S.bases.some(b => b.by === me && b.in === z) && !nb(me).includes(z))); z && add(z, `${nm(z)} te ofrece una base`, `${S.c[z].lider.n} te invita a desplegar tropas en su país sin coste: tendrás alcance militar en ${D.REGIONS[D.C[z].region]}. Sus rivales lo tomarán como una provocación.`, [{ t: 'Aceptar la base', fx: [['do', 'getBase', { iso: z }], ['rel', 'T', 4, 'Aceptaste su base'], ['relAll', -3, 'Tu base cerca de ellos', 'enemiesOfT']] }, { t: 'Agradecer y declinar', fx: [] }]); }
+  // 4) un socio poderoso te pide que aprobes una ley
+  { const z = pick(al.filter(z => big(z) && r(z) > 25)); if (z && !S.fdem.some(f => f.iso === z)) { const l = pick(D.LAWS.filter(x => ['com', 'ext', 'soc', 'sal', 'seg', 'net'].includes(x.cat) && !x.build && S.pol.laws[x.id] == null && !(S.fdem.some(f => f.law === x.id)) && Math.sign(x.eco || 0) === Math.sign(S.c[z].ideo || 0)));
+    if (l) add(z, `${nm(z)} te pide una ley`, `${S.c[z].lider.n} quiere que tu país apruebe «${l.n}». Si lo haces en 8 trimestres, lo recompensará con ayuda y confianza; si lo prometes y no cumples, lo recordará.`, [{ t: 'Prometerlo', fx: [['do', 'fdem', { iso: z, law: l.id }], ['rel', 'T', 4, 'Prometiste su ley']] }, { t: 'Es asunto nuestro', fx: [['rel', 'T', -5, 'No quisiste escucharlos'], ['sec', 'mil', 2], ['sec', 'rur', 2]] }]); } }
+  // 5) te denuncian ante la Asamblea
+  { const z = pick(al.filter(z => big(z) && r(z) < -35)); z && add(z, `${nm(z)} te denuncia en la Asamblea`, `En la Asamblea de Naciones, ${S.c[z].lider.n} te acusa de desestabilizar la región. Las cámaras del mundo esperan tu respuesta.`, [{ t: 'Defenderte con tu cancillería · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['chance', .55, [['rep', 'conf', 3], ['rep', 'gen', 2]], [['rep', 'gen', -3]]]] }, { t: 'Contraatacar con sus trapos sucios', fx: [['rel', 'T', -10, 'Lo humillaste en la Asamblea'], ['sec', 'all', 2], ['rep', 'gen', -1]] }, { t: 'Ignorarlo', fx: [['rep', 'gen', -5], ['rep', 'conf', -2]] }]); }
+  // 6) amenaza de sanciones
+  { const z = pick(al.filter(z => big(z) && r(z) < -40 && !sanctioned(z, me))); if (z) { const amt = P().gdp * .004;
+    add(z, `${nm(z)} amenaza con sancionarte`, `${S.c[z].lider.n} anuncia sanciones contra tu país${alliesOf(z).length ? ' y presiona a sus aliados para que se sumen' : ''}, salvo que hagas «un gesto».`, [{ t: `Hacer un gesto · ${money(amt)}`, fx: [['$', -amt], ['rel', 'T', 12, 'Cediste a su presión'], ['sec', 'mil', -3]] }, { t: 'Negociar · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['chance', .55, [['rel', 'T', 6, 'Negociaron sin sanciones']], [['do', 'aiSanc', { iso: z, allies: 1 }]]]] }, { t: 'Desafiarlos', fx: [['do', 'aiSanc', { iso: z, allies: 1 }], ['sec', 'all', 2], ['sec', 'emp', -4]] }]); } }
+  // 7) red de espías descubierta (y lo que ya se llevaron)
+  { const z = pick(al.filter(z => (r(z) < 15 && S.c[z].gdp > 300) || (RIVALS[me] || []).includes(z))); z && add(z, `Espías de ${nm(z)}`, `Tu contrainteligencia descubre una red de ${nm(z)} en tus ministerios. Llevaban meses copiando informes de tus laboratorios.`, [{ t: 'Expulsar a sus diplomáticos', fx: [['rel', 'T', -10, 'Expulsaste a sus diplomáticos'], ['rep', 'conf', 2], ['sec', 'mil', 3]] }, { t: 'Convertirlos en agentes dobles · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['do', 'turnSpies', { iso: z }]] }, { t: 'Callar y vigilar', fx: [['do', 'aiSteal', { iso: z }]] }]); }
+  // 8) sabotaje (a veces sin firma clara)
+  { const z = pick(al.filter(z => r(z) < -45 && S.c[z].gdp > 200)); if (z) { const cat = pick(Object.keys(D.CATS));
+    add(z, 'Sabotaje en tus fuerzas armadas', `Explosiones en instalaciones de ${D.CATS[cat].toLowerCase()} destruyen equipo. Todo apunta a ${nm(z)}, aunque nadie lo puede probar.`, [{ t: 'Acusar a ' + nm(z) + ' públicamente', fx: [['units', cat, -5], ['rel', 'T', -12, 'Los acusaste de sabotaje'], ['sec', 'all', 3], ['chance', .3, [['do', 'aiEsc', { iso: z }]], []]] }, { t: 'Investigación discreta', fx: [['units', cat, -5], ['do', 'turnSpies', { iso: z, quiet: 1 }]] }, { t: 'Ocultarlo', fx: [['units', cat, -5], ['stab', -2]] }]); } }
+  // 9) incidente fronterizo
+  { const z = pick(al.filter(z => nb(me).includes(z) && r(z) < -30 && !atWar(me, z))); z && add(z, `Disparos en la frontera con ${nm(z)}`, `Una patrulla de ${nm(z)} abre fuego contra un puesto fronterizo tuyo: hay soldados muertos. Tus generales quieren responder.`, [{ t: 'Represalia proporcional', fx: [['rel', 'T', -10, 'Represalia en la frontera'], ['sec', 'mil', 6], ['rep', 'paz', -2], ['chance', .3, [['do', 'aiEsc', { iso: z }]], []]] }, { t: 'Reforzar la frontera', fx: [['$g', -.05], ['do', 'borderPatrol', { iso: z }], ['sec', 'mil', 3]] }, { t: 'Protesta diplomática', fx: [['rel', 'T', -3, 'Tu protesta formal'], ['sec', 'mil', -5], ['rep', 'paz', 2]] }]); }
+  // 10) refugiados de un vecino en guerra o en caos
+  { const z = pick(alive().filter(z => z !== me && nb(me).includes(z) && (inWar(z) || S.c[z].stab < 25))); z && add(z, `Llegan refugiados de ${nm(z)}`, `Miles de familias huyen de ${inWar(z) ? 'la guerra' : 'el caos'} en ${nm(z)} y cruzan tu frontera. El mundo mira cómo los recibes.`, [{ t: 'Acogerlos', fx: [['$g', -.08], ['rep', 'gen', 6], ['sec', 'min', 4], ['sec', 'rur', -4], ['sec', 'obr', -2], ['rel', 'T', 10, 'Acogiste a su gente']] }, { t: 'Acogerlos con cupos · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['$g', -.03], ['rep', 'gen', 3], ['rel', 'T', 5, 'Acogiste a parte de su gente']] }, { t: 'Cerrar la frontera', fx: [['rep', 'gen', -5], ['sec', 'rur', 4], ['sec', 'min', -3], ['rel', 'T', -6, 'Les cerraste la frontera']] }]); }
+  // 11) un aliado te pide sumarte a sus sanciones
+  { const s = pick(S.sanc.filter(x => alliesOf(me).includes(x.by) && x.on !== me && !sanctioned(me, x.on) && S.c[x.on].alive && al.includes(x.by))); if (s) add(s.by, `${nm(s.by)} te pide sancionar a ${nm(s.on)}`, `${S.c[s.by].lider.n} quiere un frente común: que tu país también sancione a ${nm(s.on)}.`, [{ t: 'Sumarse a las sanciones', fx: [['do', 'mySanc', { iso: s.on }], ['rel', 'T', 8, 'Te sumaste a sus sanciones'], ['rel', s.on, -12, 'Te sumaste a las sanciones']] }, { t: 'Mantenerte al margen', fx: [['rel', 'T', -5, 'No te sumaste a sus sanciones']] }]); }
+  // 12) una potencia hostil exige que rompas con su rival
+  { const z = pick(al.filter(z => big(z) && r(z) < 10 && r(z) > -50)); if (z) { const y = pick(foesOf(z).filter(y => hasExplicit('ali', me, y) || hasExplicit('com', me, y))); if (y) { const t = hasExplicit('ali', me, y) ? 'ali' : 'com';
+    add(z, `${nm(z)} exige que rompas con ${nm(y)}`, `${S.c[z].lider.n} te pone ante una elección: o cancelas tu ${TNAME[t].toLowerCase()} con ${nm(y)}, o te considerará un adversario.`, [{ t: 'Romper con ' + nm(y), fx: [['do', 'cutTie', { iso: y, t }], ['rel', 'T', 15, 'Rompiste con su rival'], ['rel', y, -20, 'Rompiste el tratado por presión'], ['rep', 'conf', -4]] }, { t: 'Mantener tu palabra', fx: [['rel', 'T', -10, 'Elegiste a su rival'], ['rel', y, 6, 'Resististe la presión'], ['rep', 'conf', 3]] }]); } } }
+  // 13) venta de armas
+  { const z = pick(al.filter(z => r(z) > 20 && S.c[z].gdp > P().gdp && power(z) > power(me))); if (z) { const k = pick(['caz', 'tan', 'fra', 'dro']), n = k === 'tan' ? 10 : k === 'dro' ? 8 : 3, cost = unitCost(k) * n * .7;
+    add(z, `${nm(z)} te ofrece armamento`, `${S.c[z].lider.n} te vende ${n} ${D.UNITS[k].n.toLowerCase()} a precio de amigo (${money(cost)}, un 30% menos). Sus rivales tomarán nota.`, [{ t: `Comprar · ${money(cost)}`, fx: [['$', -cost], ['do', 'buyArms', { k, n }], ['rel', 'T', 6, 'Nos compraste armas'], ['relAll', -2, 'Compraste armas a su rival', 'enemiesOfT']] }, { t: 'No, gracias', fx: [] }]); } }
+  return out.concat(techOffer());
+};
+hook('world', () => {
+  const me = S.player; if (S.over || S.flags.offer2T === S.turn || S.turn < 2 || !chance(.6)) return;
+  const L = INITW(); if (!L.length) return; const [z, t, x, opts] = pick(L); S.flags.offer2T = S.turn; S.c[z].lastAsk = S.turn; pushPend({ k: 'offer', t, x, iso: z, opts });
+});
+// acciones hostiles sin preguntar: espías y presión de quien te odia
+hook('world', () => { const me = S.player; for (const z of alive()) { if (z === me || rel(me, z) > -50 || S.c[z].gdp < 150 || !chance(.04)) continue;
+  if (chance(.5)) { P().stab = clamp(P().stab - 2, 0, 100); news(`Campaña de desinformación en tus redes: los analistas apuntan a ${nm(z)}`, 'dip', z, 2); }
+  else if (S.disc.cur && progOf(me, S.disc.cur) > 10) { S.disc.prog[me][S.disc.cur] *= .85; news(`Ciberataque contra tus laboratorios: se pierden datos de ${DS[S.disc.cur].n}`, 'dip', z, 2); } } });
+OPS.hostBase = a => { if (!S.bases.some(b => b.by === a.iso && b.in === S.player)) S.bases.push({ by: a.iso, in: S.player, rent: a.rent }); dirty(); news(`${nm(a.iso)} instala una base militar en ${P().n}`, 'mil', a.iso, 2); };
+OPS.getBase = a => { if (!S.bases.some(b => b.by === S.player && b.in === a.iso)) S.bases.push({ by: S.player, in: a.iso }); dirty(); news(`${P().n} despliega tropas en una base de ${nm(a.iso)}`, 'mil', a.iso, 2); };
+OPS.fdem = a => S.fdem.push({ iso: a.iso, law: a.law, until: S.turn + 8 });
+OPS.aiSanc = a => { if (addSanction(a.iso, S.player)) news(`${nm(a.iso)} sanciona a ${P().n}`, 'dip', a.iso, 3); if (a.allies) for (const z of alliesOf(a.iso)) if (z !== S.player && rel(S.player, z) < 15 && chance(.4) && addSanction(z, S.player)) news(`${nm(z)} se suma a las sanciones de ${nm(a.iso)}`, 'dip', z, 2); };
+OPS.mySanc = a => { addSanction(S.player, a.iso); };
+OPS.aiEsc = a => escalate(a.iso, S.player);
+OPS.turnSpies = a => { if (a.quiet && chance(.5)) { addMod(S.player, a.iso, 'Descubriste su sabotaje', -6, .5, 1); return news(`Tu inteligencia confirma: el sabotaje vino de ${nm(a.iso)}`, 'dip', a.iso, 2); } if (chance(.75)) { S.spy.net[a.iso] = Math.min(3, spyNet(a.iso) + 1); news(`Tus agentes dobles en ${nm(a.iso)} empiezan a informar`, 'dip', a.iso, 1); } else { addMod(S.player, a.iso, 'Descubrieron tu doble juego', -12, .4, 1); news(`${nm(a.iso)} descubre tu doble juego con sus espías`, 'dip', a.iso, 2); } };
+OPS.aiSteal = a => { const c = S.c[a.iso]; if (c.dt) pushProg(a.iso, c.dt, discCost(c.dt) * .25); };
+OPS.borderPatrol = a => { if (S.mil.miss.length < 3 && !S.mil.miss.some(x => x.k === 'frontera' && x.t === a.iso)) S.mil.miss.push({ k: 'frontera', t: a.iso, s: S.turn }); };
+OPS.cutTie = a => endTreaties(S.player, a.iso, [a.t, a.t === 'ali' ? 'def' : 'com']);
+OPS.buyArms = a => { P().u[a.k] = (P().u[a.k] || 0) + a.n; };
+/* promesas de leyes a otros países */
+hook('late', () => { S.fdem = S.fdem.filter(f => { const c = S.c[f.iso], l = D.LAWS.find(x => x.id === f.law); if (!c || !c.alive || !l) return false;
+  if (S.pol.laws[f.law] != null) { const aid = Math.min(c.gdp * .002, P().gdp * .01); P().tr += aid; addMod(S.player, f.iso, 'Cumpliste tu promesa', gain(12), .3); repAdd('conf', 2); news(`${c.n} celebra «${l.n}» y te envía ${money(aid)} de ayuda`, 'dip', f.iso, 2); return false; }
+  if (S.turn > f.until) { addMod(S.player, f.iso, 'Incumpliste tu promesa', -10, .3, 1); repAdd('conf', -2); news(`${c.n} te reprocha no haber aprobado «${l.n}» como prometiste`, 'dip', f.iso, 2); return false; } return true; }); });

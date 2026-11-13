@@ -252,6 +252,14 @@ kbd { font: 600 12px var(--fc); padding: 2px 7px; border-radius: 5px; border: 1p
 .itabs button:hover { background: rgba(255, 255, 255, .08); transform: translateY(-1px); } .itabs button.on { color: #fff; border-color: var(--gold); background: rgba(232, 195, 106, .13); } .itabs .gi { width: 24px; height: 24px; color: inherit; } .itabs button.on .gi { color: var(--gold); } .itabs .pip { position: absolute; top: 6px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--red, #ff6b6b); }
 @media (max-width: 640px) { .itabs { gap: 3px; padding: 8px 8px 2px; } .itabs button { font-size: 9px; letter-spacing: 0; } .itabs span { line-height: 1.1; text-align: center; } .ucards { grid-template-columns: 1fr; } .gi.xl { width: 48px; height: 48px; } }
 
+/* ---- carrera tecnológica ---- */
+.dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; } .disc { display: flex; flex-direction: column; gap: 6px; padding: 11px; border-radius: 13px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); } .disc h3 { margin: 0; flex: 1; font-size: 15px; } .disc .row { gap: 8px; align-items: center; }
+.disc.own { border-color: rgba(95, 227, 161, .45); background: rgba(95, 227, 161, .06); } .disc.cur { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(232, 195, 106, .3); } .disc.locked { opacity: .55; } .disc .pro { color: var(--green); } .disc > .btn, .disc > .chip { align-self: flex-start; }
+.race { display: flex; flex-direction: column; gap: 3px; } .rb { display: grid; grid-template-columns: 18px 96px 1fr 34px; gap: 6px; align-items: center; font-size: 12px; } .rb span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rb small { text-align: right; color: var(--mut); } .rb .bar { margin: 0; }
+.owners { display: flex; flex-wrap: wrap; gap: 3px; font-size: 14px; } .disc-cur { display: flex; gap: 14px; align-items: flex-start; } .disc-cur .grow { display: flex; flex-direction: column; gap: 6px; } .li.mine { background: rgba(232, 195, 106, .1); } .li .rank { width: 22px; color: var(--mut); }
+.card.disc-cur { flex-direction: row; } .sci .li .grow { display: flex; flex-direction: column; } .rb > i { width: 16px; }
+.rb > :first-child { width: 18px; overflow: hidden; }
+
 </style>
 
 <div id="globe"></div>
@@ -1341,6 +1349,43 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     CO: { pet: 'Meta,Casanare', car: 'La Guajira,Cesar', caf: 'Huila,Antioquia,Caldas', oro: 'Antioquia' },
     GB: { pet: 'Escocia', gas: 'Escocia' }, DE: { car: 'Renania del Norte-Westfalia,Brandeburgo' }, FR: { tri: 'Centro-Valle de Loira,Alta Francia', ura: 'Nueva Aquitania' }
   };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · CARRERA TECNOLÓGICA MUNDIAL
+   Grandes descubrimientos que todas las potencias persiguen a la vez.
+   cost: puntos de I+D · req: descubrimiento previo · per/m: efectos para
+   quien lo domina (como leyes/rasgos; a la IA le valen grow, stab y mil)
+   sec: golpe de opinión al lograrlo (solo jugador) · first: premio del
+   primero (rep: reputación; world: cambios en los mercados del mundo)
+   verificado:false → ficción plausible, no datos reales.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA;
+  D.DFIELDS = { dig: 'Computación e IA', sal: 'Salud y biotecnología', amb: 'Medio ambiente y alimentos', ene: 'Energía y materiales', mil: 'Militar', esp: 'Espacio' };
+  D.DISC = [
+    { id: 'cuantica', f: 'dig', n: 'Computación cuántica útil', cost: 110, d: 'Rompe cifrados y diseña fármacos y materiales en horas.', per: { grow: .06 }, m: { spyOp: .15 }, first: { rep: { conf: 3 }, world: [['stock', 'tec', 1.08]] } },
+    { id: 'chips', f: 'dig', n: 'Semiconductores de 1 nanómetro', cost: 90, d: 'Los chips que todo el mundo necesita, hechos en casa.', per: { trade: .12, grow: .04 }, first: { world: [['price', 'tie', 1.15]] } },
+    { id: 'ia', f: 'dig', n: 'Inteligencia artificial general', cost: 170, req: 'cuantica', d: 'Una mente artificial que investiga, gestiona y negocia.', per: { grow: .15 }, m: { cp: 1 }, sec: { tec: 8, sin: -6 }, first: { rep: { conf: 4, gen: 3 }, world: [['stock', 'tec', 1.18], ['sent', .03]] } },
+    { id: 'vacuna', f: 'sal', n: 'Vacuna universal', cost: 80, d: 'Una sola dosis contra gripes y coronavirus.', per: { stab: 3 }, sec: { jub: 5, med: 3 }, first: { rep: { gen: 8 }, world: [['stock', 'far', 1.1]] } },
+    { id: 'cancer', f: 'sal', n: 'Terapia génica contra el cáncer', cost: 140, req: 'vacuna', d: 'El cáncer pasa a ser una enfermedad crónica.', per: { stab: 4, grow: .04 }, sec: { jub: 8, med: 5 }, first: { rep: { gen: 6 } } },
+    { id: 'longevidad', f: 'sal', n: 'Medicina de la longevidad', cost: 130, req: 'cancer', d: 'Vivir 20 años más, y sanos. Las pensiones tiemblan.', per: { grow: .05, cost: .1 }, sec: { jub: 10, jov: -3 }, first: { rep: { gen: 5 } } },
+    { id: 'carbono', f: 'amb', n: 'Captura de carbono a gran escala', cost: 90, d: 'Fábricas que limpian el aire en lugar de ensuciarlo.', per: { stab: 1 }, sec: { jov: 6 }, first: { rep: { gen: 8 }, world: [['price', 'car', 1.12]] } },
+    { id: 'vertical', f: 'amb', n: 'Agricultura vertical', cost: 70, d: 'Granos y verduras en torres, sin sequías ni plagas.', per: { prodMul: .06, stab: 1 }, sec: { rur: -4, med: 3 }, first: { world: [['price', 'tri', .85], ['price', 'caf', .92]] } },
+    { id: 'desal', f: 'amb', n: 'Desalinización barata', cost: 75, d: 'Agua dulce ilimitada del mar.', per: { grow: .04, stab: 2 }, sec: { rur: 6 }, first: { rep: { gen: 4 } } },
+    { id: 'baterias', f: 'ene', n: 'Baterías de estado sólido', cost: 85, d: 'Coches y redes que ya no dependen del petróleo.', per: { oilSave: .2 }, first: { world: [['price', 'lit', 1.25], ['price', 'pet', .92], ['stock', 'aut', 1.1]] } },
+    { id: 'supercond', f: 'ene', n: 'Superconductores a temperatura ambiente', cost: 150, d: 'Electricidad sin pérdidas, trenes que levitan.', per: { grow: .08, trade: .08, mil: .04 }, first: { rep: { conf: 3 }, world: [['price', 'cob', .85], ['stock', 'ind', 1.08]] } },
+    { id: 'fusion', f: 'ene', n: 'Fusión nuclear comercial', cost: 180, req: 'supercond', d: 'Energía casi infinita. El mundo del petróleo se tambalea.', per: { oilSave: .45, cost: -.15, grow: .1 }, first: { rep: { gen: 6, conf: 4 }, world: [['price', 'pet', .7], ['price', 'gas', .75], ['price', 'car', .7], ['stock', 'ene', .85]] } },
+    { id: 'hiper', f: 'mil', n: 'Misiles hipersónicos', cost: 100, d: 'Imposibles de interceptar. Tus rivales lo notarán.', per: { mil: .15 }, sec: { mil: 6 }, first: { rep: { paz: -4 }, world: [['stock', 'def', 1.08]] } },
+    { id: 'escudo', f: 'mil', n: 'Escudo antimisiles', cost: 120, d: 'Una cúpula que detiene casi todo lo que vuela.', per: { mil: .1 }, m: { casual: -.15 }, sec: { mil: 4, med: 2 } },
+    { id: 'laser', f: 'mil', n: 'Armas láser', cost: 110, req: 'hiper', d: 'Disparos a la velocidad de la luz, casi gratis.', per: { mil: .12 }, m: { unitCost: -.05 }, sec: { mil: 4 } },
+    { id: 'robots', f: 'mil', n: 'Ejército robótico', cost: 160, req: 'laser', d: 'Máquinas al frente; tus jóvenes, en casa.', per: { mil: .2 }, m: { casual: -.3 }, sec: { jov: 6, mil: -4 }, first: { rep: { paz: -5 } } },
+    { id: 'ciber', f: 'mil', n: 'Ciberarmas ofensivas', cost: 80, d: 'Apagar la red eléctrica de un país sin un disparo.', m: { spyOp: .2, spy: .5 } },
+    { id: 'satelites', f: 'esp', n: 'Constelación de satélites espía', cost: 90, d: 'Ves cada tanque del planeta. Con misiles hipersónicos, alcanzas a cualquier país.', m: { spyOp: .1 }, sec: { mil: 3 } },
+    { id: 'luna', f: 'esp', n: 'Base lunar permanente', cost: 140, req: 'satelites', d: 'Bandera en la Luna: el prestigio que no se compra.', per: { stab: 3 }, m: { treatyAcc: 4 }, sec: { jov: 5, med: 4 }, first: { rep: { gen: 10, conf: 5 } } },
+    { id: 'asteroides', f: 'esp', n: 'Minería de asteroides', cost: 190, req: 'luna', d: 'Metales raros llovidos del cielo. Los mercados de minerales se hunden.', per: { prodMul: .2, grow: .06 }, first: { world: [['price', 'tie', .6], ['price', 'pla', .7], ['price', 'niq', .7], ['price', 'oro', .8]] } }
+  ];
+  D.DISC.forEach(x => x.verificado = false);
 })();
 
 </script>
@@ -3626,6 +3671,149 @@ ACT.gesture = a => {
 };
 
 
+/* ---------- engine/79-initiative.js ---------- */
+/* =====================================================================
+   SISTEMA · INICIATIVA DE LOS DEMÁS PAÍSES
+   Te buscan, te presionan y actúan contra ti por su cuenta: piden bases,
+   pactos y leyes, te denuncian, te sancionan, te espían, provocan
+   incidentes, te venden armas o tecnología. Un segundo cupo de mensajes
+   por turno, aparte del de las ofertas clásicas.
+   ===================================================================== */
+hook('new', () => { S.fdem = []; }); hook('load', () => { S.fdem = S.fdem || []; });
+const INITW = () => { const me = S.player, al = alive().filter(z => z !== me && S.c[z].lastAsk + 6 <= S.turn), r = z => rel(me, z), big = z => S.c[z].gdp > P().gdp * .5 || S.c[z].gdp > 1500, out = [];
+  const add = (z, t, x, opts) => z && out.push([z, t, x, opts]);
+  // 1) pacto de no agresión con un vecino receloso
+  { const z = pick(al.filter(z => nb(me).includes(z) && r(z) > -25 && r(z) < 30 && !hasT('pna', me, z) && !atWar(me, z))); z && add(z, `${nm(z)} propone no agredirse`, `${S.c[z].lider.n} quiere un pacto de no agresión: ninguno atacará al otro. Romperlo después saldrá caro.`, [{ t: 'Firmar el pacto', fx: [['do', 'sign', { t: 'pna', iso: z }]] }, { t: 'Rechazar', fx: [['rel', 'T', -6, 'Rechazaste no agredirnos'], ['sec', 'mil', 2]] }]); }
+  // 2) un aliado fuerte pide una base en tu suelo (paga alquiler)
+  { const z = pick(al.filter(z => alliesOf(me).includes(z) && r(z) > 35 && S.c[z].gdp > P().gdp && !S.bases.some(b => b.by === z && b.in === me))); if (z) { const rent = Math.max(.2, S.c[z].gdp * .0003), foes = foesOf(z).length;
+    add(z, `${nm(z)} quiere una base en tu país`, `${S.c[z].lider.n} pide instalar una base militar en tu territorio y pagaría ${money(rent)} por trimestre de alquiler. Te protege de tus vecinos, pero ${foes ? `sus ${foes} enemigos te verán como un peón suyo` : 'tus nacionalistas protestarán'}.`, [{ t: `Aceptar · +${money(rent)}/t`, fx: [['do', 'hostBase', { iso: z, rent }], ['rel', 'T', 10, 'Les cediste una base'], ['sec', 'rur', -3], ['sec', 'jov', -3]] }, { t: 'Rechazar', fx: [['rel', 'T', -7, 'Les negaste una base'], ['sec', 'mil', 2]] }]); } }
+  // 3) un aliado te ofrece una base en su territorio
+  { const z = pick(al.filter(z => alliesOf(me).includes(z) && r(z) > 45 && !S.bases.some(b => b.by === me && b.in === z) && !nb(me).includes(z))); z && add(z, `${nm(z)} te ofrece una base`, `${S.c[z].lider.n} te invita a desplegar tropas en su país sin coste: tendrás alcance militar en ${D.REGIONS[D.C[z].region]}. Sus rivales lo tomarán como una provocación.`, [{ t: 'Aceptar la base', fx: [['do', 'getBase', { iso: z }], ['rel', 'T', 4, 'Aceptaste su base'], ['relAll', -3, 'Tu base cerca de ellos', 'enemiesOfT']] }, { t: 'Agradecer y declinar', fx: [] }]); }
+  // 4) un socio poderoso te pide que aprobes una ley
+  { const z = pick(al.filter(z => big(z) && r(z) > 25)); if (z && !S.fdem.some(f => f.iso === z)) { const l = pick(D.LAWS.filter(x => ['com', 'ext', 'soc', 'sal', 'seg', 'net'].includes(x.cat) && !x.build && S.pol.laws[x.id] == null && !(S.fdem.some(f => f.law === x.id)) && Math.sign(x.eco || 0) === Math.sign(S.c[z].ideo || 0)));
+    if (l) add(z, `${nm(z)} te pide una ley`, `${S.c[z].lider.n} quiere que tu país apruebe «${l.n}». Si lo haces en 8 trimestres, lo recompensará con ayuda y confianza; si lo prometes y no cumples, lo recordará.`, [{ t: 'Prometerlo', fx: [['do', 'fdem', { iso: z, law: l.id }], ['rel', 'T', 4, 'Prometiste su ley']] }, { t: 'Es asunto nuestro', fx: [['rel', 'T', -5, 'No quisiste escucharlos'], ['sec', 'mil', 2], ['sec', 'rur', 2]] }]); } }
+  // 5) te denuncian ante la Asamblea
+  { const z = pick(al.filter(z => big(z) && r(z) < -35)); z && add(z, `${nm(z)} te denuncia en la Asamblea`, `En la Asamblea de Naciones, ${S.c[z].lider.n} te acusa de desestabilizar la región. Las cámaras del mundo esperan tu respuesta.`, [{ t: 'Defenderte con tu cancillería · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['chance', .55, [['rep', 'conf', 3], ['rep', 'gen', 2]], [['rep', 'gen', -3]]]] }, { t: 'Contraatacar con sus trapos sucios', fx: [['rel', 'T', -10, 'Lo humillaste en la Asamblea'], ['sec', 'all', 2], ['rep', 'gen', -1]] }, { t: 'Ignorarlo', fx: [['rep', 'gen', -5], ['rep', 'conf', -2]] }]); }
+  // 6) amenaza de sanciones
+  { const z = pick(al.filter(z => big(z) && r(z) < -40 && !sanctioned(z, me))); if (z) { const amt = P().gdp * .004;
+    add(z, `${nm(z)} amenaza con sancionarte`, `${S.c[z].lider.n} anuncia sanciones contra tu país${alliesOf(z).length ? ' y presiona a sus aliados para que se sumen' : ''}, salvo que hagas «un gesto».`, [{ t: `Hacer un gesto · ${money(amt)}`, fx: [['$', -amt], ['rel', 'T', 12, 'Cediste a su presión'], ['sec', 'mil', -3]] }, { t: 'Negociar · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['chance', .55, [['rel', 'T', 6, 'Negociaron sin sanciones']], [['do', 'aiSanc', { iso: z, allies: 1 }]]]] }, { t: 'Desafiarlos', fx: [['do', 'aiSanc', { iso: z, allies: 1 }], ['sec', 'all', 2], ['sec', 'emp', -4]] }]); } }
+  // 7) red de espías descubierta (y lo que ya se llevaron)
+  { const z = pick(al.filter(z => (r(z) < 15 && S.c[z].gdp > 300) || (RIVALS[me] || []).includes(z))); z && add(z, `Espías de ${nm(z)}`, `Tu contrainteligencia descubre una red de ${nm(z)} en tus ministerios. Llevaban meses copiando informes de tus laboratorios.`, [{ t: 'Expulsar a sus diplomáticos', fx: [['rel', 'T', -10, 'Expulsaste a sus diplomáticos'], ['rep', 'conf', 2], ['sec', 'mil', 3]] }, { t: 'Convertirlos en agentes dobles · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['do', 'turnSpies', { iso: z }]] }, { t: 'Callar y vigilar', fx: [['do', 'aiSteal', { iso: z }]] }]); }
+  // 8) sabotaje (a veces sin firma clara)
+  { const z = pick(al.filter(z => r(z) < -45 && S.c[z].gdp > 200)); if (z) { const cat = pick(Object.keys(D.CATS));
+    add(z, 'Sabotaje en tus fuerzas armadas', `Explosiones en instalaciones de ${D.CATS[cat].toLowerCase()} destruyen equipo. Todo apunta a ${nm(z)}, aunque nadie lo puede probar.`, [{ t: 'Acusar a ' + nm(z) + ' públicamente', fx: [['units', cat, -5], ['rel', 'T', -12, 'Los acusaste de sabotaje'], ['sec', 'all', 3], ['chance', .3, [['do', 'aiEsc', { iso: z }]], []]] }, { t: 'Investigación discreta', fx: [['units', cat, -5], ['do', 'turnSpies', { iso: z, quiet: 1 }]] }, { t: 'Ocultarlo', fx: [['units', cat, -5], ['stab', -2]] }]); } }
+  // 9) incidente fronterizo
+  { const z = pick(al.filter(z => nb(me).includes(z) && r(z) < -30 && !atWar(me, z))); z && add(z, `Disparos en la frontera con ${nm(z)}`, `Una patrulla de ${nm(z)} abre fuego contra un puesto fronterizo tuyo: hay soldados muertos. Tus generales quieren responder.`, [{ t: 'Represalia proporcional', fx: [['rel', 'T', -10, 'Represalia en la frontera'], ['sec', 'mil', 6], ['rep', 'paz', -2], ['chance', .3, [['do', 'aiEsc', { iso: z }]], []]] }, { t: 'Reforzar la frontera', fx: [['$g', -.05], ['do', 'borderPatrol', { iso: z }], ['sec', 'mil', 3]] }, { t: 'Protesta diplomática', fx: [['rel', 'T', -3, 'Tu protesta formal'], ['sec', 'mil', -5], ['rep', 'paz', 2]] }]); }
+  // 10) refugiados de un vecino en guerra o en caos
+  { const z = pick(alive().filter(z => z !== me && nb(me).includes(z) && (inWar(z) || S.c[z].stab < 25))); z && add(z, `Llegan refugiados de ${nm(z)}`, `Miles de familias huyen de ${inWar(z) ? 'la guerra' : 'el caos'} en ${nm(z)} y cruzan tu frontera. El mundo mira cómo los recibes.`, [{ t: 'Acogerlos', fx: [['$g', -.08], ['rep', 'gen', 6], ['sec', 'min', 4], ['sec', 'rur', -4], ['sec', 'obr', -2], ['rel', 'T', 10, 'Acogiste a su gente']] }, { t: 'Acogerlos con cupos · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['$g', -.03], ['rep', 'gen', 3], ['rel', 'T', 5, 'Acogiste a parte de su gente']] }, { t: 'Cerrar la frontera', fx: [['rep', 'gen', -5], ['sec', 'rur', 4], ['sec', 'min', -3], ['rel', 'T', -6, 'Les cerraste la frontera']] }]); }
+  // 11) un aliado te pide sumarte a sus sanciones
+  { const s = pick(S.sanc.filter(x => alliesOf(me).includes(x.by) && x.on !== me && !sanctioned(me, x.on) && S.c[x.on].alive && al.includes(x.by))); if (s) add(s.by, `${nm(s.by)} te pide sancionar a ${nm(s.on)}`, `${S.c[s.by].lider.n} quiere un frente común: que tu país también sancione a ${nm(s.on)}.`, [{ t: 'Sumarse a las sanciones', fx: [['do', 'mySanc', { iso: s.on }], ['rel', 'T', 8, 'Te sumaste a sus sanciones'], ['rel', s.on, -12, 'Te sumaste a las sanciones']] }, { t: 'Mantenerte al margen', fx: [['rel', 'T', -5, 'No te sumaste a sus sanciones']] }]); }
+  // 12) una potencia hostil exige que rompas con su rival
+  { const z = pick(al.filter(z => big(z) && r(z) < 10 && r(z) > -50)); if (z) { const y = pick(foesOf(z).filter(y => hasExplicit('ali', me, y) || hasExplicit('com', me, y))); if (y) { const t = hasExplicit('ali', me, y) ? 'ali' : 'com';
+    add(z, `${nm(z)} exige que rompas con ${nm(y)}`, `${S.c[z].lider.n} te pone ante una elección: o cancelas tu ${TNAME[t].toLowerCase()} con ${nm(y)}, o te considerará un adversario.`, [{ t: 'Romper con ' + nm(y), fx: [['do', 'cutTie', { iso: y, t }], ['rel', 'T', 15, 'Rompiste con su rival'], ['rel', y, -20, 'Rompiste el tratado por presión'], ['rep', 'conf', -4]] }, { t: 'Mantener tu palabra', fx: [['rel', 'T', -10, 'Elegiste a su rival'], ['rel', y, 6, 'Resististe la presión'], ['rep', 'conf', 3]] }]); } } }
+  // 13) venta de armas
+  { const z = pick(al.filter(z => r(z) > 20 && S.c[z].gdp > P().gdp && power(z) > power(me))); if (z) { const k = pick(['caz', 'tan', 'fra', 'dro']), n = k === 'tan' ? 10 : k === 'dro' ? 8 : 3, cost = unitCost(k) * n * .7;
+    add(z, `${nm(z)} te ofrece armamento`, `${S.c[z].lider.n} te vende ${n} ${D.UNITS[k].n.toLowerCase()} a precio de amigo (${money(cost)}, un 30% menos). Sus rivales tomarán nota.`, [{ t: `Comprar · ${money(cost)}`, fx: [['$', -cost], ['do', 'buyArms', { k, n }], ['rel', 'T', 6, 'Nos compraste armas'], ['relAll', -2, 'Compraste armas a su rival', 'enemiesOfT']] }, { t: 'No, gracias', fx: [] }]); } }
+  return out.concat(techOffer());
+};
+hook('world', () => {
+  const me = S.player; if (S.over || S.flags.offer2T === S.turn || S.turn < 2 || !chance(.6)) return;
+  const L = INITW(); if (!L.length) return; const [z, t, x, opts] = pick(L); S.flags.offer2T = S.turn; S.c[z].lastAsk = S.turn; pushPend({ k: 'offer', t, x, iso: z, opts });
+});
+// acciones hostiles sin preguntar: espías y presión de quien te odia
+hook('world', () => { const me = S.player; for (const z of alive()) { if (z === me || rel(me, z) > -50 || S.c[z].gdp < 150 || !chance(.04)) continue;
+  if (chance(.5)) { P().stab = clamp(P().stab - 2, 0, 100); news(`Campaña de desinformación en tus redes: los analistas apuntan a ${nm(z)}`, 'dip', z, 2); }
+  else if (S.disc.cur && progOf(me, S.disc.cur) > 10) { S.disc.prog[me][S.disc.cur] *= .85; news(`Ciberataque contra tus laboratorios: se pierden datos de ${DS[S.disc.cur].n}`, 'dip', z, 2); } } });
+OPS.hostBase = a => { if (!S.bases.some(b => b.by === a.iso && b.in === S.player)) S.bases.push({ by: a.iso, in: S.player, rent: a.rent }); dirty(); news(`${nm(a.iso)} instala una base militar en ${P().n}`, 'mil', a.iso, 2); };
+OPS.getBase = a => { if (!S.bases.some(b => b.by === S.player && b.in === a.iso)) S.bases.push({ by: S.player, in: a.iso }); dirty(); news(`${P().n} despliega tropas en una base de ${nm(a.iso)}`, 'mil', a.iso, 2); };
+OPS.fdem = a => S.fdem.push({ iso: a.iso, law: a.law, until: S.turn + 8 });
+OPS.aiSanc = a => { if (addSanction(a.iso, S.player)) news(`${nm(a.iso)} sanciona a ${P().n}`, 'dip', a.iso, 3); if (a.allies) for (const z of alliesOf(a.iso)) if (z !== S.player && rel(S.player, z) < 15 && chance(.4) && addSanction(z, S.player)) news(`${nm(z)} se suma a las sanciones de ${nm(a.iso)}`, 'dip', z, 2); };
+OPS.mySanc = a => { addSanction(S.player, a.iso); };
+OPS.aiEsc = a => escalate(a.iso, S.player);
+OPS.turnSpies = a => { if (a.quiet && chance(.5)) { addMod(S.player, a.iso, 'Descubriste su sabotaje', -6, .5, 1); return news(`Tu inteligencia confirma: el sabotaje vino de ${nm(a.iso)}`, 'dip', a.iso, 2); } if (chance(.75)) { S.spy.net[a.iso] = Math.min(3, spyNet(a.iso) + 1); news(`Tus agentes dobles en ${nm(a.iso)} empiezan a informar`, 'dip', a.iso, 1); } else { addMod(S.player, a.iso, 'Descubrieron tu doble juego', -12, .4, 1); news(`${nm(a.iso)} descubre tu doble juego con sus espías`, 'dip', a.iso, 2); } };
+OPS.aiSteal = a => { const c = S.c[a.iso]; if (c.dt) pushProg(a.iso, c.dt, discCost(c.dt) * .25); };
+OPS.borderPatrol = a => { if (S.mil.miss.length < 3 && !S.mil.miss.some(x => x.k === 'frontera' && x.t === a.iso)) S.mil.miss.push({ k: 'frontera', t: a.iso, s: S.turn }); };
+OPS.cutTie = a => endTreaties(S.player, a.iso, [a.t, a.t === 'ali' ? 'def' : 'com']);
+OPS.buyArms = a => { P().u[a.k] = (P().u[a.k] || 0) + a.n; };
+/* promesas de leyes a otros países */
+hook('late', () => { S.fdem = S.fdem.filter(f => { const c = S.c[f.iso], l = D.LAWS.find(x => x.id === f.law); if (!c || !c.alive || !l) return false;
+  if (S.pol.laws[f.law] != null) { const aid = Math.min(c.gdp * .002, P().gdp * .01); P().tr += aid; addMod(S.player, f.iso, 'Cumpliste tu promesa', gain(12), .3); repAdd('conf', 2); news(`${c.n} celebra «${l.n}» y te envía ${money(aid)} de ayuda`, 'dip', f.iso, 2); return false; }
+  if (S.turn > f.until) { addMod(S.player, f.iso, 'Incumpliste tu promesa', -10, .3, 1); repAdd('conf', -2); news(`${c.n} te reprocha no haber aprobado «${l.n}» como prometiste`, 'dip', f.iso, 2); return false; } return true; }); });
+
+
+/* ---------- engine/79-race.js ---------- */
+/* =====================================================================
+   SISTEMA · CARRERA TECNOLÓGICA MUNDIAL
+   Todas las economías relevantes investigan los mismos descubrimientos.
+   El primero cobra licencias a los que llegan después, gana prestigio y
+   puede mover los mercados del mundo; los demás pagan la mitad de puntos
+   (ya se sabe que es posible). La IA aplica crecimiento, estabilidad y
+   fuerza militar de lo que domina.
+   ===================================================================== */
+const foesOf = z => alive().filter(y => y !== z && y !== S.player && rel(z, y) < -40);
+const DS = {}; D.DISC.forEach(x => DS[x.id] = x);
+const hasD = (iso, id) => !!S.disc && (S.disc.own[id] || []).includes(iso);
+const discCost = id => Math.round(DS[id].cost * ((S.disc.own[id] || []).length ? .55 : 1));
+const discOpen = (iso, id) => !hasD(iso, id) && (!DS[id].req || hasD(iso, DS[id].req));
+function rdBase(iso) { const c = C(iso), gpc = c.gdp / Math.max(.001, c.pop); return .045 * Math.sqrt(Math.max(0, c.gdp)) * clamp(.4 + gpc / 60, .4, 1.5) * (c.reg === 'com' || c.reg === 'aut' ? 1.5 : 1); }
+const rdPts = iso => isP(iso) ? rdBase(iso) * (1 + .8 * S.disc.rd) + researchRate() * .3 : rdBase(iso) * (1 + .5 * clamp(C(iso).gdp / Math.max(.001, C(iso).pop) / 30, .3, 2));
+hook('new', () => { S.disc = { own: {}, prog: {}, cur: null, rd: .5, b: {} }; });
+hook('load', () => { S.disc = S.disc || { own: {}, prog: {}, cur: null, rd: .5, b: {} }; });
+/* bonos de lo que domina cada país: el jugador por mod/lawSum, la IA por fuerza y crecimiento */
+{ const m0 = mod, l0 = lawSum;
+  mod = k => { let v = m0(k); if (S.disc) for (const id in S.disc.own) if (S.disc.own[id].includes(S.player)) v += (DS[id].m || {})[k] || 0; return v; };
+  lawSum = k => { let v = l0(k); if (S.disc) for (const id in S.disc.own) if (S.disc.own[id].includes(S.player)) v += (DS[id].per || {})[k] || 0; return v; };
+  const p0 = power; power = iso => p0(iso) * (isP(iso) || !S.disc ? 1 : 1 + ((S.disc.b[iso] || {}).mil || 0));
+  const g0 = growthOf; growthOf = iso => g0(iso) + (isP(iso) || !S.disc ? 0 : (S.disc.b[iso] || {}).grow || 0);
+  const r0 = canReach; canReach = (a, b) => r0(a, b) || (hasD(a, 'satelites') && hasD(a, 'hiper'));
+}
+function acquire(iso, id, how) {
+  const X = DS[id], L = S.disc.own[id] || (S.disc.own[id] = []); if (L.includes(iso)) return; const first = !L.length, c = C(iso); L.push(iso); delete (S.disc.prog[iso] || {})[id];
+  const per = X.per || {}, b = S.disc.b[iso] || (S.disc.b[iso] = {}); b.mil = (b.mil || 0) + (per.mil || 0); b.grow = (b.grow || 0) + (per.grow || 0); if (!isP(iso)) c.stab0 = clamp(c.stab0 + (per.stab || 0), 0, 100);
+  if (first) { (X.first && X.first.world || []).forEach(w => w[0] === 'sent' ? S.mkt.sent += w[1] : S.mkt.shocks.push({ k: w[1], m: w[2] }));
+    news(`${c.n} logra antes que nadie: ${X.n}`, 'eco', iso, isP(iso) || c.gdp > 1500 || nb(S.player).includes(iso) ? 3 : 2);
+    if (isP(iso)) for (const k in (X.first && X.first.rep) || {}) repAdd(k, X.first.rep[k]);
+    else if (X.f === 'mil' && rel(S.player, iso) < 0) why(`${c.n} gana la carrera militar`, () => secAdd('mil', -3)); }
+  else { const fst = L[0], fee = Math.min(c.gdp * .0012, 25); if (!how && C(fst).alive && fst !== iso) { c.tr -= fee; C(fst).tr += fee; if (isP(fst)) news(`${c.n} te paga ${money(fee)} en licencias por ${X.n}`, 'eco', iso, 2); else if (isP(iso)) news(`Pagas ${money(fee)} de licencias a ${C(fst).n} por ${X.n}`, 'eco', fst, 2); } }
+  if (isP(iso)) { if (S.disc.cur === id) S.disc.cur = null; why(X.n, () => { for (const k in X.sec || {}) secAdd(k, X.sec[k]); }); Bus.emit('tech', { id, n: X.n + (L[0] === iso ? ' · primero en el mundo' : '') }); }
+}
+ACT.discover = a => { if (!DS[a.id]) return fail('Descubrimiento desconocido'); if (hasD(S.player, a.id)) return fail('Ya lo dominas'); if (!discOpen(S.player, a.id)) return fail(`Primero necesitas: ${DS[DS[a.id].req].n}`); S.disc.cur = a.id; return { msg: `Tu programa nacional de I+D se vuelca en: ${DS[a.id].n}` }; };
+ACT.rdBudget = a => { const v = +a.v; if (![0, .5, 1, 2, 3].includes(v)) return fail('Presupuesto inválido'); S.disc.rd = v; return { msg: `I+D: ${v}% del PIB al año` }; };
+hook('finance', f => { f.exp.ide = P().gdp * S.disc.rd / 400; let r = 0; for (const b of S.bases) if (b.in === S.player && b.rent) r += b.rent; if (r) f.inc.alq = r; });
+const progOf = (iso, id) => (S.disc.prog[iso] || {})[id] || 0;
+function pushProg(iso, id, v) { const P0 = S.disc.prog[iso] || (S.disc.prog[iso] = {}); P0[id] = (P0[id] || 0) + v; if (P0[id] >= discCost(id)) acquire(iso, id); }
+hook('player', () => { const id = S.disc.cur; if (id && discOpen(S.player, id)) pushProg(S.player, id, rdPts(S.player)); });
+const DW = { mil: 'agres', sal: 'coop', amb: 'coop' };
+hook('world', () => {
+  for (const iso of alive()) { if (isP(iso)) continue; const c = S.c[iso]; if (c.gdp < 150) continue;
+    if (!c.dt || hasD(iso, c.dt) || !discOpen(iso, c.dt)) { const o = D.DISC.filter(x => discOpen(iso, x.id)); if (!o.length) { c.dt = null; continue; }
+      const w = o.map(x => (DW[x.f] ? .4 + (c.per[DW[x.f]] || .5) * 1.4 : 1) * ((S.disc.own[x.id] || []).length ? 1.6 : 1)); let r = rr(0, w.reduce((s, v) => s + v, 0)); c.dt = o[o.length - 1].id; for (let i = 0; i < o.length; i++) if ((r -= w[i]) <= 0) { c.dt = o[i].id; break; } }
+    pushProg(iso, c.dt, rdPts(iso) * rr(.7, 1.3)); }
+});
+/* robar tecnología también sirve para tu proyecto si ellos ya lo dominan */
+{ const s0 = ACT.spy; ACT.spy = a => { const r = s0(a), id = S.disc.cur; if (a.op === 'tec' && r && r.ok !== false && id && hasD(a.iso, id)) { pushProg(S.player, id, discCost(id) * .35); r.msg += ` · y planos de ${DS[id].n} (+35%)`; } return r; }; }
+const raceInfo = () => D.DISC.map(x => { const own = S.disc.own[x.id] || [], lead = alive().filter(z => !isP(z) && progOf(z, x.id) > 0 && !own.includes(z)).sort((a, b) => progOf(b, x.id) - progOf(a, x.id)).slice(0, 2);
+  return { id: x.id, own, cost: discCost(x.id), mine: progOf(S.player, x.id), open: discOpen(S.player, x.id), lead: lead.map(z => ({ iso: z, p: progOf(z, x.id) / discCost(x.id) })) }; });
+const sciRank = () => alive().filter(z => S.c[z].gdp > 100 || isP(z)).map(z => ({ iso: z, pts: rdPts(z), n: D.DISC.filter(x => hasD(z, x.id)).length, first: D.DISC.filter(x => (S.disc.own[x.id] || [])[0] === z).length, t: isP(z) ? S.disc.cur : spyNet(z) >= 1 ? S.c[z].dt : '?' })).sort((a, b) => b.pts - a.pts).slice(0, 15);
+
+/* ---- licencias, proyectos conjuntos y presión sobre tu programa ---- */
+OPS.discGet = a => acquire(S.player, a.id, 'lic');
+OPS.discSell = a => acquire(a.iso, a.id, 'lic');
+OPS.discJoint = a => { const id = S.disc.cur; if (id) pushProg(S.player, id, discCost(id) * .3); pushProg(a.iso, a.id || id, discCost(a.id || id) * .3); };
+OPS.discHalt = () => { if (S.disc.cur) delete (S.disc.prog[S.player] || {})[S.disc.cur]; S.disc.cur = null; };
+function techOffer() {
+  const me = S.player, al = alive().filter(z => z !== me && S.c[z].lastAsk + 6 <= S.turn && !atWar(me, z) && S.c[z].gdp > 150), cur = S.disc.cur, out = [];
+  const sellers = []; for (const x of D.DISC) if (!hasD(me, x.id) && discOpen(me, x.id)) for (const z of S.disc.own[x.id] || []) if (al.includes(z) && rel(me, z) > 15 && (x.f !== 'mil' || alliesOf(me).includes(z))) sellers.push([z, x]);
+  if (sellers.length) { const [z, x] = pick(sellers), price = Math.max(.5, P().gdp * .003 * x.cost / 100); out.push([z, `${nm(z)} te ofrece una licencia`, `${S.c[z].lider.n} está dispuesto a venderte la tecnología de ${x.n} por ${money(price)}. Ahorrarías años de laboratorio.`, [{ t: `Comprar · ${money(price)}`, fx: [['$', -price], ['do', 'discGet', { id: x.id }], ['rel', 'T', 5, 'Les compraste tecnología']] }, { t: 'Lo desarrollaremos nosotros', fx: [] }]]); }
+  const buyers = []; for (const x of D.DISC) if (hasD(me, x.id)) for (const z of al) if (!hasD(z, x.id) && rel(me, z) > 0 && (x.f !== 'mil' || rel(me, z) > 40)) buyers.push([z, x]);
+  if (buyers.length) { const [z, x] = pick(buyers), price = Math.max(.5, S.c[z].gdp * .003 * x.cost / 100), riv = foesOf(z).filter(y => alliesOf(me).includes(y));
+    out.push([z, `${nm(z)} quiere tu tecnología`, `${S.c[z].lider.n} ofrece ${money(price)} por la licencia de ${x.n}.${riv.length ? ` Tu aliado ${nm(riv[0])} no lo verá con buenos ojos.` : ''} Vender te da dinero hoy; tu ventaja se reduce.`, [{ t: `Vender · ${money(price)}`, fx: [['$', price], ['do', 'discSell', { iso: z, id: x.id }], ['rel', 'T', 8, 'Les vendiste tecnología']].concat(riv.length ? [['rel', riv[0], -10, 'Vendiste tecnología a su enemigo']] : []) }, { t: 'No se vende', fx: [['rel', 'T', -4, 'No quisiste venderles tecnología']] }]]); }
+  if (cur) { const z = pick(al.filter(z => rel(me, z) > 30 && S.c[z].dt === cur)); if (z) out.push([z, `Proyecto conjunto con ${nm(z)}`, `${nm(z)} también persigue ${DS[cur].n}. ${S.c[z].lider.n} propone juntar laboratorios: los dos avanzaríais un 30%, aunque también ellos llegarían antes.`, [{ t: `Unir esfuerzos · ${money(P().gdp * .001)}`, fx: [['$', -P().gdp * .001], ['do', 'discJoint', { iso: z, id: cur }], ['rel', 'T', 8, 'Investigamos juntos']] }, { t: 'Preferimos ir solos', fx: [['rel', 'T', -2, 'No quisiste investigar con ellos']] }]]); }
+  if (cur && DS[cur].f === 'mil' && progOf(me, cur) > discCost(cur) * .4) { const z = pick(al.filter(z => S.c[z].gdp > P().gdp && rel(me, z) < 10)); if (z) out.push([z, `${nm(z)} exige que detengas tu programa`, `${S.c[z].lider.n} sabe que estás cerca de dominar ${DS[cur].n} y exige que lo abandones «por la estabilidad regional». Si sigues, habrá consecuencias.`, [{ t: 'Detener el programa', fx: [['do', 'discHalt', {}], ['rel', 'T', 12, 'Detuviste tu programa militar'], ['sec', 'mil', -6]] }, { t: 'Seguir adelante', fx: [['rel', 'T', -12, 'Desafiaste su exigencia'], ['sec', 'mil', 4], ['chance', .35, [['do', 'aiSanc', { iso: z }]], []]] }, { t: 'Negar que exista', fx: [['rep', 'conf', -3], ['chance', .5, [], [['rel', 'T', -8, 'Les mentiste sobre tu programa']]]] }]]); }
+  return out;
+}
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -3711,6 +3899,7 @@ WL.Game = {
     rel, relBreakdown, power, catPow, troops, upkeep, costLvl, canReach, nb, ownerOf, ownCount, alliesOf, enemiesOf, warsOf, atWar, inWar, hasT, hasExplicit, sanctioned, threat,
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
+    raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     occOf, occList, annexedList, occPol: z => S.occ[z] || 'normal',
     govInfo, lawBuilding, oppForecast, deterrence, readyMult, committed,
     arcInfo, alerts, paper, memOf, exportData, GOALS, DIFF, EV: () => EV,
@@ -5263,6 +5452,45 @@ PTABS.dip.push(['ocu', 'Ocupación']);
       <h4>${gi('pin')} Territorio ocupado</h4>${occ.map(z => { const o = Q.occOf(z), r = Q.rel(p, z); return `<div class="arow">${fl(z)}<div class="grow"><b>${cname(z)}</b><small>${o.length} región${o.length > 1 ? 'es' : ''}: ${o.slice(0, 4).map(x => esc(x[0].n)).join(', ')}${o.length > 4 ? '…' : ''} · relación <span class="${relCls(r)}">${sgn(r)}</span> · ${{ normal: 'sin política', dura: 'mano dura', blanda: 'reconstrucción' }[Q.occPol(z)]}</small></div><button class="btn sm gold" data-a="occOpen" data-iso="${z}">Negociar</button></div>`; }).join('') || '<p class="mut">No ocupas territorio de ningún país vivo.</p>'}
       <h4>${gi('paz')} Naciones anexionadas</h4>${an.map(z => `<div class="arow">${fl(z)}<div class="grow"><b>${cname(z)}</b><small>Ya no existe: es parte de tu país y lo resiente. Devolverle la independencia te da mucha reputación y un vecino agradecido; pierdes su economía y enfadas a tus militares.</small></div><button class="btn sm" data-a="restore" data-iso="${z}" data-confirm>Restaurar</button><button class="btn sm gold" data-a="restore" data-iso="${z}" data-ally="1" data-confirm>Restaurar como aliado</button></div>`).join('') || '<p class="mut">No has borrado a ninguna nación del mapa.</p>'}`; };
 }
+
+
+/* ---------- ui/59-race.js ---------- */
+/* =====================================================================
+   INTERFAZ · CARRERA TECNOLÓGICA, potencias científicas y promesas
+   de leyes a otros países.
+   ===================================================================== */
+Object.assign(GI, {
+  hoja: 'M20 3C9 3 4 8 4 15c0 2 .5 4 1.5 5.5L4 22h1.6l1.3-1.3C8.5 21.5 10 22 12 22c6 0 9-6 8-19zM7.5 18.5C10 14 13 11 17 8.5 13.5 12 11 15 8.5 19.5z',
+  rayo: 'M13.500 1L4 14h6.500L9.500 23 20 9.500h-6.500z',
+  cohete: 'M12 1.500c3 2 5 6 5 10.500l2.500 3V20l-4-2h-7l-4 2v-5.500l2.500-3C7 7.500 9 3.500 12 1.500zM9.800 19h4.400L12 22.500z' + ring(12, 9, 2),
+  matraz: 'M8.500 2h7v1.800h-1.300v5.400l5.600 9.300A2.300 2.300 0 0117.800 22H6.200a2.300 2.300 0 01-2-3.500l5.600-9.300V3.800H8.500zM7.500 15.500l-1.700 2.900c-.2.400.1.800.5.800h11.400c.4 0 .7-.4.5-.8l-1.700-2.900z'
+});
+const DFI = { dig: 'tec', sal: 'sal', amb: 'hoja', ene: 'rayo', mil: 'tan', esp: 'cohete' };
+Object.assign(INN, { alq: 'Alquiler de bases extranjeras' }); Object.assign(EXN, { ide: 'Investigación y desarrollo' });
+Object.assign(MODN, { spy: v => `Espionaje +${Math.round(v * 30)}%`, rp: v => `Laboratorios +${v} pts` });
+PTABS.tec = [['lab', 'Laboratorios'], ['car', 'Carrera mundial'], ['pot', 'Potencias científicas']];
+{ const t0 = PANELS.tec; PANELS.tec = t => t === 'car' ? raceHTML() : t === 'pot' ? potHTML() : t0(t); }
+const dfx = x => Object.keys(x.per || {}).map(k => PERN[k](x.per[k])[0]).concat(Object.keys(x.m || {}).map(k => MODN[k] ? MODN[k](x.m[k]) : '')).filter(Boolean).join(' · ');
+function raceHTML() {
+  const s = S(), p = me(), R = Q.raceInfo(), D2 = s.disc, pts = Q.rdPts(p), cur = D2.cur && Q.DS[D2.cur], ci = cur && R.find(r => r.id === cur.id), mine = R.filter(r => r.own.includes(p)).length, firsts = R.filter(r => r.own[0] === p).length;
+  const bars = r => `<div class="race">${r.own.includes(p) ? '' : `<div class="rb me"><i></i><span>Tú</span>${bar(r.mine, r.cost, 'gold')}<small>${Math.round(r.mine / r.cost * 100)}%</small></div>`}${r.lead.map(l => `<div class="rb">${fl(l.iso)}<span>${cname(l.iso)}</span>${bar(l.p * 100, 100, 'red')}<small>${Math.round(l.p * 100)}%</small></div>`).join('')}</div>`;
+  return `<div class="kvs big">${kv('Tu I+D', pts.toFixed(1) + ' pts/turno')}${kv('Presupuesto', D2.rd + '% del PIB · ' + money(CC(p).gdp * D2.rd / 400) + '/t')}${kv('Dominas', mine + ' de ' + R.length)}${kv('Primero del mundo', firsts)}</div>
+    <div class="arow"><div class="grow"><b>${gi('matraz')} Presupuesto nacional de I+D</b><small>Más dinero, más rápido. Los países ricos investigan más por habitante; los regímenes de partido único concentran recursos. Tus laboratorios del árbol y las leyes de educación también suman.</small></div><div class="chips">${[0, .5, 1, 2, 3].map(v => `<button class="chip ${D2.rd === v ? 'gold' : ''}" data-a="rdB" data-v="${v}">${v}%</button>`).join('')}</div></div>
+    ${cur ? `<div class="card disc-cur">${gi(DFI[cur.f], 'xl')}<div class="grow"><small>Proyecto nacional</small><h3>${esc(cur.n)}</h3>${bars(ci)}<small class="mut">Faltan unos ${Math.max(1, Math.ceil((ci.cost - ci.mine) / Math.max(.1, pts)))} turnos${ci.own.length ? ` · ya lo tienen ${ci.own.length} países: te cuesta la mitad, pero pagarás licencia a ${cname(ci.own[0])}` : ' · nadie lo tiene aún: si llegas primero, cobrarás licencias a todos'}</small></div></div>` : '<p class="warn-box">Tu programa nacional no tiene objetivo: tus puntos de I+D se pierden. Elige un descubrimiento.</p>'}
+    <p class="mut">El primero en lograr cada avance gana prestigio, cobra licencias a quien llegue después y, a veces, mueve los mercados del mundo. Los avances militares los usan también tus rivales: una potencia con satélites espía y misiles hipersónicos puede atacar a cualquier país.</p>
+    ${Object.keys(D.DFIELDS).map(f => `<h4>${gi(DFI[f])} ${D.DFIELDS[f]}</h4><div class="dgrid">${D.DISC.filter(x => x.f === f).map(x => { const r = R.find(y => y.id === x.id), own = r.own.includes(p), lock = !own && !r.open;
+      return `<article class="disc ${own ? 'own' : ''} ${D2.cur === x.id ? 'cur' : ''} ${lock ? 'locked' : ''}"><div class="row">${gi(DFI[f])}<h3>${esc(x.n)}</h3>${r.own[0] ? `<span class="chip ${r.own[0] === p ? 'gold' : ''}" title="Primero en lograrlo">1.º ${flag(r.own[0])}</span>` : ''}</div><small>${esc(x.d)}</small><small class="pro">${dfx(x)}</small>
+        ${r.own.length > 1 ? `<div class="owners">${r.own.slice(1, 9).map(z => flag(z)).join('')}${r.own.length > 9 ? '…' : ''}</div>` : ''}${own ? '<span class="chip good">Dominado</span>' : bars(r)}
+        ${own ? '' : lock ? `<small class="mut">Requiere: ${esc(Q.DS[x.req].n)}</small>` : D2.cur === x.id ? '<span class="chip gold">Investigando</span>' : `<button class="btn sm gold" data-a="disc" data-id="${x.id}">Investigar · ${r.cost} pts</button>`}</article>`; }).join('')}</div>`).join('')}`;
+}
+function potHTML() {
+  const L = Q.sciRank(), p = me();
+  return `<p class="mut">Quién invierte más en ciencia. Lo que investiga cada país es secreto: solo lo ves si tienes una red de espías allí.</p>
+    <div class="list sci">${L.map((r, i) => `<button class="li ${r.iso === p ? 'mine' : ''}" data-a="sel" data-iso="${r.iso}"><b class="num rank">${i + 1}</b>${fl(r.iso)}<span class="grow">${cname(r.iso)}<small class="mut">${r.t === '?' ? 'Investiga: secreto' : r.t ? 'Investiga: ' + esc(Q.DS[r.t].n) : 'Sin proyecto'}</small></span><span class="chip">${gi('matraz')} ${r.pts.toFixed(1)}/t</span><span class="chip" title="Descubrimientos dominados">${r.n}</span><span class="chip ${r.first ? 'gold' : ''}" title="Primero del mundo">1.º ×${r.first}</span></button>`).join('')}</div>`;
+}
+H.rdB = d => act('rdBudget', { v: +d.v }); H.disc = d => act('discover', { id: d.id });
+/* promesas de leyes hechas a otros países */
+{ const le0 = lawExtra; lawExtra = (l, on) => { const f = Q.fdem().find(x => x.law === l.id); return (f ? `<div class="row wrap"><span class="chip gold">${flag(f.iso)} Se lo prometiste a ${cname(f.iso)}: ${f.until - S().turn} t</span></div>` : '') + le0(l, on); }; }
 
 
 /* ---------- ui/90-boot.js ---------- */
