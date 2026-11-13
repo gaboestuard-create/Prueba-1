@@ -16,7 +16,7 @@ ACT.drill = () => {
 };
 ACT.mission = a => {
   const m = S.mil, M = D.MISSIONS[a.k], me = S.player; if (!M) return fail('Misión desconocida');
-  if (a.end != null) { const x = m.miss[+a.end]; if (!x) return fail('Esa misión ya no existe'); m.miss.splice(+a.end, 1); return { msg: `Termina: ${D.MISSIONS[x.k].n}${x.t ? ' en ' + nm(x.t) : ''}` }; }
+  if (a.end != null) { const x = m.miss[+a.end]; if (!x) return fail('Esa misión ya no existe'); m.miss.splice(+a.end, 1); return { msg: `Termina: ${D.MISSIONS[x.k].n}${S.c[x.t] ? ' en ' + nm(x.t) : ''}` }; }
   if (m.miss.length >= 3) return fail('Tus fuerzas ya tienen tres misiones: termina una antes'); if (m.miss.some(x => x.k === a.k && x.t === a.t)) return fail('Esa misión ya está en marcha');
   let t = a.t || '';
   if (M.tgt === 'vecino' && !nb(me).includes(t)) return fail('Elige un país vecino');
