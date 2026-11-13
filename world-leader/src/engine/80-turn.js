@@ -20,16 +20,16 @@ ACT.endTurn = () => {
   S.gm = S.gm.filter(m => --m.t > 0); S.built = {};
   for (const k in S.rep) S.rep[k] *= .985;
   // FASE 2 · IA
-  for (const iso of shuffle(alive())) if (!isP(iso)) aiTurn(iso);
+  for (const iso of shuffle(alive())) if (!isP(iso)) safe('IA ' + iso, aiTurn, iso);
   run('world');
   // FASE 3 · resolución
-  for (const w of S.wars.slice()) warTurn(w);
+  for (const w of S.wars.slice()) safe('guerra', warTurn, w);
   purgeWars(); marketTurn(); decayMods();
   S.turn++; S.q = (S.q + 1) % 4; if (!S.q) S.year++;
-  laterTurn(); electionTurn(); run('late');
+  safe('consecuencias', laterTurn); safe('elecciones', electionTurn); run('late');
   if (S.turn % 4 === 0) unSession();
   // FASE 4 · eventos
-  worldEvents(); playerEvent();
+  safe('titulares', worldEvents); safe('eventos', playerEvent);
   if (!S.over && c.stab <= 3) { news(`La revolución derroca a ${S.leader.n}`, 'coup', S.player, 3); over('revolucion'); }
   if (S.over) S.pend = [];
   const h = S.hist; h.tr.push(Math.round(c.tr * 10) / 10); h.appr.push(Math.round(approval())); h.gdp.push(Math.round(c.gdp)); for (const k in h) if (h[k].length > 40) h[k].shift();

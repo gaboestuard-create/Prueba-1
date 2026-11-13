@@ -7,7 +7,8 @@ Object.assign(INN, { ind: 'Industria y exportaciones', ara: 'Aranceles' }); Obje
 Object.assign(PT, { edit: 'Editor · modo dios' });
 
 /* ---------- ECONOMÍA: indicadores, industria, política y deuda ---------- */
-PTABS.eco.push(['ind', 'Indicadores'], ['fab', 'Industria'], ['pol', 'Política y deuda']);
+PTABS.eco[1][1] = 'Recursos'; PTABS.eco.push(['ind', 'Indicadores'], ['fab', 'Industria'], ['pol', 'Deuda y política']);
+Bus.on('syserr', e => { if (UI.errT === G.S.turn) return; UI.errT = G.S.turn; toast(`Se omitió un fallo interno (${e.w}). La partida sigue; si se repite, exporta la partida y avísame.`, false); });
 function chart(arr, title, unit, cls) {
   if (!arr || arr.length < 2) return `<div class="card chartc"><small>${title}</small><p class="mut">Aparecerá tras un par de turnos.</p></div>`;
   const w = 300, h = 90, mn = Math.min(...arr), mx = Math.max(...arr), sp = mx - mn || 1, pts = arr.map((v, i) => [(i / (arr.length - 1) * (w - 12) + 6).toFixed(1), (h - 10 - (v - mn) / sp * (h - 22)).toFixed(1)]), last = arr[arr.length - 1], d = last - arr[0];

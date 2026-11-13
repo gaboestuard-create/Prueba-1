@@ -1423,13 +1423,25 @@ function load(str) {
       c.terr = nt; }
     o.geo = 3;
   }
+  // completa lo que una versión anterior no guardaba: materias primas, empresas y recursos nuevos
+  o.mkt.com = o.mkt.com || {}; o.mkt.co = o.mkt.co || {}; o.mkt.shocks = o.mkt.shocks || []; o.port = o.port || {};
+  for (const k in D.COMMODITIES) if (!o.mkt.com[k]) o.mkt.com[k] = { p: D.COMMODITIES[k].p, h: [] };
+  for (const c of D.COMPANIES) if (!o.mkt.co[c.id]) o.mkt.co[c.id] = { p: c.p, h: [] };
+  for (const id in o.port) if (!o.mkt.co[id]) delete o.port[id];
+  for (const iso of ISOS) { const c = o.c[iso]; c.rec = c.rec || {}; for (const k in D.C[iso].rec) if (c.rec[k] == null) c.rec[k] = D.C[iso].rec[k]; c.ask = c.ask || {}; c.per = c.per || {}; }
+  const pc = o.c[o.player]; pc.stock = pc.stock || {}; for (const k in D.COMMODITIES) if (pc.stock[k] == null) pc.stock[k] = 0;
+  for (const k of ['news', 'pend', 'later', 'gm', 'contracts', 'bases', 'sanc', 'tr', 'wars']) o[k] = o[k] || [];
+  o.flags = o.flags || {}; o.evSeen = o.evSeen || {}; o.mods = o.mods || {}; o.hist = o.hist || { tr: [], appr: [], gdp: [] };
   S = o; dirty(); run('load'); Bus.emit('loaded'); Bus.emit('state');
   return { ok: true, msg: 'Partida cargada: ' + dateStr() };
 }
 
 /* ---- puerta única de acciones ---- */
 const ACT = {}, OPS = {}, HOOKS = {};
-const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); }, run = (name, a, b) => { for (const f of HOOKS[name] || []) f(a, b); };
+const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); };
+/* cada sistema corre aislado: si uno falla, se registra y el turno sigue (antes un fallo bloqueaba la partida entera) */
+function safe(where, fn, a, b) { try { return fn(a, b); } catch (e) { if (typeof console !== 'undefined') console.error(e); if (S) { S.errs = (S.errs || []).slice(-19); S.errs.push({ t: S.turn, w: where, m: String(e && e.message || e) }); } Bus.emit('syserr', { w: where, m: String(e && e.message || e) }); } }
+const run = (name, a, b) => { for (const f of HOOKS[name] || []) safe(name, f, a, b); };
 const FREE = { decide: 1, edit: 1, asylum: 1, unLobby: 1 };
 const fail = msg => ({ ok: false, msg });
 const canPay = x => P().tr - x >= -P().gdp * .15;
@@ -3175,16 +3187,16 @@ ACT.endTurn = () => {
   S.gm = S.gm.filter(m => --m.t > 0); S.built = {};
   for (const k in S.rep) S.rep[k] *= .985;
   // FASE 2 · IA
-  for (const iso of shuffle(alive())) if (!isP(iso)) aiTurn(iso);
+  for (const iso of shuffle(alive())) if (!isP(iso)) safe('IA ' + iso, aiTurn, iso);
   run('world');
   // FASE 3 · resolución
-  for (const w of S.wars.slice()) warTurn(w);
+  for (const w of S.wars.slice()) safe('guerra', warTurn, w);
   purgeWars(); marketTurn(); decayMods();
   S.turn++; S.q = (S.q + 1) % 4; if (!S.q) S.year++;
-  laterTurn(); electionTurn(); run('late');
+  safe('consecuencias', laterTurn); safe('elecciones', electionTurn); run('late');
   if (S.turn % 4 === 0) unSession();
   // FASE 4 · eventos
-  worldEvents(); playerEvent();
+  safe('titulares', worldEvents); safe('eventos', playerEvent);
   if (!S.over && c.stab <= 3) { news(`La revolución derroca a ${S.leader.n}`, 'coup', S.player, 3); over('revolucion'); }
   if (S.over) S.pend = [];
   const h = S.hist; h.tr.push(Math.round(c.tr * 10) / 10); h.appr.push(Math.round(approval())); h.gdp.push(Math.round(c.gdp)); for (const k in h) if (h[k].length > 40) h[k].shift();
@@ -4426,7 +4438,8 @@ Object.assign(INN, { ind: 'Industria y exportaciones', ara: 'Aranceles' }); Obje
 Object.assign(PT, { edit: 'Editor · modo dios' });
 
 /* ---------- ECONOMÍA: indicadores, industria, política y deuda ---------- */
-PTABS.eco.push(['ind', 'Indicadores'], ['fab', 'Industria'], ['pol', 'Política y deuda']);
+PTABS.eco[1][1] = 'Recursos'; PTABS.eco.push(['ind', 'Indicadores'], ['fab', 'Industria'], ['pol', 'Deuda y política']);
+Bus.on('syserr', e => { if (UI.errT === G.S.turn) return; UI.errT = G.S.turn; toast(`Se omitió un fallo interno (${e.w}). La partida sigue; si se repite, exporta la partida y avísame.`, false); });
 function chart(arr, title, unit, cls) {
   if (!arr || arr.length < 2) return `<div class="card chartc"><small>${title}</small><p class="mut">Aparecerá tras un par de turnos.</p></div>`;
   const w = 300, h = 90, mn = Math.min(...arr), mx = Math.max(...arr), sp = mx - mn || 1, pts = arr.map((v, i) => [(i / (arr.length - 1) * (w - 12) + 6).toFixed(1), (h - 10 - (v - mn) / sp * (h - 22)).toFixed(1)]), last = arr[arr.length - 1], d = last - arr[0];

@@ -222,13 +222,25 @@ function load(str) {
       c.terr = nt; }
     o.geo = 3;
   }
+  // completa lo que una versión anterior no guardaba: materias primas, empresas y recursos nuevos
+  o.mkt.com = o.mkt.com || {}; o.mkt.co = o.mkt.co || {}; o.mkt.shocks = o.mkt.shocks || []; o.port = o.port || {};
+  for (const k in D.COMMODITIES) if (!o.mkt.com[k]) o.mkt.com[k] = { p: D.COMMODITIES[k].p, h: [] };
+  for (const c of D.COMPANIES) if (!o.mkt.co[c.id]) o.mkt.co[c.id] = { p: c.p, h: [] };
+  for (const id in o.port) if (!o.mkt.co[id]) delete o.port[id];
+  for (const iso of ISOS) { const c = o.c[iso]; c.rec = c.rec || {}; for (const k in D.C[iso].rec) if (c.rec[k] == null) c.rec[k] = D.C[iso].rec[k]; c.ask = c.ask || {}; c.per = c.per || {}; }
+  const pc = o.c[o.player]; pc.stock = pc.stock || {}; for (const k in D.COMMODITIES) if (pc.stock[k] == null) pc.stock[k] = 0;
+  for (const k of ['news', 'pend', 'later', 'gm', 'contracts', 'bases', 'sanc', 'tr', 'wars']) o[k] = o[k] || [];
+  o.flags = o.flags || {}; o.evSeen = o.evSeen || {}; o.mods = o.mods || {}; o.hist = o.hist || { tr: [], appr: [], gdp: [] };
   S = o; dirty(); run('load'); Bus.emit('loaded'); Bus.emit('state');
   return { ok: true, msg: 'Partida cargada: ' + dateStr() };
 }
 
 /* ---- puerta única de acciones ---- */
 const ACT = {}, OPS = {}, HOOKS = {};
-const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); }, run = (name, a, b) => { for (const f of HOOKS[name] || []) f(a, b); };
+const hook = (name, fn) => { (HOOKS[name] = HOOKS[name] || []).push(fn); };
+/* cada sistema corre aislado: si uno falla, se registra y el turno sigue (antes un fallo bloqueaba la partida entera) */
+function safe(where, fn, a, b) { try { return fn(a, b); } catch (e) { if (typeof console !== 'undefined') console.error(e); if (S) { S.errs = (S.errs || []).slice(-19); S.errs.push({ t: S.turn, w: where, m: String(e && e.message || e) }); } Bus.emit('syserr', { w: where, m: String(e && e.message || e) }); } }
+const run = (name, a, b) => { for (const f of HOOKS[name] || []) safe(name, f, a, b); };
 const FREE = { decide: 1, edit: 1, asylum: 1, unLobby: 1 };
 const fail = msg => ({ ok: false, msg });
 const canPay = x => P().tr - x >= -P().gdp * .15;

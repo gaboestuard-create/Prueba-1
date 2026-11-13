@@ -5,7 +5,7 @@ const fs = require('fs'), path = require('path'), assert = require('assert');
 (0, eval)(fs.readFileSync(path.join(__dirname, 'dist', 'core.js'), 'utf8'));
 const G = WL.Game, D = WL.DATA;
 function noNaN(o, p) { if (typeof o === 'number') assert(Number.isFinite(o), 'NaN/Infinity en ' + p); else if (o && typeof o === 'object') for (const k in o) noNaN(o[k], p + '.' + k); }
-let r = 12345; const rnd = () => (r = (r * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff, pick = a => a[Math.floor(rnd() * a.length)];
+let r = 12345; const chance5 = () => rnd() < .5; const rnd = () => (r = (r * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff, pick = a => a[Math.floor(rnd() * a.length)];
 function play(iso, traits, turns, seed) {
   G.newGame({ iso, name: 'Test', traits, seed });
   const S0 = () => G.S, errs = []; WL.Bus.h = {};
@@ -18,7 +18,9 @@ function play(iso, traits, turns, seed) {
       ['recruit', { k: pick(Object.keys(D.UNITS)), n: 2 }], ['buildBase', { k: pick(Object.keys(D.BASES)) }], ['buyStock', { id: pick(D.COMPANIES).id, amt: 1 }], ['sellStock', { id: pick(D.COMPANIES).id }],
       ['buyCom', { k: 'hie', q: 5 }], ['sellCom', { k: 'pet', q: 3 }], ['sanction', { iso: o }], ['lift', { iso: o }], ['giveAid', { iso: o, kind: 'eco', v: 1 }], ['giveAid', { iso: o, kind: 'mil', k: 'tierra', v: .1 }], ['askAid', { iso: o, kind: pick(['eco', 'mil', 'mat']), k: 'pet' }],
       ['base', { iso: o }], ['contract', { iso: o, k: 'pet', q: 1 }], ['buyTerr', { iso: pick(G.q.nb(iso).concat([o])), i: 1 }], ['cedeTerr', { iso: pick(G.q.nb(iso).concat([o])), i: 1 }], ['unPropose', { type: 'condena', target: o }],
-      ['repealLaw', { id: pick(D.LAWS).id }], ['research', { id: pick(D.TECHS).id }], ['fundResearch', {}], ['spy', { iso: o, op: pick(Object.keys(D.SPYOPS)) }], ['breakTreaty', { iso: o, t: 'com' }], ['edit', { iso: o, k: 'stab', v: 50 }], ['edit', { iso: o, k: 'rel', v: 20 }], ['edit', { iso: o, k: 'ally' }]];
+      ['repealLaw', { id: pick(D.LAWS).id }], ['research', { id: pick(D.TECHS).id }], ['fundResearch', {}], ['spy', { iso: o, op: pick(Object.keys(D.SPYOPS)) }], ['policy', { k: pick(['rate', 'tar', 'fis']), v: pick([0, 1, 2]) }], ['buildInd', { k: pick(['man', 'tec', 'agr']) }], ['bond', { amt: pick([5, -3]) }], ['reserves', { amt: pick([2, -1]) }],
+      ['summit', { iso: o, agenda: pick(['com', 'seg', 'rec']) }], ['embargo', { iso: o }], ['bloc', { b: pick(Object.keys(D.BLOCS)), leave: chance5() }], ['partyTalk', { k: pick(['woo', 'pledge', 'pact', 'expel']), i: 1 + Math.floor(rnd() * 3), law: pick(D.LAWS).id }],
+      ['unLobby', { iso: o, how: pick(['favor', 'aid']), dir: 1 }], ['unPropose', { type: pick(['sanc', 'mision', 'ayuda', 'clima']), target: o }], ['edit', { iso: iso, k: 'terr.1.o', v: o }], ['edit', { iso: o, k: 'party.1.rel', v: 70 }], ['breakTreaty', { iso: o, t: 'com' }], ['edit', { iso: o, k: 'stab', v: 50 }], ['edit', { iso: o, k: 'rel', v: 20 }], ['edit', { iso: o, k: 'ally' }]];
     for (let i = 0; i < 4; i++) { const a = pick(acts); G.act(a[0], a[1]); }
     if (t % 7 === 3) { const n = G.q.nb(iso); if (n.length) G.act('declareWar', { iso: pick(n) }); }
     if (t % 5 === 4) for (const w of G.q.warsOf(iso)) G.act('peace', { w: w.id, kind: pick(['blanca', 'actual']) });
@@ -43,6 +45,14 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
 { const o = JSON.parse(snap); delete o.geo; delete o.tech; delete o.spy; for (const i in o.c) o.c[i].terr = [{ n: 'Capital', o: i }, { n: 'Norte', o: i }, { n: 'Sur', o: i === 'UA' ? 'RU' : i }];
   assert(G.load(JSON.stringify(o)).ok, 'no migra partidas de la Fase 1'); assert.strictEqual(G.S.c.MX.terr.length, D.C.MX.terr.length); assert(G.S.c.UA.terr.some(t => t.o === 'RU'), 'la migración pierde la ocupación');
   while (G.S.pend.length) G.act('decide', { i: 0 }); assert(G.act('endTurn').ok); noNaN(G.S, 'S'); }
+// partida real de una versión anterior (si existe el archivo de prueba)
+{ const f = path.join(__dirname, 'test-oldsave.json'); if (fs.existsSync(f)) { assert(G.load(fs.readFileSync(f, 'utf8')).ok, 'no carga la partida antigua'); for (let i = 0; i < 4; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); const r = G.act('endTurn'); assert(r.ok, 'la partida antigua se traba: ' + r.msg); } noNaN(G.S, 'S'); } }
+// cada evento con cada una de sus opciones, también las ocultas y diferidas
+{ let n = 0; for (const e of D.EVENTS) for (let i = 0; i < e.opts.length; i++) {
+    G.newGame({ iso: 'MX', name: 'E', traits: ['intrigante'], seed: 31 + n }); G.S.pend = []; const r = G.act('fireEvent', { id: e.id });
+    if (!r.ok) continue; const p = G.S.pend[G.S.pend.length - 1]; G.S.pend = [p]; assert(G.act('decide', { i }).ok, 'falla ' + e.id + ' opción ' + i); n++;
+    for (let t = 0; t < 6; t++) { while (G.S.pend.length) G.act('decide', { i: 0 }); assert(G.act('endTurn').ok); } noNaN(G.S, 'S'); }
+  console.log('eventos probados:', n); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);
