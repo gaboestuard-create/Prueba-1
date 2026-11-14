@@ -195,6 +195,8 @@ const parts = {
 let body = read('index.html');
 for (const k in parts) body = body.split('%%' + k + '%%').join(parts[k]);
 if (/<\/script>/i.test(Object.values(parts).join(''))) throw new Error('Un módulo contiene </script>');
+// sintaxis: un error aquí (p. ej. un // a mitad de línea) rompería el juego entero en el navegador
+for (const k of ['DATA', 'ENGINE', 'GLOBE', 'UI']) try { new Function(parts[k]); } catch (e) { console.error(`Error de sintaxis en ${k}: ${e.message}`); process.exit(1); }
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist', 'artifact.html'), body);
 fs.writeFileSync(path.join(__dirname, 'dist', 'core.js'), parts.GEO + '\n' + parts.DATA + '\n' + parts.ENGINE); // para test.js

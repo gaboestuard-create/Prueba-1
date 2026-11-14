@@ -26,7 +26,8 @@ const PROV = [[/^Espías de /, 'espias', 15, 'Te espiaba: red descubierta en tus
 { const pp0 = pushPend; pushPend = p => { if (p && p.iso && p.t) for (const [re, k, v, x] of PROV) if (re.test(p.t)) { grieve(p.iso, k, v, x); break; } return pp0(p); }; }
 const NPROV = [[/^Tu contraespionaje desarticula una red de /, 'espias', 10, 'Su red de espionaje en tu país fue desarticulada'], [/^Campaña de desinformación en tus redes/, 'desinfo', 10, 'Campaña de desinformación contra tu país'], [/^Ciberataque contra tus laboratorios/, 'ciber', 15, 'Ciberataque contra tus laboratorios']];
 { const n0 = news; news = (x, k, iso, p) => { n0(x, k, iso, p); if (iso && S.cb) for (const [re, kk, v, t] of NPROV) if (re.test(x)) { grieve(iso, kk, v, t); break; } }; }
-{ const a0 = addSanction; addSanction = (by, on) => { const r = a0(by, on); if (r && isP(on) && !sanctioned(on, by)) grieve(by, 'sancion', 20, 'Te impuso sanciones'); // una represalia a tus sanciones no es provocación return r; }; }
+// una represalia a tus sanciones no es provocación; de las negativas a disculparse solo cuenta la última
+{ const a0 = addSanction; addSanction = (by, on) => { const r = a0(by, on); if (r && isP(on) && !sanctioned(on, by)) grieve(by, 'sancion', 20, 'Te impuso sanciones'); return r; }; }
 { const e0 = embargo; embargo = (by, on) => { const was = (S.sanc.find(x => x.by === by && x.on === on) || {}).emb; e0(by, on); if (!was && isP(on)) grieve(by, 'embargo', 25, 'Te impuso un embargo total'); }; }
 { const s0 = startWar; startWar = (a, d) => { const j = isP(a) ? justInfo(d) : null, n0 = S.sanc.length, w = s0(a, d); if (!w || !j) return w; w.just = j.lvl;
   if (j.lvl === 1) repAdd('paz', 5); // débil: el mundo duda, pero algo entiende
@@ -40,5 +41,5 @@ ACT.demandApology = a => { const me = S.player, z = a.iso, c = S.c[z]; if (!c ||
   const pr = clamp(.15 + (power(me) / (power(z) + 1) - 1) * .25 + rel(z, me) / 150 + (1 - c.per.agres) * .25 - c.per.rencor * .2, .05, .85);
   if (chance(pr)) { const amt = Math.min(c.gdp * .002 * J.score / 20, c.tr > 0 ? c.tr * .5 : c.gdp * .003); c.tr -= amt; P().tr += amt; S.cb[z] = []; addMod(me, z, 'Se disculpó y pagó reparaciones', gain(10), .3);
     news(`${c.n} se disculpa públicamente ante ${P().n} y paga ${money(amt)} en reparaciones`, 'dip', z, 3); return { msg: `${c.n} se disculpa y paga ${money(amt)}. Los agravios quedan saldados.` }; }
-  S.cb[z] = (S.cb[z] || []).filter(g => g.k !== 'rechazo'); grieve(z, 'rechazo', 20, 'Se negó a disculparse y a reparar'); // solo cuenta la última negativa addMod(me, z, 'Exigiste disculpas', -4, .5, 1); news(`${c.n} se niega a disculparse ante ${P().n}`, 'dip', z, 3);
+  S.cb[z] = (S.cb[z] || []).filter(g => g.k !== 'rechazo'); grieve(z, 'rechazo', 20, 'Se negó a disculparse y a reparar'); addMod(me, z, 'Exigiste disculpas', -4, .5, 1); news(`${c.n} se niega a disculparse ante ${P().n}`, 'dip', z, 3);
   return { ok: false, msg: `${c.n} se niega. Tu justificación para actuar crece.` }; };
