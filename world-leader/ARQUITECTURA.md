@@ -22,6 +22,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Fase 3**: `7a-theatre` (frente y batallas), `7b-wareco` (economía y diplomacia de guerra), `7c-intel` (espionaje), `data-war.js`, `ui/5a-war.js`.
 - **Regiones ocupadas**: `ui/5c-occview.js` (tarjeta de región ocupada o anexionada y lista de provincias por origen).
 - **Reciprocidad**: `7e-reciprocity` (la IA revisa y levanta sanciones, represalias, pedir que levanten).
+- **Motivos para la guerra**: `7f-casus` y `ui/5d-casus.js` (agravios, justificación, exigir disculpas).
 - **Fase 4**: `7d-story` (sinergias, diario, frases, legado), `data-story.js` (rasgos, 40 eventos, frases), `ui/12-cfg.js` (ajustes), `ui/15-sound.js` (audio procedural), `ui/5b-feel.js` (experiencia), y en `globe.js` auroras, partículas y calidad.
 
 ## Cómo extender sin romper

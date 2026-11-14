@@ -28,7 +28,7 @@ OPS.abandon = a => { if (endTreaties(S.player, a.ally, ['ali', 'def'])) news(`${
 
 function startWar(a, d) {
   if (a === d || atWar(a, d) || !C(a).alive || !C(d).alive) return null;
-  const casus = rel(a, d) < -40 || sanctioned(d, a) || alliesOf(a).some(x => atWar(x, d));
+  const casus = rel(a, d) < -40 || sanctioned(d, a) || alliesOf(a).some(x => atWar(x, d)) || (isP(a) && justLvl(d) >= 2); // justLvl: motivos acumulados (7f-casus.js)
   const pact = hasExplicit('pna', a, d) || alliesOf(a).includes(d);
   const dAllies = alliesOf(d), aAllies = alliesOf(a); // se calculan antes de romper tratados
   endTreaties(a, d);

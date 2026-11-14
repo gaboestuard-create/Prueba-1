@@ -340,6 +340,9 @@ body[data-q=low] .tk span { animation-duration: 120s; }
 .occ-s.orig { border-left: 3px solid var(--cyan); } .occ-s.hold { border-left: 3px solid var(--gold); } .occ-s small { color: var(--mut); font-size: 11.5px; } .occ-arrow { color: var(--gold); text-align: center; } .occ-lab { margin: 6px 0 0; }
 .reg.occ { border-left: 3px solid var(--red); background: rgba(255, 90, 77, .08); } .reg.occ-held { border-left: 3px solid var(--gold); background: rgba(232, 195, 106, .08); } .reg.occ-held .dot { background: var(--gold); }
 details.held { margin-top: 8px; } details.held summary { cursor: pointer; color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 6px; } .held-g { margin: 8px 0; } .held-g > b { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.card.just { display: flex; flex-direction: column; gap: 8px; } .card.just.j0 { border-color: rgba(255, 90, 77, .35); } .card.just.j2, .card.just.j3 { border-color: rgba(95, 227, 161, .4); } .card.just h3 { margin: 2px 0 0; display: flex; gap: 8px; align-items: center; }
+.just-bar { position: relative; } .just-bar .bar { flex: none; width: 100%; height: 9px; } .just-bar i { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(255, 255, 255, .45); }
+.just-l { display: flex; flex-direction: column; gap: 3px; } .just-l div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); } .just-l b { color: var(--gold); font: 600 13px var(--fc); }
 
 </style>
 
@@ -2450,7 +2453,7 @@ OPS.abandon = a => { if (endTreaties(S.player, a.ally, ['ali', 'def'])) news(`${
 
 function startWar(a, d) {
   if (a === d || atWar(a, d) || !C(a).alive || !C(d).alive) return null;
-  const casus = rel(a, d) < -40 || sanctioned(d, a) || alliesOf(a).some(x => atWar(x, d));
+  const casus = rel(a, d) < -40 || sanctioned(d, a) || alliesOf(a).some(x => atWar(x, d)) || (isP(a) && justLvl(d) >= 2); // justLvl: motivos acumulados (7f-casus.js)
   const pact = hasExplicit('pna', a, d) || alliesOf(a).includes(d);
   const dAllies = alliesOf(d), aAllies = alliesOf(a); // se calculan antes de romper tratados
   endTreaties(a, d);
@@ -4790,6 +4793,53 @@ ACT.askLift = a => { const me = S.player, z = a.iso, c = S.c[z]; if (!c || !c.al
   return { ok: false, msg: `${c.n} se niega: ${why}` }; };
 
 
+/* ---------- engine/7f-casus.js ---------- */
+/* =====================================================================
+   SISTEMA · MOTIVOS PARA LA GUERRA (agravios y justificación)
+   Cada provocación de un país contra ti queda registrada como agravio
+   con su peso (espías, sabotajes, disparos en la frontera, sanciones,
+   ultimátums…) y se olvida poco a poco. La suma da tu justificación:
+   ninguna, débil, sólida o indiscutible. Con justificación sólida, tu
+   guerra cuenta como provocada para el mundo; con indiscutible, casi
+   nadie te castiga. Antes de la guerra puedes exigir disculpas y
+   reparaciones: si las niegan, el agravio crece.
+   ===================================================================== */
+hook('new', () => { S.cb = {}; }); hook('load', () => { S.cb = S.cb || {}; });
+const JLV = [[0, 'Ninguna'], [15, 'Débil'], [40, 'Sólida'], [80, 'Indiscutible']];
+function grieve(iso, k, v, x) { if (!iso || isP(iso) || !S.c[iso] || !S.cb) return; const L = S.cb[iso] || (S.cb[iso] = []); L.push({ t: S.turn, k, v, x }); if (L.length > 20) L.shift(); }
+/* los agravios pierden un 4% de su peso por turno: lo de hace años ya no justifica nada */
+const gw = g => g.v * Math.pow(.96, S.turn - g.t);
+function justInfo(iso) { const me = S.player, L = (S.cb[iso] || []).map(g => ({ x: g.x, k: g.k, ago: S.turn - g.t, v: Math.round(gw(g)) })).filter(g => g.v >= 1);
+  const extra = []; if (rel(me, iso) < -40) extra.push({ x: 'Hostilidad abierta entre ambos países', v: 20, ago: 0 }); if (sanctioned(iso, me) && !sanctioned(me, iso)) extra.push({ x: 'Te mantiene bajo sanciones', v: 20, ago: 0 });
+  if (alliesOf(me).some(x => atWar(x, iso))) extra.push({ x: 'Está en guerra con un aliado tuyo', v: 45, ago: 0 }); if (atWar(iso, me)) extra.push({ x: 'Ya está en guerra contigo', v: 100, ago: 0 });
+  const list = extra.concat(L.sort((a, b) => b.v - a.v)), score = Math.min(150, list.reduce((s, g) => s + g.v, 0)); let lvl = 0; JLV.forEach((j, i) => { if (score >= j[0]) lvl = i; });
+  return { score: Math.round(score), lvl, name: JLV[lvl][1], list }; }
+const justLvl = iso => justInfo(iso).lvl;
+/* las provocaciones que ya existían se convierten en agravios */
+const PROV = [[/^Espías de /, 'espias', 15, 'Te espiaba: red descubierta en tus ministerios'], [/^Sabotaje en tus fuerzas armadas/, 'sabotaje', 25, 'Sabotaje contra tus fuerzas armadas'], [/^Disparos en la frontera/, 'frontera', 30, 'Disparó contra tus tropas en la frontera'],
+  [/amenaza con sancionarte$/, 'amenaza', 12, 'Te amenazó con sanciones'], [/te denuncia en la Asamblea$/, 'denuncia', 10, 'Te denunció ante la Asamblea'], [/^Ultimátum de /, 'ultimatum', 30, 'Te lanzó un ultimátum'], [/arma a la guerrilla$/, 'guerrilla', 25, 'Arma a la guerrilla en tu territorio'],
+  [/exige que rompas con /, 'exigencia', 8, 'Te exigió romper con un socio'], [/exige que detengas tu programa$/, 'exigencia', 8, 'Te exigió detener tu programa'], [/eleva su alerta estratégica$/, 'nuclear', 40, 'Te amenazó con su capacidad estratégica']];
+{ const pp0 = pushPend; pushPend = p => { if (p && p.iso && p.t) for (const [re, k, v, x] of PROV) if (re.test(p.t)) { grieve(p.iso, k, v, x); break; } return pp0(p); }; }
+const NPROV = [[/^Tu contraespionaje desarticula una red de /, 'espias', 10, 'Su red de espionaje en tu país fue desarticulada'], [/^Campaña de desinformación en tus redes/, 'desinfo', 10, 'Campaña de desinformación contra tu país'], [/^Ciberataque contra tus laboratorios/, 'ciber', 15, 'Ciberataque contra tus laboratorios']];
+{ const n0 = news; news = (x, k, iso, p) => { n0(x, k, iso, p); if (iso && S.cb) for (const [re, kk, v, t] of NPROV) if (re.test(x)) { grieve(iso, kk, v, t); break; } }; }
+{ const a0 = addSanction; addSanction = (by, on) => { const r = a0(by, on); if (r && isP(on) && !sanctioned(on, by)) grieve(by, 'sancion', 20, 'Te impuso sanciones'); // una represalia a tus sanciones no es provocación return r; }; }
+{ const e0 = embargo; embargo = (by, on) => { const was = (S.sanc.find(x => x.by === by && x.on === on) || {}).emb; e0(by, on); if (!was && isP(on)) grieve(by, 'embargo', 25, 'Te impuso un embargo total'); }; }
+{ const s0 = startWar; startWar = (a, d) => { const j = isP(a) ? justInfo(d) : null, n0 = S.sanc.length, w = s0(a, d); if (!w || !j) return w; w.just = j.lvl;
+  if (j.lvl === 1) repAdd('paz', 5); // débil: el mundo duda, pero algo entiende
+  if (j.lvl >= 3) { repAdd('paz', 6); for (const s of S.sanc.slice(n0)) if (s.on === a && !alliesOf(d).includes(s.by) && rel(s.by, d) < 60) liftSanction(s.by, a); news(`El mundo reconoce que ${P().n} fue provocado por ${nm(d)}`, 'dip', a, 2); }
+  return w; }; }
+{ const a0 = OPS.annex; OPS.annex = a => { const w = warById(a.w), j = w ? w.just || 0 : 0; a0(a); if (j >= 2) { repAdd('paz', j >= 3 ? 9 : 6); news(`La anexión de ${nm(a.v)} se ve como el final de una guerra que ${nm(a.v)} provocó`, 'dip', a.v, 2); } }; }
+/* exigir disculpas y reparaciones: el peldaño antes de la guerra */
+ACT.demandApology = a => { const me = S.player, z = a.iso, c = S.c[z]; if (!c || !c.alive || z === me) return fail('País inválido'); if (atWar(me, z)) return fail('Ya estáis en guerra');
+  const J = justInfo(z); if (J.score < 15) return fail(`No tienes agravios suficientes contra ${nm(z)}`); if ((c.ask.apo || 0) > S.turn) return fail(`Esperan tu siguiente paso: vuelve a exigir en ${c.ask.apo - S.turn} turnos`);
+  if (!useCP(1)) return fail('Necesitas 1 de capital político'); c.ask.apo = S.turn + 4;
+  const pr = clamp(.15 + (power(me) / (power(z) + 1) - 1) * .25 + rel(z, me) / 150 + (1 - c.per.agres) * .25 - c.per.rencor * .2, .05, .85);
+  if (chance(pr)) { const amt = Math.min(c.gdp * .002 * J.score / 20, c.tr > 0 ? c.tr * .5 : c.gdp * .003); c.tr -= amt; P().tr += amt; S.cb[z] = []; addMod(me, z, 'Se disculpó y pagó reparaciones', gain(10), .3);
+    news(`${c.n} se disculpa públicamente ante ${P().n} y paga ${money(amt)} en reparaciones`, 'dip', z, 3); return { msg: `${c.n} se disculpa y paga ${money(amt)}. Los agravios quedan saldados.` }; }
+  S.cb[z] = (S.cb[z] || []).filter(g => g.k !== 'rechazo'); grieve(z, 'rechazo', 20, 'Se negó a disculparse y a reparar'); // solo cuenta la última negativa addMod(me, z, 'Exigiste disculpas', -4, .5, 1); news(`${c.n} se niega a disculparse ante ${P().n}`, 'dip', z, 3);
+  return { ok: false, msg: `${c.n} se niega. Tu justificación para actuar crece.` }; };
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -4878,6 +4928,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
+    justInfo,
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
     resInfo,
@@ -7143,6 +7194,26 @@ function occCard(o) {
   return base + `<details class="held" ${UI.heldOpen !== false ? 'open' : ''}><summary>${gi('pin')} Territorios fuera de sus fronteras · ${n}</summary>
     ${zs.map(z => `<div class="held-g"><b>${fl(z)} ${cname(z)} <small class="mut">${CC(z).alive ? `ocupa ${held[z].length} de sus ${CC(z).terr.length} regiones` : 'nación anexionada'}</small></b>
       <div class="reglist">${held[z].map(([i, t]) => `<button class="reg occ-held ${UI.occ && UI.occ.iso === z && UI.occ.i === i ? 'on' : ''}" data-a="occSel" data-iso="${z}" data-i="${i}"><i class="dot"></i><span class="grow">${esc(t.n)}</span><small>${t.int >= 100 ? 'integrada' : (CC(z).alive ? 'ocupada' : 'anexionada') + (t.int ? ' · ' + Math.round(t.int) + '%' : '')}</small></button>`).join('')}</div></div>`).join('')}</details>`; }; }
+
+
+/* ---------- ui/5d-casus.js ---------- */
+/* =====================================================================
+   INTERFAZ · MOTIVOS PARA LA GUERRA (ficha del país · pestaña Guerra)
+   ===================================================================== */
+SHT.find(x => x[0] === 'gue')[3].unshift('Motivos para la guerra');
+const JCOL = ['bad', 'gold', 'good', 'good'], JTXT = [
+  'Para el mundo sería una guerra de agresión: te condenarán en la Asamblea, las democracias te embargarán armas, muchos te sancionarán (y se cortan los tratados comerciales con ellos) y tus aliados dudarán.',
+  'El mundo duda: sigue contando como agresión, pero tu reputación sufre un poco menos.',
+  'Guerra provocada: sin condena en la Asamblea ni embargo de armas, muchas menos sanciones, tus aliados te apoyan más y anexionar al final duele menos.',
+  'Nadie discute que te provocaron: casi nadie te sanciona ni te corta tratados, tu reputación apenas sufre y una anexión final se entiende.'];
+{ const x0 = sheetExtra; sheetExtra = iso => { const J = Q.justInfo(iso), c = CC(iso), t = S().turn, cd = (c.ask.apo || 0) > t;
+  return x0(iso) + `<h4>Motivos para la guerra</h4><div class="card just j${J.lvl}"><div class="row"><div class="grow"><small class="mut">Justificación ante el mundo</small><h3><span class="chip ${JCOL[J.lvl]}">${J.name}</span> <small class="mut">${J.score} puntos</small></h3></div></div>
+    <div class="just-bar">${bar(Math.min(J.score, 100), 100, J.lvl >= 2 ? 'green' : J.lvl ? 'gold' : 'red')}<i style="left:15%"></i><i style="left:40%"></i><i style="left:80%"></i></div>
+    <small>${JTXT[J.lvl]}</small>
+    ${J.list.length ? `<div class="just-l">${J.list.slice(0, 8).map(g => `<div><span>${esc(g.x)}${g.ago ? ` <small class="mut">hace ${g.ago} t</small>` : ''}</span><b>+${g.v}</b></div>`).join('')}</div>` : '<p class="mut">No te ha provocado. Los agravios se acumulan cuando te espía, sabotea, dispara en la frontera, te sanciona, te lanza ultimátums o arma guerrillas en tu territorio, y se olvidan con los años.</p>'}
+    ${J.score >= 15 ? `<div class="arow"><div class="grow"><b>${gi('ultimatum')} Exigir disculpas y reparaciones</b><small>El paso previo a la guerra. Si aceptan, pagan y los agravios quedan saldados; si se niegan, tu justificación crece. Aceptan más si eres mucho más fuerte y si no son agresivos ni rencorosos.</small></div><button class="btn sm gold" data-a="apology" data-iso="${iso}" ${cd ? 'disabled' : ''}>${cd ? `Espera ${c.ask.apo - t} t` : 'Exigir · 1 CP'}</button></div>` : ''}</div>`; }; }
+H.apology = d => sheetAct('demandApology', { iso: d.iso });
+{ const s0 = sheetHTML; sheetHTML = iso => { const J = Q.justInfo(iso); return s0(iso).replace('Declarar guerra · 4 CP', `Declarar guerra · 4 CP · justificación ${J.name.toLowerCase()}`); }; }
 
 
 /* ---------- ui/90-boot.js ---------- */
