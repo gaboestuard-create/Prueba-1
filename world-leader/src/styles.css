@@ -248,3 +248,13 @@ kbd { font: 600 12px var(--fc); padding: 2px 7px; border-radius: 5px; border: 1p
 .card.disc-cur { flex-direction: row; } .sci .li .grow { display: flex; flex-direction: column; } .rb > i { width: 16px; }
 .rb > :first-child { width: 18px; overflow: hidden; }
 .arow .grow > .bar { display: block; flex: none; width: 100%; max-width: 340px; margin: 3px 0; }
+
+/* ---- mundo en vivo, barra de recursos, fábricas ---- */
+.feed .li { align-items: flex-start; gap: 8px; text-align: left; } .feed .li > .gi { width: 16px; height: 16px; margin-top: 2px; } .feed .fl2 { display: flex; align-items: center; gap: 2px; flex: none; min-width: 44px; } .feed .fl2 i { font-style: normal; color: var(--mut); }
+.feed .f-war > .gi { color: var(--red); } .feed .f-dip > .gi { color: var(--cyan); } .feed .f-eco > .gi { color: var(--green); } .feed .f-tec > .gi { color: var(--violet); } .feed .f-pol > .gi { color: var(--gold); } .feed .f-world > .gi { color: var(--mut); }
+.ticker { cursor: pointer; pointer-events: auto; } .ticker:hover { border-color: var(--gold); }
+.resbar { position: fixed; right: var(--sr); bottom: calc(76px + var(--sb)); display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; padding: 5px; border-radius: 12px; z-index: 3; }
+.rs { display: grid; grid-template-columns: 18px auto; grid-template-rows: auto auto; column-gap: 4px; align-items: center; padding: 4px 7px; border-radius: 8px; text-align: left; min-width: 54px; } .rs:hover { background: rgba(255, 255, 255, .08); }
+.rs .gi { grid-row: span 2; width: 17px; height: 17px; } .rs b { font: 600 13px var(--fc); line-height: 1; } .rs small { font-size: 10px; color: var(--green); line-height: 1.1; } .rs.neg small { color: #f0a36e; } .rs.low { background: rgba(255, 90, 77, .14); } .rs.low small, .rs.low .gi { color: var(--red); }
+.cellgrp { padding: 6px 0; border-bottom: 1px solid var(--line); } .cellgrp > b { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; } .ucard.fac .bar { flex: none; width: 100%; }
+@media (max-width: 760px) { .resbar { left: 8px; right: auto; bottom: calc(66px + var(--sb)); grid-template-columns: repeat(4, auto); padding: 3px; } .rs { min-width: 0; padding: 3px 4px; grid-template-columns: 14px auto; } .rs .gi { width: 14px; height: 14px; } .rs b { font-size: 11px; } .rs small { font-size: 9px; } }

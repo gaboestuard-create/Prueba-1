@@ -27,7 +27,7 @@ function acquire(iso, id, how) {
   const X = DS[id], L = S.disc.own[id] || (S.disc.own[id] = []); if (L.includes(iso)) return; const first = !L.length, c = C(iso); L.push(iso); delete (S.disc.prog[iso] || {})[id];
   const per = X.per || {}, b = S.disc.b[iso] || (S.disc.b[iso] = {}); b.mil = (b.mil || 0) + (per.mil || 0); b.grow = (b.grow || 0) + (per.grow || 0); if (!isP(iso)) c.stab0 = clamp(c.stab0 + (per.stab || 0), 0, 100);
   if (first) { (X.first && X.first.world || []).forEach(w => w[0] === 'sent' ? S.mkt.sent += w[1] : S.mkt.shocks.push({ k: w[1], m: w[2] }));
-    news(`${c.n} logra antes que nadie: ${X.n}`, 'eco', iso, isP(iso) || c.gdp > 1500 || nb(S.player).includes(iso) ? 3 : 2);
+    news(`${c.n} logra antes que nadie: ${X.n}`, 'tec', iso, isP(iso) || c.gdp > 1500 || nb(S.player).includes(iso) ? 3 : 2);
     if (isP(iso)) for (const k in (X.first && X.first.rep) || {}) repAdd(k, X.first.rep[k]);
     else if (X.f === 'mil' && rel(S.player, iso) < 0) why(`${c.n} gana la carrera militar`, () => secAdd('mil', -3)); }
   else { const fst = L[0], fee = Math.min(c.gdp * .0012, 25); if (!how && C(fst).alive && fst !== iso) { c.tr -= fee; C(fst).tr += fee; if (isP(fst)) news(`${c.n} te paga ${money(fee)} en licencias por ${X.n}`, 'eco', iso, 2); else if (isP(iso)) news(`Pagas ${money(fee)} de licencias a ${C(fst).n} por ${X.n}`, 'eco', fst, 2); } }
