@@ -5672,7 +5672,7 @@ function resbarHTML() {
   const f = Q.resFlow(); return `<div class="resbar glass" aria-label="Materias primas">${RKEY.map(k => { const x = f[k], n = x.net, low = n < 0 && x.stock < -n * 4, u = usedBy(k);
     return `<button class="rs ${low ? 'low' : n < 0 ? 'neg' : ''}" data-a="resOpen" title="${esc(D.COMMODITIES[k].n)}: reserva ${Math.round(x.stock)} · produces ${x.prod.toFixed(1)} · consumes ${x.cons.toFixed(1)}${u.length ? ' · lo usan: ' + u.join(', ') : ''}${low ? ' · ¡se acaba!' : ''}">${gi(k)}<b>${Math.round(x.stock)}</b><small>${n >= 0 ? '+' : ''}${n.toFixed(1)}</small></button>`; }).join('')}</div>`;
 }
-{ const d0 = dockHTML; dockHTML = () => tickLink(d0()) + resbarHTML(); }
+{ const d0 = dockHTML; dockHTML = () => tickLink(d0()) + (UI.sel || (UI.panel && innerWidth < 760) ? '' : resbarHTML()); } // no tapar la ficha del país ni los paneles
 H.resOpen = () => { UI.tab.eco = 'pla'; UI.panel = 'eco'; UI.render(); };
 
 /* ---------- fábricas ---------- */
