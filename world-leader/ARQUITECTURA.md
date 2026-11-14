@@ -20,6 +20,8 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Fase 2 y pulidos**: `67…77` en el motor; `45…59` en la interfaz.
 - **Ampliaciones posteriores**: `78-conquest` (ocupación, resistencia), `79-initiative`, `79-race`, `79-world`.
 - **Fase 3**: `7a-theatre` (frente y batallas), `7b-wareco` (economía y diplomacia de guerra), `7c-intel` (espionaje), `data-war.js`, `ui/5a-war.js`.
+- **Regiones ocupadas**: `ui/5c-occview.js` (tarjeta de región ocupada o anexionada y lista de provincias por origen).
+- **Reciprocidad**: `7e-reciprocity` (la IA revisa y levanta sanciones, represalias, pedir que levanten).
 - **Fase 4**: `7d-story` (sinergias, diario, frases, legado), `data-story.js` (rasgos, 40 eventos, frases), `ui/12-cfg.js` (ajustes), `ui/15-sound.js` (audio procedural), `ui/5b-feel.js` (experiencia), y en `globe.js` auroras, partículas y calidad.
 
 ## Cómo extender sin romper
