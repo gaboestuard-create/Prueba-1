@@ -75,13 +75,18 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   G.act('warAuto', { w: w.id, on: 1 }); for (let i = 0; i < 6 && S.wars.includes(w); i++) { S.pend = []; G.act('endTurn'); }
   assert(S.blog.some(b => b.w === w.id && b.kind === 'tierra'), 'hubo batallas'); assert(S.c.PY.terr.filter(t => t.o === 'PY').length < own0 || !S.wars.includes(w), 'Brasil avanza sobre Paraguay');
   if (S.wars.includes(w)) { S.pend = []; const r = G.act('ceasefire', { w: w.id }); if (r.ok) { const n = S.blog.length; S.pend = []; G.act('endTurn'); assert(S.blog.filter(b => b.w === w.id && b.t === S.turn - 1).length === 0, 'con alto el fuego no hay combates'); } }
-  const b0 = S.c.BR.bases.cuartel; assert(G.act('buildBase', { k: 'cuartel' }).ok); assert.strictEqual(S.c.BR.bases.cuartel, b0, 'las obras tardan'); S.pend = []; G.act('endTurn'); S.pend = []; G.act('endTurn'); assert.strictEqual(S.c.BR.bases.cuartel, b0 + 1);
+  S.pend = []; const b0 = S.c.BR.bases.cuartel; assert(G.act('buildBase', { k: 'cuartel' }).ok); assert.strictEqual(S.c.BR.bases.cuartel, b0, 'las obras tardan'); S.pend = []; G.act('endTurn'); S.pend = []; G.act('endTurn'); assert.strictEqual(S.c.BR.bases.cuartel, b0 + 1);
   S.pend = []; const k = 'BR:' + S.c.BR.terr.findIndex(t => t.o === 'BR'); const rf = G.act('fortify', { k }); assert(rf.ok, 'fortificar: ' + rf.msg + ' caja ' + S.c.BR.tr); S.pend = []; G.act('endTurn'); S.pend = []; G.act('endTurn'); assert(q.rSt(k).fort >= 1, 'fortificación terminada');
   S.pend = []; G.act('agency', { v: 3 }); for (let i = 0; i < 4; i++) { S.pend = []; G.act('endTurn'); } assert(S.spy.lvl > 1, 'la agencia sube de nivel');
   S.pend = []; assert(G.act('setAlert', { v: 2 }).ok); noNaN(S, 'S'); }
 // la IA libra sus propias guerras región a región y el mapa cambia sin el jugador
 { G.newGame({ iso: 'MX', name: 'W2', traits: [], seed: 22 }); const S = G.S; S.pend = []; G.act('edWar', { op: 'war', a: 'IN', b: 'PK' }); const w = S.wars.find(x => x.att[0] === 'IN' && x.def[0] === 'PK');
   for (let i = 0; i < 8 && S.wars.includes(w); i++) { S.pend = []; G.act('endTurn'); } assert(S.blog.some(b => b.w === w.id && b.took), 'la IA conquista regiones'); noNaN(S, 'S'); }
+// Fase 4: sinergias, diario y legado
+{ G.newGame({ iso: 'MX', name: 'L', traits: ['carismatico', 'tecnocrata', 'sereno', 'cercano'], seed: 31 }); const S = G.S, q = G.q; S.pend = [];
+  assert(q.synergies().some(x => x.n === 'Encanto popular') && q.synergies().some(x => x.n === 'Gestor frío'), 'sinergias activas');
+  for (let i = 0; i < 6; i++) { while (S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); } assert(S.diary.length > 0, 'el diario registra decisiones');
+  const L = q.legacy(); assert(L.title && L.score >= 0 && L.score <= 100 && L.text.length > 20, 'legado'); noNaN(S, 'S'); }
 // fábricas, guerrillas urbanas y registro mundial
 { G.newGame({ iso: 'MX', name: 'F', traits: [], seed: 13 }); const S = G.S; S.pend = []; G.act('edit', { iso: 'MX', k: 'tr', v: 500 }); G.act('edit', { iso: 'MX', k: 'cp', v: 12 });
   const p0 = G.q.resFlow().tie.prod; assert(G.act('buildFac', { k: 'tie' }).ok); assert(!G.act('buildFac', { k: 'tie' }).ok, 'una obra a la vez'); S.pend = []; G.act('endTurn'); S.pend = []; G.act('endTurn'); S.pend = [];

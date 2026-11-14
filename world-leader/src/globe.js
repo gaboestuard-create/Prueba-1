@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -22,7 +22,7 @@
   const VERT = `varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     void main(){ vPos=position; vec4 mv=modelViewMatrix*vec4(position,1.); vV=mv.xyz; vN=normalMatrix*normal; gl_Position=projectionMatrix*mv; }`;
   const EARTH = `precision highp float;
-    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime;
+    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime, uNight;
     varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     ${NOISE}
     vec2 idAt(vec2 t){ vec2 uv=(t+.5)/uSize; vec4 x=texture2D(uId,vec2(uv.x,clamp(uv.y,0.,1.))); return floor(vec2(x.r,x.a)*255.+.5); } // (país, provincia)
@@ -59,7 +59,7 @@
         float snow=smoothstep(.93,.985,abs(n.y)+elev*.05); base=mix(base,vec3(.88,.93,1.),snow*.75);
         col=base*(.4+.14*day+.8*d*day) + base*.2*pow(max(dot(Nb,V),0.),2.)*(1.-day);
         float city=smoothstep(.86,.95,noise(n*260.))*smoothstep(.5,.75,noise(n*27.))*(1.-day)*(1.-snow);
-        col+=vec3(1.,.8,.45)*city*.28;
+        col+=vec3(1.,.8,.45)*city*uNight;
         col*=mix(.6,1.,edgeP);
         col=mix(col*.38,col,edge);                                          // fronteras
         col+=base*.16*step(abs(id-uProv.x)+abs(pid.y-uProv.y),.5);          // provincia bajo el cursor
@@ -102,6 +102,14 @@
   const TH_V = `attribute float aPh, aS; attribute vec3 aCol; uniform float uTime, uScale; varying float vA; varying vec3 vC;
     void main(){ float t=fract(uTime*.5+aPh); vA=.35+.65*sin(t*3.14159); vC=aCol; vec4 mv=modelViewMatrix*vec4(position,1.); gl_PointSize=uScale*aS*(.7+.6*t)/-mv.z; gl_Position=projectionMatrix*mv; }`;
   const TH_F = `precision highp float; varying float vA; varying vec3 vC; void main(){ float d=length(gl_PointCoord-.5); float a=(smoothstep(.5,.42,d)*smoothstep(.3,.38,d)+smoothstep(.16,0.,d)*.9)*vA; gl_FragColor=vec4(vC*a,a); }`;
+  const AUR = `precision highp float; uniform vec3 uSun; uniform float uTime; varying vec3 vPos;
+    ${NOISE}
+    void main(){ vec3 n=normalize(vPos); float lat=abs(n.y), band=smoothstep(.78,.86,lat)*smoothstep(.97,.9,lat);
+      float w=noise(vec3(atan(n.z,n.x)*4.,uTime*.22,n.y*9.)), cur=pow(w,2.2)*band*smoothstep(.15,-.25,dot(n,uSun));
+      vec3 c=mix(vec3(.1,1.,.55),vec3(.65,.3,1.),smoothstep(.35,.85,w)); gl_FragColor=vec4(c*cur*1.3,cur); }`;
+  const BF_V = `attribute float aR; uniform float uT, uScale; varying float vA;
+    void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); vA=(1.-uT)*(.5+.5*aR); gl_PointSize=uScale*(1.2+2.4*aR)*(.6+uT*.9)/-mv.z; gl_Position=projectionMatrix*mv; }`;
+  const BF_F = `precision highp float; uniform vec3 uC0, uC1; uniform float uT; varying float vA; void main(){ float d=length(gl_PointCoord-.5), g=smoothstep(.5,0.,d); gl_FragColor=vec4(mix(uC0,uC1,uT)*g*vA, g*vA); }`;
   const MK_V = `uniform float uScale; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); gl_PointSize=uScale; gl_Position=projectionMatrix*mv; }`;
   const MK_F = `precision highp float; void main(){ float d=length(gl_PointCoord-.5); float ring=smoothstep(.5,.42,d)*smoothstep(.26,.34,d)+smoothstep(.14,.08,d);
       gl_FragColor=vec4(vec3(.55,.9,1.),ring*.9); }`;
@@ -118,7 +126,7 @@
       renderer.setClearColor(0x02040a, 1);
       host.appendChild(renderer.domElement);
       const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(38, 1, .05, 200);
-      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun } };
+      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun }, uNight: { value: .5 } };
 
       // --- textura de IDs desde el PNG incrustado
       const img = new Image();
@@ -141,7 +149,8 @@
         }));
         scene.add(earth);
         const cloudU = Object.assign({ uFade: { value: 1 } }, U);
-        scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.009, 96, 48), new THREE.ShaderMaterial({ uniforms: cloudU, vertexShader: VERT, fragmentShader: CLOUD, transparent: true, depthWrite: false })));
+        const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(1.009, 96, 48), new THREE.ShaderMaterial({ uniforms: cloudU, vertexShader: VERT, fragmentShader: CLOUD, transparent: true, depthWrite: false })); scene.add(cloudMesh);
+        const aurora = new THREE.Mesh(new THREE.SphereGeometry(1.03, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: AUR, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(aurora);
         scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: ATMO, side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })));
         // estrellas
         { const n = 2600, p = new Float32Array(n * 3), c = new Float32Array(n * 3); let r = 7;
@@ -236,6 +245,19 @@
           const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('aPh', new THREE.BufferAttribute(ph, 1)); g.setAttribute('aS', new THREE.BufferAttribute(sz, 1)); g.setAttribute('aCol', new THREE.BufferAttribute(co, 3));
           thPts = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: thU, vertexShader: TH_V, fragmentShader: TH_F, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(thPts); };
 
+        // --- ráfagas de partículas por suceso (Fase 4): explosión, humo, ayuda, revolución, desastre, tormenta, sanción
+        const FXK = { exp: [0xffa040, 0x3a3634, 1.8, 46, .5], humo: [0x8a8a90, 0x2a2a2e, 3.2, 30, .18], ayuda: [0x7dffb0, 0x2a7a5a, 2.4, 26, .3], rev: [0xff3b30, 0xffc94a, 2.6, 40, .45], des: [0xb48cff, 0x40306a, 2.8, 36, .35], tormenta: [0xdfe8ff, 0x5a6a8a, 4, 54, .3], sanc: [0x9aa0aa, 0x30343a, 2.2, 24, .25], tratado: [0xffd36a, 0x7a5a1a, 2.4, 34, .35] };
+        const bursts = []; let fxScale = 1, skip = 1, fc = 0;
+        G.fx = (kind, lat, lon) => { if (bursts.length > 14 || lat == null) return; const K = FXK[kind] || FXK.exp, n = Math.max(6, Math.round(K[3] * fxScale)), c = ll2v(lat, lon, 1.013), up = c.clone().normalize();
+          const t1 = new THREE.Vector3().crossVectors(up, new THREE.Vector3(0, 1, 0)).normalize(), t2 = new THREE.Vector3().crossVectors(up, t1).normalize(), pos = new Float32Array(n * 3), vel = [], ar = new Float32Array(n);
+          for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, r = Math.random(); ar[i] = Math.random(); pos[i * 3] = c.x; pos[i * 3 + 1] = c.y; pos[i * 3 + 2] = c.z;
+            vel.push(t1.clone().multiplyScalar(Math.cos(a) * r * K[4] * .05).addScaledVector(t2, Math.sin(a) * r * K[4] * .05).addScaledVector(up, (kind === 'humo' ? .03 : .012) * Math.random())); }
+          const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aR', new THREE.BufferAttribute(ar, 1));
+          const u = { uT: { value: 0 }, uScale: fxU.uScale, uC0: { value: new THREE.Color(K[0]) }, uC1: { value: new THREE.Color(K[1]) } }, m = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: u, vertexShader: BF_V, fragmentShader: BF_F, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+          scene.add(m); bursts.push({ m, u, vel, c, up, kind, t0: performance.now(), life: K[2] * 1000 }); };
+        G.setQuality = (q, rm) => { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, q === 'high' ? 2 : q === 'med' ? 1.5 : 1)); G.resize(); cloudMesh.visible = q !== 'low'; aurora.visible = q === 'high';
+          U.uNight.value = q === 'low' ? .32 : .55; fxScale = q === 'low' ? .35 : q === 'med' ? .7 : 1; skip = q === 'low' ? 2 : 1; G.rm = !!rm; if (rm) G.spin = false; };
+
         // --- API de pintado
         const idx = iso => (C[iso] || {}).idx || 0;
         // over = { iso: { nºprovincia: color } } para las provincias ocupadas por otro país
@@ -255,7 +277,7 @@
 
         let last = performance.now();
         function frame(now) {
-          requestAnimationFrame(frame);
+          requestAnimationFrame(frame); if (skip > 1 && (++fc % skip)) return; // calidad baja: 30 fps
           const dt = Math.min(.05, (now - last) / 1000); last = now; U.uTime.value += dt;
           if (G.spin) tgt.lon += dt * 4;
           let dl = ((tgt.lon - cur.lon + 540) % 360) - 180; const k = 1 - Math.pow(.0015, dt);
@@ -265,6 +287,8 @@
           const sa = U.uTime.value * .02 + 1.2; sun.set(Math.cos(sa), .28, Math.sin(sa)).normalize();
           cloudU.uFade.value = Math.max(.12, Math.min(1, (cur.dist - 1.5) / 1.3));
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
+          for (let i = bursts.length - 1; i >= 0; i--) { const b = bursts[i], t = (now - b.t0) / b.life; if (t >= 1) { scene.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); continue; }
+            b.u.uT.value = t; const P = b.m.geometry.attributes.position; for (let j = 0; j < b.vel.length; j++) { const v = b.vel[j]; if (b.kind === 'tormenta') v.applyAxisAngle(b.up, dt * 1.6); P.array[j * 3] += v.x * dt; P.array[j * 3 + 1] += v.y * dt; P.array[j * 3 + 2] += v.z * dt; v.multiplyScalar(1 - dt * .6); } P.needsUpdate = true; }
           for (const m of thArrows) m.userData.u.uHead.value = ((U.uTime.value * .4 + m.userData.ph) % 1) * 1.25;
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
           if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }

@@ -66,6 +66,7 @@ ACT.edit = a => {
   else if (k0 === 'terr') { // regiones: terr.<índice>.<g|p|v|o|n>
     const t = c.terr[+k1], f = k.split('.')[2]; if (!t) return fail('Región inválida');
     if (f === 'o') { if (!S.c[v] || !S.c[v].alive) return fail('País inválido'); if (t.o !== v) { if (t.o !== a.iso) restoreTerr(a.iso, +k1); if (v !== a.iso) moveTerr(a.iso, +k1, v, 1); } }
+    else if (f === 'ter') { if (v && !D.TER[v]) return fail('Terreno inválido'); if (v) t.ter = v; else delete t.ter; }
     else if (f === 'v') t.v = !!v; else if (f === 'gob' || f === 'p' || f === 'n') t[f] = String(v).slice(0, 60); else return fail('Campo inválido');
   }
   else if (k === 'peace') { for (const w of S.wars.slice()) if (w.att.includes(a.iso) || w.def.includes(a.iso)) endWar(w, 'blanca'); }
@@ -84,6 +85,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
+    legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
     resInfo,
     occOf, occList, annexedList, occPol: z => S.occ[z] || 'normal',

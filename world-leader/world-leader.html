@@ -304,6 +304,35 @@ kbd { font: 600 12px var(--fc); padding: 2px 7px; border-radius: 5px; border: 1p
 @media (prefers-reduced-motion: reduce) { .bt, .bt-res { opacity: 1; animation: none; } .bt-pow i { width: var(--w); animation: none; } .bt-u, .bt-x { animation: none; } }
 @media (max-width: 760px) { .wr-head { grid-template-columns: 1fr 1fr; } .wr-vs { grid-column: 1 / -1; order: 3; } .alertlv { grid-template-columns: 1fr 1fr; } .tri-r { grid-template-columns: 1fr 12px 1.4fr; } .grp .gi.xl { width: 44px; height: 44px; } }
 
+/* ---- Fase 4: ajustes, intro, observador, asesores, legado, ayuda táctil, errores ---- */
+body.rm *, body.rm *::before, body.rm *::after { animation-duration: .001s !important; animation-delay: 0s !important; transition-duration: .001s !important; }
+body[data-q=low] .glass { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(9, 14, 26, .94); }
+body[data-q=low] .tk span { animation-duration: 120s; }
+.legend { display: inline-flex; align-items: center; gap: 8px; } .legend .lg { display: inline-block; width: 64px; height: 6px; border-radius: 4px; flex: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15); }
+.hud-adv .gi { width: 20px; height: 20px; color: var(--gold); }
+.pulse-up b { animation: pUp .7s; } .pulse-down b { animation: pDown .7s; } @keyframes pUp { 30% { color: var(--green); transform: scale(1.08); } } @keyframes pDown { 30% { color: var(--red); transform: scale(1.08); } }
+.intro { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 60%, #0b1a33 0%, #02050c 70%); cursor: pointer; transition: opacity .7s; } .intro.out { opacity: 0; pointer-events: none; }
+.in-stars { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 20% 30%, #fff8, transparent), radial-gradient(1px 1px at 70% 20%, #fff6, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #fffa, transparent), radial-gradient(1px 1px at 85% 65%, #fff7, transparent), radial-gradient(1px 1px at 10% 75%, #fff5, transparent); animation: drift 14s linear infinite; }
+@keyframes drift { to { transform: translateY(-40px) scale(1.05); } }
+.in-t { position: relative; text-align: center; padding: 20px; } .in-t h1 { font: 700 clamp(40px, 9vw, 96px)/1 var(--fd); letter-spacing: .12em; margin: 12px 0; color: var(--gold); text-shadow: 0 0 28px rgba(232, 195, 106, .45), 0 2px 0 #7a5412; }
+.in-t h1 span { display: inline-block; opacity: 0; transform: translateY(30px) scale(.9); animation: letter .7s cubic-bezier(.2, .8, .2, 1) forwards; }
+@keyframes letter { to { opacity: 1; transform: none; } } .in-sub { color: #c9d6ea; letter-spacing: .2em; text-transform: uppercase; font: 600 13px var(--fc); opacity: 0; animation: fadeIn 1s 1.3s forwards; }
+.in-tap { display: block; margin-top: 30px; color: var(--cyan); opacity: 0; animation: fadeIn 1s 2.2s forwards, blink 2s 3.2s infinite; } @keyframes fadeIn { to { opacity: 1; } } @keyframes blink { 50% { opacity: .35; } }
+.obs { position: fixed; left: 50%; bottom: calc(92px + var(--sb)); transform: translateX(-50%); z-index: 40; width: min(620px, calc(100vw - 24px)); pointer-events: none; }
+.obs-cap { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 14px; pointer-events: auto; border-color: rgba(232, 195, 106, .45); } .obs-cap .btn { align-self: flex-end; } .obs.in .obs-cap b { animation: obsIn .5s both; } @keyframes obsIn { from { opacity: 0; transform: translateY(8px); } }
+.advs { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin: 8px 0 12px; } .adv { padding: 12px; border-radius: 13px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.adv.sev2 { border-color: rgba(255, 90, 77, .5); } .adv.sev1 { border-color: rgba(232, 195, 106, .4); } .adv-pic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(232, 195, 106, .35), rgba(255, 255, 255, .04)); border: 1px solid rgba(232, 195, 106, .5); flex: none; } .adv-pic .gi { width: 22px; height: 22px; }
+.adv .row { gap: 10px; align-items: center; } .adv .grow { display: flex; flex-direction: column; } .adv-fl { margin: 0; font-style: italic; color: var(--gold); font-size: 13px; } .adv-l { display: flex; gap: 8px; align-items: flex-start; } .adv-l p { margin: 0; flex: 1; font-size: 13px; color: #d7e0ee; }
+.legacy { text-align: center; display: flex; flex-direction: column; gap: 8px; border-color: rgba(232, 195, 106, .4); } .legacy h2 { margin: 0; font-family: var(--fd); color: var(--gold); text-transform: capitalize; } .legacy-bar { display: flex; gap: 10px; align-items: center; } .legacy-bar .bar { flex: 1; height: 10px; }
+.dia { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); font-size: 13px; } .dia small { width: 64px; flex: none; color: var(--mut); } .dia.war span { color: #ffb4ad; } .dia.peace span, .dia.dip span { color: #b6ecff; } .dia.dec span { color: #f4e3b5; } .dia-y { margin: 12px 0 4px; color: var(--gold); font: 600 12px var(--fc); letter-spacing: .14em; }
+.gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; } .gloss div { padding: 10px; border-radius: 10px; background: rgba(255, 255, 255, .04); } .gloss p { margin: 4px 0 0; font-size: 13px; color: #c8d3e3; }
+.vols { display: grid; gap: 8px; margin: 8px 0; } .vol { display: grid; grid-template-columns: 90px 1fr 34px; gap: 10px; align-items: center; } .vol input { width: 100%; accent-color: var(--gold); } .vol b { text-align: right; font: 600 13px var(--fc); }
+.tip { position: fixed; z-index: 70; max-width: min(320px, calc(100vw - 16px)); padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4; pointer-events: none; animation: fadeIn .15s; }
+.errcard { position: fixed; z-index: 80; left: 50%; top: calc(80px + var(--st)); transform: translateX(-50%); display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 12px; border-color: rgba(255, 90, 77, .6); width: min(520px, calc(100vw - 24px)); } .errcard div { flex: 1; display: flex; flex-direction: column; } .errcard small { color: var(--mut); }
+@media (max-width: 760px) { .advs { grid-template-columns: 1fr; } .legend .lg { width: 40px; } .vol { grid-template-columns: 70px 1fr 30px; } }
+.spark .line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 1.2s ease-out forwards; } .spark .area { opacity: 0; animation: fadeIn .8s .5s forwards; } @keyframes draw { to { stroke-dashoffset: 0; } }
+.ev-trait { margin: -4px 0 10px; font-style: italic; color: var(--gold); font-size: 13px; display: flex; gap: 6px; align-items: center; } .ev-trait .gi { width: 14px; height: 14px; }
+
 </style>
 
 <div id="globe"></div>
@@ -1393,6 +1422,86 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     CO: { pet: 'Meta,Casanare', car: 'La Guajira,Cesar', caf: 'Huila,Antioquia,Caldas', oro: 'Antioquia' },
     GB: { pet: 'Escocia', gas: 'Escocia' }, DE: { car: 'Renania del Norte-Westfalia,Brandeburgo' }, FR: { tri: 'Centro-Valle de Loira,Alta Francia', ura: 'Nueva Aquitania' }
   };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · FASE 4: PERSONALIDAD Y NARRATIVA
+   Rasgos nuevos con sinergias y conflictos, frases de líderes según su
+   carácter y 40 eventos con humor, drama y giros. Todo ficción
+   (verificado:false). Formato de eventos: el de data-events2.js.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx;
+  Object.assign(D.BRANCHES, { tem: 'Temperamento', pue: 'Pueblo' });
+  D.TRAITS.push(
+    { id: 'sereno', b: 'tem', t: 1, n: 'Sereno', pro: 'Estabilidad +0.1/turno; los escándalos te salpican un 20% menos', con: '−5% a las mejoras de afinidad: pareces frío', m: { stabT: .1, scandal: -.2, secGain: -.05 } },
+    { id: 'estoico', b: 'tem', t: 2, n: 'Estoico', pro: 'Bajas −15% y estabilidad +0.1/turno más', con: '−2 pts en elecciones: no te emocionas en público', m: { casual: -.15, stabT: .1, elect: -2 } },
+    { id: 'inquebrantable', b: 'tem', t: 3, n: 'Inquebrantable', pro: '+1 capital político por turno y +4 a que acepten tus tratados', con: '−10% a las mejoras de relación: nunca cedes', m: { cp: 1, treatyAcc: 4, relGain: -.1 } },
+    { id: 'cercano', b: 'pue', t: 1, n: 'Cercano', pro: '+10% a toda mejora de afinidad y +2 pts en elecciones', con: '−2% de recaudación: perdonas demasiado', m: { secGain: .1, elect: 2, income: -.02 } },
+    { id: 'tribuno', b: 'pue', t: 2, n: 'Tribuno', pro: '+4 pts en elecciones y +5% de votos en el congreso', con: 'Escándalos +20%: hablas demasiado', m: { elect: 4, lawVote: .05, scandal: .2 } },
+    { id: 'padre_patria', b: 'pue', t: 3, n: 'Padre de la patria', pro: '+5 pts en elecciones, estabilidad +0.2/turno', con: '−5% de recaudación: el pueblo espera regalos', m: { elect: 5, stabT: .2, income: -.05 } }
+  );
+  /* sinergias: si tienes ambos rasgos, un bono extra · conflictos: no se pueden elegir juntos */
+  D.SYNERGY = [
+    { a: 'carismatico', b: 'cercano', n: 'Encanto popular', d: '+2 pts en elecciones', m: { elect: 2 } },
+    { a: 'diplomatico', b: 'sereno', n: 'Mano izquierda', d: '+4 a que acepten tus tratados', m: { treatyAcc: 4 } },
+    { a: 'belicista', b: 'estoico', n: 'Voluntad de hierro', d: 'Fuerza +5% y bajas −5%', m: { atk: .05, casual: -.05 } },
+    { a: 'tecnocrata', b: 'sereno', n: 'Gestor frío', d: '+3% de recaudación', m: { income: .03 } },
+    { a: 'populista', b: 'tribuno', n: 'Caudillo de masas', d: '+3 pts en elecciones, escándalos +10%', m: { elect: 3, scandal: .1 } },
+    { a: 'corrupto', b: 'cercano', n: 'Clientelismo', d: 'Más fondos reservados y +2 pts en elecciones', m: { graft: .5, elect: 2 } },
+    { a: 'intrigante', b: 'inquebrantable', n: 'Ajedrecista', d: 'Operaciones encubiertas +10%', m: { spyOp: .1 } }
+  ];
+  D.TCONF = [['pacifista', 'belicista'], ['populista', 'tecnocrata'], ['autoritario', 'cercano'], ['sereno', 'tribuno'], ['corrupto', 'padre_patria']];
+  /* frases de líderes según su carácter: {P} = tú, {C} = tu país, {X} = país en cuestión */
+  D.QUOTES = {
+    halcon: { war: ['«{P} por fin enseña los dientes. Respeto eso.»', '«Que {C} recuerde: las guerras se empiezan fácil.»'], treaty: ['«Papeles. {P} colecciona papeles.»'], sanc: ['«Sanciones: el arma de los cobardes.»'], disc: ['«Ese avance de {C} es una amenaza. Tomamos nota.»'], elec: ['«Votos, votos… nosotros preferimos los cuarteles.»'], weak: ['«{C} sangra. Los lobos huelen la sangre.»'] },
+    paloma: { war: ['«Lamentamos profundamente la decisión de {P}.»', '«Ninguna guerra termina como empieza.»'], treaty: ['«Un buen día para el mundo. Gracias, {P}.»'], sanc: ['«Esperamos que el diálogo vuelva pronto.»'], disc: ['«Que ese avance de {C} sea para todos.»'], elec: ['«Felicidades a {P}: la democracia sigue viva.»'], weak: ['«Ofrecemos nuestra mediación a {C}.»'] },
+    rencor: { war: ['«{P} es exactamente lo que dijimos que era.»'], treaty: ['«{P} firma hoy y traiciona mañana. Ya lo vimos.»'], sanc: ['«No olvidaremos esto, {P}. Nunca.»'], disc: ['«Lo habrán robado, como todo lo demás.»'], elec: ['«El pueblo de {C} se equivocó otra vez.»'], weak: ['«Que {C} pruebe su propia medicina.»'] },
+    pragma: { war: ['«Seguiremos de cerca la situación.»', '«Los mercados no perdonan aventuras.»'], treaty: ['«Un acuerdo sensato. Habrá que ver la letra pequeña.»'], sanc: ['«Las sanciones encarecen todo. A todos.»'], disc: ['«Interesante. ¿Lo venden?»'], elec: ['«Trabajaremos con quien gane. Con {P} también.»'], weak: ['«{C} debería negociar mientras pueda.»'] }
+  };
+  const E = [
+    ['f4_toro', 6, { cool: 12 }, '', 'El toro de la embajada', 'Un toro escapado de una feria recorre el barrio de las embajadas. Las cámaras del mundo lo siguen en directo.', [['Declarar al toro huésped de honor', 'sec.rur+5;rep.gen+2;sec.jov+3'], ['Mandar al ejército', 'sec.mil+2;sec.jov-3', 'chance.4{sec.all-2}{}'], ['Ignorarlo', 'sec.pre-2']]],
+    ['f4_meme', 7, { cool: 10 }, '', 'Eres un meme', 'Un vídeo tuyo tropezando en un acto oficial supera los 200 millones de reproducciones.', [['Reírte de ti mismo en redes', 'sec.jov+6;sec.med+2'], ['Exigir que lo retiren', 'sec.jov-5;rep.dem-2;sec.pre-4'], ['Hacer un baile viral', 'chance.5{sec.jov+8;sec.jub-3}{sec.all-3}']]],
+    ['f4_doble', 4, { cool: 15 }, '', 'Tu doble', 'Aparece un hombre idéntico a ti que da discursos en los pueblos. La gente lo adora más que a ti.', [['Contratarlo para los actos aburridos', 'cp+1;sec.rur+3', 'later5@.4{sec.all-4}:Tu doble se va de la lengua en una entrevista'], ['Detenerlo', 'rep.dem-3;sec.rur-4'], ['Desafiarlo a un debate', 'chance.6{sec.all+4}{sec.all-4}']]],
+    ['f4_vidente', 5, { cool: 12 }, '', 'La vidente', 'La vidente más famosa del país predice tu caída "antes de la próxima luna llena". Los mercados se ponen nerviosos.', [['Invitarla a palacio', 'sec.rel+4;sec.tec-3'], ['Burlarte en directo', 'sec.tec+3;sec.rel-4'], ['Pedirle los números de la lotería', 'chance.1{$g+.3;sec.all+3}{sec.med-2}']]],
+    ['f4_mascota', 6, { cool: 14 }, '', 'La mascota presidencial', 'Tu perro muerde al embajador de {T} durante una recepción. Hay foto.', [['Disculparte con un regalo', '$g-.02;rel.T+4:Disculpas por el mordisco'], ['Defender al perro', 'sec.all+3;rel.T-6:Tu perro mordió a su embajador'], ['Culpar al embajador', 'rel.T-12:Culpaste a su embajador;sec.jov+2']], 'power'],
+    ['f4_apagon', 6, { cool: 10 }, '', 'Apagón en plena final', 'Se va la luz en todo el país durante la final del campeonato. Diez millones de personas se quedan sin el penalti decisivo.', [['Repetir el partido por decreto', 'cp-1;sec.all+4'], ['Culpar a la eléctrica', 'sec.emp-4;sec.obr+3'], ['Pedir perdón por cadena nacional', 'sec.all+1']]],
+    ['f4_espia_amor', 4, { cool: 15 }, 'rival', 'Amor de espías', 'Tu jefe de inteligencia se ha enamorado de una agregada de {T}. Dice que puede convertirla.', [['Darle una oportunidad', 'chance.5{rel.T-5:Operación de seducción;cp+1}{rel.T-15:Escándalo de espionaje amoroso;rep.conf-4}'], ['Destituirlo', 'sec.mil-2'], ['Usarlo para desinformar', 'chance.6{cp+1}{rep.conf-3}']]],
+    ['f4_ministro_fuga', 5, { cool: 12 }, '', 'El ministro desaparecido', 'Tu ministro de Hacienda lleva tres días sin aparecer. Su secretaria dice que "está meditando".', [['Esperar', 'chance.5{sec.med+1}{$g-.2;sec.emp-4}', 'later2@.5{sec.pre-4}:El ministro reaparece en una playa del Caribe'], ['Nombrar sustituto', 'cp-1;sec.emp+2'], ['Buscarlo con el ejército', 'sec.mil+1;rep.dem-1;sec.pre-2']]],
+    ['f4_ovni', 3, { cool: 20 }, '', 'Luces en el cielo', 'Cientos de testigos ven luces extrañas sobre la capital. Las redes enloquecen.', [['Anunciar una investigación seria', 'sec.tec+3;$g-.05'], ['Insinuar que sabes algo', 'sec.jov+4;rep.conf-2'], ['Reconocer que eran tus drones', 'sec.mil+2;sec.pre+2']]],
+    ['f4_canal', 5, { cool: 14 }, 'neighbor', 'El canal', 'Ingenieros proponen un canal que uniría tus costas pasando junto a {T}. Costaría una fortuna; cambiaría el comercio para siempre.', [['Construirlo', '$g-1;grow+.15/12;rel.T-6:Tu canal junto a su frontera;sec.emp+5'], ['Construirlo con {T}', '$g-.5;grow+.1/12;rel.T+10:Canal compartido'], ['Archivarlo', 'sec.emp-2']]],
+    ['f4_hijo', 5, { cool: 14 }, '', 'El hijo del presidente', 'Tu hijo estrella su deportivo contra una fuente histórica. Iba a 180 km/h.', [['Que pague como cualquiera', 'sec.all+3;rep.dem+2'], ['Taparlo', 'chance.5{}{sec.all-6;rep.dem-4}'], ['Mandarlo a estudiar fuera', 'sec.pre-2']]],
+    ['f4_premio', 4, { cool: 20, peace: 1 }, '', 'Candidato al premio de la paz', 'Te nominan al premio internacional de la paz. Tus generales ponen los ojos en blanco.', [['Aceptar con humildad', 'rep.paz+6;rep.gen+3;sec.mil-3'], ['Rechazarlo', 'sec.mil+3;rep.conf+2'], ['Hacer campaña para ganarlo', '$g-.05;chance.4{rep.paz+10;sec.all+3}{sec.all-2}']]],
+    ['f4_golpe_fake', 4, { cool: 18 }, '', '¿Golpe o simulacro?', 'Unos tanques aparecen frente al palacio. El general jura que es "un simulacro que nadie avisó".', [['Creerle', 'sec.mil+3', 'chance.15{ev3:golpe}{}'], ['Arrestarlo', 'sec.mil-6;rep.dem+2;stab+2'], ['Pasar revista a las tropas tú mismo', 'chance.7{sec.mil+5;sec.all+2}{sec.mil-4}']]],
+    ['f4_vecino_fiesta', 5, { cool: 12 }, 'neighbor', 'La fiesta en la frontera', 'Los pueblos de ambos lados de la frontera con {T} celebran juntos una fiesta tradicional. Te invitan.', [['Ir y bailar', 'rel.T+8:Bailaste en la fiesta fronteriza;sec.rur+3'], ['Mandar a un ministro', 'rel.T+3:Enviaste a un ministro'], ['Cerrar la frontera "por seguridad"', 'rel.T-10:Cerraste la fiesta;sec.mil+2']], 'neighbor'],
+    ['f4_rapero', 6, { cool: 10 }, '', 'La canción contra ti', 'El rapero más escuchado del país publica una canción que te destroza. Es pegadiza.', [['Responder con otra canción', 'chance.3{sec.jov+8}{sec.jov-6;sec.pre-2}'], ['Invitarlo a palacio', 'sec.jov+4;sec.mil-2'], ['Censurarla', 'sec.jov-10;rep.dem-4', 'later2@.7{sec.jov-4}:La canción censurada se convierte en himno']]],
+    ['f4_terremoto', 5, { cool: 14 }, '', 'Terremoto', 'Un terremoto de magnitud 7 sacude una región del país. Hay miles de heridos y la ayuda tarda.', [['Ir en persona y dirigir el rescate', '$g-.3;sec.all+5;stab+2'], ['Pedir ayuda internacional', 'relAll.big+2:Pediste ayuda;sec.mil-2;$g-.1'], ['Delegar en el ejército', 'sec.mil+3;sec.all-2']]],
+    ['f4_tratado_secreto', 4, { cool: 16 }, 'power', 'El anexo secreto', 'Un periodista publica que tu tratado con {T} tenía un anexo secreto. No lo tenía… o eso creías.', [['Publicar el texto completo', 'rep.conf+3;rel.T-4:Publicaste el tratado'], ['Negarlo todo', 'chance.5{}{rep.conf-6;sec.pre-4}'], ['Acusar a {T} de la filtración', 'rel.T-10:Los acusaste de filtrar;sec.mil+2']], 'power'],
+    ['f4_robot', 4, { cool: 16 }, '', 'El robot ministro', 'Una empresa ofrece un "ministro de IA" gratis durante un año. Dicen que nunca se cansa ni roba.', [['Probarlo en Hacienda', 'grow+.08/6;sec.tec+5;sec.sin-5', 'later4@.3{sec.all-4;$g-.3}:El ministro de IA comete un error millonario'], ['Rechazarlo', 'sec.sin+3;sec.tec-3'], ['Que lo pruebe la oposición', 'cp+1;sec.tec+2']]],
+    ['f4_boda', 5, { cool: 16 }, 'ally', 'La boda del siglo', 'La hija del líder de {T}, tu aliado, se casa. Te invitan… y a tu peor rival también.', [['Ir y sonreír', 'rel.T+8:Fuiste a la boda;$g-.02'], ['Mandar un regalo carísimo', '$g-.1;rel.T+10:Tu regalo de boda'], ['No ir', 'rel.T-6:No fuiste a la boda']], 'ally'],
+    ['f4_plaga_ratas', 4, { cool: 14 }, '', 'Ratas en el Congreso', 'Una plaga de ratas obliga a suspender las sesiones del congreso. Los chistes se escriben solos.', [['Gobernar por decreto unas semanas', 'cp+2;rep.dem-4'], ['Sesionar en un estadio', '$g-.05;sec.all+3'], ['Esperar a que pase', 'cp-1']]],
+    ['f4_inflacion_meme', 5, { infGt: 8, cool: 10 }, '', 'El billete de un millón', 'La inflación es tan alta que la gente empapela las casas con billetes. Te piden un billete nuevo.', [['Quitar tres ceros', 'cp-1;inf-1;sec.med+2'], ['Imprimir el billete gigante', 'inf+2;sec.emp-4'], ['Prometer dolarizar', 'chance.5{inf-3;sec.emp+5}{sec.sin-6;stab-3}']]],
+    ['f4_desertor', 4, { cool: 14 }, 'rival', 'Un piloto de {T} aterriza en tu país', 'Un piloto militar de {T} aterriza con su caza y pide asilo. Su gobierno exige que lo devuelvas… con el avión.', [['Concederle asilo y quedarte el avión', 'rel.T-15:Te quedaste su caza;sec.mil+4;rep.conf-2'], ['Asilo, pero devolver el avión', 'rel.T-6:Diste asilo a su piloto;rep.gen+2'], ['Devolverlo', 'rel.T+8:Devolviste al desertor;rep.gen-4']], 'rival'],
+    ['f4_puerto', 5, { cool: 14 }, 'power', 'El puerto en venta', 'Una empresa estatal de {T} quiere comprar tu principal puerto por una cifra enorme.', [['Vender', '$g+.6;rel.T+8:Les vendiste el puerto;sec.mil-6;sec.sin-4'], ['Alquilarlo 30 años', '$g+.3;rel.T+4:Les alquilaste el puerto'], ['Negarte', 'rel.T-4:No vendiste el puerto;sec.mil+3']], 'power'],
+    ['f4_pandemia', 4, { cool: 20 }, '', 'Un virus nuevo', 'Un virus respiratorio se extiende desde un mercado lejano. Tus médicos piden cerrar fronteras ya.', [['Cerrar fronteras', 'grow-.15/4;sec.emp-5;sec.jub+4', 'later3@.6{sec.all+4}:Tu cierre temprano salvó miles de vidas'], ['Esperar a ver', 'chance.5{}{grow-.3/6;sec.all-6;stab-4}'], ['Confinamiento total', 'grow-.3/4;sec.jov-6;sec.jub+6;stab-2']]],
+    ['f4_actor', 5, { cool: 14, dem: 1 }, '', 'El actor candidato', 'Una estrella de cine anuncia que se presentará contra ti en las próximas elecciones. Las encuestas lo adoran.', [['Invitarlo a tu partido', 'cp-1;sec.jov+4'], ['Atacar su pasado', 'chance.5{sec.all+2}{sec.all-4;sec.pre-3}'], ['Ignorarlo', 'later4@.5{sec.all-3}:El actor candidato sube en las encuestas']]],
+    ['f4_oro', 4, { cool: 20 }, '', 'Fiebre del oro', 'Un campesino encuentra una pepita gigante. Miles de buscadores invaden la selva.', [['Nacionalizar la zona', 'prod.oro+1;sec.rur-4;sec.emp-3'], ['Dejar que busquen', 'sec.rur+4;stab-2;sec.min-3'], ['Proteger la selva', 'rep.gen+4;sec.jov+3;sec.rur-3']]],
+    ['f4_embajada', 4, { cool: 16 }, 'rival', 'Asalto a la embajada', 'Manifestantes asaltan tu embajada en {T}. La policía local mira hacia otro lado.', [['Exigir disculpas y reparaciones', 'rel.T-8:Exigiste reparaciones;chance.5{$g+.05}{}'], ['Retirar al embajador', 'rel.T-14:Retiraste a tu embajador;sec.mil+3'], ['Responder con calma', 'rep.conf+3;sec.mil-3']], 'rival'],
+    ['f4_loteria', 5, { cool: 12 }, '', 'Gana la lotería… tu ministro', 'Tu ministro de Cultura gana el premio gordo de la lotería nacional. Por tercera vez.', [['Investigarlo', 'sec.med+3;rep.dem+1;cp-1'], ['Felicitarlo', 'sec.pre-4;sec.med-4'], ['Exigirle que done el premio', 'sec.all+2']]],
+    ['f4_glaciar', 4, { cool: 18 }, '', 'El glaciar perdido', 'El último glaciar del país se derrite. Los jóvenes convocan una huelga por el clima.', [['Declarar emergencia climática', '$g-.2;sec.jov+6;sec.emp-3;rep.gen+3'], ['Prometer un plan para 2050', 'sec.jov-3'], ['Recibir a los jóvenes', 'cp-1;sec.jov+4']]],
+    ['f4_dictador_exiliado', 4, { cool: 18 }, 'troubledNeighbor', 'Un dictador pide refugio', 'El exdictador de {T}, derrocado ayer, aterriza en tu aeropuerto con 40 maletas.', [['Darle refugio', 'rel.T-12:Refugiaste a su dictador;$g+.2'], ['Entregarlo a la justicia de {T}', 'rel.T+12:Entregaste al dictador;rep.dem+3'], ['Mandarlo a otro país', 'rep.conf+1']], 'troubledNeighbor'],
+    ['f4_mundial', 4, { cool: 20 }, '', 'La sede del Mundial', 'Tu país es candidato a organizar el próximo Mundial. Costaría mucho; daría mucho más… o no.', [['Presentar la candidatura', '$g-.6;chance.5{grow+.15/8;sec.all+5;rep.gen+3}{sec.all-3}'], ['Candidatura compartida con un vecino', '$g-.3;grow+.08/8;sec.all+2'], ['No presentarse', 'sec.jov-2']]],
+    ['f4_censo', 5, { cool: 14 }, '', 'El censo imposible', 'El censo revela que el país tiene 4 millones de habitantes menos de lo que creías. Las ayudas se pagaban a fantasmas.', [['Auditar todo', '$g+.2;sec.emp+2;cp-1'], ['Taparlo', 'chance.5{}{rep.dem-4;sec.med-5}'], ['Culpar al gobierno anterior', 'sec.all+2;party.gov+2']]],
+    ['f4_libro', 5, { cool: 14 }, '', 'El libro de tu exasesor', 'Tu exasesor publica unas memorias explosivas: "El emperador desnudo". Ya es el más vendido.', [['Leerlo y responder punto por punto', 'chance.5{sec.med+3}{sec.med-3}'], ['Demandarlo', 'rep.dem-2;sec.pre-4', 'later2@.6{sec.all-2}:La demanda dispara las ventas del libro'], ['Decir que no lo has leído', 'sec.pre-1']]],
+    ['f4_alianza_rara', 4, { cool: 20 }, 'rival', 'Un mensaje inesperado', 'El líder de {T}, tu rival, te escribe en privado: quiere reunirse sin cámaras.', [['Aceptar en secreto', 'rel.T+15:Reunión secreta;chance.3{rep.conf-5}{}'], ['Aceptar, pero en público', 'rel.T+8:Reunión pública;sec.mil-3'], ['Filtrar el mensaje', 'rel.T-15:Filtraste su mensaje;sec.mil+4']], 'rival'],
+    ['f4_ciberataque', 5, { cool: 14 }, 'rival', 'Hackean tu Twitter', 'Tu cuenta oficial publica a las 3 de la madrugada: "Declaramos la guerra a {T}". Fue un hackeo.', [['Desmentir de inmediato', 'rel.T-3:El tuit falso;sec.pre-2'], ['No desmentir del todo', 'rel.T-12:Tu ambigüedad;sec.mil+4'], ['Acusar a {T} del hackeo', 'rel.T-10:Los acusaste del hackeo;sec.all+2']], 'rival'],
+    ['f4_rey', 3, { cool: 25 }, '', 'Un heredero al trono', 'Un hombre demuestra ser descendiente del último rey del país y reclama… una pensión. Y el palacio.', [['Darle la pensión', '$g-.01;sec.rel+3'], ['Un museo con su nombre', 'sec.med+2;$g-.05'], ['Reírte en público', 'sec.jov+2;sec.rel-3']]],
+    ['f4_sequia', 5, { cool: 14 }, '', 'El río se seca', 'El río más importante del país baja a su mínimo histórico. Agricultores y ciudades se pelean por el agua.', [['Priorizar a los agricultores', 'sec.rur+6;sec.med-4'], ['Priorizar las ciudades', 'sec.med+4;sec.rur-6'], ['Racionar para todos', 'stab-2;sec.all+1']]],
+    ['f4_viral_ministra', 5, { cool: 12 }, '', 'La ministra influencer', 'Tu ministra de Juventud tiene más seguidores que tú. Empieza a opinar de todo.', [['Ascenderla', 'sec.jov+5;cp-1'], ['Moderarla', 'sec.jov-2'], ['Que haga tus anuncios', 'sec.jov+3;sec.jub-2']]],
+    ['f4_traicion', 4, { cool: 18 }, 'ally', 'El aliado que habla de más', 'Se filtra un audio del líder de {T}, tu aliado, burlándose de ti en una cena.', [['Pedir explicaciones en privado', 'rel.T-4:El audio de la cena'], ['Responder con humor', 'sec.all+3;rel.T+2:Te lo tomaste con humor'], ['Congelar la relación', 'rel.T-15:Congelaste la relación;sec.mil+2']], 'ally'],
+    ['f4_eclipse', 3, { cool: 25 }, '', 'El gran eclipse', 'Un eclipse total cruzará el país. Millones de turistas quieren venir.', [['Organizar el evento del siglo', '$g-.1;grow+.06/2;sec.emp+3;rep.gen+2'], ['Dejarlo a las provincias', 'sec.rur+2'], ['Decretar festivo', 'sec.all+3;grow-.03/1']]]
+  ];
+  E.forEach(e => D.EVENTS.push({ id: e[0], w: e[1], if: e[2], tgt: e[3] || e[7] || null, t: e[4], x: e[5], opts: e[6].map(o => ({ t: o[0].replace('{T}', '{T}'), fx: fx(o[1]), hid: fx(o[2]) })), verificado: false }));
 })();
 
 /* =====================================================================
@@ -4572,6 +4681,43 @@ const NEWOPS = {
   return out.sort((x, y) => y.p - x.p); }; }
 
 
+/* ---------- engine/7d-story.js ---------- */
+/* =====================================================================
+   SISTEMA · FASE 4 · PERSONALIDAD Y NARRATIVA
+   Sinergias entre rasgos, condición de rasgo en eventos, «Diario de mi
+   mandato», frases de líderes según su carácter y el juicio de la
+   historia (legado) al terminar.
+   ===================================================================== */
+const synergies = () => (D.SYNERGY || []).filter(x => S.leader.traits.includes(x.a) && S.leader.traits.includes(x.b));
+{ const m0 = mod; mod = k => { let v = m0(k); if (S && S.leader) for (const x of synergies()) v += x.m[k] || 0; return v; }; }
+{ const c0 = condOk; condOk = q => c0(q) && (!q || !q.trait || S.leader.traits.includes(q.trait)); }
+hook('new', () => { S.diary = []; }); hook('load', () => { S.diary = S.diary || []; });
+function diary(x, k) { S.diary.push({ t: S.turn, x, k: k || 'pol' }); if (S.diary.length > 400) S.diary.splice(0, S.diary.length - 400); }
+{ const n0 = news; news = (x, k, iso, p) => { n0(x, k, iso, p); if (S.diary && iso === S.player && (p || 1) >= 2 && ['war', 'peace', 'pol', 'elec', 'coup', 'tec', 'dip', 'mil'].includes(k)) diary(x, k); }; }
+{ const d0 = ACT.decide; ACT.decide = a => { const p = S.pend[0], o = p && p.opts && p.opts[+a.i]; const r = d0(a); if (r && r.ok !== false && o && S.diary && p.k !== 'un') diary(`${p.t}: ${o.t}`, 'dec'); return r; }; }
+/* frases de líderes según su carácter, reaccionando a lo que hiciste este turno */
+function archetype(z) { const p = S.c[z].per; return p.agres > .6 ? 'halcon' : p.coop > .65 ? 'paloma' : p.rencor > .65 && rel(S.player, z) < 0 ? 'rencor' : 'pragma'; }
+hook('late', () => { const me = S.player, mine = S.news.filter(n => n.t >= S.turn - 1 && n.i === me), ctxs = [];
+  if (mine.some(n => /declara la guerra/.test(n.x))) ctxs.push('war'); if (mine.some(n => n.k === 'dip' && /firman|firma /.test(n.x))) ctxs.push('treaty'); if (mine.some(n => /sanciona/.test(n.x))) ctxs.push('sanc');
+  if (mine.some(n => n.k === 'tec')) ctxs.push('disc'); if (mine.some(n => n.k === 'elec')) ctxs.push('elec'); if (inWar(me) && warScoreFor(me) < -30) ctxs.push('weak');
+  if (!ctxs.length || !chance(.7)) return; const ctx = pick(ctxs), pool = alive().filter(z => z !== me && (S.c[z].gdp > 400 || nb(me).includes(z)));
+  for (const z of shuffle(pool).slice(0, ctx === 'war' ? 3 : 2)) { const L = (D.QUOTES[archetype(z)] || {})[ctx]; if (!L) continue;
+    const q = pick(L).replace(/\{P\}/g, S.leader.n).replace(/\{C\}/g, P().n); news(`${S.c[z].lider.n} (${S.c[z].n}): ${q}`, 'dip', z, 1); wlog('dip', z, me, `${S.c[z].lider.n} sobre ${P().n}: ${q}`); } });
+/* el juicio de la historia */
+function legacy() {
+  const s = S, c = P(), yrs = s.turn / 4, g = (c.gdp / Math.max(.001, s.stats.gdp0 || c.gdp) - 1) * 100, ap = s.hist.appr.length ? s.hist.appr.reduce((a, b) => a + b, 0) / s.hist.appr.length : approval();
+  const firsts = s.disc ? D.DISC.filter(x => (s.disc.own[x.id] || [])[0] === s.player).length : 0, crimes = (s.war3 || {}).crimes || 0, R = s.rep;
+  const facts = [[g > 40, 'el del milagro económico', `Bajo su mandato la economía creció un ${Math.round(g)}%.`], [R.paz > 40, 'el pacificador', 'Se le recuerda por evitar guerras y firmar paces difíciles.'],
+    [s.stats.annexed >= 2 || (s.stats.wars >= 3 && R.paz < -20), 'el conquistador', `Libró ${s.stats.wars} guerras y redibujó el mapa.`], [firsts >= 3, 'el visionario', `Su país fue el primero del mundo en ${firsts} grandes descubrimientos.`],
+    [s.stats.laws >= 20, 'el reformador', `Aprobó ${s.stats.laws} leyes que cambiaron la vida diaria.`], [ap > 62, 'el querido', 'El pueblo lo quiso como a pocos.'], [crimes >= 3 || R.dem < -40, 'el tirano', 'Su nombre quedó ligado a la represión y a los crímenes de guerra.'],
+    [g < -15, 'el de la ruina', `La economía se hundió un ${Math.round(-g)}%.`], [yrs < 2, 'el breve', 'Su paso por el poder fue tan corto que pocos lo recuerdan.']];
+  const hit = facts.filter(f => f[0]), title = hit.length ? hit[0][1] : 'el gestor', score = clamp(Math.round(50 + g / 3 + (ap - 50) / 2 + R.paz / 6 + R.gen / 8 + firsts * 3 - crimes * 6 - s.stats.annexed * 4), 0, 100);
+  const text = (hit.slice(0, 3).map(f => f[2]).join(' ') || 'Gobernó sin grandes aciertos ni grandes desastres.') + ` Estuvo ${yrs >= 1 ? Math.round(yrs * 10) / 10 + ' años' : s.turn + ' trimestres'} en el poder.`;
+  const key = s.diary.filter(d => ['war', 'peace', 'elec', 'tec', 'coup', 'dec'].includes(d.k)).slice(-8);
+  return { name: `${s.leader.n}, ${title}`, title, score, text, key, stats: { yrs, g, ap, firsts, crimes, laws: s.stats.laws, wars: s.stats.wars, annexed: s.stats.annexed } };
+}
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -4641,6 +4787,7 @@ ACT.edit = a => {
   else if (k0 === 'terr') { // regiones: terr.<índice>.<g|p|v|o|n>
     const t = c.terr[+k1], f = k.split('.')[2]; if (!t) return fail('Región inválida');
     if (f === 'o') { if (!S.c[v] || !S.c[v].alive) return fail('País inválido'); if (t.o !== v) { if (t.o !== a.iso) restoreTerr(a.iso, +k1); if (v !== a.iso) moveTerr(a.iso, +k1, v, 1); } }
+    else if (f === 'ter') { if (v && !D.TER[v]) return fail('Terreno inválido'); if (v) t.ter = v; else delete t.ter; }
     else if (f === 'v') t.v = !!v; else if (f === 'gob' || f === 'p' || f === 'n') t[f] = String(v).slice(0, 60); else return fail('Campo inválido');
   }
   else if (k === 'peace') { for (const w of S.wars.slice()) if (w.att.includes(a.iso) || w.def.includes(a.iso)) endWar(w, 'blanca'); }
@@ -4659,6 +4806,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
+    legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
     resInfo,
     occOf, occList, annexedList, occPol: z => S.occ[z] || 'normal',
@@ -4689,7 +4837,7 @@ WL.Game = {
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -4700,7 +4848,7 @@ WL.Game = {
   const VERT = `varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     void main(){ vPos=position; vec4 mv=modelViewMatrix*vec4(position,1.); vV=mv.xyz; vN=normalMatrix*normal; gl_Position=projectionMatrix*mv; }`;
   const EARTH = `precision highp float;
-    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime;
+    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime, uNight;
     varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     ${NOISE}
     vec2 idAt(vec2 t){ vec2 uv=(t+.5)/uSize; vec4 x=texture2D(uId,vec2(uv.x,clamp(uv.y,0.,1.))); return floor(vec2(x.r,x.a)*255.+.5); } // (país, provincia)
@@ -4737,7 +4885,7 @@ WL.Game = {
         float snow=smoothstep(.93,.985,abs(n.y)+elev*.05); base=mix(base,vec3(.88,.93,1.),snow*.75);
         col=base*(.4+.14*day+.8*d*day) + base*.2*pow(max(dot(Nb,V),0.),2.)*(1.-day);
         float city=smoothstep(.86,.95,noise(n*260.))*smoothstep(.5,.75,noise(n*27.))*(1.-day)*(1.-snow);
-        col+=vec3(1.,.8,.45)*city*.28;
+        col+=vec3(1.,.8,.45)*city*uNight;
         col*=mix(.6,1.,edgeP);
         col=mix(col*.38,col,edge);                                          // fronteras
         col+=base*.16*step(abs(id-uProv.x)+abs(pid.y-uProv.y),.5);          // provincia bajo el cursor
@@ -4780,6 +4928,14 @@ WL.Game = {
   const TH_V = `attribute float aPh, aS; attribute vec3 aCol; uniform float uTime, uScale; varying float vA; varying vec3 vC;
     void main(){ float t=fract(uTime*.5+aPh); vA=.35+.65*sin(t*3.14159); vC=aCol; vec4 mv=modelViewMatrix*vec4(position,1.); gl_PointSize=uScale*aS*(.7+.6*t)/-mv.z; gl_Position=projectionMatrix*mv; }`;
   const TH_F = `precision highp float; varying float vA; varying vec3 vC; void main(){ float d=length(gl_PointCoord-.5); float a=(smoothstep(.5,.42,d)*smoothstep(.3,.38,d)+smoothstep(.16,0.,d)*.9)*vA; gl_FragColor=vec4(vC*a,a); }`;
+  const AUR = `precision highp float; uniform vec3 uSun; uniform float uTime; varying vec3 vPos;
+    ${NOISE}
+    void main(){ vec3 n=normalize(vPos); float lat=abs(n.y), band=smoothstep(.78,.86,lat)*smoothstep(.97,.9,lat);
+      float w=noise(vec3(atan(n.z,n.x)*4.,uTime*.22,n.y*9.)), cur=pow(w,2.2)*band*smoothstep(.15,-.25,dot(n,uSun));
+      vec3 c=mix(vec3(.1,1.,.55),vec3(.65,.3,1.),smoothstep(.35,.85,w)); gl_FragColor=vec4(c*cur*1.3,cur); }`;
+  const BF_V = `attribute float aR; uniform float uT, uScale; varying float vA;
+    void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); vA=(1.-uT)*(.5+.5*aR); gl_PointSize=uScale*(1.2+2.4*aR)*(.6+uT*.9)/-mv.z; gl_Position=projectionMatrix*mv; }`;
+  const BF_F = `precision highp float; uniform vec3 uC0, uC1; uniform float uT; varying float vA; void main(){ float d=length(gl_PointCoord-.5), g=smoothstep(.5,0.,d); gl_FragColor=vec4(mix(uC0,uC1,uT)*g*vA, g*vA); }`;
   const MK_V = `uniform float uScale; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.); gl_PointSize=uScale; gl_Position=projectionMatrix*mv; }`;
   const MK_F = `precision highp float; void main(){ float d=length(gl_PointCoord-.5); float ring=smoothstep(.5,.42,d)*smoothstep(.26,.34,d)+smoothstep(.14,.08,d);
       gl_FragColor=vec4(vec3(.55,.9,1.),ring*.9); }`;
@@ -4796,7 +4952,7 @@ WL.Game = {
       renderer.setClearColor(0x02040a, 1);
       host.appendChild(renderer.domElement);
       const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(38, 1, .05, 200);
-      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun } };
+      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun }, uNight: { value: .5 } };
 
       // --- textura de IDs desde el PNG incrustado
       const img = new Image();
@@ -4819,7 +4975,8 @@ WL.Game = {
         }));
         scene.add(earth);
         const cloudU = Object.assign({ uFade: { value: 1 } }, U);
-        scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.009, 96, 48), new THREE.ShaderMaterial({ uniforms: cloudU, vertexShader: VERT, fragmentShader: CLOUD, transparent: true, depthWrite: false })));
+        const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(1.009, 96, 48), new THREE.ShaderMaterial({ uniforms: cloudU, vertexShader: VERT, fragmentShader: CLOUD, transparent: true, depthWrite: false })); scene.add(cloudMesh);
+        const aurora = new THREE.Mesh(new THREE.SphereGeometry(1.03, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: AUR, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(aurora);
         scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: ATMO, side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })));
         // estrellas
         { const n = 2600, p = new Float32Array(n * 3), c = new Float32Array(n * 3); let r = 7;
@@ -4914,6 +5071,19 @@ WL.Game = {
           const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('aPh', new THREE.BufferAttribute(ph, 1)); g.setAttribute('aS', new THREE.BufferAttribute(sz, 1)); g.setAttribute('aCol', new THREE.BufferAttribute(co, 3));
           thPts = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: thU, vertexShader: TH_V, fragmentShader: TH_F, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(thPts); };
 
+        // --- ráfagas de partículas por suceso (Fase 4): explosión, humo, ayuda, revolución, desastre, tormenta, sanción
+        const FXK = { exp: [0xffa040, 0x3a3634, 1.8, 46, .5], humo: [0x8a8a90, 0x2a2a2e, 3.2, 30, .18], ayuda: [0x7dffb0, 0x2a7a5a, 2.4, 26, .3], rev: [0xff3b30, 0xffc94a, 2.6, 40, .45], des: [0xb48cff, 0x40306a, 2.8, 36, .35], tormenta: [0xdfe8ff, 0x5a6a8a, 4, 54, .3], sanc: [0x9aa0aa, 0x30343a, 2.2, 24, .25], tratado: [0xffd36a, 0x7a5a1a, 2.4, 34, .35] };
+        const bursts = []; let fxScale = 1, skip = 1, fc = 0;
+        G.fx = (kind, lat, lon) => { if (bursts.length > 14 || lat == null) return; const K = FXK[kind] || FXK.exp, n = Math.max(6, Math.round(K[3] * fxScale)), c = ll2v(lat, lon, 1.013), up = c.clone().normalize();
+          const t1 = new THREE.Vector3().crossVectors(up, new THREE.Vector3(0, 1, 0)).normalize(), t2 = new THREE.Vector3().crossVectors(up, t1).normalize(), pos = new Float32Array(n * 3), vel = [], ar = new Float32Array(n);
+          for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, r = Math.random(); ar[i] = Math.random(); pos[i * 3] = c.x; pos[i * 3 + 1] = c.y; pos[i * 3 + 2] = c.z;
+            vel.push(t1.clone().multiplyScalar(Math.cos(a) * r * K[4] * .05).addScaledVector(t2, Math.sin(a) * r * K[4] * .05).addScaledVector(up, (kind === 'humo' ? .03 : .012) * Math.random())); }
+          const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aR', new THREE.BufferAttribute(ar, 1));
+          const u = { uT: { value: 0 }, uScale: fxU.uScale, uC0: { value: new THREE.Color(K[0]) }, uC1: { value: new THREE.Color(K[1]) } }, m = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: u, vertexShader: BF_V, fragmentShader: BF_F, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+          scene.add(m); bursts.push({ m, u, vel, c, up, kind, t0: performance.now(), life: K[2] * 1000 }); };
+        G.setQuality = (q, rm) => { renderer.setPixelRatio(Math.min(devicePixelRatio || 1, q === 'high' ? 2 : q === 'med' ? 1.5 : 1)); G.resize(); cloudMesh.visible = q !== 'low'; aurora.visible = q === 'high';
+          U.uNight.value = q === 'low' ? .32 : .55; fxScale = q === 'low' ? .35 : q === 'med' ? .7 : 1; skip = q === 'low' ? 2 : 1; G.rm = !!rm; if (rm) G.spin = false; };
+
         // --- API de pintado
         const idx = iso => (C[iso] || {}).idx || 0;
         // over = { iso: { nºprovincia: color } } para las provincias ocupadas por otro país
@@ -4933,7 +5103,7 @@ WL.Game = {
 
         let last = performance.now();
         function frame(now) {
-          requestAnimationFrame(frame);
+          requestAnimationFrame(frame); if (skip > 1 && (++fc % skip)) return; // calidad baja: 30 fps
           const dt = Math.min(.05, (now - last) / 1000); last = now; U.uTime.value += dt;
           if (G.spin) tgt.lon += dt * 4;
           let dl = ((tgt.lon - cur.lon + 540) % 360) - 180; const k = 1 - Math.pow(.0015, dt);
@@ -4943,6 +5113,8 @@ WL.Game = {
           const sa = U.uTime.value * .02 + 1.2; sun.set(Math.cos(sa), .28, Math.sin(sa)).normalize();
           cloudU.uFade.value = Math.max(.12, Math.min(1, (cur.dist - 1.5) / 1.3));
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
+          for (let i = bursts.length - 1; i >= 0; i--) { const b = bursts[i], t = (now - b.t0) / b.life; if (t >= 1) { scene.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); continue; }
+            b.u.uT.value = t; const P = b.m.geometry.attributes.position; for (let j = 0; j < b.vel.length; j++) { const v = b.vel[j]; if (b.kind === 'tormenta') v.applyAxisAngle(b.up, dt * 1.6); P.array[j * 3] += v.x * dt; P.array[j * 3 + 1] += v.y * dt; P.array[j * 3 + 2] += v.z * dt; v.multiplyScalar(1 - dt * .6); } P.needsUpdate = true; }
           for (const m of thArrows) m.userData.u.uHead.value = ((U.uTime.value * .4 + m.userData.ph) % 1) * 1.25;
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
           if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }
@@ -5078,34 +5250,124 @@ function closeModal() { $('#modal').hidden = true; $('#modal').innerHTML = ''; U
 H.closeModal = closeModal;
 
 
+/* ---------- ui/12-cfg.js ---------- */
+/* =====================================================================
+   INTERFAZ · AJUSTES DEL JUGADOR (Fase 4). Se guardan en este navegador,
+   no en la partida: calidad gráfica, reducir movimiento, volúmenes por
+   canal, silencio total, portada del periódico y cámara cinematográfica.
+   ===================================================================== */
+const CFG = (() => {
+  const def = { q: 'auto', rm: !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches), mute: false, vol: { master: .8, music: .45, sfx: .8, amb: .3, ui: .5 }, paper: true, cine: true, hover: true, observer: false };
+  let c = Object.assign({}, def, { vol: Object.assign({}, def.vol) });
+  try { const s = JSON.parse(localStorage.getItem('wl_cfg') || 'null'); if (s) c = Object.assign({}, def, s, { vol: Object.assign({}, def.vol, s.vol || {}) }); else if (localStorage.getItem('wl_snd') === '0') c.mute = true; } catch (e) { }
+  return c;
+})();
+const cfgSave = () => { try { localStorage.setItem('wl_cfg', JSON.stringify(CFG)); } catch (e) { } };
+const quality = () => CFG.q !== 'auto' ? CFG.q : innerWidth < 760 || (navigator.hardwareConcurrency || 4) <= 4 ? 'med' : 'high';
+function applyCfg() { const b = document.body; if (!b) return; b.classList.toggle('rm', !!CFG.rm); b.dataset.q = quality(); try { Globe.setQuality(quality(), CFG.rm); } catch (e) { } if (typeof Sfx !== 'undefined') Sfx.mix(); }
+
+
 /* ---------- ui/15-sound.js ---------- */
 /* =====================================================================
-   INTERFAZ · sonido sintetizado (WebAudio, sin archivos). El contexto de
-   audio solo puede arrancar tras un gesto del usuario: el primer clic.
+   INTERFAZ · AUDIO PROCEDURAL (Web Audio, sin archivos ni música ajena).
+   Mezclador por canales (música, efectos, ambiente, interfaz), efectos
+   sintetizados, ambiente del globo y música adaptativa original por capas
+   (pad, bajo, arpegio, percusión, melodía) según el estado del mundo.
+   El audio solo arranca tras el primer gesto del usuario.
    ===================================================================== */
 const Sfx = (() => {
-  let ctx = null, on = true; try { on = localStorage.getItem('wl_snd') !== '0'; } catch (e) { }
-  const ac = () => { if (!ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; ctx = new A(); } if (ctx.state === 'suspended') ctx.resume(); return ctx; };
-  function tone(f, t0, dur, type, vol, f2) {
-    const t = ctx.currentTime + t0, o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
-    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + dur + .05);
-  }
-  const seq = (fs, step, dur, type, vol) => fs.forEach((f, i) => tone(f, i * step, dur, type, vol));
-  const P = {
-    click: () => tone(920, 0, .045, 'triangle', .035), ok: () => seq([660, 990], .08, .16, 'sine', .05), bad: () => tone(190, 0, .26, 'sawtooth', .045, 120),
-    turn: () => seq([262, 330, 392, 523], .09, .55, 'triangle', .055), war: () => { tone(72, 0, 1, 'sawtooth', .11, 40); tone(55, .28, 1, 'square', .07, 36); },
-    treaty: () => seq([523, 659, 784], .12, .7, 'sine', .055), peace: () => seq([392, 523, 659], .14, .8, 'sine', .05), vote: () => tone(440, 0, .32, 'triangle', .05, 660),
-    coup: () => { tone(110, 0, .5, 'square', .07, 55); tone(104, .3, .7, 'sawtooth', .07, 49); }, tech: () => seq([523, 784, 1047, 1568], .07, .4, 'sine', .045), event: () => seq([440, 415], .18, .4, 'triangle', .05)
+  let ctx = null, bus = null, nbuf = null, amb = null, timer = null;
+  const M = { mood: 'paz', want: 'paz', step: 0, next: 0, layer: {}, seed: 7 };
+  const MOODS = {
+    paz: { bpm: 72, prog: [[0, 4, 7], [9, 12, 16], [5, 9, 12], [7, 11, 14]], sc: [0, 2, 4, 7, 9], L: { pad: .9, bass: .45, arp: .45, perc: 0, lead: .35 } },
+    tension: { bpm: 88, prog: [[0, 3, 7], [8, 12, 15], [3, 7, 10], [10, 14, 17]], sc: [0, 3, 5, 7, 10], L: { pad: .75, bass: .7, arp: .7, perc: .3, lead: .2 } },
+    crisis: { bpm: 96, prog: [[0, 3, 7], [1, 5, 8], [0, 3, 7], [7, 11, 14]], sc: [0, 1, 3, 7, 8], L: { pad: .65, bass: .9, arp: .8, perc: .55, lead: 0 } },
+    guerra: { bpm: 104, prog: [[0, 3, 7], [10, 14, 17], [8, 12, 15], [7, 11, 14]], sc: [0, 3, 5, 7, 8], L: { pad: .6, bass: 1, arp: .55, perc: 1, lead: .3 } },
+    victoria: { bpm: 96, prog: [[0, 4, 7], [5, 9, 12], [7, 11, 14], [0, 4, 7]], sc: [0, 2, 4, 7, 9], L: { pad: 1, bass: .7, arp: .8, perc: .5, lead: .6 } },
+    derrota: { bpm: 60, prog: [[0, 3, 7], [5, 8, 12], [0, 3, 7], [7, 10, 14]], sc: [0, 3, 5, 7, 10], L: { pad: 1, bass: .5, arp: .2, perc: 0, lead: .3 } }
   };
+  const hz = (semi, oct) => 146.83 * Math.pow(2, semi / 12 + (oct || 0)); // re3
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC();
+    const master = ctx.createGain(), comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination); bus = { master };
+    for (const k of ['music', 'sfx', 'amb', 'ui']) { bus[k] = ctx.createGain(); bus[k].connect(master); }
+    const rv = ctx.createConvolver(), rg = ctx.createGain(), n = ctx.sampleRate * 2.4, b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+    rv.buffer = b; rg.gain.value = .28; rv.connect(rg); rg.connect(master); bus.rev = rv;
+    for (const k of ['pad', 'bass', 'arp', 'perc', 'lead']) { M.layer[k] = ctx.createGain(); M.layer[k].gain.value = 0; M.layer[k].connect(bus.music); }
+    mix(); return ctx;
+  }
+  function mix() { if (!bus) return; const v = CFG.vol, t = ctx.currentTime; bus.master.gain.setTargetAtTime(CFG.mute ? 0 : v.master, t, .05); for (const k of ['music', 'sfx', 'amb', 'ui']) bus[k].gain.setTargetAtTime(v[k], t, .05); music(); }
+  const noise = () => { if (!nbuf) { const n = ctx.sampleRate * 2; nbuf = ctx.createBuffer(1, n, ctx.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; } return nbuf; };
+  function tone(dst, f, t0, dur, type, vol, f2, rev, att) { const t = ctx.currentTime + t0, o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + (att || .012)); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g); g.connect(dst); if (rev) g.connect(bus.rev); o.start(t); o.stop(t + dur + .05); }
+  function nz(dst, t0, dur, vol, fq, q, type, f2) { const t = ctx.currentTime + t0, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noise(); f.type = type || 'bandpass'; f.frequency.setValueAtTime(fq, t); if (f2) f.frequency.exponentialRampToValueAtTime(f2, t + dur); f.Q.value = q || 1;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); s.connect(f); f.connect(g); g.connect(dst); s.start(t, Math.random() * 1.5); s.stop(t + dur + .05); }
+  const seq = (dst, fs, step, dur, type, vol, rev) => fs.forEach((f, i) => tone(dst, f, i * step, dur, type, vol, 0, rev));
+  const boom = t0 => { tone(bus.sfx, 90, t0, .9, 'sine', .22, 32); nz(bus.sfx, t0, .8, .3, 400, .7, 'lowpass', 60); };
+  const quill = () => { for (let i = 0; i < 6; i++) nz(bus.sfx, i * .07, .06, .05, 3500 + Math.random() * 2000, 4); };
+  const gavel = t0 => { tone(bus.sfx, 150, t0, .12, 'sine', .2, 90); nz(bus.sfx, t0, .05, .15, 1800, 2); };
+  const brass = (ch, t0, dur) => ch.forEach(s => { const t = ctx.currentTime + t0, o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = hz(s, 1); f.type = 'lowpass'; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2600, t + .12);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.045, t + .05); g.gain.setValueAtTime(.045, t + dur * .7); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(f); f.connect(g); g.connect(bus.sfx); g.connect(bus.rev); o.start(t); o.stop(t + dur + .05); });
+  const fanfare = () => { brass([0, 4, 7], 0, .4); brass([5, 9, 12], .4, .4); brass([7, 11, 14], .8, .4); brass([12, 16, 19], 1.2, 1.5); tone(bus.sfx, 73, 1.2, 1.4, 'sine', .15, 0, 1); };
+  const P = {
+    click: () => tone(bus.ui, 920, 0, .04, 'triangle', .05), hover: () => tone(bus.ui, 1600, 0, .025, 'sine', .012),
+    ok: () => seq(bus.ui, [660, 990], .07, .15, 'sine', .07), bad: () => { tone(bus.ui, 196, 0, .22, 'sawtooth', .06, 130); tone(bus.ui, 185, .08, .2, 'square', .03, 120); },
+    coin: () => seq(bus.ui, [1318, 1760], .06, .2, 'triangle', .05),
+    turn: () => { seq(bus.sfx, [262, 330, 392, 523], .09, .6, 'triangle', .06, 1); nz(bus.sfx, 0, .6, .04, 3000, .7, 'highpass'); },
+    war: () => { tone(bus.sfx, 72, 0, 1.2, 'sawtooth', .13, 40); tone(bus.sfx, 55, .28, 1.2, 'square', .08, 36); boom(.1); boom(.6); },
+    treaty: () => { quill(); seq(bus.sfx, [523, 659, 784, 1047], .12, .8, 'sine', .06, 1); }, peace: () => seq(bus.sfx, [392, 523, 659, 784], .15, 1, 'sine', .06, 1),
+    vote: () => { gavel(0); gavel(.2); tone(bus.sfx, 440, .4, .4, 'triangle', .05, 660); },
+    coup: () => { tone(bus.sfx, 110, 0, .6, 'square', .08, 55); tone(bus.sfx, 104, .3, .8, 'sawtooth', .08, 49); for (let i = 0; i < 10; i++) nz(bus.sfx, .9 + i * .06, .08, .12, 220, 1, 'lowpass'); },
+    tech: () => seq(bus.sfx, [523, 784, 1047, 1568], .07, .5, 'sine', .055, 1), event: () => seq(bus.sfx, [440, 415], .18, .45, 'triangle', .06),
+    battle: () => { for (let i = 0; i < 4; i++) boom(i * .22 + Math.random() * .1); nz(bus.sfx, 0, 1.2, .06, 2500, .5, 'highpass'); },
+    news: () => { for (let i = 0; i < 8; i++) tone(bus.sfx, 1800 + (i % 2) * 300, i * .05, .03, 'square', .02); },
+    alert: () => seq(bus.sfx, [880, 660], .12, .2, 'square', .035), alertHi: () => seq(bus.sfx, [988, 740, 988, 740], .12, .18, 'sawtooth', .045),
+    fanfare, inaug: fanfare, elecWin: fanfare, elecLose: () => seq(bus.sfx, [392, 349, 311, 262], .3, .9, 'triangle', .06, 1),
+    crisis: () => { tone(bus.sfx, 330, 0, 1.6, 'sawtooth', .05, 110); tone(bus.sfx, 311, .1, 1.6, 'sawtooth', .04, 104); nz(bus.sfx, 0, 1.6, .05, 800, 2, 'bandpass', 150); },
+    over: () => seq(bus.sfx, [262, 247, 220, 196, 147], .35, 1.4, 'triangle', .07, 1)
+  };
+  /* ---- música adaptativa: un secuenciador con 0,25 s de margen ---- */
+  const rnd = () => (M.seed = (M.seed * 16807) % 2147483647) / 2147483647;
+  function musicStep(i, t) {
+    const md = MOODS[M.mood], bar = Math.floor(i / 16), st = i % 16, ch = md.prog[bar % md.prog.length], sp = 60 / md.bpm / 4, L = M.layer;
+    const v = (dst, f, dur, type, vol, att, cut) => { const o = ctx.createOscillator(), g = ctx.createGain(); let out = g; o.type = type; o.frequency.value = f;
+      if (cut) { const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = cut; o.connect(fl); fl.connect(g); } else o.connect(g);
+      g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + (att || .01)); g.gain.exponentialRampToValueAtTime(.0001, t + dur); out.connect(dst); out.connect(bus.rev); o.start(t); o.stop(t + dur + .05); };
+    if (st === 0) ch.forEach((s, k) => { v(L.pad, hz(s, 0), sp * 16 * 1.05, 'sawtooth', .022, sp * 5, 700 + 300 * k); v(L.pad, hz(s, 0) * 1.004, sp * 16, 'triangle', .02, sp * 6); });
+    if (st === 0 || st === 8 || (md.L.perc > .5 && (st === 6 || st === 14))) v(L.bass, hz(ch[0], -1), sp * 3.5, 'triangle', .11, .01);
+    if (st % 2 === 0 && md.L.arp > .3) v(L.arp, hz(ch[(st / 2) % 3], 1 + (st % 8 === 6 ? 1 : 0)), sp * 1.6, 'triangle', .035, .005);
+    if (md.L.perc) { if (st === 0 || st === 8 || (M.mood === 'guerra' && st % 4 === 0)) { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + .25); g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.0001, t + .3); o.connect(g); g.connect(L.perc); o.start(t); o.stop(t + .35); }
+      if (st % 2 === 1) { const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = noise(); f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(.025, t); g.gain.exponentialRampToValueAtTime(.0001, t + .05); s.connect(f); f.connect(g); g.connect(L.perc); s.start(t, rnd()); s.stop(t + .07); } }
+    if (st % 4 === 0 && md.L.lead && rnd() < .38) v(L.lead, hz(md.sc[Math.floor(rnd() * md.sc.length)] + (rnd() < .3 ? 12 : 0), 1), sp * 3, 'sine', .04, .02);
+  }
+  function tick() { if (!ctx) return; const now = ctx.currentTime; if (M.next < now) M.next = now + .05;
+    while (M.next < now + .25) { if (M.step % 16 === 0 && M.want !== M.mood) { M.mood = M.want; for (const k in M.layer) M.layer[k].gain.setTargetAtTime(MOODS[M.mood].L[k], M.next, 1.2); }
+      musicStep(M.step, M.next); M.next += 60 / MOODS[M.mood].bpm / 4; M.step++; } }
+  function music() { const on = ctx && !CFG.mute && CFG.vol.music > .01 && CFG.vol.master > .01 && !document.hidden && UI.screen === 'game';
+    if (on && !timer) { for (const k in M.layer) M.layer[k].gain.setTargetAtTime(MOODS[M.mood].L[k], ctx.currentTime, 1.5); timer = setInterval(tick, 60); }
+    else if (!on && timer) { clearInterval(timer); timer = null; for (const k in M.layer) M.layer[k].gain.setTargetAtTime(0, ctx.currentTime, .3); }
+    ambient(on && CFG.vol.amb > .01); }
+  function ambient(on) { if (on && !amb && ctx) { const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain(); s.buffer = noise(); s.loop = true; f.type = 'lowpass'; f.frequency.value = 520; lfo.frequency.value = .07; lg.gain.value = 260; lfo.connect(lg); lg.connect(f.frequency);
+      g.gain.value = .0001; g.gain.setTargetAtTime(.09, ctx.currentTime, 2); s.connect(f); f.connect(g); g.connect(bus.amb); s.start(); lfo.start(); amb = { s, lfo, g }; }
+    else if (!on && amb) { const a = amb; amb = null; a.g.gain.setTargetAtTime(.0001, ctx.currentTime, .3); setTimeout(() => { try { a.s.stop(); a.lfo.stop(); } catch (e) { } }, 1200); } }
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else { ctx.resume(); } music(); }); // sin pestaña visible, sin sonido ni CPU
   return {
-    play(n) { if (!on || !P[n]) return; try { if (ac()) P[n](); } catch (e) { } },
-    get on() { return on; },
-    toggle() { on = !on; try { localStorage.setItem('wl_snd', on ? '1' : '0'); } catch (e) { } this.play('ok'); return on; }
+    play(n) { if (CFG.mute || !P[n]) return; try { if (init()) P[n](); } catch (e) { } },
+    unlock() { try { if (init()) music(); } catch (e) { } },
+    mix() { try { if (ctx) mix(); } catch (e) { } },
+    mood(m) { if (MOODS[m]) M.want = m; }, get moodNow() { return M.want; },
+    get on() { return !CFG.mute; },
+    toggle() { CFG.mute = !CFG.mute; cfgSave(); this.mix(); if (!CFG.mute) this.play('ok'); return !CFG.mute; },
+    refresh() { try { if (ctx) music(); } catch (e) { } }
   };
 })();
-['turn', 'war', 'treaty', 'peace', 'vote', 'coup', 'tech'].forEach(k => Bus.on(k, () => Sfx.play(k)));
+['turn', 'war', 'treaty', 'peace', 'vote', 'coup', 'tech', 'battle'].forEach(k => Bus.on(k, () => Sfx.play(k)));
 Bus.on('toast', t => Sfx.play(t.ok === false ? 'bad' : 'ok'));
 document.addEventListener('click', e => { if (e.target.closest('[data-a]')) Sfx.play('click'); }, true);
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, () => Sfx.unlock(), { capture: true, passive: true })); // el navegador solo deja sonar tras un gesto
+let hoverT = 0; document.addEventListener('pointerover', e => { if (!CFG.hover || e.pointerType !== 'mouse') return; const b = e.target.closest && e.target.closest('button[data-a]'); if (b && performance.now() - hoverT > 70) { hoverT = performance.now(); Sfx.play('hover'); } });
 H.sound = () => { Sfx.toggle(); UI.render(); };
 
 
@@ -6520,6 +6782,244 @@ H.edW = d => { const a = { op: d.op, w: d.w, g: d.g, v: d.v };
 KEYS.push(['G', 'Sala de guerra'], ['L', 'Logística de guerra']);
 document.addEventListener('keydown', e => { if (UI.screen !== 'game' || e.ctrlKey || e.metaKey || e.altKey || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName || '') || !$('#modal').hidden) return;
   if (e.key === 'g' || e.key === 'G') H.warRoom(); else if (e.key === 'l' || e.key === 'L') { UI.tab.mil = 'log'; UI.panel = 'mil'; UI.render(); } });
+
+
+/* ---------- ui/5b-feel.js ---------- */
+/* =====================================================================
+   INTERFAZ · FASE 4: PULIDO, SONIDO Y "GAME FEEL"
+   Ajustes, música según el estado del mundo, capas de mapa con
+   transición, efectos por suceso, modo observador, intro y momentos
+   clave, números que cuentan, periódico por turno, ayuda táctil,
+   glosario, asesores, diario y legado, ranuras de guardado con
+   recuperación, manejo de errores y editor de pruebas.
+   ===================================================================== */
+const LL = iso => { const c = D.C[iso]; return c ? [c.lat, c.lon] : null; };
+const fxAt = (kind, iso) => { const p = LL(iso); if (p) Globe.fx(kind, p[0], p[1]); };
+const fxReg = (kind, k) => { try { const g = Q.rGeo(k); Globe.fx(kind, g.la, g.lo); } catch (e) { } };
+
+/* ---------- arranque, errores y render a prueba de fallos ---------- */
+applyCfg();
+{ const qT = setInterval(() => { if (!Globe.ready) return; clearInterval(qT); applyCfg(); wrapPaint(); }, 400); }
+let errT = 0;
+function softError(msg) { if (Date.now() - errT < 4000) return; errT = Date.now(); console.error('[World Leader]', msg);
+  const d = document.createElement('div'); d.className = 'errcard glass'; d.innerHTML = `${ic('bad')}<div><b>Algo falló, pero tu partida está a salvo.</b><small>${esc(String(msg).slice(0, 140))}</small></div><button class="btn sm gold" data-a="recover">Recuperar</button>`;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 12000); }
+window.addEventListener('error', e => softError(e.message || 'Error desconocido'));
+window.addEventListener('unhandledrejection', e => softError((e.reason && e.reason.message) || 'Promesa rechazada'));
+H.recover = () => { document.querySelectorAll('.errcard').forEach(x => x.remove()); SQ.length = 0; sqRun = false; UI.busy = false; UI.turnBuf = null; UI.cineEnd = null; const c = $('#cine'); if (c) c.hidden = true; closeModal(); UI.panel = null; UI.render(); refreshMap(); if (S() && S().pend.length) showPending(); };
+{ const r0 = UI.render; UI.render = () => { try { r0(); } catch (e) { softError('Pantalla: ' + e.message); } try { Sfx.refresh(); afterRender(); } catch (e) { } }; }
+
+/* ---------- música adaptativa: el estado del mundo decide la banda sonora ---------- */
+function moodNow() { const s = S(); if (!s || UI.screen !== 'game') return 'paz'; if (s.over) return 'derrota'; const p = me(), w = Q.warsOf(p);
+  if (w.length) return Q.warScoreFor(p) > 40 ? 'victoria' : 'guerra'; const c = CC(p), a = Q.alerts();
+  if ((s.eco && s.eco.cri) || c.stab < 30 || Q.approval() < 28 || c.tr < -c.gdp * .1) return 'crisis';
+  if (a.some(x => x.p >= 4) || (s.war3 && s.war3.alert >= 2) || Q.deterrence().some(d => d.risk === 'alto')) return 'tension'; return 'paz'; }
+let moodLock = 0; const setMood = () => { if (Date.now() > moodLock) Sfx.mood(moodNow()); };
+Bus.on('turn', setMood); Bus.on('state', () => { clearTimeout(UI.moodT); UI.moodT = setTimeout(setMood, 400); });
+Bus.on('peace', p => { if (S() && (p.a === me() || p.d === me())) { Sfx.mood('victoria'); moodLock = Date.now() + 20000; } });
+Bus.on('over', () => { Sfx.mood('derrota'); Sfx.play('over'); moodLock = Date.now() + 1e9; });
+Bus.on('election', e => Sfx.play(e.win ? 'elecWin' : 'elecLose'));
+
+/* ---------- capas del mapa: recursos y estabilidad, transición animada, leyenda, países sancionados apagados ---------- */
+Object.assign(MODES, { rec: 'Recursos', est: 'Estabilidad' });
+Object.assign(LEGEND, { rec: 'Riqueza en materias primas: de gris (nada) a ámbar (potencia minera)', est: 'Estabilidad: rojo (al borde del colapso) → verde (sólido)' });
+{ const c0 = colorOf; colorOf = (iso, mode, ctx) => { const c = CC(iso);
+  let col = mode === 'rec' ? ramp([[60, 64, 76], [96, 92, 70], [196, 150, 60], [255, 206, 90]], Object.values(c.rec || {}).reduce((a, b) => a + b, 0) / 14)
+    : mode === 'est' ? ramp([[200, 40, 40], [220, 150, 60], [200, 200, 90], [70, 190, 120]], c.stab / 100) : c0(iso, mode, ctx);
+  if ((mode === 'pol' || mode === 'rel') && iso !== me() && S()) { const n = S().sanc.filter(x => x.on === iso).length; if (Q.sanctioned(me(), iso) || n >= 3) col = col.map(v => v * (Q.sanctioned(me(), iso) ? .42 : .65)); } // sancionados: «apagados»
+  return col; }; }
+function wrapPaint() { const gp = Globe.paint; let last = null, lastMode = null, raf = 0;
+  Globe.paint = (cols, wars, over) => { cancelAnimationFrame(raf); if (CFG.rm || !last || lastMode === UI.mode) { gp(cols, wars, over); last = cols; lastMode = UI.mode; return; }
+    const from = last, t0 = performance.now(); lastMode = UI.mode; last = cols;
+    const step = now => { const k = Math.min(1, (now - t0) / 420), e = k * (2 - k), mix = {}; for (const i in cols) { const a = from[i] || cols[i], b = cols[i]; mix[i] = [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e, a[2] + (b[2] - a[2]) * e]; } gp(mix, wars, over); if (k < 1) raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step); };
+  refreshMap(); }
+const LGRAD = { pol: 'linear-gradient(90deg,#6a7aa0,#a0768a,#7aa08a,#e2b43a)', rel: 'linear-gradient(90deg,#cd342c,#d6963e,#b0aa60,#46be78)', mil: 'linear-gradient(90deg,#2c285c,#783c96,#d6546e,#ffa03c)', eco: 'linear-gradient(90deg,#1a3442,#24787c,#46c4a0,#d6fad0)', blo: 'linear-gradient(90deg,#3f72dc,#e0564a,#5fe3a1,#545c6c)', rec: 'linear-gradient(90deg,#3c404c,#605c46,#c4963c,#ffce5a)', est: 'linear-gradient(90deg,#c82828,#dc963c,#c8c85a,#46be78)' };
+{ const h0 = hudHTML; hudHTML = () => { const s = S(), c = CC(me()), f = s.fin || Q.finance(), g = Q.govInfo(), pol = s.pol, top = (o, N) => Object.keys(o).filter(k => o[k] > .05).sort((a, b) => o[b] - o[a]).slice(0, 3).map(k => `${N[k] || k} ${money(o[k])}`).join(', ');
+  const worst = Object.keys(pol.sec).sort((a, b) => pol.sec[a].a - pol.sec[b].a).slice(0, 3).map(k => `${D.SECTORS[k].n} ${Math.round(pol.sec[k].a)}`).join(', ');
+  const T = { 'Caja del Estado y saldo por turno': `Caja del Estado. Este turno entra ${money(f.ti)} (${top(f.inc, INN)}) y sale ${money(f.te)} (${top(f.exp, EXN)}).`,
+    'Capital político: lo gastas en casi todo': `Capital político: ${pol.cp} de 12. Cada turno: ${g.parts.map(x => x[0] + ' ' + sgn(x[1])).join(', ')}.`,
+    'Aprobación ponderada de los sectores': `Aprobación ponderada por el peso de cada sector. Los que menos te quieren: ${worst}. Mira Política → Sectores para ver por qué.`,
+    'Estabilidad: por debajo de 30 hay ruido de sables': `Estabilidad ${Math.round(c.stab)} (tiende a ${Math.round(c.stab0)}). ${Q.inWar(me()) ? 'La guerra la erosiona. ' : ''}${s.sanc.filter(x => x.on === me()).length ? 'Las sanciones la erosionan. ' : ''}Por debajo de 30 hay ruido de sables.` };
+  let h = h0(); for (const k in T) h = h.split(`title="${k}"`).join(`title="${esc(T[k])}"`);
+  return h.replace('<small class="legend">', `<small class="legend"><i class="lg" style="background:${LGRAD[UI.mode] || LGRAD.pol}"></i>`).replace('<div class="hud-date">', `<button class="sndbtn hud-adv" data-a="open" data-p="adv" aria-label="Asesores" title="Consejo de asesores">${gi('min')}</button><div class="hud-date">`); }; }
+
+/* ---------- efectos en el globo para cada tipo de suceso ---------- */
+Bus.on('war', w => { fxAt('exp', w.d); setTimeout(() => fxAt('humo', w.d), 600); });
+Bus.on('battle', () => { const L = S().blog.filter(b => b.t === S().turn).slice(-3); L.forEach((b, i) => setTimeout(() => { fxReg('exp', b.k); fxReg('humo', b.k); }, i * 500)); });
+Bus.on('coup', c => fxAt('rev', c.iso)); Bus.on('treaty', t => { fxAt('tratado', t.a); fxAt('tratado', t.b); }); Bus.on('annex', a => { fxAt('exp', a.v); fxAt('rev', a.v); });
+Bus.on('news', n => { if (!n.i || !S()) return; const x = n.x;
+  if (/ayuda humanitaria|voluntarios|acogerlos|rescate/i.test(x)) fxAt('ayuda', n.i); else if (/sanciona|embargo/i.test(x)) fxAt('sanc', n.i);
+  else if (/huracán|tormenta|inundaci|ola de calor|sequía|monzón/i.test(x)) fxAt('tormenta', n.i); else if (/terremoto|erupción|plaga|pandemia|apagón|ciberataque/i.test(x)) fxAt('des', n.i);
+  else if (/protestas|huelga|revoluci|motín|disturbios|levantamiento|golpe/i.test(x)) fxAt('rev', n.i);
+  if (n.i === me() && n.p >= 3 && n.k === 'eco' && /crisis|corralito|quiebra|colapso|recesión/i.test(x)) { Sfx.play('crisis'); scene(cineScene(banner('war', 'eco', 'Crisis financiera', esc(x), 'Los mercados huyen de tu país'), 3200)); } });
+
+/* ---------- modo observador: la cámara recorre lo que pasó en el mundo ---------- */
+function observe(done) { const s = S(), t = s.turn - 1, seen = new Set(), L = [];
+  for (const n of s.news.slice().reverse()) { const nt = n.tk != null ? n.tk : n.t; if (nt !== t || !n.i || n.p < 2 || seen.has(n.i) || !CC(n.i)) continue; seen.add(n.i); L.push(n); if (L.length >= 7) break; }
+  if (!L.length) { if (done) done(); return toast('Un trimestre tranquilo: nada que recorrer'); }
+  const box = document.createElement('div'); box.className = 'obs'; box.innerHTML = `<div class="obs-cap glass"><small class="eyebrow">Modo observador · ${esc(Q.dateStr())}</small><b></b><button class="btn sm ghost" data-a="obsStop">Saltar</button></div>`; document.body.appendChild(box);
+  let i = 0, stop = false; UI.obsStop = () => { stop = true; };
+  const next = () => { if (stop || i >= L.length) { box.remove(); UI.obsStop = null; Globe.focus(me(), 2.5); if (done) done(); return; }
+    const n = L[i++]; Globe.focus(n.i, 2.15); box.querySelector('b').innerHTML = `${fl(n.i)} ${esc(n.x)}`; box.classList.remove('in'); void box.offsetWidth; box.classList.add('in');
+    setTimeout(() => { fxAt(n.k === 'war' ? 'exp' : n.k === 'peace' || n.k === 'dip' ? 'tratado' : n.k === 'coup' ? 'rev' : 'ayuda', n.i); }, 700); if (n.p >= 3) Sfx.play('news'); setTimeout(next, CFG.rm ? 1800 : 2800); };
+  next(); }
+H.observe = () => observe(); H.obsStop = () => UI.obsStop && UI.obsStop();
+Bus.on('turn', () => { if (CFG.observer) scene(done => observe(done)); });
+
+/* ---------- intro cinematográfica y toma de posesión ---------- */
+function intro() { let seen = false; try { seen = !!sessionStorage.getItem('wl_intro'); } catch (e) { } if (seen || CFG.rm || UI.screen !== 'start') return;
+  const d = document.createElement('div'); d.className = 'intro'; d.dataset.a = 'introEnd';
+  d.innerHTML = `<div class="in-stars"></div><div class="in-t"><p class="eyebrow">Una simulación de poder mundial</p><h1>${'WORLD LEADER'.split('').map((ch, i) => `<span style="animation-delay:${.15 + i * .07}s">${ch === ' ' ? '&nbsp;' : ch}</span>`).join('')}</h1><p class="in-sub">197 países · 1 sillón · todas las consecuencias</p><small class="in-tap">Toca para empezar</small></div>`;
+  document.body.appendChild(d); setTimeout(() => H.introEnd(true), 6500); }
+H.introEnd = quiet => { const d = $('.intro'); if (!d) return; try { sessionStorage.setItem('wl_intro', '1'); } catch (e) { } if (!quiet) Sfx.play('inaug'); d.classList.add('out'); setTimeout(() => d.remove(), 700); };
+setTimeout(intro, 50);
+{ const g0 = H.ngGo; H.ngGo = d => { g0(d); const s = S(); if (!s || UI.screen !== 'game' || s.turn !== 0) return; Sfx.play('inaug');
+  let tut = false; try { tut = !localStorage.getItem('wl_tut'); } catch (e) { } if (tut) closeModal(); // el tutorial espera a que termine la ceremonia
+  scene(cineScene(banner('peace', 'cp', 'Toma de posesión', esc(s.leader.n), `${fl(me())} ${cname(me())} · ${esc(Q.dateStr())} · ${esc(D.REGIMES[CC(me()).reg] || '')}`), 3600));
+  if (tut) scene(done => { tutorial(0); done(); }); }; }
+
+/* ---------- números que cuentan, periódico por turno y fin de turno ---------- */
+function countUp(el, to, fmt, ms) { if (!el || CFG.rm) return; const t0 = performance.now(); const step = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(to * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
+let prevHud = null;
+function afterRender() { if (!S() || UI.screen !== 'game') { prevHud = null; return; } const c = CC(me()), b = document.querySelectorAll('.hud-stats .stat b');
+  if (prevHud && b[0] && Math.abs(prevHud.tr - c.tr) > .05 && !CFG.rm) { const from = prevHud.tr, to = c.tr, el = b[0], t0 = performance.now(); const step = now => { const k = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - k, 3); el.textContent = money(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); el.parentNode.parentNode.classList.add(to >= from ? 'pulse-up' : 'pulse-down'); }
+  prevHud = { tr: c.tr }; }
+Bus.on('turn', () => { setTimeout(() => { document.querySelectorAll('.tf-deltas b').forEach(el => { const m = el.textContent.match(/^([+−-]?)([^0-9]*)([0-9.,]+)(.*)$/); if (!m) return; const n = parseFloat(m[3].replace(',', '.')), dec = (m[3].split('.')[1] || '').length; countUp(el, n, v => m[1] + m[2] + v.toFixed(dec) + m[4], 900); }); }, 120); });
+Bus.on('turn', () => { if (CFG.paper && S() && !S().over) scene(modalScene(paperHTML() + `<label class="check"><input type="checkbox" data-c="paperT" ${CFG.paper ? 'checked' : ''}> Mostrar la portada al final de cada turno</label>`, 'wide paperbox')); });
+H.paperT = (d, el) => { CFG.paper = el.checked; cfgSave(); };
+
+/* ---------- ayuda táctil: mantener pulsado muestra la explicación ---------- */
+{ let tm = 0, tip = null; const kill = () => { clearTimeout(tm); if (tip) { tip.remove(); tip = null; } };
+  document.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; const el = e.target.closest && e.target.closest('[title]'); kill(); if (!el || !el.title) return;
+    tm = setTimeout(() => { tip = document.createElement('div'); tip.className = 'tip glass'; tip.textContent = el.title; document.body.appendChild(tip); const r = el.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(innerWidth - tip.offsetWidth - 8, r.left + r.width / 2 - tip.offsetWidth / 2)) + 'px'; tip.style.top = Math.max(8, r.top - tip.offsetHeight - 8) + 'px'; setTimeout(kill, 4500); }, 480); }, { passive: true });
+  ['pointerup', 'pointercancel', 'scroll'].forEach(ev => document.addEventListener(ev, () => clearTimeout(tm), { passive: true, capture: true })); }
+
+/* ---------- glosario ---------- */
+const GLOSS = [['Capital político (CP)', 'La moneda del poder: lo gastas en leyes, tratados, viajes y operaciones. Se regenera cada turno según tu apoyo y tu gobierno.'], ['Aprobación', 'Media de la afinidad de cada sector social, ponderada por su peso electoral. Decide elecciones.'], ['Estabilidad', 'Lo sólido que es tu país. Por debajo de 30 hay riesgo de golpe; por debajo de 3, revolución.'],
+  ['Relación', 'De −100 (odio) a +100 (amistad). Pulsa «¿Por qué?» en la ficha de un país para ver cada motivo.'], ['Sectores', 'Grupos sociales (obreros, jóvenes, militares…) con peso electoral y memoria de lo que haces.'], ['Tratados', 'Comercio, no agresión, alianza y defensa mutua. Romperlos cuesta reputación.'],
+  ['Reputación', 'Cómo te ve el mundo: paz, confianza, generosidad y democracia. Cambia el trato que recibes.'], ['Sanciones', 'Castigo económico: frenan el crecimiento y cortan el comercio. Los países sancionados se ven apagados en el mapa.'], ['Teatro de operaciones', 'Las regiones en disputa de una guerra. Ahí luchan tus ejércitos, escuadrones y flotas.'],
+  ['Moral', 'Las ganas de luchar de un grupo. Sube defendiendo tu tierra y ganando; baja perdiendo, avanzando sin pausa o sin suministro.'], ['Suministro', 'Combustible, munición, repuestos y comida que llegan al frente. Lejos de casa y bajo bloqueo, cae.'], ['Triángulo táctico', 'Blindados vencen a infantería, infantería a fuerzas especiales, fuerzas especiales a artillería y antiaéreos, antiaéreos a aviación, aviación a blindados.'],
+  ['Niebla de guerra', 'Sin buenos espías, las cifras enemigas son estimaciones con error.'], ['Alerta', 'Paz, tensión, movilización o guerra: más preparación y disuasión, a cambio de dinero y crecimiento.'], ['Ocupación', 'Regiones que tomas por la fuerza: se integran despacio o se rebelan, según cómo las trates.'],
+  ['Resistencia', 'Guerrilla de una nación anexionada. Al llegar a 100 se levanta y puede recuperar la independencia.'], ['Carrera tecnológica', 'Descubrimientos que todas las potencias persiguen. El primero cobra licencias y gana prestigio.'], ['I+D', 'Presupuesto de investigación: más dinero, más puntos para los grandes descubrimientos.'],
+  ['Agencia de inteligencia', 'Su nivel mejora las operaciones encubiertas, la certeza de los informes y el contraespionaje.'], ['Doctrina', 'Forma de hacer la guerra de cada rama (tierra, aire, mar), con ventajas y costes.'], ['Armisticio', 'Alto el fuego largo que congela el frente y termina en paz con lo ocupado.'],
+  ['Sinergia de rasgos', 'Dos rasgos de tu líder que juntos dan un bono extra. Otros son incompatibles.'], ['Diario de mi mandato', 'Registro de tus decisiones clave. Al final, la historia te juzga con él.'], ['Modo observador', 'La cámara recorre lo que pasó en el mundo el último trimestre (tecla O).']];
+const glossHTML = () => `<div class="gloss">${GLOSS.map(g => `<div><b>${g[0]}</b><p>${g[1]}</p></div>`).join('')}</div>`;
+H.glossary = () => openModal(`<h2>Glosario</h2>${glossHTML()}`, true, 'wide');
+TUT.push(['.hud-adv', 'Tus asesores', 'Cinco asesores con carácter propio resumen lo que requiere atención y te recomiendan qué hacer. A veces no se ponen de acuerdo: la decisión es tuya.'],
+  ['.dock [data-p=mil]', 'La guerra, si llega', 'En Ejército tienes la Sala de guerra (tecla G): frente, grupos, órdenes y parte de batalla. Tu Estado Mayor puede dirigirla por ti.'],
+  ['.dock [data-p=sys]', 'Ajustes y glosario', 'En Partida ajustas la calidad gráfica, el movimiento y el volumen de cada canal, guardas en ranuras y consultas el glosario. Mantén pulsado cualquier número para saber qué significa.']);
+
+/* ---------- consejo de asesores ---------- */
+PT.adv = 'Consejo de asesores'; IC.adv = IC.people;
+const ADV = [['eco', 'Valeria Ortega', 'Economía', 'prudente', 'eco'], ['mil', 'Gral. Arturo Basaldúa', 'Defensa', 'halcón', 'mil'], ['dip', 'Inés Ferrer', 'Exteriores', 'paloma', 'dip'], ['int', 'Mara Ilyin', 'Inteligencia', 'desconfiada', 'ojo'], ['pol', 'Tomás Rey', 'Política interna', 'cínico', 'sin']];
+PANELS.adv = () => { const s = S(), p = me(), c = CC(p), f = s.fin || Q.finance(), tr = s.leader.traits, A = {};
+  const add = (k, sev, x, go) => (A[k] = A[k] || []).push({ sev, x, go });
+  // economía
+  if (f.net < 0) add('eco', 2, `Perdemos ${money(-f.net)} por turno. Hay que recortar gasto o subir impuestos antes de que llegue la deuda.`, ['eco', 'pre']); else add('eco', 0, `Ganamos ${money(f.net)} por turno. Es buen momento para invertir en fábricas o en I+D.`, ['eco', 'pla']);
+  if (s.eco && s.eco.inf > 8) add('eco', 2, `La inflación está en ${s.eco.inf.toFixed(1)}%. La gente lo nota en el súper.`, ['eco', 'ind']);
+  const fl2 = Q.resFlow(), short = Object.keys(fl2).filter(k => fl2[k].net < 0 && fl2[k].stock < -fl2[k].net * 4); if (short.length) add('eco', 1, `Se nos acaba ${short.map(k => D.COMMODITIES[k].n.toLowerCase()).join(', ')}. Una fábrica lo resolvería.`, ['eco', 'pla']);
+  // defensa
+  const dt = Q.deterrence(), hot = dt.filter(d => d.risk === 'alto'); for (const w of Q.warsOf(p)) { const sc = Q.thSide(w, p) === 'att' ? w.score : -w.score; add('mil', sc < -15 ? 2 : 1, sc < -15 ? `Vamos perdiendo contra ${cname(w.att[0] === p ? w.def[0] : w.att[0])}. Necesito refuerzos o un alto el fuego.` : `La guerra contra ${cname(w.att[0] === p ? w.def[0] : w.att[0])} va ${sc > 15 ? 'bien' : 'estancada'}. Mantengamos la presión.`, ['mil', 'tea']); }
+  if (hot.length) add('mil', 2, `${cname(hot[0].iso)} podría atacarnos. Subamos la alerta y fortifiquemos la frontera.`, ['mil', 'est']);
+  const prey = Q.nb(p).filter(z => !Q.atWar(p, z) && Q.rel(p, z) < -30 && Q.power(p) > Q.power(z) * 2)[0]; if (prey && !Q.warsOf(p).length) add('mil', 1, `${cname(prey)} es hostil y débil. Una campaña corta resolvería el problema para siempre.`, ['mil', 'tea']);
+  if (!A.mil) add('mil', 0, `Preparación al ${Math.round(s.mil.ready)}%. ${s.mil.ready < 40 ? 'Un ejército que no entrena se oxida: ordene maniobras.' : 'Las tropas están listas.'}`, ['mil', 'mis']);
+  // exteriores
+  const foes = Q.nb(p).filter(z => Q.rel(p, z) < -30); if (prey) add('dip', 2, `El general quiere guerra con ${cname(prey)}. Yo propongo una cumbre: una guerra nos costaría sanciones y reputación.`, ['dip', 'rel']); else if (foes.length) add('dip', 1, `${cname(foes[0])} nos mira mal. Una visita o una cumbre bajarían la tensión.`, ['dip', 'rel']);
+  const partners = Object.keys(s.c).filter(z => z !== p && CC(z).alive && Q.hasT('com', p, z)).length; add('dip', 0, partners < 5 ? `Solo tenemos ${partners} socios comerciales. Cada tratado son ingresos y aliados.` : `Tenemos ${partners} socios comerciales. Cuidémoslos.`, ['dip', 'tra']);
+  // inteligencia
+  const il = Q.intelList().filter(e => e.danger >= 3).slice(0, 2); il.forEach(e => add('int', e.danger >= 4 ? 2 : 1, `${cname(e.iso)}: creemos que ${Q.planText(e.est).toLowerCase()} (${Math.round(e.conf * 100)}% de certeza).`, ['dip', 'int']));
+  add('int', (s.spy.lvl || 0) < 1 ? 1 : 0, (s.spy.lvl || 0) < 1 ? 'Trabajamos a ciegas. Con más presupuesto vería lo que traman y quitaría la niebla de guerra.' : `La agencia está a nivel ${(s.spy.lvl || 0).toFixed(1)}. Nada se nos escapa… casi.`, ['dip', 'int']);
+  // política
+  const g = Q.govInfo(), left = s.pol.nextElec - s.turn, ap = Q.approval(), worstK = Object.keys(s.pol.sec).sort((a, b) => s.pol.sec[a].a - s.pol.sec[b].a)[0];
+  if (Q.isDem() && left > 0 && left <= 4) add('pol', ap < 50 ? 2 : 1, `Elecciones en ${left} trimestres con ${Math.round(ap)}% de aprobación.${f.net < 0 ? ' Y que nadie hable de recortes ahora, diga lo que diga Economía.' : ''}`, ['pol', 'ele']);
+  if (g.dem.length) add('pol', 1, `${D.SECTORS[g.dem[0].k].n} exigen una ley con plazo. Cumplir sale barato; ignorarlos, caro.`, ['pol', 'ley']);
+  add('pol', 0, `Los que menos te quieren: ${D.SECTORS[worstK].n} (${Math.round(s.pol.sec[worstK].a)}). Una campaña de comunicación los ablanda.`, ['pol', 'sec']);
+  const flavor = { pol: tr.includes('populista') ? 'Como buen populista, sabes que la calle manda.' : tr.includes('tecnocrata') ? 'Los números no votan, señor tecnócrata.' : '', mil: tr.includes('pacifista') ? 'Sé que usted es pacifista. Yo también… hasta que nos atacan.' : tr.includes('belicista') ? 'Por fin un líder que entiende a los militares.' : '', dip: tr.includes('diplomatico') ? 'Con su talento diplomático, esto debería ser fácil.' : '', eco: tr.includes('economista') || tr.includes('tecnocrata') ? 'Usted entiende de números: le hablaré claro.' : '', int: tr.includes('intrigante') ? 'Ah, un colega del oficio.' : '' };
+  const syn = Q.synergies();
+  return `<p class="mut">Cada asesor resume lo que le preocupa y te recomienda algo. No siempre están de acuerdo.${syn.length ? ` Tus rasgos combinan bien: ${syn.map(x => `<b>${x.n}</b> (${x.d})`).join(', ')}.` : ''}</p>
+    <div class="advs">${ADV.map(([k, n, role, per, icn]) => { const L = (A[k] || []).sort((a, b) => b.sev - a.sev), sev = L.length ? L[0].sev : 0;
+      return `<article class="adv sev${sev}"><div class="row"><span class="adv-pic">${gi(icn)}</span><div class="grow"><b>${n}</b><small class="mut">${role} · ${per}</small></div><span class="chip ${sev >= 2 ? 'bad' : sev ? 'gold' : 'good'}">${sev >= 2 ? 'Alarmado' : sev ? 'Preocupado' : 'Tranquilo'}</span></div>
+        ${flavor[k] ? `<p class="adv-fl">«${flavor[k]}»</p>` : ''}${L.slice(0, 3).map(x => `<div class="adv-l"><p>«${esc(x.x)}»</p>${x.go ? `<button class="chip" data-a="advGo" data-p="${x.go[0]}" data-t="${x.go[1]}">Ir</button>` : ''}</div>`).join('')}</article>`; }).join('')}</div>
+    <div class="row wrap"><button class="btn sm" data-a="glossary">Glosario</button><button class="btn sm" data-a="observe">Recorrer el mundo (O)</button></div>`; };
+H.advGo = d => { UI.tab[d.p] = d.t; UI.panel = d.p; UI.render(); };
+
+/* ---------- Partida: guardado en ranuras, ajustes, diario y legado, glosario ---------- */
+PTABS.sys = [['gen', 'Partida'], ['aju', 'Ajustes'], ['dia', 'Diario y legado'], ['glo', 'Glosario']];
+{ const s0 = PANELS.sys; PANELS.sys = t => t === 'aju' ? cfgHTML() : t === 'dia' ? diaryHTML() : t === 'glo' ? glossHTML() : s0(t) + slotsHTML(); }
+const slotMeta = i => { try { const x = JSON.parse(localStorage.getItem('wl_slot' + i) || 'null'); return x && x.meta; } catch (e) { return null; } };
+const slotsHTML = () => `<h4>${gi('acuerdo')} Ranuras de guardado</h4>${[1, 2, 3].map(i => { const m = slotMeta(i); return `<div class="arow"><div class="grow"><b>Ranura ${i}</b><small>${m ? `${esc(m.n)} · ${esc(m.c)} · ${esc(m.d)} · turno ${m.t + 1}` : 'Vacía'}</small></div><button class="btn sm gold" data-a="slotSave" data-i="${i}" ${m ? 'data-confirm' : ''}>Guardar aquí</button>${m ? `<button class="btn sm" data-a="slotLoad" data-i="${i}" data-confirm>Cargar</button><button class="btn sm ghost" data-a="slotDel" data-i="${i}" data-confirm>Borrar</button>` : ''}</div>`; }).join('')}
+  <p class="mut fine">El autoguardado se hace solo; además se conserva una copia del turno anterior por si la principal se daña.</p>`;
+H.slotSave = d => { try { localStorage.setItem('wl_slot' + d.i, JSON.stringify({ meta: { n: S().leader.n, c: CC(me()).n, d: Q.dateStr(), t: S().turn }, data: G.save() })); toast(`Guardado en la ranura ${d.i}`); UI.render(); } catch (e) { toast('No queda espacio en este navegador: borra una ranura o exporta a JSON', false); } };
+H.slotLoad = d => { try { const x = JSON.parse(localStorage.getItem('wl_slot' + d.i)); const r = G.load(x.data); toast(r.msg, r.ok); if (r.ok) enterGame(false); } catch (e) { toast('Esa ranura está dañada y no se puede cargar', false); } };
+H.slotDel = d => { try { localStorage.removeItem('wl_slot' + d.i); } catch (e) { } UI.render(); };
+{ const a0 = autosave; autosave = () => { try { if (S() && UI.bakTurn !== S().turn) { const prev = localStorage.getItem('wl_save'); if (prev) localStorage.setItem('wl_save_bak', prev); UI.bakTurn = S().turn; } } catch (e) { } a0(); }; }
+{ const c0 = H.continue; H.continue = d => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } let ok = false; try { ok = !!(s && JSON.parse(s)); } catch (e) { }
+  if (ok) { const r = G.load(s); if (r.ok) { toast(r.msg); return enterGame(false); } }
+  let b = null; try { b = localStorage.getItem('wl_save_bak'); } catch (e) { } if (b) { const r = G.load(b); if (r.ok) { toast('La partida principal estaba dañada: se recuperó la copia del turno anterior', false); return enterGame(false); } }
+  return c0(d); }; }
+function cfgHTML() { const v = CFG.vol, sl = (k, n) => `<label class="vol"><span>${n}</span><input type="range" min="0" max="100" value="${Math.round(v[k] * 100)}" data-c="cfgVol" data-k="${k}"><b>${Math.round(v[k] * 100)}</b></label>`;
+  return `<h4>${gi('estrella')} Calidad gráfica <small class="mut">ahora: ${({ low: 'Baja', med: 'Media', high: 'Alta' })[quality()]}</small></h4><div class="chips">${[['auto', 'Automática'], ['low', 'Baja · teléfonos modestos'], ['med', 'Media'], ['high', 'Alta']].map(q => `<button class="chip ${CFG.q === q[0] ? 'gold' : ''}" data-a="cfgQ" data-v="${q[0]}">${q[1]}</button>`).join('')}</div>
+    <p class="mut fine">Baja: sin nubes ni auroras, 30 fps, menos partículas y sin desenfoque de los paneles. Alta: todo, con auroras y más resolución.</p>
+    <label class="check"><input type="checkbox" data-c="cfgB" data-k="rm" ${CFG.rm ? 'checked' : ''}> Reducir movimiento (sin animaciones ni giros de cámara)</label>
+    <label class="check"><input type="checkbox" data-c="cfgB" data-k="cine" ${CFG.cine ? 'checked' : ''}> Cámara cinematográfica en los momentos clave</label>
+    <label class="check"><input type="checkbox" data-c="cfgB" data-k="paper" ${CFG.paper ? 'checked' : ''}> Portada del periódico al final de cada turno</label>
+    <label class="check"><input type="checkbox" data-c="cfgB" data-k="observer" ${CFG.observer ? 'checked' : ''}> Modo observador automático tras cada turno</label>
+    <h4>${gi('sin')} Sonido</h4><div class="row wrap"><button class="btn ${CFG.mute ? 'red' : ''}" data-a="sound">${CFG.mute ? 'Activar el sonido' : 'Silenciar todo'}</button><button class="btn sm" data-a="cfgTest">Probar</button><label class="check"><input type="checkbox" data-c="cfgB" data-k="hover" ${CFG.hover ? 'checked' : ''}> Sonido al pasar el ratón</label></div>
+    <div class="vols">${sl('master', 'General')}${sl('music', 'Música')}${sl('sfx', 'Efectos')}${sl('amb', 'Ambiente')}${sl('ui', 'Interfaz')}</div>
+    <p class="mut fine">Todo el audio se genera en tu navegador: música original que cambia con el estado del mundo (paz, tensión, crisis, guerra, victoria, derrota), ambiente del globo y efectos. Suena solo tras tu primer toque.</p>`; }
+H.cfgQ = d => { CFG.q = d.v; cfgSave(); applyCfg(); UI.render(); };
+H.cfgB = (d, el) => { CFG[el.dataset.k] = el.checked; cfgSave(); applyCfg(); UI.render(); };
+H.cfgVol = (d, el) => { CFG.vol[el.dataset.k] = el.value / 100; cfgSave(); Sfx.mix(); Sfx.refresh(); const b = el.parentNode.querySelector('b'); if (b) b.textContent = el.value; };
+H.cfgTest = () => { Sfx.play('fanfare'); };
+function diaryHTML() { const s = S(), L = Q.legacy(), D2 = s.diary.slice().reverse(), byY = {};
+  D2.forEach(e => (byY[tLabel(e.t).split(' ')[1]] = byY[tLabel(e.t).split(' ')[1]] || []).push(e));
+  return `<div class="card legacy"><small class="eyebrow">Si tu mandato terminara hoy, la historia te recordaría como</small><h2>${esc(L.name)}</h2><div class="legacy-bar">${bar(L.score, 100, L.score >= 60 ? 'green' : L.score < 40 ? 'red' : 'gold')}<b>${L.score}/100</b></div><p>${esc(L.text)}</p></div>
+    <h4>${gi('acuerdo')} Diario de mi mandato <small class="mut">${s.diary.length} entradas</small></h4>${Object.keys(byY).map(y => `<h5 class="dia-y">${y}</h5>${byY[y].map(e => `<div class="dia ${e.k}"><small>${tLabel(e.t).split(' ')[0]}</small><span>${esc(e.x)}</span></div>`).join('')}`).join('') || '<p class="mut">Aún no hay decisiones que recordar.</p>'}`; }
+{ const o0 = showOver; showOver = () => { o0(); const box = $('#modal .over'), s = S(); if (!box || !s) return; const L = Q.legacy();
+  box.querySelector('.kvs').insertAdjacentHTML('afterend', `<div class="card legacy"><small class="eyebrow">El juicio de la historia</small><h2>${esc(L.name)}</h2><div class="legacy-bar">${bar(L.score, 100, L.score >= 60 ? 'green' : L.score < 40 ? 'red' : 'gold')}<b>${L.score}/100</b></div><p>${esc(L.text)}</p>${L.key.length ? `<h4>Momentos clave</h4>${L.key.map(e => `<div class="dia ${e.k}"><small>${tLabel(e.t)}</small><span>${esc(e.x)}</span></div>`).join('')}` : ''}</div>`); }; }
+
+/* ---------- rasgos: conflictos y sinergias al crear el líder ---------- */
+{ const t0 = H.ngTrait; H.ngTrait = d => { if (!NG.traits.includes(d.id)) { const c = (D.TCONF || []).find(x => x.includes(d.id) && NG.traits.includes(x[0] === d.id ? x[1] : x[0])); if (c) { const o = D.TRAITS.find(t => t.id === (c[0] === d.id ? c[1] : c[0])); return toast(`Incompatible con «${o.n}»: no se puede ser ambas cosas a la vez`, false); } }
+  const before = NG.traits.length; t0(d); if (NG.traits.length > before) { const s = (D.SYNERGY || []).find(x => NG.traits.includes(x.a) && NG.traits.includes(x.b) && (x.a === d.id || x.b === d.id)); if (s) toast(`Sinergia: ${s.n} · ${s.d}`); } }; }
+
+/* ---------- editor: pruebas de sonido, cinemáticas, eventos y avance rápido ---------- */
+PTABS.edit.push(['pru', 'Pruebas']);
+{ const e0 = PANELS.edit; PANELS.edit = t => { if (t === 'reg') { const c = CC(edIso()), i = Math.min(c.terr.length - 1, Math.max(0, +fv('ed:reg', 0) || 0)), k = edIso() + ':' + i;
+    return e0(t) + `<div class="grid2"><label>Terreno de la región<select data-c="edSet" data-k="terr.${i}.ter"><option value="">Automático (${D.TER[Q.terOf(k)].n})</option>${Object.keys(D.TER).map(x => `<option value="${x}" ${c.terr[i].ter === x ? 'selected' : ''}>${D.TER[x].n}</option>`).join('')}</select></label></div>`; }
+  if (t !== 'pru') return e0(t);
+  return `<h4>${gi('sin')} Sonido</h4><div class="chips">${['click', 'ok', 'bad', 'coin', 'turn', 'war', 'battle', 'treaty', 'peace', 'vote', 'coup', 'tech', 'news', 'alert', 'alertHi', 'fanfare', 'crisis', 'elecWin', 'elecLose', 'over'].map(k => `<button class="chip" data-a="tSnd" data-k="${k}">${k}</button>`).join('')}</div>
+    <h4>${gi('estrella')} Música <small class="mut">ahora: ${Sfx.moodNow}</small></h4><div class="chips">${['paz', 'tension', 'crisis', 'guerra', 'victoria', 'derrota'].map(m => `<button class="chip" data-a="tMood" data-m="${m}">${m}</button>`).join('')}<button class="chip gold" data-a="tMood" data-m="">automática</button></div>
+    <h4>${gi('ojo')} Cinemáticas y efectos</h4><div class="chips">${[['intro', 'Intro'], ['inaug', 'Toma de posesión'], ['war', 'Declaración de guerra'], ['treaty', 'Tratado'], ['coup', 'Golpe de Estado'], ['elec', 'Noche electoral'], ['crisis', 'Crisis financiera'], ['battle', 'Parte de batalla'], ['paper', 'Periódico'], ['legacy', 'Legado'], ['obs', 'Modo observador']].map(x => `<button class="chip" data-a="tCine" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="chips">${['exp', 'humo', 'ayuda', 'rev', 'des', 'tormenta', 'sanc', 'tratado'].map(k => `<button class="chip" data-a="tFx" data-k="${k}">Efecto: ${k}</button>`).join('')}</div>
+    <h4>${gi('pin')} Avance rápido <small class="mut">juega N turnos eligiendo siempre la primera opción, sin cinemáticas</small></h4><div class="row wrap">${inp('ed:ff', 10, 'type="number" min="1" max="200" class="w70"')}<button class="btn sm gold" data-a="tFF">Avanzar</button></div>
+    <p class="mut fine">Para forzar cualquier evento usa la pestaña Eventos.</p>`; }; }
+H.tSnd = d => Sfx.play(d.k); H.tMood = d => { moodLock = d.m ? Date.now() + 1e9 : 0; if (d.m) Sfx.mood(d.m); else setMood(); UI.render(); };
+H.tFx = d => fxAt(d.k, UI.sel || me());
+H.tCine = d => { const p = me(), z = Q.nb(p)[0] || Object.keys(S().c).find(i => i !== p && CC(i).alive), k = d.k; UI.panel = null; UI.render();
+  if (k === 'intro') { try { sessionStorage.removeItem('wl_intro'); } catch (e) { } const sc = UI.screen; UI.screen = 'start'; intro(); UI.screen = sc; }
+  else if (k === 'inaug') scene(cineScene(banner('peace', 'cp', 'Toma de posesión', esc(S().leader.n), `${fl(p)} ${cname(p)}`), 3000));
+  else if (k === 'war') scene(cineScene(banner('war', 'war', 'Declaración de guerra', `${cname(p)} <i>contra</i> ${cname(z)}`, ''), 3000, () => Globe.focus(z, 2.3)));
+  else if (k === 'treaty') Bus.emit('treaty', { t: 'ali', a: p, b: z, name: 'Alianza de prueba' }); else if (k === 'coup') Bus.emit('coup', { iso: z, near: 1 });
+  else if (k === 'elec') Bus.emit('election', { win: true, share: 54.2 }); else if (k === 'crisis') { Sfx.play('crisis'); scene(cineScene(banner('war', 'eco', 'Crisis financiera', 'Prueba de cinemática', ''), 3000)); }
+  else if (k === 'battle') { const L = S().blog.slice(-3); if (L.length) openModal(battleHTML(L), true, 'event wide'); else toast('Aún no hay batallas registradas', false); }
+  else if (k === 'paper') H.paper(); else if (k === 'legacy') H.open({ p: 'sys' }) || (UI.tab.sys = 'dia', UI.render()); else if (k === 'obs') observe(); };
+H.tFF = () => { const n = Math.max(1, Math.min(200, +fv('ed:ff', 10) || 10)), h = Bus.h; Bus.h = {}; let i = 0;
+  try { for (; i < n && !S().over; i++) { let k = 0; while (S().pend.length && k++ < 40) G.act('decide', { i: 0 }); const r = G.act('endTurn'); if (!r.ok) break; } } finally { Bus.h = h; }
+  UI.render(); refreshMap(); autosave(); setMood(); toast(`Avance rápido: ${i} turnos jugados${S().over ? ' (la partida terminó)' : ''}`); if (S().over) showOver(); else showPending(); };
+
+/* ---------- atajos nuevos ---------- */
+KEYS.push(['V', 'Asesores'], ['O', 'Modo observador'], ['H', 'Glosario']);
+document.addEventListener('keydown', e => { if (UI.screen !== 'game' || e.ctrlKey || e.metaKey || e.altKey || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName || '')) return;
+  if (e.key === 'Escape' && UI.obsStop) return UI.obsStop(); if (!$('#modal').hidden) return;
+  if (e.key === 'v' || e.key === 'V') H.open({ p: 'adv' }); else if (e.key === 'o' || e.key === 'O') observe(); else if (e.key === 'h' || e.key === 'H') H.glossary(); });
+
+/* ---------- tus rasgos se notan en las decisiones ---------- */
+const TFLAV = { populista: 'Tu instinto populista te susurra: haz lo que aplauda la calle.', tecnocrata: 'Tu lado tecnócrata pide datos antes de decidir.', belicista: 'Tu instinto belicista pide mano dura.', pacifista: 'Tu pacifismo te inclina hacia la salida menos violenta.', corrupto: 'Ya calculas qué parte de esto podría quedarse en tu bolsillo.', intrigante: 'Huele a trampa. Siempre huele a trampa.', diplomatico: 'Hay una salida negociada; siempre la hay.', sereno: 'Respiras hondo: nada de decisiones en caliente.', cercano: 'Piensas en cómo se lo explicarías a tu vecina.', tribuno: 'Ya imaginas el discurso.', autoritario: 'Lo resolverías por decreto, si pudieras.', carismatico: 'Decidas lo que decidas, sabrás venderlo.', estoico: 'Ni una ceja se te mueve.', padre_patria: 'El país entero te mira como a un padre.', economista: 'Antes de nada, ¿cuánto cuesta?', visionario: 'Piensas en cómo se verá esto dentro de veinte años.' };
+{ const p0 = showPending; showPending = () => { p0(); const el = $('#modal .ev-text'), tr = (S() && S().leader.traits.filter(t => TFLAV[t])) || []; if (!el || !tr.length || el.nextElementSibling && el.nextElementSibling.classList.contains('ev-trait')) return;
+  el.insertAdjacentHTML('afterend', `<p class="ev-trait">${gi('estrella')} ${TFLAV[tr[S().turn % tr.length]]}</p>`); }; }
+/* alertas con sonido distinto según su gravedad */
+Bus.on('turn', () => setTimeout(() => { if (!S() || S().over) return; const a = Q.alerts(); if (a.some(x => x.p >= 5)) Sfx.play('alertHi'); else if (a.some(x => x.p >= 4)) Sfx.play('alert'); }, 1600));
 
 
 /* ---------- ui/90-boot.js ---------- */
