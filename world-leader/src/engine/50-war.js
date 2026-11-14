@@ -157,17 +157,7 @@ function warTurn(w) {
   if (S.pend.some(p => p.k === 'war' && p.opts.some(o => (o.fx || []).some(f => f[0] === 'do' && f[2] && f[2].w === w.id && f[1] !== 'joinWar')))) return; // espera la decisión del jugador
   const A = w.att.filter(x => C(x).alive), Dn = w.def.filter(x => C(x).alive);
   if (!C(la).alive || !C(ld).alive) return endWar(w, 'fin');
-  const eff = (x, lead, foe) => power(x) * (x === lead ? 1 : canReach(x, foe) ? .7 : .35);
-  let pa = A.reduce((s, x) => s + eff(x, la, ld), 0) * (canReach(la, ld) ? 1 : .6);
-  const pd = Dn.reduce((s, x) => s + eff(x, ld, la), 0) * 1.25 * (C(ld).nuke ? 1.25 : 1);
-  const ra = pa * rr(.8, 1.2), rd = pd * rr(.8, 1.2), ratio = ra / (ra + rd + .001);
-  A.forEach(x => casualties(x, .03 + .09 * (1 - ratio))); Dn.forEach(x => casualties(x, .03 + .09 * ratio));
-  w.score = clamp(w.score + (ratio - .5) * 50, -100, 100);
-  const mine = isP(la) || isP(ld) || A.includes(S.player) || Dn.includes(S.player);
-  let got = [];
-  if (ratio > .56) { got = capture(la, ld, Math.max(1, Math.round((ratio - .5) * C(ld).terr.length * .6))); if (got.length) news(`${nm(la)} avanza en ${nm(ld)}: ${got.slice(0, 3).join(', ')}${got.length > 3 ? ' y ' + (got.length - 3) + ' más' : ''}`, 'war', la, mine ? 2 : 1); }
-  else if (ratio < .44 && (canReach(ld, la) || C(la).terr.some(t => t.o === ld) || C(ld).terr.some(t => t.o === la))) { got = capture(ld, la, Math.max(1, Math.round((.5 - ratio) * C(la).terr.length * .6))); if (got.length) news(`${nm(ld)} contraataca a ${nm(la)}: ${got.slice(0, 3).join(', ')}${got.length > 3 ? ' y ' + (got.length - 3) + ' más' : ''}`, 'war', ld, mine ? 2 : 1); }
-  if (got.length) Bus.emit('battle', { a: la, d: ld });
+  theatreTurn(w); if (!S.wars.includes(w)) return; // Fase 3: batallas región a región (7a-theatre.js)
   A.concat(Dn).forEach(x => { const c = C(x), lead = x === la || x === ld; c.stab = clamp(c.stab - (lead ? 1.2 : .4), 0, 100); if (!isP(x)) c.gdp *= lead ? .996 : .999; });
   if (ownCount(ld) === 0) return capitulate(w, ld, la);
   if (ownCount(la) === 0) return capitulate(w, la, ld);
