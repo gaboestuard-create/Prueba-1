@@ -83,6 +83,7 @@ WL.Game = {
     approval, lawForecast, invLaw, lawPop, bribeCost, secBase, localCtl, isDem, mod, lawSum, taxRate,
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
+    resInfo,
     occOf, occList, annexedList, occPol: z => S.occ[z] || 'normal',
     govInfo, lawBuilding, oppForecast, deterrence, readyMult, committed,
     arcInfo, alerts, paper, memOf, exportData, GOALS, DIFF, EV: () => EV,

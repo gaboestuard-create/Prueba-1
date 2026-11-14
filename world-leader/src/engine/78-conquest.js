@@ -35,18 +35,52 @@ ACT.returnTerr = a => {
   return { msg: `Devuelves ${n} región${n > 1 ? 'es' : ''} a ${v.n}${extra}. Lo agradecen; no lo olvidan.` };
 };
 ACT.occPolicy = a => { if (!S.c[a.iso] || !occOf(a.iso).length || !['normal', 'dura', 'blanda'].includes(a.k)) return fail('Política inválida'); S.occ[a.iso] = a.k; return { msg: a.k === 'dura' ? 'Mano dura: menos insurgencia, más odio y peor imagen' : a.k === 'blanda' ? 'Reconstrucción: pagas por región, hay menos odio y menos insurgencia' : 'Ocupación sin política especial' }; };
-/* restaurar una nación anexionada */
+/* resucitar una nación anexionada con su líder, partido y régimen de antes */
+function revive(iso, ally) {
+  const V = S.c[iso], t = V.owner, T = S.c[t], d = D.C[iso], g = Math.min(d.gdp * .6, T.gdp * .4); T.gdp -= g * .7; T.pop = Math.max(.01, T.pop - d.pop);
+  Object.assign(V, { alive: true, owner: iso, gdp: g, pop: d.pop, stab: 42, stab0: d.stab, tr: g * .01, rec: Object.assign({}, d.rec), reg: d.reg, ideo: d.ideo, partido: d.partido, lider: { n: d.lider.n, verificado: d.lider.verificado, img: '' }, nextElec: d.reg === 'dem' || d.reg === 'hib' ? S.turn + ri(4, 12) : 0, cd: S.turn + 2 });
+  const u = initUnits(d); for (const k in u) V.u[k] = Math.round(u[k] * .3); V.terr.forEach(x => { if (x.o === t) { x.o = iso; delete x.g; delete x.pp; delete x.k; } });
+  addMod(t, iso, 'Años de ocupación', -40, .1, 1); if (ally && S.c[ally] && S.c[ally].alive) { addMod(ally, iso, 'Nos ayudaron a ser libres', 40, .1); addTreaty('ali', ally, iso); }
+  S.res[iso] = 0; dirty(); Bus.emit('treaty', { t: 'terr', a: t, b: iso, name: `Independencia de ${V.n}` });
+}
+/* restaurar una nación anexionada por ti */
 ACT.restore = a => {
   const iso = a.iso, me = S.player, V = S.c[iso]; if (!V || V.alive || V.owner !== me) return fail('Esa nación no está bajo tu dominio');
-  const d = D.C[iso], g = Math.min(d.gdp * .6, P().gdp * .4); P().gdp -= g * .7; P().pop = Math.max(.01, P().pop - d.pop);
-  V.alive = true; V.owner = iso; V.gdp = g; V.pop = d.pop; V.stab = 45; V.stab0 = 50; V.tr = g * .01; V.rec = Object.assign({}, d.rec); V.reg = 'hib'; V.partido = 'Gobierno de transición'; V.lider = { n: genLeader(iso), verificado: false, img: '', gen: 1 };
-  const u = initUnits(d); for (const k in u) V.u[k] = Math.round(u[k] * .3); V.terr.forEach(t => { if (t.o === me) { t.o = iso; delete t.g; delete t.pp; delete t.k; } });
-  dirty(); addMod(me, iso, 'Les devolviste la independencia', gain(a.ally ? 25 : 38), .2); addMod(me, iso, 'Años de ocupación', -15, .2, 1); if (a.ally) addTreaty('ali', me, iso);
+  revive(iso, a.ally ? me : null); addMod(me, iso, 'Les devolviste la independencia', gain(a.ally ? 25 : 38), .2);
   repAdd('paz', 10); repAdd('conf', 4); repAdd('gen', 5); why(`Restauraste ${V.n}`, () => { secAdd('mil', -8); secAdd('rur', -3); secAdd('jov', 4); secAdd('min', 4); });
   for (const z of alive()) if (z !== me && z !== iso && D.C[iso].bord.includes(z)) addMod(me, z, `Restauraste ${V.n}`, gain(6), .3);
-  news(`${V.n} vuelve a existir: ${P().n} le devuelve la independencia${a.ally ? ' como aliado' : ''}`, 'peace', iso, 3); Bus.emit('treaty', { t: 'terr', a: me, b: iso, name: `Independencia de ${V.n}` });
+  news(`${V.n} vuelve a existir: ${P().n} le devuelve la independencia${a.ally ? ' como aliado' : ''}`, 'peace', iso, 3);
   return { msg: `${V.n} renace${a.ally ? ' como aliado tuyo' : ''}. Agradecidos, con cicatrices.` };
 };
+/* ---- resistencia en las naciones anexionadas: crece sola, la financian los rivales del ocupante
+   y, al llegar a 100, estalla un levantamiento que puede devolverles la independencia ---- */
+hook('new', () => { S.res = {}; S.resF = {}; }); hook('load', () => { S.res = S.res || {}; S.resF = S.resF || {}; });
+const annexedAll = () => ISOS.filter(z => !S.c[z].alive && S.c[z].owner !== z && S.c[z].owner !== S.player && S.c[S.c[z].owner] && S.c[S.c[z].owner].alive);
+const resInfo = () => ISOS.filter(z => !S.c[z].alive && z !== S.player && S.c[S.c[z].owner] && S.c[S.c[z].owner].alive).map(z => ({ iso: z, owner: S.c[z].owner, res: Math.round(S.res[z] || 0), fund: (S.resF[z] || 0) > S.turn, sponsor: S.resF[z + ':by'] || null }));
+hook('late', () => {
+  for (const r of resInfo()) { const z = r.iso, t = r.owner, T = S.c[t], old = S.res[z] || 0;
+    let v = 1.5 + (T.stab < 40 ? 2 : 0) + (inWar(t) ? 2 : 0) + ((S.resF[z] || 0) > S.turn ? 4 : 0) - (isP(t) && (S.occ[z] === 'dura') ? 1.5 : 0) - (isP(t) && (S.occ[z] === 'blanda') ? .8 : 0);
+    if (alive().some(y => y !== t && !isP(y) && S.c[y].gdp > 500 && rel(y, t) < -40)) v += 1; // un rival del ocupante la arma en secreto
+    const now = Math.min(100, old + v * rr(.6, 1.4)); S.res[z] = now;
+    if (old < 50 && now >= 50) news(`Crece la guerrilla en la antigua ${S.c[z].n}: atentados contra ${T.n}`, 'war', t, isP(t) || nb(S.player).includes(t) ? 2 : 1);
+    if (isP(t) && now >= 50) { T.stab = clamp(T.stab - .5, 0, 100); casualties(t, .003); }
+    if (now < 100) continue;
+    const odds = clamp(.35 + (T.stab < 40 ? .2 : 0) + (inWar(t) ? .15 : 0) + ((S.resF[z] || 0) > S.turn ? .15 : 0), .15, .85), by = S.resF[z + ':by'];
+    if (chance(odds)) { revive(z, by && S.c[by] && S.c[by].alive ? by : null); news(`¡${S.c[z].n} recupera su independencia! La resistencia expulsa a ${T.n}`, 'peace', z, 3);
+      if (isP(t)) { repAdd('paz', -3); why(`Perdiste ${S.c[z].n}`, () => { secAdd('mil', -6); secAdd('all', -2); }); }
+      if (isP(by)) { addMod(S.player, z, 'Financiaste nuestra libertad', gain(30), .1); repAdd('gen', 4); } }
+    else { S.res[z] = 25; T.stab = clamp(T.stab - 3, 0, 100); news(`${T.n} aplasta un levantamiento en la antigua ${S.c[z].n}`, 'war', t, isP(t) ? 3 : 2); }
+  }
+});
+ACT.fundRes = a => {
+  const z = a.iso, V = S.c[z], me = S.player; if (!V || V.alive || V.owner === me || !S.c[V.owner] || !S.c[V.owner].alive) return fail('Esa nación no está ocupada por otro país');
+  if ((S.resF[z] || 0) > S.turn) return fail('Ya financias esa resistencia'); const cost = Math.max(.3, D.C[z].gdp * .01); if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(1)) return fail('Necesitas 1 de capital político');
+  P().tr -= cost; S.res[z] = Math.min(99, (S.res[z] || 0) + 15); S.resF[z] = S.turn + 6; S.resF[z + ':by'] = me;
+  if (chance(.3)) { addMod(me, V.owner, 'Armas a los rebeldes', -20, .3, 1); news(`${nm(V.owner)} acusa a ${P().n} de armar a la guerrilla de ${V.n}`, 'dip', V.owner, 3); return { ok: false, msg: `Armas entregadas, pero ${nm(V.owner)} te ha descubierto` }; }
+  return { msg: `Financias a la resistencia de ${V.n} durante 6 turnos` };
+};
+ACT.repress = a => { const z = a.iso, V = S.c[z]; if (!V || V.alive || V.owner !== S.player) return fail('No gobiernas esa nación'); if (!useCP(1)) return fail('Necesitas 1 de capital político'); const cost = Math.max(.3, D.C[z].gdp * .008); if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`);
+  P().tr -= cost; S.res[z] = Math.max(0, (S.res[z] || 0) - 25); repAdd('dem', -3); repAdd('gen', -2); return { msg: `Redadas en la antigua ${V.n}: la resistencia retrocede` }; };
 { const c0 = condOk, t0 = pickTarget; condOk = q => c0(q) && (!q || !q.occupier || occList().length > 0); pickTarget = k => k === 'occupied' ? (occList().length ? pick(occList()) : null) : t0(k); }
 
 /* ---- operaciones de guerra ---- */
