@@ -58,6 +58,9 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   assert(G.q.resInfo().some(x => x.iso === 'AF' && x.owner === 'CN')); G.act('edit', { iso: 'MX', k: 'cp', v: 12 }); G.act('edit', { iso: 'MX', k: 'tr', v: 500 }); G.act('fundRes', { iso: 'AF' });
   for (let i = 0; i < 12 && !A.alive; i++) { S.res.AF = 100; S.pend = []; G.act('endTurn'); }
   assert(A.alive, 'la resistencia debe poder liberar Afganistán'); assert.strictEqual(A.lider.n, D.C.AF.lider.n); assert.strictEqual(A.reg, D.C.AF.reg); assert(A.terr.every(t => t.o === 'AF')); S.pend = []; assert(G.act('endTurn').ok); noNaN(S, 'S'); }
+// la IA arma guerrillas contra tus anexiones
+{ G.newGame({ iso: 'MX', name: 'H', traits: [], seed: 11 }); const S = G.S; S.pend = []; const A = S.c.GT; A.alive = false; A.owner = 'MX'; A.terr.forEach(t => { t.o = 'MX'; }); G.act('edit', { iso: 'US', k: 'enemy' });
+  let by = null; for (let i = 0; i < 40 && !by && !S.over; i++) { S.pend = []; G.act('endTurn'); by = S.resF['GT:by']; } assert(by && by !== 'MX', 'algún rival debe armar a la guerrilla'); noNaN(S, 'S'); }
 // carrera tecnológica: dominar un descubrimiento da sus efectos y avisa al mundo
 { G.newGame({ iso: 'US', name: 'R', traits: [], seed: 5 }); const S = G.S; S.pend = []; const m0 = G.q.lawSum('mil');
   assert(!G.act('discover', { id: 'laser' }).ok, 'láser exige hipersónicos'); assert(G.act('discover', { id: 'hiper' }).ok); S.disc.prog.US = { hiper: 999 }; G.act('endTurn'); S.pend = [];

@@ -3655,7 +3655,7 @@ ACT.restore = a => {
    y, al llegar a 100, estalla un levantamiento que puede devolverles la independencia ---- */
 hook('new', () => { S.res = {}; S.resF = {}; }); hook('load', () => { S.res = S.res || {}; S.resF = S.resF || {}; });
 const annexedAll = () => ISOS.filter(z => !S.c[z].alive && S.c[z].owner !== z && S.c[z].owner !== S.player && S.c[S.c[z].owner] && S.c[S.c[z].owner].alive);
-const resInfo = () => ISOS.filter(z => !S.c[z].alive && z !== S.player && S.c[S.c[z].owner] && S.c[S.c[z].owner].alive).map(z => ({ iso: z, owner: S.c[z].owner, res: Math.round(S.res[z] || 0), fund: (S.resF[z] || 0) > S.turn, sponsor: S.resF[z + ':by'] || null }));
+const resInfo = () => ISOS.filter(z => !S.c[z].alive && z !== S.player && S.c[S.c[z].owner] && S.c[S.c[z].owner].alive).map(z => ({ iso: z, owner: S.c[z].owner, res: Math.round(S.res[z] || 0), fund: (S.resF[z] || 0) > S.turn, sponsor: S.resF[z + ':by'] || null, known: !!S.resF[z + ':known'] }));
 hook('late', () => {
   for (const r of resInfo()) { const z = r.iso, t = r.owner, T = S.c[t], old = S.res[z] || 0;
     let v = 1.5 + (T.stab < 40 ? 2 : 0) + (inWar(t) ? 2 : 0) + ((S.resF[z] || 0) > S.turn ? 4 : 0) - (isP(t) && (S.occ[z] === 'dura') ? 1.5 : 0) - (isP(t) && (S.occ[z] === 'blanda') ? .8 : 0);
@@ -3671,6 +3671,19 @@ hook('late', () => {
     else { S.res[z] = 25; T.stab = clamp(T.stab - 3, 0, 100); news(`${T.n} aplasta un levantamiento en la antigua ${S.c[z].n}`, 'war', t, isP(t) ? 3 : 2); }
   }
 });
+/* la IA también arma guerrillas: contra ti y contra otros ocupantes */
+hook('world', () => { const me = S.player;
+  for (const r of resInfo()) { if (r.fund || r.owner === r.iso) continue; const z = r.iso, t = r.owner;
+    const cand = alive().filter(y => y !== t && !isP(y) && S.c[y].gdp > 200 && rel(y, t) < -30 && !atWar(y, z)); if (!cand.length || !chance(isP(t) ? .18 : .1)) continue;
+    const y = cand.sort((a, b) => rel(a, t) - rel(b, t) + (D.C[z].bord.includes(b) ? 25 : 0) - (D.C[z].bord.includes(a) ? 25 : 0))[0];
+    S.resF[z] = S.turn + 6; S.resF[z + ':by'] = y; S.res[z] = Math.min(99, (S.res[z] || 0) + 10); delete S.resF[z + ':known'];
+    if (!isP(t)) { if (S.c[t].gdp > 800 || nb(me).includes(t)) news(`Se acusa a ${nm(y)} de armar a la guerrilla de la antigua ${S.c[z].n}`, 'war', y, 1); continue; }
+    if (chance(.3 + spyNet(y) * .2)) { S.resF[z + ':known'] = 1; addMod(me, y, 'Arma a la guerrilla en tu territorio', -10, .3, 1);
+      pushPend({ k: 'offer', iso: y, t: `${nm(y)} arma a la guerrilla`, x: `Tu inteligencia confirma que ${S.c[y].lider.n} envía armas y dinero a la resistencia de la antigua ${S.c[z].n}. Si triunfa, nacerá un aliado suyo en tu territorio.`,
+        opts: [{ t: 'Exigir que pare · 1 CP', req: { cp: 1 }, fx: [['cp', -1], ['do', 'stopFund', { iso: y, z }]] }, { t: 'Denunciarlo y sancionarlo', fx: [['do', 'mySanc', { iso: y }], ['rel', 'T', -10, 'Lo denunciaste por armar rebeldes'], ['rep', 'conf', 2]] }, { t: 'Redoblar la vigilancia', fx: [['$g', -.03], ['do', 'resCut', { z, v: 12 }]] }] }); }
+    else news(`Llegan armas de origen desconocido a la guerrilla de la antigua ${S.c[z].n}`, 'war', me, 2); } });
+OPS.stopFund = a => { if (power(S.player) > power(a.iso) * 1.2 || chance(.4)) { S.resF[a.z] = S.turn; news(`${nm(a.iso)} deja de armar a la guerrilla de la antigua ${nm(a.z)}`, 'dip', a.iso, 2); } else { addMod(S.player, a.iso, 'Les exigiste que pararan', -5, .5, 1); news(`${nm(a.iso)} niega todo y sigue armando a los rebeldes`, 'dip', a.iso, 2); } };
+OPS.resCut = a => { S.res[a.z] = Math.max(0, (S.res[a.z] || 0) - a.v); };
 ACT.fundRes = a => {
   const z = a.iso, V = S.c[z], me = S.player; if (!V || V.alive || V.owner === me || !S.c[V.owner] || !S.c[V.owner].alive) return fail('Esa nación no está ocupada por otro país');
   if ((S.resF[z] || 0) > S.turn) return fail('Ya financias esa resistencia'); const cost = Math.max(.3, D.C[z].gdp * .01); if (!canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(1)) return fail('Necesitas 1 de capital político');
@@ -5492,7 +5505,7 @@ PTABS.dip.push(['ocu', 'Ocupación']);
 /* ---------- resistencias en naciones anexionadas ---------- */
 { const d1 = PANELS.dip;
   PANELS.dip = t => { if (t !== 'ocu') return d1(t); const R = Q.resInfo(), p = me(), mine = R.filter(r => r.owner === p), other = R.filter(r => r.owner !== p).sort((a, b) => b.res - a.res);
-    const rbar = r => `${bar(r.res, 100, r.res >= 70 ? 'red' : 'gold')}<small class="mut">Resistencia ${r.res}/100${r.fund ? ' · la financias tú' : ''}</small>`;
+    const rbar = r => `${bar(r.res, 100, r.res >= 70 ? 'red' : 'gold')}<small class="mut">Resistencia ${r.res}/100${!r.fund ? '' : r.sponsor === p ? ' · la financias tú' : r.known || r.owner !== p ? ` · la arma ${flag(r.sponsor)} ${cname(r.sponsor)}` : ' · armas de origen desconocido'}</small>`;
     return d1(t) + (mine.length ? `<h4>${gi('presion')} Resistencia en tus anexiones</h4>${mine.map(r => `<div class="arow">${fl(r.iso)}<div class="grow"><b>${cname(r.iso)}</b>${rbar(r)}<small>Al llegar a 100 estalla un levantamiento: si triunfa, recuperan su independencia, su líder y su gobierno. Crece más si tu estabilidad es baja o estás en guerra; la mano dura la frena.</small></div><button class="btn sm red" data-a="repress" data-iso="${r.iso}" data-confirm>Reprimir · 1 CP</button></div>`).join('')}` : '')
       + `<h4>${gi('paz')} Naciones bajo dominio extranjero</h4><p class="mut">Países que otros han borrado del mapa. Su guerrilla crece sola y los rivales del ocupante la arman. Si la financias y triunfa, renacen como aliados tuyos.</p>${other.map(r => `<div class="arow">${fl(r.iso)}<div class="grow"><b>${cname(r.iso)} <small class="mut">bajo ${flag(r.owner)} ${cname(r.owner)}</small></b>${rbar(r)}</div><button class="btn sm gold" data-a="fundRes" data-iso="${r.iso}" ${r.fund ? 'disabled' : ''}>Financiar la resistencia · 1 CP · ${money(Math.max(.3, D.C[r.iso].gdp * .01))}</button></div>`).join('') || '<p class="mut">Ninguna nación ha sido anexionada por otro país.</p>'}`; };
 }
