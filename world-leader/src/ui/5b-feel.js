@@ -233,3 +233,8 @@ const TFLAV = { populista: 'Tu instinto populista te susurra: haz lo que aplauda
   el.insertAdjacentHTML('afterend', `<p class="ev-trait">${gi('estrella')} ${TFLAV[tr[S().turn % tr.length]]}</p>`); }; }
 /* alertas con sonido distinto según su gravedad */
 Bus.on('turn', () => setTimeout(() => { if (!S() || S().over) return; const a = Q.alerts(); if (a.some(x => x.p >= 5)) Sfx.play('alertHi'); else if (a.some(x => x.p >= 4)) Sfx.play('alert'); }, 1600));
+
+/* ---------- pedir que levanten sanciones (ficha del país · Presión) ---------- */
+{ const x0 = sheetExtra; sheetExtra = iso => { const s = S(), me2 = me(), on = s.sanc.find(x => x.by === iso && x.on === me2), mine = s.sanc.some(x => x.by === me2 && x.on === iso);
+  return x0(iso) + (on ? `<h4>Sanciones en tu contra</h4><div class="arow"><div class="grow"><b>${gi('presion')} ${cname(iso)} te ${on.emb ? 'embarga' : 'sanciona'} desde hace ${s.turn - (on.s || 0)} turnos</b><small>${mine ? 'Tú también lo sancionas: si levantas las tuyas primero, es mucho más probable que corresponda. ' : ''}Puedes pedir que las levanten sin más, ofreciendo un pago o haciendo una concesión. Cuanto mejor la relación, más fácil.</small></div>${sel('sh:lo', [['nada', 'Sin ofrecer nada'], ['pago', `Ofrecer ${money(Math.max(.3, CC(iso).gdp * .005))}`], ['concesion', 'Concesión política']], 'nada')}<button class="btn sm gold" data-a="askLift" data-iso="${iso}">Pedir que las levanten · 1 CP</button></div>` : ''); }; }
+H.askLift = d => sheetAct('askLift', { iso: d.iso, offer: fv('sh:lo', 'nada') });
