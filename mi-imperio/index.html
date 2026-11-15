@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi Imperio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Teléfono: una columna con pestañas abajo. PC: mapa, negocios y lo personal lado a lado. */
+:root {
+  --bg: #e9eef0; --panel: #ffffff; --hundido: #f2f5f6; --tinta: #14263a; --tenue: #586a7a; --linea: #d3dbe0;
+  --acento: #0b7a6c; --sobre-acento: #ffffff;
+  --ok: #1d9453; --aviso: #c98a00; --mal: #cf4141;
+  --alto: #d9e6dc; --medio: #e6dfee; --obrero: #efe2d0; --agua: #a9cfe3;
+  --fuente: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --titulo: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1920; --panel: #172630; --hundido: #1e303b; --tinta: #e4edf1; --tenue: #94a6b3; --linea: #2b3e4a;
+  --acento: #3fc4ae; --sobre-acento: #05231e;
+  --ok: #45c17f; --aviso: #e5b23a; --mal: #ef6b6b;
+  --alto: #213a33; --medio: #2c2a44; --obrero: #3a3024; --agua: #1d4a63; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1920; --panel: #172630; --hundido: #1e303b; --tinta: #e4edf1; --tenue: #94a6b3; --linea: #2b3e4a;
+  --acento: #3fc4ae; --sobre-acento: #05231e;
+  --ok: #45c17f; --aviso: #e5b23a; --mal: #ef6b6b;
+  --alto: #213a33; --medio: #2c2a44; --obrero: #3a3024; --agua: #1d4a63; color-scheme: dark }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--tinta); font: 15px/1.4 var(--fuente); font-variant-numeric: tabular-nums; }
+#app { height: 100%; display: flex; flex-direction: column; }
+.borde { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--titulo); margin: 0; text-wrap: balance; }
+h2 { font-size: 1.15rem; } h3 { font-size: 1rem; }
+p { margin: 0; }
+.tenue { color: var(--tenue); font-size: 0.87rem; }
+
+button { font: inherit; color: var(--tinta); background: var(--hundido); border: 1px solid var(--linea); border-radius: 10px; min-height: 44px; padding: 8px 14px; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, .pin:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+button.pri { background: var(--acento); color: var(--sobre-acento); border-color: transparent; font-weight: 600; }
+button.on { border-color: var(--acento); box-shadow: inset 0 0 0 1px var(--acento); font-weight: 600; }
+button.peligro { color: var(--mal); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.mini { min-width: 44px; padding: 8px; }
+input, textarea { font: inherit; color: var(--tinta); background: var(--hundido); border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; width: 100%; }
+textarea { min-height: 90px; font-size: 12px; font-family: ui-monospace, monospace; }
+
+header { background: var(--panel); border-bottom: 1px solid var(--linea); padding-block: 8px; display: grid; gap: 6px; }
+.fila { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fila > .crece { flex: 1; min-width: 0; }
+.reloj { font-family: var(--titulo); font-weight: 700; font-size: 1.05rem; }
+.dinero { font-family: var(--titulo); font-weight: 700; font-size: 1.2rem; margin-left: auto; }
+.neg { color: var(--mal); }
+.vel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.vel button { min-height: 40px; padding: 4px; }
+.nec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 0.72rem; color: var(--tenue); text-transform: uppercase; letter-spacing: 0.04em; }
+.asesor { text-align: left; background: color-mix(in srgb, var(--acento) 12%, var(--panel)); border-color: color-mix(in srgb, var(--acento) 40%, var(--linea)); font-size: 0.82rem; line-height: 1.3; padding: 6px 10px; min-height: 0; }
+.final { background: var(--tinta); color: var(--bg); border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+
+main { flex: 1; overflow-y: auto; padding-block: 12px; -webkit-overflow-scrolling: touch; }
+.panel { display: none; gap: 12px; align-content: start; }
+.panel.activo { display: grid; }
+.tarjeta { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.lista { display: grid; gap: 8px; }
+.renglon { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; border-top: 1px solid var(--linea); padding-top: 8px; }
+.renglon:first-child { border-top: 0; padding-top: 0; }
+.renglon > div:first-child { flex: 1; min-width: 150px; }
+.botones { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.par { display: flex; justify-content: space-between; gap: 12px; }
+.par b { white-space: nowrap; }
+
+.barra { height: 8px; border-radius: 4px; background: var(--hundido); overflow: hidden; border: 1px solid var(--linea); }
+.barra i { display: block; height: 100%; background: var(--ok); }
+.barra.aviso i { background: var(--aviso); } .barra.mal i { background: var(--mal); }
+.medida { display: grid; gap: 3px; }
+.luz { width: 14px; height: 14px; border-radius: 50%; background: var(--ok); flex: none; }
+.luz.aviso { background: var(--aviso); } .luz.mal { background: var(--mal); }
+.negocio { text-align: left; display: grid; gap: 4px; width: 100%; background: var(--panel); border-radius: 14px; padding: 12px; }
+.precio { font-family: var(--titulo); font-weight: 700; min-width: 64px; text-align: center; }
+
+.mapa { width: 100%; height: auto; display: block; border-radius: 10px; }
+.dist { stroke: var(--panel); stroke-width: 2; }
+.dist.alto { fill: var(--alto); } .dist.medio { fill: var(--medio); } .dist.obrero { fill: var(--obrero); }
+.rio { fill: var(--agua); }
+.dn { fill: var(--tenue); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.pin { cursor: pointer; }
+.pin .hit { fill: transparent; }
+.pin .p { fill: var(--panel); stroke: var(--tinta); stroke-width: 2; }
+.pin.casa .p { fill: var(--tinta); } .pin.proveedor .p { fill: var(--aviso); } .pin.empleo .p { fill: var(--tenue); }
+.pin.mio .p { fill: var(--acento); }
+.pin.sel .p { stroke: var(--acento); stroke-width: 4; }
+.pin .yo { fill: none; stroke: var(--mal); stroke-width: 2.5; stroke-dasharray: 4 3; }
+.pin text { fill: var(--tinta); font-size: 9.5px; font-weight: 600; text-anchor: middle; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
+.leyenda { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.8rem; color: var(--tenue); }
+.leyenda span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; border: 2px solid var(--tinta); background: var(--c); }
+.leyenda span:last-child::before { border: 2px dashed var(--mal); }
+
+nav { background: var(--panel); border-top: 1px solid var(--linea); display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding-block: 6px; }
+nav button { border: 0; background: none; font-size: 0.78rem; min-height: 48px; padding: 4px 0; color: var(--tenue); border-radius: 10px; }
+nav button.on { color: var(--acento); background: color-mix(in srgb, var(--acento) 12%, transparent); box-shadow: none; }
+#avisos { position: fixed; left: 0; right: 0; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 6px; justify-items: center; pointer-events: none; z-index: 5; padding: 0 16px; }
+.aviso-t { background: var(--tinta); color: var(--bg); padding: 8px 14px; border-radius: 10px; font-size: 0.9rem; max-width: 420px; }
+
+.inicio { max-width: 460px; margin: 0 auto; display: grid; gap: 14px; }
+.inicio h1 { font-size: 2.2rem; letter-spacing: -0.02em; }
+.opc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.spark { width: 100%; height: 44px; display: block; }
+.spark polyline { fill: none; stroke: var(--acento); stroke-width: 2; vector-effect: non-scaling-stroke; }
+label, .rot { font-size: 0.8rem; color: var(--tenue); text-transform: uppercase; letter-spacing: 0.05em; display: grid; gap: 4px; }
+
+@media (min-width: 1000px) {
+  nav { display: none; }
+  #avisos { bottom: 20px; }
+  main.juego { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  main.juego .panel { display: grid; }
+  #p-mapa, #p-negocios { grid-row: 1 / span 3; }
+  #p-personaje, #p-finanzas, #p-menu { grid-column: 3; }
+  header .dentro { display: grid; grid-template-columns: auto 320px 300px 1fr; gap: 16px; align-items: center; }
+}
+header .dentro { display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="avisos" aria-live="polite"></div>
+<script src="datos.js"></script>
+<script src="motor.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
