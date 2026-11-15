@@ -344,6 +344,49 @@ details.held { margin-top: 8px; } details.held summary { cursor: pointer; color:
 .just-bar { position: relative; } .just-bar .bar { flex: none; width: 100%; height: 9px; } .just-bar i { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(255, 255, 255, .45); }
 .just-l { display: flex; flex-direction: column; gap: 3px; } .just-l div { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); } .just-l b { color: var(--gold); font: 600 13px var(--fc); }
 
+/* ===================== FASE 5 · modos, campañas, logros, resultado ===================== */
+.start-in { max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.start-in.wide5 { max-width: 820px; }
+.modes5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 0 0 14px; }
+.mcard { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--glass); color: var(--ink); cursor: pointer; transition: transform .15s, border-color .15s; }
+.mcard:hover, .mcard:focus-visible { transform: translateY(-2px); border-color: var(--gold); }
+.mcard .gi { width: 22px; height: 22px; fill: var(--gold); } .mcard b { font: 600 15px var(--fd); letter-spacing: .03em; } .mcard small { color: var(--mut); line-height: 1.3; }
+.camps { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin: 12px 0; }
+.card.camp p { margin: 8px 0; } .stages { margin: 0 0 8px 18px; padding: 0; color: #cfd8e8; } .stages li { margin: 2px 0; }
+.code5 { width: 100%; font: 13px/1.4 ui-monospace, Menlo, monospace; background: rgba(0, 0, 0, .35); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical; }
+.scens { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.scard { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, .03); color: var(--ink); cursor: pointer; }
+.scard.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset, 0 6px 24px rgba(232, 195, 106, .18); } .scard:disabled { opacity: .5; cursor: not-allowed; }
+.scard small { color: var(--mut); line-height: 1.3; } .scard small.gold { color: var(--gold); } .scard .gi { width: 15px; height: 15px; fill: currentColor; vertical-align: -2px; }
+.sub5 { margin: 0 0 8px 26px; }
+.vlist, .goals5, .tl5 { list-style: none; margin: 6px 0; padding: 0; } .vlist li, .goals5 li { padding: 6px 0; border-bottom: 1px solid var(--line); } .vlist li small { display: block; color: var(--mut); }
+.vlist .gi, .goals5 .gi { width: 16px; height: 16px; fill: var(--mut); vertical-align: -3px; } .vlist li.ok .gi, .goals5 li.ok .gi { fill: var(--green); } .goals5 li.ok { color: var(--green); }
+.score5 .arow { gap: 10px; } .score5 .bar { width: 110px; flex: none; } .score5 .num { min-width: 64px; text-align: right; }
+.camp-pill { position: fixed; right: var(--sr); bottom: calc(74px + var(--sb)); z-index: 6; display: flex; align-items: center; gap: 6px; max-width: min(320px, calc(100vw - 32px)); padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(232, 195, 106, .45); color: var(--ink); font: 600 12px var(--fb); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.camp-pill .gi { width: 15px; height: 15px; fill: var(--gold); flex: none; }
+.p5det { margin: 10px 0; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: rgba(255, 255, 255, .02); } .p5det summary { cursor: pointer; font-weight: 600; } .p5det summary .gi { width: 16px; height: 16px; fill: var(--gold); vertical-align: -3px; }
+.tl5 li { padding: 4px 0 4px 12px; border-left: 2px solid rgba(232, 195, 106, .35); margin-left: 4px; } .tl5 small { color: var(--mut); margin-right: 6px; }
+.mem5 .arow { gap: 10px; } .card.ending { border-color: var(--gold); text-align: center; } .card.ending h2 { color: var(--gold); }
+.rcard { display: block; width: 100%; border-radius: 12px; border: 1px solid var(--line); margin: 10px 0; }
+.rec5 { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; } .rec5 th, .rec5 td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; } .rec5 th { color: var(--mut); font-weight: 500; }
+.ach5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.ach { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); opacity: .55; } .ach.on { opacity: 1; border-color: rgba(232, 195, 106, .5); background: rgba(232, 195, 106, .06); }
+.ach small { display: block; color: var(--mut); line-height: 1.25; }
+.ach-ic { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(255, 255, 255, .06); } .ach-ic .gi { width: 22px; height: 22px; fill: var(--mut); } .ach.on .ach-ic .gi, .achpop .ach-ic .gi { fill: var(--gold); }
+#achbox { position: fixed; top: calc(70px + var(--st)); left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 8px; pointer-events: none; width: min(380px, calc(100vw - 32px)); }
+.achpop { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 16px; background: linear-gradient(160deg, rgba(40, 32, 12, .95), rgba(10, 12, 20, .95)); border: 1px solid var(--gold); box-shadow: 0 10px 40px rgba(232, 195, 106, .3); animation: achIn .5s cubic-bezier(.2, .9, .3, 1.3) both; }
+.achpop b { display: block; font: 600 15px var(--fd); color: var(--gold); } .achpop small { display: block; color: #cfd8e8; } .achpop small:first-child { color: var(--mut); text-transform: uppercase; letter-spacing: .1em; font-size: 10px; }
+.achpop .ach-ic { background: rgba(232, 195, 106, .15); animation: achSpin 1s ease-out both; } .achpop.out { opacity: 0; transform: translateY(-10px); transition: .45s; }
+@keyframes achIn { from { opacity: 0; transform: translateY(-16px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes achSpin { from { transform: rotate(-180deg) scale(.4); } to { transform: none; } }
+body[data-frame="oro"] .portrait { border: 2px solid var(--gold); box-shadow: 0 0 0 3px rgba(232, 195, 106, .25), 0 0 18px rgba(232, 195, 106, .45); }
+body[data-frame="grabado"] .portrait { filter: grayscale(1) sepia(.45) contrast(1.25); border-color: #c9b48a; }
+.trait.locked .gi { width: 12px; height: 12px; }
+@media (max-width: 700px) { .modes5 { grid-template-columns: 1fr 1fr; } .mcard small { display: none; } .camps, .scens { grid-template-columns: 1fr; } .score5 .bar { width: 70px; } .camp-pill { bottom: calc(132px + var(--sb)); } }
+.start-in.wide5 { background: linear-gradient(160deg, rgba(10, 16, 30, .9), rgba(4, 7, 14, .92)); border: 1px solid var(--line); border-radius: 18px; padding: 18px; backdrop-filter: blur(6px); }
+.check.opt5 { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; } .check.opt5 span { display: flex; flex-direction: column; } .check.opt5 small { line-height: 1.3; }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
 </style>
 
 <div id="globe"></div>
@@ -1360,6 +1403,137 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 })();
 
 /* =====================================================================
+   WORLD LEADER · DATOS · FASE 5: logros, desbloqueables, estilos,
+   rasgos de leyenda y fórmula de puntuación. Todo editable.
+   Cada logro: [id, icono, nombre, descripción, condición(m), oculto?, desbloquea?]
+   "m" son las métricas de la partida (ver metrics() en src/engine/7h-victory.js):
+     turn gdpX gdpRank powRank appr stab com ali pna laws wars warsWon annex occ med tech firsts conf paz dem gen
+     debt sancOn sancBy crimes elections treat spy coupsNear mode scen camp campStage campEnd vic over traits
+     cash nukes noWarTurns lostElec allies regs gdp pop, y "g" las estadísticas globales (partidas, victorias…)
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA;
+  D.ACH = [
+    // ---- primeros pasos
+    ['primer', 'pin', 'Primer día en el palacio', 'Juega tu primer turno.', m => m.turn >= 1],
+    ['ano', 'pin', 'Un año en el cargo', 'Aguanta 4 trimestres.', m => m.turn >= 4],
+    ['legis', 'seg', 'Legislatura completa', 'Aguanta 16 trimestres.', m => m.turn >= 16],
+    ['decada', 'seg', 'La década', 'Aguanta 40 trimestres.', m => m.turn >= 40],
+    ['eterno', 'seg', 'El eterno', 'Aguanta 100 trimestres.', m => m.turn >= 100],
+    ['ley1', 'obras', 'Tu primera ley', 'Aprueba una ley.', m => m.laws >= 1],
+    ['ley10', 'obras', 'Legislador', 'Aprueba 10 leyes.', m => m.laws >= 10],
+    ['ley25', 'obras', 'Reformador incansable', 'Aprueba 25 leyes.', m => m.laws >= 25],
+    ['reeleg', 'jov', 'El pueblo ha hablado', 'Gana unas elecciones.', m => m.elections >= 1],
+    ['reeleg3', 'jov', 'Tricampeón', 'Gana 3 elecciones.', m => m.elections >= 3],
+    // ---- economía
+    ['crece20', 'eco', 'Viento de cola', 'Haz crecer el PIB un 20%.', m => m.gdpX >= 1.2],
+    ['crece50', 'eco', 'Milagro económico', 'Haz crecer el PIB un 50%.', m => m.gdpX >= 1.5],
+    ['crece100', 'oro', 'El doble', 'Duplica el PIB.', m => m.gdpX >= 2],
+    ['top10', 'oro', 'Club de los diez', 'Entra en las 10 mayores economías.', m => m.gdpRank <= 10],
+    ['top1', 'oro', 'Número uno', 'Sé la primera economía del mundo.', m => m.gdpRank === 1],
+    ['caja', 'emp', 'Colchón', 'Acumula en caja el 10% de tu PIB.', m => m.cash >= .1],
+    ['sindeuda', 'emp', 'Cuentas limpias', 'Baja la deuda del 30% del PIB tras 20 turnos.', m => m.turn >= 20 && m.debt < .3],
+    ['quiebra', 'presion', 'Bancarrota creativa', 'Ten una deuda del 150% del PIB y sigue gobernando.', m => m.debt >= 1.5, 1],
+    // ---- diplomacia
+    ['com5', 'acuerdo', 'Comerciante', 'Ten 5 tratados comerciales.', m => m.com >= 5],
+    ['com20', 'acuerdo', 'La ruta de la seda', 'Ten 20 tratados comerciales.', m => m.com >= 20],
+    ['ali3', 'acuerdo', 'Hermanos de armas', 'Ten 3 alianzas o pactos de defensa.', m => m.ali >= 3],
+    ['ali10', 'acuerdo', 'Arquitecto de bloques', 'Ten 10 alianzas o pactos de defensa.', m => m.ali >= 10],
+    ['treat25', 'acuerdo', 'Coleccionista de firmas', 'Firma 25 tratados en una partida.', m => m.treat >= 25],
+    ['conf50', 'trofeo', 'Palabra de honor', 'Alcanza 50 de confianza internacional.', m => m.conf >= 50],
+    ['med1', 'paz', 'Pacificador', 'Media con éxito en una guerra ajena.', m => m.med >= 1],
+    ['med5', 'paz', 'El honesto intermediario', 'Logra 5 mediaciones.', m => m.med >= 5],
+    ['amigos', 'regalo', 'Todo el mundo me quiere', 'Ten relación de 50 o más con 25 países.', m => m.friends >= 25],
+    ['paria', 'presion', 'Persona non grata', 'Sufre sanciones de 15 países a la vez.', m => m.sancOn >= 15, 1],
+    ['sancion10', 'presion', 'Mano dura comercial', 'Sanciona a 10 países a la vez.', m => m.sancBy >= 10],
+    // ---- guerra y espionaje
+    ['guerra1', 'tan', 'Bautismo de fuego', 'Entra en una guerra.', m => m.wars >= 1],
+    ['gana1', 'tan', 'Victoria', 'Gana una guerra.', m => m.warsWon >= 1],
+    ['gana5', 'tan', 'Señor de la guerra', 'Gana 5 guerras.', m => m.warsWon >= 5],
+    ['anex1', 'frontera', 'Nuevas fronteras', 'Anexiona un país.', m => m.annex >= 1],
+    ['anex5', 'frontera', 'Imperio', 'Anexiona 5 países.', m => m.annex >= 5],
+    ['occ10', 'frontera', 'Ocupante', 'Ocupa 10 regiones extranjeras.', m => m.occ >= 10],
+    ['pow1', 'mil', 'Primera potencia militar', 'Ten el ejército más poderoso del mundo.', m => m.powRank === 1],
+    ['pacif40', 'paz', 'Cuarenta trimestres de paz', 'Llega al turno 40 sin haber entrado en ninguna guerra.', m => m.turn >= 40 && m.wars === 0],
+    ['espia10', 'ojo', 'Ojos en todas partes', 'Ejecuta 10 operaciones de espionaje.', m => m.spy >= 10],
+    ['crimen', 'bomb', 'La Haya te espera', 'Comete crímenes de guerra.', m => m.crimes >= 1, 1],
+    ['nuke', 'ura', 'El botón rojo', 'Usa un arma nuclear.', m => m.nukes >= 1, 1],
+    // ---- ciencia y política interior
+    ['tec5', 'tec', 'Laboratorio nacional', 'Domina 5 tecnologías.', m => m.tech >= 5],
+    ['tec12', 'tec', 'Era de la información', 'Domina 12 tecnologías.', m => m.tech >= 12],
+    ['first1', 'tec', 'Primero en el mundo', 'Sé el primer país en lograr un gran descubrimiento.', m => m.firsts >= 1],
+    ['first5', 'tec', 'Faro de la ciencia', 'Sé el primero en 5 grandes descubrimientos.', m => m.firsts >= 5],
+    ['amado', 'jov', 'El querido', 'Llega al 75% de aprobación.', m => m.appr >= 75],
+    ['odiado', 'presion', 'Récord de impopularidad', 'Baja del 15% de aprobación y sigue en el cargo.', m => m.appr < 15 && !m.over, 1],
+    ['roca', 'seg', 'Roca firme', 'Llega a 85 de estabilidad.', m => m.stab >= 85],
+    ['filo', 'presion', 'Al filo', 'Sobrevive 4 turnos con estabilidad por debajo de 15.', m => m.lowStab >= 4, 1],
+    ['demo', 'jov', 'Faro democrático', 'Alcanza 50 de reputación democrática.', m => m.dem >= 50],
+    ['golpes', 'ojo', 'Vecindario agitado', 'Vive 5 golpes de Estado en el mundo en una partida.', m => m.coups >= 5],
+    // ---- finales, modos y campañas
+    ['vic', 'trofeo', 'Victoria', 'Consigue cualquier victoria alternativa.', m => !!m.vic],
+    ['vic_eco', 'oro', 'Hegemonía económica', 'Consigue la victoria económica.', m => m.vic === 'eco'],
+    ['vic_dip', 'acuerdo', 'Concierto de naciones', 'Consigue la victoria diplomática.', m => m.vic === 'dip'],
+    ['vic_dom', 'tan', 'Dominación', 'Consigue la victoria por dominación.', m => m.vic === 'dom'],
+    ['vic_tec', 'tec', 'Siglo de las luces', 'Consigue la victoria científica.', m => m.vic === 'tec'],
+    ['vic_leg', 'trofeo', 'Para la posteridad', 'Consigue la victoria por legado.', m => m.vic === 'leg', 0, 'u_edad'],
+    ['camp1', 'pin', 'Primera campaña', 'Termina una campaña.', m => !!m.campEnd],
+    ['camp_all', 'trofeo', 'Cronista del siglo', 'Termina 8 campañas distintas.', (m, g) => (g.campDone || 0) >= 8, 0, 'u_cronista'],
+    ['camp_alt', 'trofeo', 'Otro final', 'Consigue dos finales distintos de la misma campaña.', (m, g) => !!g.twoEnds],
+    ['rapido', 'pin', 'Contrarreloj', 'Termina una partida rápida con más de 60 puntos.', m => m.mode === 'rapido' && m.over && m.score >= 60],
+    ['semanal', 'pin', 'Reto aceptado', 'Termina un reto semanal.', m => m.mode === 'semana' && m.over],
+    ['caos', 'bomb', 'Sobreviviste al caos', 'Aguanta 20 turnos en el escenario Caos total.', m => m.scen === 'caos' && m.turn >= 20, 0, 'u_invierno'],
+    ['frio', 'ura', 'Deshielo', 'Aguanta 20 turnos en la Guerra Fría sin entrar en guerra.', m => m.scen === 'guerrafria' && m.turn >= 20 && m.wars === 0],
+    ['perm', 'seg', 'Sin red', 'Llega al turno 40 en muerte permanente.', m => m.perm && m.turn >= 40, 0, 'u_marco'],
+    ['juegos5', 'pin', 'Veterano', 'Empieza 5 partidas.', (m, g) => g.games >= 5, 0, 'u_naciones'],
+    ['juegos20', 'pin', 'Adicto al poder', 'Empieza 20 partidas.', (m, g) => g.games >= 20, 0, 'u_tema'],
+    // ---- ocultos y con humor
+    ['breve', 'puerta', 'Menos que un yogur', 'Pierde el poder antes del turno 4.', m => m.over && m.turn < 4, 1],
+    ['exilio', 'puerta', 'Con una sola maleta', 'Termina en el exilio.', m => m.overR === 'exilio', 1],
+    ['urnas', 'puerta', 'Gracias por los servicios prestados', 'Pierde unas elecciones.', m => m.overR === 'eleccion', 1],
+    ['golpeado', 'tan', 'Despertar con tanques', 'Sufre un golpe de Estado.', m => m.overR === 'golpe' || m.overR === 'revolucion', 1],
+    ['sandbox', 'ojo', 'Dios de bolsillo', 'Usa el editor en modo sandbox.', m => m.mode === 'sandbox' && m.edited, 1, 'u_retrato'],
+    ['pobre', 'presion', 'Austeridad extrema', 'Ten la caja en números rojos 8 turnos seguidos.', m => m.redTurns >= 8, 1],
+    ['patas', 'regalo', 'Diplomacia del mantel', 'Haz 10 visitas de Estado.', m => m.visits >= 10, 1],
+    ['traidor', 'presion', 'Puñalada por la espalda', 'Declara la guerra a alguien con quien tenías un pacto.', m => m.betray >= 1, 1]
+  ];
+  /* desbloqueables: id → qué abre. Se ganan con logros (última columna de D.ACH) */
+  D.UNLOCK = {
+    u_edad: { n: 'Escenario «Edad de oro»', k: 'scen' }, u_invierno: { n: 'Escenario «Invierno nuclear»', k: 'scen' },
+    u_naciones: { n: 'Naciones históricas al fundar país', k: 'nat' }, u_cronista: { n: 'Rasgo «Cronista»', k: 'trait' },
+    u_marco: { n: 'Marco dorado para el retrato', k: 'frame' }, u_retrato: { n: 'Retrato de estilo grabado', k: 'frame' },
+    u_tema: { n: 'Estilo de interfaz «Carmesí»', k: 'theme' }, u_leyenda: { n: 'Rasgos de leyenda', k: 'trait' }
+  };
+  /* los rasgos de leyenda se desbloquean con 15 logros cualesquiera */
+  D.UNLOCK_BY_COUNT = [[15, 'u_leyenda'], [30, 'u_tema']];
+  D.BRANCHES.leg = 'Leyenda';
+  D.TRAITS.push(
+    { id: 'cronista', b: 'leg', t: 1, lock: 'u_cronista', n: 'Cronista', pro: '+10% a las mejoras de relación y +2 pts en elecciones', con: '−2% de recaudación', m: { relGain: .1, elect: 2, income: -.02 } },
+    { id: 'estadista', b: 'leg', t: 2, lock: 'u_leyenda', n: 'Estadista', pro: '+1 capital político por turno y +4 a que acepten tus tratados', con: '−0.05 pp de crecimiento', m: { cp: 1, treatyAcc: 4, growth: -.05 } },
+    { id: 'mito', b: 'leg', t: 3, lock: 'u_leyenda', n: 'Mito viviente', pro: 'Escándalos a la mitad y estabilidad +0.15/turno', con: '−10% a las mejoras de afinidad: nadie te ve como uno más', m: { scandal: -.5, stabT: .15, secGain: -.1 } }
+  );
+  /* estilos de interfaz (variables CSS) */
+  D.THEMES = {
+    clasico: { n: 'Clásico', v: {} },
+    esmeralda: { n: 'Esmeralda', v: { '--gold': '#7fe0a8', '--gold2': '#2f9e68', '--cyan': '#7fd6ff' } },
+    artico: { n: 'Ártico', v: { '--gold': '#cfe6ff', '--gold2': '#7aa6d6', '--cyan': '#9ff0ff' } },
+    carmesi: { n: 'Carmesí', lock: 'u_tema', v: { '--gold': '#ff8a7a', '--gold2': '#b23a2e', '--cyan': '#ffc46b' } }
+  };
+  D.FRAMES = { none: { n: 'Sin marco' }, oro: { n: 'Marco dorado', lock: 'u_marco' }, grabado: { n: 'Grabado', lock: 'u_retrato' } };
+
+  /* puntuación: cada bloque aporta hasta su máximo; total de 0 a 100. Nada domina por sí solo */
+  D.SCORE = [
+    ['eco', 'Economía', 20, 'Crecimiento del PIB respecto al inicio (+50% = máximo) y deuda'],
+    ['soc', 'Bienestar', 15, 'Aprobación media y estabilidad'],
+    ['dip', 'Diplomacia', 15, 'Tratados, confianza y mediaciones'],
+    ['paz', 'Paz y prestigio', 12, 'Reputación de paz y humanitaria, sin crímenes de guerra'],
+    ['sci', 'Ciencia', 12, 'Tecnologías y descubrimientos pioneros'],
+    ['pow', 'Poder', 12, 'Puesto militar mundial, guerras ganadas y territorio'],
+    ['dur', 'Permanencia', 8, 'Tiempo en el poder'],
+    ['obj', 'Objetivos', 6, 'Etapas de campaña o victoria conseguida']
+  ];
+})();
+
+/* =====================================================================
    WORLD LEADER · DATOS · SUBDIVISIONES (Fase 2)
    Nivel A: 15 países con todas sus entidades, autoridad regional y partido.
    Nivel B: el resto se reparte en 3-8 regiones en el build (partido aproximado).
@@ -1432,6 +1606,300 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     AR: { lit: 'Jujuy,Salta,Catamarca', tri: 'Buenos Aires,Santa Fe,Córdoba', gas: 'Neuquén', pet: 'Neuquén,Chubut', cob: 'San Juan', oro: 'Santa Cruz' },
     CO: { pet: 'Meta,Casanare', car: 'La Guajira,Cesar', caf: 'Huila,Antioquia,Caldas', oro: 'Antioquia' },
     GB: { pet: 'Escocia', gas: 'Escocia' }, DE: { car: 'Renania del Norte-Westfalia,Brandeburgo' }, FR: { tri: 'Centro-Valle de Loira,Alta Francia', ura: 'Nueva Aquitania' }
+  };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · FASE 5: escenarios, campañas, victorias,
+   reto semanal, eventos procedurales y mundo alternativo.
+   Todo es editable. Los datos históricos son aproximados (verificado: false).
+
+   Operaciones de escenario (ops), se aplican tras crear el mundo:
+     ['rel', A, B, v, motivo]     relación entre dos países (A o B pueden ser '*' = todos, 'P' = jugador, 'big' = las 20 mayores economías)
+     ['blocRel', blocA, blocB, v] relación entre todos los miembros de dos bloques
+     ['gdp', filtro, k]          multiplica el PIB (filtro: '*', 'big', 'P' o un código)
+     ['stab', filtro, v]         suma estabilidad
+     ['war', A, B]  ['sanc', A, B]  ['tr', tipo, A, B]  ['untr', A, B]
+     ['coups', n]                n golpes de Estado al azar entre países inestables
+     ['wars', n]                 n guerras al azar entre vecinos hostiles
+     ['crisis', n]               crisis financieras en n grandes economías (y quizá en la tuya)
+     ['price', k, m]             precio de una materia prima (k = '*' para todas)
+     ['inf', v]  ['year', y]  ['leader', iso, nombre, partido]  ['reg', iso, régimen]
+     ['blocs', iso, '+OTAN' | '-OTAN']  ['per', '*', 'agres', +0.1]  ['tension', v] (rival de cada gran potencia)
+   Condiciones de objetivos (goal / if): ver goalOk() en src/engine/7g-scenarios.js
+     ['gdpX', 1.3] ['gdpRank', 5] ['powRank', 3] ['tr', 'com'|'pna'|'ali'|'def'|'any', n] ['stab', 60] ['appr', 55]
+     ['rep', 'paz', 20] ['peace'] ['annex', 2] ['occ', 6] ['rel', 'US', 30] ['relLt', 'US', 0] ['warsWon', 1] ['tech', 6]
+     ['firsts', 2] ['debtLt', .8] ['med', 2] ['noSanc'] ['bloc', 'OTAN'] ['flag', 'x'] ['noflag', 'x'] ['laws', 8]
+     ['reg', 'dem'] ['turns', 12] (turnos dentro de la etapa) ['turn', 60] ['stabLt', 20] ['dead'] ['any', [...], [...]]
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx;
+
+  /* ---------- escenarios ---------- */
+  D.SCEN = [
+    { id: 'actual', n: 'Mundo actual (nov 2026)', d: 'Normal', obj: 'Gobierna el mundo tal como es hoy.', x: 'El tablero de hoy: guerra en Ucrania, rivalidad entre Washington y Pekín, bloques en tensión y una economía mundial que crece poco.', ops: [], verificado: false },
+    { id: 'guerrafria', n: 'Guerra Fría tardía', d: 'Difícil', year: 1987, obj: 'Sobrevive al duelo de bloques sin que el mundo arda.',
+      x: 'Dos bloques armados hasta los dientes, telones de acero y crisis por delegación. Las repúblicas exsoviéticas son satélites fieles de Moscú; China juega a dos bandas.',
+      ops: [['year', 1987], ['blocRel', 'OTAN', 'OTSC', -45, 'Telón de acero'], ['rel', 'US', 'RU', -40, 'Guerra Fría'], ['rel', 'US', 'CU', -40, 'Embargo'], ['rel', 'RU', 'CU', 40, 'Hermanos socialistas'],
+        ['rel', 'RU', 'UA', 80, 'República hermana'], ['rel', 'RU', 'BY', 60, 'República hermana'], ['rel', 'RU', 'KZ', 50, 'República hermana'], ['rel', 'RU', 'VN', 35, 'Aliado socialista'], ['rel', 'RU', 'KP', 30, 'Aliado socialista'],
+        ['rel', 'CN', 'RU', -20, 'Ruptura sino-soviética'], ['rel', 'US', 'CN', 20, 'Diplomacia triangular'], ['sanc', 'US', 'RU'], ['sanc', 'RU', 'US'], ['sanc', 'US', 'CU'], ['peace', 'RU', 'UA'],
+        ['leader', 'US', 'Ronald Reagan', 'Partido Republicano'], ['leader', 'RU', 'Mijaíl Gorbachov', 'PCUS'], ['reg', 'RU', 'com'], ['leader', 'CN', 'Deng Xiaoping', 'Partido Comunista'], ['leader', 'GB', 'Margaret Thatcher', 'Partido Conservador'],
+        ['leader', 'FR', 'François Mitterrand', 'Partido Socialista'], ['leader', 'DE', 'Helmut Kohl', 'CDU'], ['leader', 'CU', 'Fidel Castro', 'Partido Comunista'], ['leader', 'JP', 'Yasuhiro Nakasone', 'PLD'], ['leader', 'IN', 'Rajiv Gandhi', 'Congreso Nacional'],
+        ['leader', 'UA', 'Volodímir Shcherbytsky', 'PCUS'], ['reg', 'UA', 'com'], ['reg', 'BY', 'com'], ['leader', 'MX', 'Miguel de la Madrid', 'PRI'], ['leader', 'BR', 'José Sarney', 'PMDB'], ['leader', 'AR', 'Raúl Alfonsín', 'UCR'],
+        ['gdp', 'CN', .25], ['gdp', 'IN', .35], ['gdp', 'RU', 1.2], ['per', '*', 'agres', .05]], verificado: false },
+    { id: 'crisis', n: 'Mundo en crisis económica', d: 'Difícil', obj: 'Saca a tu país de la recesión antes que los demás.',
+      x: 'Un crac bancario ha contagiado a las grandes economías. Crédito seco, materias primas por los suelos, paro al alza y gobiernos que caen como fichas.',
+      ops: [['crisis', 8, 'P'], ['gdp', '*', .93], ['stab', '*', -6], ['price', '*', .75], ['price', 'pet', .6], ['inf', 3], ['coups', 2]], verificado: false },
+    { id: 'tension', n: 'Mundo multipolar en tensión', d: 'Difícil', obj: 'Navega entre cinco potencias que desconfían unas de otras.',
+      x: 'Ya no hay un árbitro. Washington, Pekín, Moscú, Nueva Delhi y Bruselas compiten por zonas de influencia; las guerras por delegación se multiplican.',
+      ops: [['tension', -25], ['rel', 'US', 'CN', -30, 'Rivalidad estratégica'], ['rel', 'IN', 'CN', -25, 'Frontera disputada'], ['rel', 'IN', 'PK', -20, 'Cachemira'], ['rel', 'SA', 'IR', -25, 'Pulso regional'],
+        ['wars', 3], ['per', '*', 'agres', .08], ['sanc', 'US', 'CN'], ['sanc', 'CN', 'US']], verificado: false },
+    { id: 'paz', n: 'Mundo en paz frágil', d: 'Fácil', obj: 'Mantén la paz: cualquier chispa puede incendiarlo todo.',
+      x: 'Un alto el fuego general y una ola de tratados han traído calma. Pero los agravios siguen ahí, y la paz solo dura mientras alguien la cuide.',
+      ops: [['peace', '*', '*'], ['rel', 'RU', 'UA', 15, 'Alto el fuego'], ['rel', '*', '*', 8, 'Ola de distensión'], ['per', '*', 'agres', -.08], ['stab', '*', 4]], verificado: false },
+    { id: 'caos', n: 'Caos total', d: 'Despiadado', obj: 'Sobrevive. Lo demás es un lujo.',
+      x: 'Golpes de Estado, guerras y crisis desde el primer día. Los mercados se desploman, los aliados dudan y tu propio ejército mira hacia el palacio.',
+      ops: [['coups', 7], ['wars', 6], ['crisis', 6, 'P'], ['stab', '*', -10], ['stab', 'P', -8], ['price', '*', 1.25], ['inf', 6], ['per', '*', 'agres', .12], ['rel', 'P', 'big', -8, 'Desconfianza general']], verificado: false },
+    /* escenarios desbloqueables (logros) */
+    { id: 'edad', n: 'Edad de oro', d: 'Fácil', lock: 'u_edad', obj: 'Haz que la prosperidad dure.', x: 'Crecimiento, comercio y tecnología baratos. El reto es no estropearlo.',
+      ops: [['gdp', '*', 1.08], ['stab', '*', 8], ['rel', '*', '*', 5, 'Prosperidad compartida'], ['price', '*', 1.1], ['peace', '*', '*']], verificado: false },
+    { id: 'invierno', n: 'Invierno nuclear', d: 'Despiadado', lock: 'u_invierno', obj: 'Reconstruye la civilización tras un intercambio nuclear limitado.',
+      x: 'Un intercambio nuclear limitado ha devastado a las grandes potencias. Cosechas perdidas, refugiados y gobiernos improvisados.',
+      ops: [['gdp', 'big', .6], ['stab', '*', -12], ['coups', 5], ['price', '*', 1.6], ['inf', 8], ['rel', '*', '*', -6, 'Mundo traumatizado']], verificado: false }
+  ];
+
+  /* ---------- naciones históricas desbloqueables (país propio sobre un territorio) ---------- */
+  D.HISTNATIONS = [
+    { id: 'gcol', lock: 'u_naciones', iso: 'CO', n: 'Gran Colombia', reg: 'dem', ideo: 0, x: 'El sueño de Bolívar, de nuevo en pie.' },
+    { id: 'yugo', lock: 'u_naciones', iso: 'RS', n: 'Federación Yugoslava', reg: 'hib', ideo: -1, x: 'Los Balcanes unidos bajo una sola bandera.' },
+    { id: 'rau', lock: 'u_naciones', iso: 'EG', n: 'República Árabe Unida', reg: 'aut', ideo: -1, x: 'El panarabismo vuelve al poder en El Cairo.' },
+    { id: 'aust', lock: 'u_naciones', iso: 'AT', n: 'Danubia', reg: 'mon', ideo: 1, x: 'Una monarquía constitucional en el corazón de Europa.' },
+    { id: 'cent', lock: 'u_naciones', iso: 'GT', n: 'República Federal de Centroamérica', reg: 'dem', ideo: 0, x: 'Cinco repúblicas que vuelven a ser una.' }
+  ];
+
+  /* ---------- victorias alternativas (partida libre) ----------
+     Umbrales elegidos para que ninguna sea trivial: ver FASE5.md */
+  D.VICT = [
+    { id: 'dom', n: 'Dominación', x: 'Controlas al menos el 25% del poder militar mundial y has anexionado 3 países.', ic: 'tan' },
+    { id: 'eco', n: 'Victoria económica', x: 'Tu PIB supera en 1,6 veces al segundo del mundo y es al menos 1,5 veces el inicial.', ic: 'oro' },
+    { id: 'dip', n: 'Victoria diplomática', x: '12 alianzas o pactos de defensa, 30 tratados comerciales y confianza internacional de 50.', ic: 'acuerdo' },
+    { id: 'tec', n: 'Victoria científica y cultural', x: 'Tu país fue el primero del mundo en 7 grandes descubrimientos y tu prestigio cultural es alto.', ic: 'tec' },
+    { id: 'sup', n: 'Supervivencia', x: 'Sigues en el poder tras 120 trimestres (30 años).', ic: 'seg' },
+    { id: 'leg', n: 'Legado', x: 'Tras al menos 60 trimestres, el juicio de la historia te da 85 o más.', ic: 'trofeo' }
+  ];
+
+  /* ---------- modos y reto semanal ---------- */
+  D.MODES = [
+    { id: 'libre', n: 'Partida libre', x: 'Elige país, escenario y reglas. Seis caminos a la victoria.' },
+    { id: 'camp', n: 'Campaña', x: 'Ocho historias con objetivos por etapas y tres finales cada una.' },
+    { id: 'semana', n: 'Reto semanal', x: 'Misma semilla y reglas para todo el que juegue esta semana.' },
+    { id: 'rapido', n: 'Rápido', x: '36 turnos. Gana quien consiga más puntos.' },
+    { id: 'sandbox', n: 'Sandbox', x: 'Editor abierto, sin derrota por elecciones. Para experimentar.' }
+  ];
+  D.QUICK_TURNS = 36;
+  D.WEEK_RULES = [
+    { id: 'escasez', n: 'Escasez de recursos' }, { id: 'hostil', n: 'Mundo hostil' }, { id: 'alt', n: 'Mundo alternativo' }, { id: 'rapido', n: 'Partida rápida (36 turnos)' },
+    { id: 'perm', n: 'Muerte permanente' }, { id: 'caosev', n: 'Eventos al doble' }, { id: 'pobre', n: 'Economía dura' }
+  ];
+  D.WEEK_COUNTRIES = ['MX', 'BR', 'AR', 'TR', 'NG', 'ID', 'PL', 'EG', 'VN', 'ZA', 'CO', 'PK', 'KR', 'IR', 'ES', 'UA', 'SA', 'CL', 'PH', 'ET'];
+  /* componentes de dificultad: multiplicadores (1 = normal) */
+  D.DK = { ai: ['Agresividad de la IA', .6, 1.5], eco: ['Generosidad de la economía', .7, 1.3], stab: ['Dureza de la estabilidad', .6, 1.6], ev: ['Frecuencia de eventos', .5, 2] };
+
+  /* ---------- campañas ----------
+     stages: { n, x (lo que te cuenta tu asesor), goal: [...], turns: plazo }  · lose: derrota inmediata
+     events: { id, st (etapa), at (turnos tras empezar la etapa), t, x, opts: [[texto, efectos]] } (los efectos pueden poner flag.algo)
+     endings: tres finales; gana el primero cuyo "if" se cumpla (el último no tiene condición) */
+  const C = [
+    { id: 'emergente', n: 'La potencia emergente', iso: 'IN', scen: 'actual', d: 'Media', lead: 'Kavya Raman',
+      x: 'Mil cuatrocientos millones de personas, una economía que despega y vecinos que te miran con recelo. El siglo puede ser tuyo… si no tropiezas.',
+      stages: [
+        { n: 'Despegue', x: 'Primero, crecer. Haz que la economía crezca un 15% y domina tres tecnologías.', goal: [['gdpX', 1.15], ['tech', 3]], turns: 28 },
+        { n: 'Un asiento en la mesa', x: 'El mundo debe contar contigo: 8 tratados comerciales y 3 pactos de no agresión.', goal: [['tr', 'com', 8], ['tr', 'pna', 3]], turns: 28 },
+        { n: 'Potencia', x: 'Entra en el podio: entre las 3 mayores economías del mundo y con 10 tecnologías dominadas.', goal: [['gdpRank', 3], ['tech', 10]], turns: 44 }],
+      lose: [['stabLt', 18]],
+      events: [
+        { id: 'em_fab', st: 0, at: 2, t: 'La fábrica del mundo', x: 'Las multinacionales quieren trasladar su producción a tu país si abres la mano con los impuestos y los sindicatos.',
+          opts: [['Abrir las puertas', '$g+.6;grow+.2/6;sec.emp+8;sec.obr-6;flag.em_abierto'], ['Crecer con industria propia', 'grow+.1/6;sec.obr+6;sec.emp-4;flag.em_propia']] },
+        { id: 'em_himal', st: 1, at: 4, t: 'Incidente en el Himalaya', x: 'Patrullas chinas y tuyas se enfrentan a pedradas en un paso fronterizo. Hay muertos. La prensa pide respuesta.',
+          opts: [['Respuesta militar limitada', 'sec.mil+8;rel.CN-15:Choque en el Himalaya;rep.paz-4;flag.em_halcon'], ['Canal diplomático discreto', 'rel.CN+4:Contención en la frontera;sec.mil-5;rep.paz+3;flag.em_paloma']] },
+        { id: 'em_wash', st: 2, at: 3, t: 'La oferta de Washington', x: 'Estados Unidos te ofrece una asociación estratégica: tecnología militar a cambio de alinearte contra Pekín.',
+          opts: [['Aceptar la asociación', 'rel.US+15:Asociación estratégica;rel.CN-12:Te alineas con Washington;units.aire+8;flag.em_alineado'], ['Mantener la autonomía estratégica', 'rep.conf+5;rel.RU+5:Autonomía estratégica;flag.em_autonomo']] }],
+      endings: [
+        { t: 'La potencia que inspira', x: 'Tu país se convierte en el ejemplo del Sur Global: rico, respetado y en paz con sus vecinos.', if: [['rep', 'paz', 15], ['noflag', 'em_halcon']] },
+        { t: 'El nuevo hegemón regional', x: 'Nadie en Asia del Sur se mueve sin tu permiso. Te temen tanto como te respetan.', if: [['any', [['flag', 'em_halcon']], [['annex', 1]], [['flag', 'em_alineado']]]] },
+        { t: 'Gigante con pies de barro', x: 'Las cifras impresionan, pero la desigualdad y la tensión interna amenazan todo lo logrado.' }] },
+
+    { id: 'declive', n: 'La superpotencia en declive', iso: 'US', scen: 'tension', d: 'Difícil', lead: 'Margaret Holloway',
+      x: 'Sigues siendo el país más poderoso del mundo, pero la deuda crece, los aliados dudan y los rivales huelen la sangre.',
+      stages: [
+        { n: 'Contener la hemorragia', x: 'Pon la casa en orden: estabilidad de 60 y aprobación de 52, y sostenlo 6 turnos.', goal: [['stab', 60], ['appr', 52], ['turns', 6]], turns: 26 },
+        { n: 'Reconstruir alianzas', x: 'Recupera a tus aliados: 6 alianzas o pactos de defensa y confianza internacional de 10.', goal: [['tr', 'ali', 6], ['rep', 'conf', 10]], turns: 30 },
+        { n: 'El nuevo orden', x: 'Demuestra que el siglo no ha terminado: sigue siendo la primera economía, con 8 alianzas o pactos de defensa, durante 8 turnos.', goal: [['gdpRank', 1], ['tr', 'ali', 8], ['turns', 8]], turns: 40 }],
+      lose: [['stabLt', 20], ['gdpRankGt', 2]],
+      events: [
+        { id: 'de_deuda', st: 0, at: 2, t: 'El techo de deuda', x: 'El congreso amenaza con bloquear el presupuesto si no recortas el gasto militar o social.',
+          opts: [['Recortar el gasto militar', 'sec.mil-10;$g+.5;units.tierra-5;flag.de_retiro'], ['Recortar programas sociales', 'sec.obr-8;sec.jov-6;$g+.5;flag.de_halcon'], ['Subir impuestos a los ricos', 'sec.emp-10;sec.obr+5;$g+.4']] },
+        { id: 'de_bases', st: 1, at: 3, t: '¿Volver a casa?', x: 'Tus asesores debaten: cerrar bases en el extranjero y centrarse en casa, o redoblar la presencia global.',
+          opts: [['Repliegue ordenado', 'rep.paz+8;$g+.4;relAll.big-3:Retirada americana;flag.de_retiro'], ['Más presencia, no menos', 'sec.mil+8;$g-.4;rep.conf+6;flag.de_halcon']] },
+        { id: 'de_rival', st: 2, at: 2, t: 'El rival propone un pacto', x: 'Pekín ofrece un reparto de esferas de influencia: tú en las Américas y Europa, ellos en Asia.',
+          opts: [['Aceptar el reparto', 'rel.CN+20:Reparto de esferas;rel.JP-15:Abandono de Asia;rel.KR-15:Abandono de Asia;flag.de_reparto'], ['Rechazarlo con firmeza', 'rel.CN-10:Rechazo del reparto;rep.conf+5']] }],
+      endings: [
+        { t: 'El renacimiento americano', x: 'Contra todo pronóstico, el país recupera su vigor: aliados leales, economía pujante y un liderazgo que nadie discute.', if: [['rep', 'conf', 25], ['noflag', 'de_reparto']] },
+        { t: 'La retirada ordenada', x: 'Renuncias al papel de policía del mundo. El país es menos poderoso, pero más estable y en paz.', if: [['any', [['flag', 'de_retiro']], [['flag', 'de_reparto']]]] },
+        { t: 'El imperio a la defensiva', x: 'Sigues en la cima, pero rodeado de rivales y con aliados que ya no confían del todo.' }] },
+
+    { id: 'pequeno', n: 'Entre gigantes', iso: 'MN', scen: 'tension', d: 'Difícil', lead: 'Oyuun Batbayar',
+      x: 'Tres millones de personas entre Rusia y China. Tu independencia depende de que ninguno de los dos crea que eres del otro.',
+      stages: [
+        { n: 'Equilibrio', x: 'Gánate a los dos vecinos: relación de 15 con Rusia y con China, sin guerras.', goal: [['rel', 'RU', 15], ['rel', 'CN', 15], ['peace']], turns: 28 },
+        { n: 'El tercer vecino', x: 'Diversifica: 6 tratados comerciales y una economía un 20% mayor.', goal: [['tr', 'com', 6], ['gdpX', 1.2]], turns: 30 },
+        { n: 'Soberanía', x: 'Aguanta 20 turnos más entero, independiente y con estabilidad de 50.', goal: [['turns', 20], ['stab', 50], ['occFree']], turns: 36 }],
+      lose: [['occBy', 3], ['stabLt', 15]],
+      events: [
+        { id: 'pe_mina', st: 0, at: 2, t: 'La mina de cobre', x: 'Una empresa china y otra rusa pujan por la mayor mina del país. Una tercera, canadiense, ofrece menos dinero.',
+          opts: [['Para China', '$g+.8;rel.CN+12:Concesión minera;rel.RU-6:Concesión minera china;flag.pe_cn'], ['Para Rusia', '$g+.6;rel.RU+12:Concesión minera;rel.CN-6:Concesión minera rusa;flag.pe_ru'], ['Para los canadienses', '$g+.3;rel.CA+12:Concesión minera;rel.US+6:El tercer vecino;flag.pe_occ']] },
+        { id: 'pe_bases', st: 1, at: 4, t: 'Una base en la estepa', x: 'Moscú pide instalar una estación de radar en tu territorio. Pekín advierte que lo vería como un acto hostil.',
+          opts: [['Aceptar el radar ruso', 'rel.RU+15:Radar en la estepa;rel.CN-15:Radar ruso;flag.pe_ru'], ['Negarse con cortesía', 'rel.RU-5:Rechazo del radar;rel.CN+5:Neutralidad;flag.pe_neutral']] },
+        { id: 'pe_ue', st: 2, at: 3, t: 'Invitación de Bruselas', x: 'La Unión Europea te ofrece un acuerdo de asociación. Tus dos vecinos lo miran con desconfianza.',
+          opts: [['Firmarlo', 'rel.FR+10:Asociación;rel.DE+10:Asociación;rel.RU-6:Te acercas a Europa;rel.CN-6:Te acercas a Europa;flag.pe_occ'], ['Aplazarlo', 'flag.pe_neutral']] }],
+      endings: [
+        { t: 'La Suiza de la estepa', x: 'Neutral, próspera y respetada por todos. Tus vecinos gigantes compiten por tu amistad en vez de por tu territorio.', if: [['rel', 'RU', 25], ['rel', 'CN', 25]] },
+        { t: 'El tercer vecino', x: 'Te apoyas en Occidente para equilibrar a los gigantes. Funciona… mientras Occidente se acuerde de ti.', if: [['flag', 'pe_occ']] },
+        { t: 'Satélite con bandera propia', x: 'Sigues siendo independiente sobre el papel, pero las decisiones importantes se toman en otra capital.' }] },
+
+    { id: 'mediador', n: 'El mediador mundial', iso: 'NO', scen: 'tension', d: 'Media', lead: 'Ingrid Solberg',
+      x: 'Un país pequeño, rico y respetado. El mundo arde y tú tienes algo que nadie más tiene: la confianza de casi todos.',
+      stages: [
+        { n: 'La primera paz', x: 'Media con éxito en una guerra ajena: toca en el globo a uno de los bandos y pulsa «Mediar» en su ficha.', goal: [['med', 1]], turns: 24 },
+        { n: 'El honesto intermediario', x: 'Logra 3 mediaciones y una reputación de paz de 25.', goal: [['med', 3], ['rep', 'paz', 25]], turns: 40 },
+        { n: 'La conciencia del mundo', x: 'Confianza internacional de 20, ninguna gran potencia hostil (relación de −20 o más con las 5 mayores) y sin guerras propias.', goal: [['rep', 'conf', 20], ['relBig', -20], ['peace']], turns: 44 }],
+      lose: [['declared', 1]],
+      events: [
+        { id: 'me_arma', st: 0, at: 3, t: 'Armas para la paz', x: 'Tu industria podría vender armas a uno de los bandos de una guerra. El dinero vendría bien; la neutralidad, no tanto.',
+          opts: [['Vender las armas', '$g+.8;rep.paz-12;flag.me_armas'], ['Neutralidad estricta', 'rep.paz+5;rep.conf+3']] },
+        { id: 'me_secreto', st: 1, at: 4, t: 'El canal secreto', x: 'Un enviado te propone una negociación secreta entre dos enemigos acérrimos. Si se filtra, quedarás como un ingenuo.',
+          opts: [['Aceptar el canal', 'chance.6{rep.paz+10;rep.conf+6}{rep.conf-6};flag.me_canal'], ['Solo negociaciones públicas', 'rep.conf+2']] },
+        { id: 'me_nobel', st: 2, at: 2, t: 'El premio', x: 'Te proponen para el premio de la paz. Aceptarlo te da prestigio; rechazarlo en nombre de las víctimas, otra clase de respeto.',
+          opts: [['Aceptarlo', 'rep.conf+8;sec.all+3;flag.me_premio'], ['Rechazarlo', 'rep.paz+8;flag.me_humilde']] }],
+      endings: [
+        { t: 'El gran pacificador', x: 'Tus mediaciones se estudian en las academias diplomáticas. El mundo es un poco más seguro gracias a ti.', if: [['noflag', 'me_armas'], ['med', 4]] },
+        { t: 'El negociador de la sombra', x: 'Nadie sabe del todo lo que hiciste, pero los que importan te deben favores.', if: [['flag', 'me_canal']] },
+        { t: 'Buenas intenciones', x: 'Lograste algunas paces, pero el mundo siguió su curso. Al menos lo intentaste.' }] },
+
+    { id: 'imperio', n: 'El imperio conquistador', iso: 'TR', scen: 'tension', d: 'Despiadado', lead: 'Kemal Aydın',
+      x: 'Un ejército poderoso, una historia imperial y vecinos débiles. Los generales susurran que es el momento. La historia juzgará el precio.',
+      stages: [
+        { n: 'El primer paso', x: 'Gana una guerra (paz favorable) u ocupa 4 regiones extranjeras.', goal: [['any', [['warsWon', 1]], [['occ', 4]]]], turns: 28 },
+        { n: 'Expansión', x: 'Anexiona un país y ocupa al menos 6 regiones.', goal: [['annex', 1], ['occ', 6]], turns: 32 },
+        { n: 'Imperio', x: 'Anexiona 3 países en total y mantén la estabilidad por encima de 40 durante 8 turnos.', goal: [['annex', 3], ['stab', 40], ['turns', 8]], turns: 44 }],
+      lose: [['stabLt', 15]],
+      events: [
+        { id: 'im_gen', st: 0, at: 1, t: 'El consejo de generales', x: 'Tus generales te presentan dos planes: una guerra relámpago o una campaña lenta con apoyo popular.',
+          opts: [['Guerra relámpago', 'sec.mil+10;units.tierra+10;rep.paz-5;flag.im_rapido'], ['Preparar a la opinión pública', 'camp+3;sec.all+3;flag.im_lento']] },
+        { id: 'im_pob', st: 1, at: 4, t: 'La población conquistada', x: 'Los territorios ocupados se resisten. Tus gobernadores piden instrucciones.',
+          opts: [['Mano de hierro', 'rep.dem-10;rep.gen-6;sec.mil+5;flag.im_hierro'], ['Integración y derechos', '$g-.5;rep.dem+5;flag.im_integra']] },
+        { id: 'im_coal', st: 2, at: 3, t: 'La coalición', x: 'Varios países discuten una coalición contra ti. Puedes intentar dividirlos con dinero o desafiarlos.',
+          opts: [['Comprar a los indecisos', '$g-.8;relAll.big+4:Diplomacia del dinero'], ['Desafiarlos', 'sec.mil+6;relAll.big-6:Desafío imperial;rep.paz-5;flag.im_hierro']] }],
+      endings: [
+        { t: 'Un imperio que perdura', x: 'Tus conquistas se convierten en provincias leales. Dentro de un siglo, nadie recordará que fueron otra cosa.', if: [['flag', 'im_integra'], ['stab', 55]] },
+        { t: 'El tirano de la historia', x: 'Tu imperio es vasto y temido. Los libros de historia de tus vecinos te dedican capítulos enteros, ninguno amable.', if: [['flag', 'im_hierro']] },
+        { t: 'El imperio de arena', x: 'Conquistaste mucho, pero todo se sostiene con alfileres. Tu sucesor heredará guerrillas y deudas.' }] },
+
+    { id: 'comercial', n: 'La república comercial', iso: 'SG', scen: 'actual', d: 'Media', lead: 'Wei Ling Tan',
+      x: 'Una isla sin recursos que vive del comercio. Si el comercio mundial se cierra, tú te ahogas. Si se abre, puedes ser el centro del mundo.',
+      stages: [
+        { n: 'Abrir rutas', x: 'Firma 12 tratados comerciales.', goal: [['tr', 'com', 12]], turns: 24 },
+        { n: 'El puerto del mundo', x: 'Haz crecer la economía un 35% sin endeudarte más del 80% del PIB.', goal: [['gdpX', 1.35], ['debtLt', .8]], turns: 32 },
+        { n: 'Centro financiero', x: '20 tratados comerciales, una economía 1,8 veces la inicial y confianza de 10.', goal: [['tr', 'com', 20], ['gdpX', 1.8], ['rep', 'conf', 10]], turns: 44 }],
+      lose: [['stabLt', 20]],
+      events: [
+        { id: 'co_fisc', st: 0, at: 3, t: 'El paraíso fiscal', x: 'Te proponen convertir el país en refugio de capitales con secreto bancario absoluto.',
+          opts: [['Adelante', '$g+1;rep.conf-8;relAll.big-3:Paraíso fiscal;flag.co_paraiso'], ['Transparencia', 'rep.conf+8;sec.emp-4;flag.co_limpio']] },
+        { id: 'co_estrecho', st: 1, at: 4, t: 'El estrecho', x: 'Una potencia quiere patrullar el estrecho que controla tu comercio. Otra te ofrece protección a cambio de una base.',
+          opts: [['Aceptar la base', 'rel.US+12:Base naval;rel.CN-10:Base extranjera;flag.co_base'], ['Neutralidad armada', '$g-.4;units.mar+10;rep.conf+3']] },
+        { id: 'co_cripto', st: 2, at: 2, t: 'La bolsa digital', x: 'Las finanzas digitales prometen convertirte en la capital mundial del dinero nuevo… o en su mayor estafa.',
+          opts: [['Apostar fuerte', 'chance.55{$g+1.2;grow+.3/6}{$g-1;stab-6}'], ['Regular primero', 'rep.conf+4']] }],
+      endings: [
+        { t: 'El puerto del mundo', x: 'Medio comercio mundial pasa por tus muelles y tus bancos. Pequeña, rica y respetada.', if: [['flag', 'co_limpio']] },
+        { t: 'La caja fuerte del planeta', x: 'Eres riquísima, aunque el dinero que guardas tiene a veces un olor extraño.', if: [['flag', 'co_paraiso']] },
+        { t: 'La ciudad-estado protegida', x: 'Prosperas bajo el paraguas de una gran potencia. Mientras dure el paraguas.' }] },
+
+    { id: 'fallido', n: 'El Estado fallido', iso: 'HT', scen: 'actual', d: 'Difícil', lead: 'Marie-Claire Joseph',
+      x: 'Pandillas, hambre y un Estado que casi no existe. Nadie apuesta por ti. Precisamente por eso, todo lo que logres contará el doble.',
+      stages: [
+        { n: 'Recuperar las calles', x: 'Lleva la estabilidad a 45 y sostenla 4 turnos.', goal: [['stab', 45], ['turns', 4]], turns: 20 },
+        { n: 'Que vuelva el pan', x: 'Haz crecer la economía un 50% y alcanza una aprobación de 55.', goal: [['gdpX', 1.5], ['appr', 55]], turns: 34 },
+        { n: 'Un Estado de verdad', x: 'Estabilidad de 65, 16 leyes aprobadas y 8 turnos sin sobresaltos.', goal: [['stab', 65], ['laws', 16], ['turns', 8]], turns: 40 }],
+      lose: [['stabLt', 4]],
+      events: [
+        { id: 'fa_band', st: 0, at: 1, t: 'Las pandillas', x: 'Las bandas controlan media capital. Puedes negociar una tregua o lanzar una ofensiva policial.',
+          opts: [['Ofensiva total', 'stab+6;rep.dem-6;sec.mil+6;flag.fa_mano'], ['Tregua y programas sociales', '$g-.4;stab+3;sec.jov+6;flag.fa_social']] },
+        { id: 'fa_ayuda', st: 1, at: 2, t: 'La ayuda internacional', x: 'Los donantes ofrecen un gran paquete de ayuda, con supervisores extranjeros en tus ministerios.',
+          opts: [['Aceptar con supervisión', '$g+2;rep.conf+6;sec.mil-4;flag.fa_ayuda'], ['Solo sin condiciones', '$g+.6;sec.all+3']] },
+        { id: 'fa_elec', st: 2, at: 3, t: '¿Elecciones ya?', x: 'La comunidad internacional pide elecciones. Tus aliados temen perderlas.',
+          opts: [['Convocarlas', 'rep.dem+12;stab-3;flag.fa_dem'], ['Aplazarlas: primero, el orden', 'rep.dem-8;stab+4;flag.fa_mano']] }],
+      endings: [
+        { t: 'El milagro caribeño', x: 'De Estado fallido a democracia en marcha. Tu historia se cuenta en todo el mundo como prueba de que se puede.', if: [['flag', 'fa_dem'], ['noflag', 'fa_mano']] },
+        { t: 'Orden con mano dura', x: 'Las calles son seguras y la economía funciona, pero las libertades esperan turno.', if: [['flag', 'fa_mano']] },
+        { t: 'La reconstrucción frágil', x: 'El país está mejor que nunca en décadas, pero un mal año podría deshacerlo todo.' }] },
+
+    { id: 'reformista', n: 'El líder reformista', iso: 'CU', scen: 'actual', d: 'Difícil', lead: 'Elena Varona',
+      x: 'Llegas al poder con el viejo aparato vigilándote y una población que ya no cree en nada. Quieres cambiarlo todo sin que todo se derrumbe.',
+      stages: [
+        { n: 'Primeras reformas', x: 'Aprueba 5 leyes sin que la estabilidad baje de 40.', goal: [['laws', 5], ['stab', 40]], turns: 24 },
+        { n: 'Abrirse al mundo', x: 'Haz crecer la economía un 20% y mejora la relación con Estados Unidos por encima de −40.', goal: [['gdpX', 1.2], ['rel', 'US', -40]], turns: 34 },
+        { n: 'El nuevo país', x: 'Llega a régimen híbrido o democracia (o a 35 de reputación democrática), con aprobación de 55.', goal: [['any', [['reg', 'dem']], [['reg', 'hib']], [['rep', 'dem', 35]]], ['appr', 55]], turns: 40 }],
+      lose: [['stabLt', 15]],
+      events: [
+        { id: 're_viejo', st: 0, at: 2, t: 'La vieja guardia', x: 'Los veteranos del partido exigen frenar las reformas. Tienen al ejército de su lado.',
+          opts: [['Pactar con ellos', 'sec.mil+6;rep.dem-4;flag.re_pacto'], ['Jubilarlos a todos', 'sec.mil-10;stab-5;rep.dem+6;flag.re_ruptura']] },
+        { id: 're_deshielo', st: 1, at: 1, t: 'El deshielo', x: 'Un enviado de Washington sugiere que un gesto humanitario abriría la puerta a levantar sanciones.',
+          opts: [['Liberar a los presos políticos', 'rel.US+25:Gesto de deshielo;rep.dem+8;sec.mil-6'], ['Abrir el país al turismo y a las remesas', 'rel.US+12:Apertura al turismo;$g+.4;sec.emp+5'], ['Nada que negociar', 'sec.mil+4;rel.US-5:Portazo al deshielo']] },
+        { id: 're_mercado', st: 1, at: 4, t: 'La apertura económica', x: 'Permitir empresas privadas puede multiplicar el crecimiento… y la desigualdad.',
+          opts: [['Apertura total', 'grow+.4/8;sec.emp+10;sec.obr-6;flag.re_mercado'], ['Apertura gradual', 'grow+.2/8;sec.obr+3']] },
+        { id: 're_const', st: 2, at: 1, t: 'La nueva constitución', x: 'Una asamblea propone una constitución con elecciones libres y pluripartidismo.',
+          opts: [['Elecciones libres', 'do.setReg:dem;rep.dem+20;stab-6;flag.re_dem'], ['Apertura controlada', 'do.setReg:hib;rep.dem+8;flag.re_hib'], ['Rechazarla', 'rep.dem-12;sec.jov-10']] }],
+      endings: [
+        { t: 'La transición ejemplar', x: 'El país cambia de régimen sin un solo disparo. Tu nombre queda asociado a la palabra libertad.', if: [['reg', 'dem']] },
+        { t: 'El modelo chino a la caribeña', x: 'Abriste la economía sin abrir del todo la política. Prosperidad sí; libertad, a medias.', if: [['flag', 're_mercado']] },
+        { t: 'La reforma inconclusa', x: 'Cambiaste mucho, pero no lo suficiente. Tu sucesor tendrá que decidir si sigue o da marcha atrás.' }] }
+  ];
+  /* conversión: los efectos de las opciones se traducen con el mini-lenguaje de eventos ("do.setReg:dem" = operación del motor) */
+  const fx2 = s => s.split(';').map(t => t.trim()).filter(Boolean).some(t => /^do\./.test(t)) ? s.split(';').map(t => t.trim()).filter(Boolean).flatMap(t => { const m = /^do\.(\w+):(\w+)$/.exec(t); return m ? [['do', m[1], { v: m[2] }]] : fx(t); }) : fx(s);
+  for (const c of C) for (const e of c.events) e.opts = e.opts.map(o => ({ t: o[0], fx: fx2(o[1]) }));
+  D.CAMP = C;
+
+  /* ---------- eventos procedurales: plantillas que combinan país, líder, recurso y situación ----------
+     {T} país, {L} su líder, {RES} recurso, {SIT} situación. Efectos con el mini-lenguaje. */
+  D.PROC = {
+    p: .22, cool: 10,
+    sit: ['una sequía histórica', 'una huelga general', 'unas elecciones reñidas', 'un escándalo de corrupción', 'una ola de protestas estudiantiles', 'un terremoto', 'una crisis de deuda', 'un boom tecnológico', 'una epidemia de gripe', 'un golpe fallido'],
+    tpl: [
+      { id: 'res_oferta', tgt: 'any', t: '{L} ofrece {RES}', x: '{T}, golpeado por {SIT}, necesita liquidez y te ofrece {RES} a precio de saldo a cambio de pago inmediato.',
+        opts: [['Comprar', '$g-.3;prod.{K}+1;rel.T+6:Compra en un mal momento'], ['Ofrecer un préstamo en su lugar', '$g-.2;rel.T+10:Préstamo solidario;rep.conf+2'], ['No interesa', 'rel.T-2:Ignoraste su oferta']] },
+      { id: 'res_disputa', tgt: 'neighbor', t: 'Disputa por {RES} con {T}', x: 'Prospectores de {T} y de tu país reclaman el mismo yacimiento de {RES} en la frontera. {L} habla de “soberanía”.',
+        opts: [['Explotarlo a medias', 'rel.T+4:Explotación conjunta;prod.{K}+1'], ['Reclamarlo entero', 'prod.{K}+2;rel.T-12:Disputa fronteriza;sec.mil+3'], ['Arbitraje internacional', 'rep.conf+3;rep.paz+2']] },
+      { id: 'sit_ayuda', tgt: 'any', t: '{T} pide ayuda', x: '{T} sufre {SIT} y {L} pide ayuda públicamente a la comunidad internacional.',
+        opts: [['Ayuda generosa', '$g-.3;rel.T+12:Ayuda en la desgracia;rep.gen+4'], ['Ayuda simbólica', '$g-.05;rel.T+3:Ayuda simbólica'], ['Es su problema', 'rel.T-6:Le diste la espalda']] },
+      { id: 'sit_oportunidad', tgt: 'rival', t: 'La debilidad de {T}', x: 'Tu rival {T} atraviesa {SIT}. Tus asesores ven una oportunidad para ganar influencia… o para apretar.',
+        opts: [['Tender la mano', 'rel.T+10:Tendiste la mano;rep.paz+3'], ['Apretar con propaganda', 'rel.T-8:Propaganda;sec.mil+3'], ['Esperar', '']] },
+      { id: 'lider_visita', tgt: 'power', t: '{L} quiere verte', x: '{L}, líder de {T}, propone una cumbre bilateral para hablar de {RES} y de seguridad regional.',
+        opts: [['Cumbre a lo grande', 'cp-1;rel.T+8:Cumbre bilateral;sec.emp+3'], ['Solo una llamada', 'rel.T+2:Llamada cordial'], ['Declinar', 'rel.T-5:Rechazaste la cumbre']] },
+      { id: 'lider_insulto', tgt: 'any', t: '{L} te insulta', x: 'En pleno {SIT}, {L} culpa a tu gobierno de los males de {T} en un discurso televisado.',
+        opts: [['Responder con dureza', 'sec.all+2;rel.T-8:Guerra de palabras'], ['Ignorarlo', 'rep.conf+2'], ['Llamarle en privado', 'rel.T+4:Llamada discreta']] },
+      { id: 'res_boom', tgt: '', t: 'Fiebre de {RES}', x: 'El precio mundial de {RES} se dispara por {SIT} en {T}. Tus productores piden permisos de explotación urgentes.',
+        opts: [['Dar permisos', 'prod.{K}+1;sec.emp+5;sec.rur-3'], ['Impuesto a las ganancias extraordinarias', '$g+.3;sec.emp-5'], ['Proteger el medio ambiente', 'sec.jov+5;sec.emp-4']] },
+      { id: 'sit_refug', tgt: 'neighbor', t: 'Éxodo desde {T}', x: '{SIT} en {T} empuja a miles de personas hacia tu frontera.',
+        opts: [['Acogerlos', '$g-.2;rel.T+8:Acogida de refugiados;rep.gen+5;sec.obr-3'], ['Campamentos en la frontera', '$g-.1;rel.T+2:Campamentos'], ['Cerrar la frontera', 'sec.mil+3;rel.T-6:Frontera cerrada;rep.gen-4']] }
+    ]
+  };
+
+  /* ---------- mundo alternativo: qué se puede barajar y con qué reglas de coherencia ---------- */
+  D.ALT = {
+    leaders: 'Los líderes se intercambian solo entre países de la misma región.',
+    borders: 'Hasta 12 regiones cambian de dueño, siempre entre vecinos terrestres, nunca la capital ni del jugador, y como máximo una por país.',
+    states: 'PIB ±25% y estabilidad ±15; los regímenes solo cambian a uno cercano (democracia↔híbrido, autoritario↔militar↔partido único).',
+    regNear: { dem: ['hib'], hib: ['dem', 'aut'], aut: ['mil', 'com', 'hib'], mil: ['aut'], com: ['aut'], mon: ['aut', 'hib'], teo: ['aut'] }
   };
 })();
 
@@ -3011,7 +3479,8 @@ Bus.on('annex', a => { if (a.t === S.player) { S.pol.camp += 2.5; S.flags.glory 
    jugador: una estimación con ruido de lo que planea cada país.
    ===================================================================== */
 const DIFF = { n: ['Relajado', 'Normal', 'Realista', 'Despiadado'], need: [1.5, 1, .85, .7], inc: [1.12, 1, .96, .92], ai: [.8, 1, 1.1, 1.25], spy: [.1, 0, -.05, -.1] };
-const diffK = k => DIFF[k][S.diff == null ? 1 : S.diff];
+/* Fase 5: los componentes de dificultad (S.setup.dk) ajustan cada nivel: ai = agresividad, eco = economía */
+const diffK = k => { const v = DIFF[k][S.diff == null ? 1 : S.diff], dk = (S.setup && S.setup.dk) || {}; return k === 'ai' ? v * (dk.ai || 1) : k === 'need' ? v / (dk.ai || 1) : k === 'inc' ? v * (dk.eco || 1) : v; };
 const GOALS = { expansion: 'Expandir su territorio', hegemonia: 'Dominar su región', seguridad: 'Garantizar su seguridad', riqueza: 'Enriquecerse con el comercio', estabilidad: 'Sobrevivir en el poder' };
 
 function initBrain() {
@@ -4841,6 +5310,289 @@ ACT.demandApology = a => { const me = S.player, z = a.iso, c = S.c[z]; if (!c ||
   return { ok: false, msg: `${c.n} se niega. Tu justificación para actuar crece.` }; };
 
 
+/* ---------- engine/7g-scenarios.js ---------- */
+/* =====================================================================
+   SISTEMA · FASE 5 · ESCENARIOS, MODOS, CAMPAÑAS Y DIFICULTAD POR PARTES
+   newGame(o) acepta o.setup = { mode, scen, camp, opts:{perm, solo, escasez, hostil, rapido, alt}, dk:{ai, eco, stab, ev}, week, custom }
+   y deja en S.setup lo elegido. Los datos están en src/data-scenario.js.
+   ===================================================================== */
+const P5DEF = () => ({ treat: 0, warsWon: 0, med: 0, spy: 0, coups: 0, nukes: 0, visits: 0, betray: 0, decl: 0, lowStab: 0, redTurns: 0, edited: 0, vic: null, vicDone: {}, cont: 0, tl: [] });
+const SETDEF = () => ({ mode: 'libre', scen: 'actual', camp: null, opts: {}, dk: { ai: 1, eco: 1, stab: 1, ev: 1 }, week: 0, rel0: 0 });
+hook('new', () => { S.setup = SETDEF(); S.p5 = P5DEF(); S.camp = null; });
+hook('load', () => {
+  if (!S.setup) { S.setup = SETDEF(); S.p5mig = 'Partida de una versión anterior: se ha adaptado a la Fase 5 (modo libre, escenario actual). Todo lo demás se conserva.'; }
+  S.setup.dk = Object.assign({ ai: 1, eco: 1, stab: 1, ev: 1 }, S.setup.dk); S.setup.opts = S.setup.opts || {};
+  S.p5 = Object.assign(P5DEF(), S.p5 || {}); if (S.camp === undefined) S.camp = null;
+});
+const SC = id => D.SCEN.find(x => x.id === id) || D.SCEN[0];
+const CA = id => D.CAMP.find(x => x.id === id);
+const p5k = k => (S && S.setup && S.setup.dk && S.setup.dk[k]) || 1;
+const mode = () => (S.setup || {}).mode || 'libre';
+const opt = k => !!((S.setup || {}).opts || {})[k];
+
+/* ---- selección de países para las operaciones de escenario ---- */
+function selC(f) {
+  if (f === '*') return alive(); if (f === 'P') return [S.player];
+  if (f === 'big') return alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 20);
+  return S.c[f] && S.c[f].alive ? [f] : [];
+}
+function scenOp(op) {
+  const [k, a, b, v, lab] = op, me = S.player;
+  if (k === 'rel') { if (a === '*' && b === '*') { S.setup.rel0 += v; return; } for (const x of selC(a)) for (const y of selC(b)) if (x !== y) addMod(x, y, lab || 'Escenario', v, 0); return; }
+  if (k === 'blocRel') { const A = alive().filter(z => S.c[z].blocs.includes(a)), B = alive().filter(z => S.c[z].blocs.includes(b)); for (const x of A) for (const y of B) if (x !== y) addMod(x, y, op[4] || 'Bloques rivales', v, 0); return; }
+  if (k === 'gdp') { for (const z of selC(a)) { S.c[z].gdp *= b; S.c[z].tr *= b; } return; }
+  if (k === 'stab') { for (const z of selC(a)) S.c[z].stab = clamp(S.c[z].stab + b, 5, 95); return; }
+  if (k === 'war') { if (S.c[a] && S.c[b]) startWar(a, b); return; }
+  if (k === 'peace') { for (const w of S.wars.slice()) if ((a === '*' || w.att.includes(a) || w.def.includes(a)) && (b === '*' || w.att.includes(b) || w.def.includes(b))) endWar(w, 'blanca'); return; }
+  if (k === 'sanc') { if (S.c[a] && S.c[b]) addSanction(a, b); return; }
+  if (k === 'tr') { if (S.c[b] && S.c[v]) addTreaty(a, b, v); return; }
+  if (k === 'untr') { endTreaties(a, b); return; }
+  if (k === 'coups') { const L = alive().filter(z => z !== me && S.c[z].reg !== 'mil').sort((x, y) => S.c[x].stab - S.c[y].stab + rr(-25, 25)); for (const z of L.slice(0, a)) coup(z); return; }
+  if (k === 'wars') {
+    let n = a; const used = new Set([me]);
+    for (const x of shuffle(alive().filter(z => z !== me && S.c[z].gdp > 15))) { if (n <= 0) break; if (used.has(x)) continue;
+      const t = nb(x).filter(y => !used.has(y) && !atWar(x, y) && !alliesOf(x).includes(y) && power(y) < power(x) * 1.2).sort((p, q) => rel(x, p) - rel(x, q))[0];
+      if (t && rel(x, t) < 20 && startWar(x, t)) { used.add(x); used.add(t); n--; } }
+    return; }
+  if (k === 'crisis') { const L = alive().filter(z => z !== me).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 20); for (const z of shuffle(L).slice(0, a)) infect(z); if (b === 'P') infect(me); return; }
+  if (k === 'price') { for (const c in S.mkt.com) if (a === '*' || a === c) S.mkt.com[c].p *= b; return; }
+  if (k === 'inf') { S.eco.inf = clamp(S.eco.inf + a, -5, 200); return; }
+  if (k === 'year') { S.year = a; return; }
+  if (k === 'leader') { if (S.c[a] && a !== me) { S.c[a].lider = { n: b, verificado: false, img: '' }; if (v) S.c[a].partido = v; } return; }
+  if (k === 'reg') { if (S.c[a] && a !== me) S.c[a].reg = b; return; }
+  if (k === 'blocs') { const c = S.c[a]; if (!c) return; const bl = b.slice(1); c.blocs = c.blocs.filter(x => x !== bl); if (b[0] === '+') c.blocs.push(bl); return; }
+  if (k === 'per') { for (const z of selC(a)) if (z !== me) S.c[z].per[b] = clamp(S.c[z].per[b] + v, 0, 1); return; }
+  if (k === 'tension') { const big = alive().filter(z => z !== me).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 6); for (const x of big) { const t = big.filter(y => y !== x).sort((p, q) => rel(x, p) - rel(x, q))[0]; if (t) addMod(x, t, 'Pulso entre potencias', a, 0); } return; }
+}
+/* relación de fondo de todo el escenario (no crea 19.000 modificadores) */
+{ const r0 = rel; rel = (a, b) => { const v = r0(a, b), o = S && S.setup ? S.setup.rel0 : 0; return !o || a === b || v === -100 ? v : clamp(v + o, -100, 100); }; }
+
+/* ---- mundo alternativo con reglas de coherencia (ver D.ALT) ---- */
+function altWorld(o) {
+  const me = S.player, L = alive().filter(z => z !== me);
+  if (o.lid) { const byR = {}; for (const z of L) (byR[D.C[z].region] = byR[D.C[z].region] || []).push(z);
+    for (const r in byR) { const g = byR[r], ls = shuffle(g.map(z => S.c[z].lider)); g.forEach((z, i) => { S.c[z].lider = ls[i]; }); } }
+  if (o.bor) { const used = new Set([me]); let n = 12;
+    for (const a of shuffle(L)) { if (n <= 0) break; if (used.has(a) || S.c[a].terr.length < 3) continue; const b = shuffle(nb(a).filter(y => !used.has(y) && S.c[y].alive))[0]; if (!b) continue;
+      const i = ri(1, S.c[a].terr.length - 1); if (S.c[a].terr[i].o === a && moveTerr(a, i, b, .9)) { used.add(a); used.add(b); n--; } } }
+  if (o.est) for (const z of L) { const c = S.c[z]; c.gdp *= rr(.75, 1.25); c.stab = clamp(c.stab + ri(-15, 15), 8, 95); if (chance(.15)) { const nx = D.ALT.regNear[c.reg]; if (nx) c.reg = pick(nx); } }
+}
+/* ---- opciones de partida ---- */
+function applyOpts(st) {
+  const me = S.player, c = P(), O = st.opts;
+  if (O.escasez) { for (const k in S.mkt.com) S.mkt.com[k].p *= 1.35; for (const k in c.stock) c.stock[k] = Math.round(c.stock[k] * .4); for (const z of alive()) for (const k in S.c[z].rec) if (chance(.4)) S.c[z].rec[k] = Math.max(0, S.c[z].rec[k] - 1); }
+  if (O.hostil) for (const z of alive()) if (z !== me) { addMod(me, z, 'Mundo hostil', -20, 0); S.c[z].per.agres = clamp(S.c[z].per.agres + .1, 0, 1); }
+  if (O.caosev) st.dk.ev = Math.max(st.dk.ev, 2); if (O.pobre) st.dk.eco = Math.min(st.dk.eco, .8);
+}
+function normSetup(x) {
+  const s = Object.assign(SETDEF(), x || {}); s.opts = Object.assign({}, s.opts); s.dk = Object.assign({ ai: 1, eco: 1, stab: 1, ev: 1 }, s.dk);
+  for (const k in D.DK) s.dk[k] = clamp(+s.dk[k] || 1, D.DK[k][1], D.DK[k][2]);
+  if (!D.MODES.some(m => m.id === s.mode)) s.mode = 'libre'; if (s.mode === 'rapido') s.opts.rapido = 1;
+  if (s.mode === 'camp') { const k = CA(s.camp); if (!k) s.mode = 'libre'; else s.scen = k.scen; } else s.camp = null;
+  if (!D.SCEN.some(c => c.id === s.scen)) s.scen = 'actual'; s.rel0 = 0; return s;
+}
+{ const n0 = newGame; newGame = o => {
+  const st = normSetup(o.setup); if (st.mode === 'camp') { const k = CA(st.camp); o = Object.assign({}, o, { iso: k.iso, custom: null, name: o.name || k.lead }); }
+  n0(o); S.setup = st;
+  const sc = SC(st.scen); for (const op of sc.ops) safe('escenario', scenOp, op);
+  if (st.custom) for (const op of st.custom.ops || []) safe('escenario propio', scenOp, op);
+  if (st.opts.alt) altWorld(st.opts.alt === 1 ? { lid: 1, bor: 1, est: 1 } : st.opts.alt);
+  applyOpts(st);
+  if (st.mode === 'camp') { const k = CA(st.camp); S.camp = { id: k.id, st: 0, s0: 0, end: null, fired: {}, done: [] }; news(`Comienza la campaña: ${k.n}`, 'pol', S.player, 3); }
+  S.stats.gdp0 = P().gdp; S.p5.tl.push({ t: 0, x: `${S.leader.n} llega al poder en ${P().n} · ${sc.n}` });
+  dirty(); S.fin = finance(true); return S; }; }
+
+/* ---- dificultad por componentes (sobre los 4 niveles: ver diffK en 68-brain.js) ---- */
+hook('late', () => { const k = p5k('stab'); if (k !== 1) P().stab = clamp(P().stab - (k - 1) * .9, 0, 100); });
+{ const pe0 = playerEvent; playerEvent = () => { const k = p5k('ev'); if (k < 1 && chance(1 - k)) return; const n = S.pend.length; pe0(); if (k > 1 && S.pend.length === n && chance(k - 1)) pe0(); }; }
+
+/* ---- sandbox (no pierdes por política) y modo rápido ---- */
+{ const o0 = over; over = r => { if (S.over) return; if (mode() === 'sandbox' && ['eleccion', 'censura', 'golpe', 'revolucion'].includes(r)) { P().stab = Math.max(P().stab, 30); news('Modo sandbox: sigues en el poder pese a todo', 'pol', S.player, 2); return; }
+  o0(r); if (S.over && S.p5) S.p5.tl.push({ t: S.turn, x: 'Fin del mandato: ' + r }); }; }
+hook('late', () => { if (opt('rapido') && S.turn >= D.QUICK_TURNS && !S.over) over('tiempo'); });
+
+/* ---- contadores de la partida (logros, estadísticas y puntuación) ---- */
+{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && (isP(a) || isP(b)) && S.p5) { S.p5.treat++; if (t === 'ali' || t === 'def') S.p5.tl.push({ t: S.turn, x: `${TNAME[t]} con ${nm(isP(a) ? b : a)}` }); } }; }
+{ const w0 = startWar; startWar = (a, d) => { const pact = S.p5 && isP(a) && (hasExplicit('pna', a, d) || alliesOf(a).includes(d)); const w = w0(a, d); if (w && S.p5) { if (pact) S.p5.betray++; if (isP(a)) S.p5.decl++; if (isP(a) || isP(d)) S.p5.tl.push({ t: S.turn, x: `Guerra con ${nm(isP(a) ? d : a)}` }); } return w; }; }
+{ const e0 = endWar; endWar = (w, kind) => { const me = S.player, mine = S.p5 && (w.att.includes(me) || w.def.includes(me)), sc = mine ? (w.att.includes(me) ? w.score : -w.score) : 0, foe = mine ? (w.att.includes(me) ? w.def[0] : w.att[0]) : null;
+  e0(w, kind); if (mine) { if (sc >= 25 || (foe && !S.c[foe].alive)) S.p5.warsWon++; S.p5.tl.push({ t: S.turn, x: `Paz con ${nm(foe)}${sc >= 25 ? ' (victoria)' : sc <= -25 ? ' (derrota)' : ''}` }); } }; }
+{ const m0 = OPS.mediate; OPS.mediate = a => { const had = !!warById(a.w); m0(a); if (had && !warById(a.w)) { S.p5.med++; S.p5.tl.push({ t: S.turn, x: 'Mediación de paz con éxito' }); } }; }
+{ const s0 = ACT.spy; ACT.spy = a => { const r = s0(a); if (r && r.ok !== false) S.p5.spy++; return r; }; }
+{ const v0 = ACT.visit; ACT.visit = a => { const r = v0(a); if (r && r.ok !== false) S.p5.visits++; return r; }; }
+if (ACT.strat) { const n0 = ACT.strat; ACT.strat = a => { const r = n0(a); if (r && r.ok !== false) { S.p5.nukes++; S.p5.tl.push({ t: S.turn, x: 'Ataque estratégico' }); } return r; }; }
+{ const c0 = coup; coup = iso => { c0(iso); if (S.p5) S.p5.coups++; }; }
+hook('late', () => { const p = S.p5; p.lowStab = P().stab < 15 ? p.lowStab + 1 : 0; p.redTurns = P().tr < 0 ? p.redTurns + 1 : 0; if (p.tl.length > 60) p.tl.splice(1, p.tl.length - 60); });
+OPS.setReg = a => { if (D.REGIMES[a.v]) { P().reg = a.v; if ((a.v === 'dem' || a.v === 'hib') && !(S.pol.nextElec > S.turn)) S.pol.nextElec = S.turn + 8; dirty(); news(`${P().n} cambia de régimen: ${D.REGIMES[a.v]}`, 'pol', S.player, 3); } };
+
+/* ---- puerta de acciones: un solo país sin editor, y seguir jugando tras ganar ---- */
+const EDIT_ACTS = { edit: 1, edWar: 1, fireEvent: 1, fireProc: 1, campSkip: 1, testVic: 1 };
+{ const a0 = act; act = (name, a) => {
+  if (name === 'keepPlaying') { if (!S || !S.over || !/^(vic_|camp_win|tiempo)/.test(S.over.r) || S.over.r === 'tiempo') return fail('Solo puedes seguir tras una victoria'); S.p5.cont = 1; S.over = null; S.pend = []; news('El mandato continúa', 'pol', S.player, 2); Bus.emit('state'); return { ok: true, msg: 'Sigues gobernando: la victoria queda registrada' }; }
+  if (S && EDIT_ACTS[name]) { if (opt('solo') && mode() !== 'sandbox') { const r = fail('Esta partida es de un solo país sin editor'); Bus.emit('toast', r); return r; } S.p5.edited = 1; }
+  return a0(name, a); }; }
+
+/* ---- condiciones de objetivos (campañas, finales, escenarios propios) ---- */
+const rankOf = (f, iso) => alive().sort((a, b) => f(b) - f(a)).indexOf(iso) + 1;
+/* poder militar "en bruto" para objetivos y logros: sin el castigo de preparación o tropas desplegadas que power() aplica solo al jugador */
+const rawPow = iso => { const c = C(iso); if (!c.alive) return 0; let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow; return v * (.7 + .3 * Math.min(1, c.gdp / Math.max(.001, c.pop) / 40)) * (.75 + c.stab / 400); };
+function goalOk(g) {
+  const me = S.player, c = P(), [k, a, b] = g;
+  switch (k) {
+    case 'any': return g.slice(1).some(L => L.every(goalOk));
+    case 'gdpX': return c.gdp >= (S.stats.gdp0 || c.gdp) * a;
+    case 'gdpRank': return rankOf(z => S.c[z].gdp, me) <= a; case 'gdpRankGt': return rankOf(z => S.c[z].gdp, me) > a;
+    case 'powRank': return rankOf(rawPow, me) <= a; case 'powRankGt': return rankOf(rawPow, me) > a;
+    case 'tr': return S.tr.filter(t => (t.a === me || t.b === me) && (a === 'any' || t.t === a || (a === 'ali' && t.t === 'def'))).length >= b;
+    case 'stab': return c.stab >= a; case 'stabLt': return c.stab < a; case 'appr': return approval() >= a;
+    case 'rep': return S.rep[a] >= b; case 'peace': return !inWar(me);
+    case 'annex': return S.stats.annexed >= a; case 'occ': return ISOS.reduce((n, z) => n + (z === me ? 0 : S.c[z].terr.filter(t => t.o === me).length), 0) >= a;
+    case 'occFree': return c.terr.every(t => t.o === me); case 'occBy': return c.terr.filter(t => t.o !== me).length >= a;
+    case 'rel': return !!S.c[a] && S.c[a].alive && rel(me, a) >= b; case 'relLt': return !!S.c[a] && rel(me, a) < b;
+    case 'relBig': return alive().filter(z => z !== me).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 5).every(z => rel(me, z) >= a);
+    case 'warsWon': return S.p5.warsWon >= a; case 'declared': return S.p5.decl >= a; case 'med': return S.p5.med >= a;
+    case 'tech': return S.tech.done.length >= a; case 'firsts': return firstsOf(me) >= a;
+    case 'debtLt': return debtRatio() < a; case 'noSanc': return !S.sanc.some(s => s.on === me);
+    case 'bloc': return c.blocs.includes(a); case 'flag': return !!S.flags[a]; case 'noflag': return !S.flags[a];
+    case 'laws': return S.stats.laws >= a; case 'reg': return c.reg === a;
+    case 'turns': return !!S.camp && S.turn - S.camp.s0 >= a; case 'turn': return S.turn >= a; case 'dead': return !c.alive;
+  }
+  return false;
+}
+const firstsOf = iso => S.disc ? D.DISC.filter(x => (S.disc.own[x.id] || [])[0] === iso).length : 0;
+const GOALN = { gdpX: g => `PIB ×${g[1]} del inicial`, gdpRank: g => `Entre las ${g[1]} mayores economías`, powRank: g => `Entre los ${g[1]} ejércitos más fuertes`, tr: g => `${g[2]} ${g[1] === 'com' ? 'tratados comerciales' : g[1] === 'ali' ? 'alianzas o pactos de defensa' : g[1] === 'pna' ? 'pactos de no agresión' : 'tratados'}`,
+  stab: g => `Estabilidad ${g[1]}`, appr: g => `Aprobación ${g[1]}%`, rep: g => `Reputación (${({ paz: 'paz', conf: 'confianza', dem: 'democracia', gen: 'humanitaria' })[g[1]] || g[1]}) ${g[2]}`, peace: () => 'Sin guerras propias',
+  annex: g => `${g[1]} anexiones`, occ: g => `${g[1]} regiones extranjeras ocupadas`, occFree: () => 'Todo tu territorio libre', rel: g => `Relación ${g[2]} con ${nm(g[1])}`, relBig: g => `Relación ${g[1]} con las 5 grandes potencias`,
+  warsWon: g => `${g[1]} guerra${g[1] > 1 ? 's' : ''} ganada${g[1] > 1 ? 's' : ''}`, med: g => `${g[1]} mediaci${g[1] > 1 ? 'ones' : 'ón'} de paz`, tech: g => `${g[1]} tecnologías`, firsts: g => `Primero del mundo en ${g[1]} descubrimientos`,
+  debtLt: g => `Deuda por debajo del ${Math.round(g[1] * 100)}% del PIB`, noSanc: () => 'Nadie te sanciona', bloc: g => `Miembro de ${g[1]}`, laws: g => `${g[1]} leyes aprobadas`, reg: g => `Régimen: ${D.REGIMES[g[1]]}`,
+  stabLt: g => `Estabilidad por debajo de ${g[1]}`, occBy: g => `Perder ${g[1]} regiones a manos extranjeras`, gdpRankGt: g => `Caer del puesto ${g[1]} en PIB mundial`, powRankGt: g => `Caer del puesto ${g[1]} en poder militar`, declared: () => 'Declarar tú una guerra', dead: () => 'Que tu país desaparezca',
+  turns: g => `Mantenerlo ${g[1]} turnos`, turn: g => `Llegar al turno ${g[1]}`, any: g => g.slice(1).map(L => L.map(goalText).join(' y ')).join(' — o — '), flag: () => 'Una decisión concreta', noflag: () => 'Evitar cierta decisión' };
+const goalText = g => (GOALN[g[0]] || (() => g[0]))(g);
+
+/* ---- campaña: eventos por etapa, objetivos, plazos y finales ---- */
+hook('late', () => {
+  const K = S.camp; if (!K || K.end != null || S.over) return; const k = CA(K.id); if (!k) return; const st = k.stages[K.st];
+  for (const e of k.events) if (e.st === K.st && !K.fired[e.id] && S.turn - K.s0 >= e.at && !S.pend.length) { K.fired[e.id] = 1; fireEvent(Object.assign({ tgt: null }, e), null); }
+  if ((k.lose || []).some(goalOk)) { S.p5.tl.push({ t: S.turn, x: 'La campaña fracasa' }); return over('camp_lose'); }
+  if (st.goal.every(goalOk)) {
+    K.done.push(S.turn); S.p5.tl.push({ t: S.turn, x: `Etapa cumplida: ${st.n}` }); news(`Campaña · etapa cumplida: ${st.n}`, 'pol', S.player, 3); Bus.emit('campStage', { i: K.st, n: st.n });
+    if (K.st + 1 < k.stages.length) { K.st++; K.s0 = S.turn; return; }
+    K.end = k.endings.findIndex(x => !x.if || x.if.every(goalOk)); return over('camp_win');
+  }
+  if (st.turns && S.turn - K.s0 > st.turns) { S.p5.tl.push({ t: S.turn, x: `Se agota el plazo de «${st.n}»` }); over('camp_time'); }
+});
+function campInfo() {
+  const K = S.camp; if (!K) return null; const k = CA(K.id); if (!k) return null; const st = k.stages[Math.min(K.st, k.stages.length - 1)];
+  return { k, K, st, left: st.turns ? st.turns - (S.turn - K.s0) : null, goals: st.goal.map(g => ({ t: goalText(g), ok: goalOk(g) })), end: K.end != null ? k.endings[K.end] : null };
+}
+
+/* ---- código de partida: semilla + configuración en texto corto ---- */
+function shareCode(x) { const j = JSON.stringify(x), b = typeof btoa === 'function' ? btoa(unescape(encodeURIComponent(j))) : Buffer.from(j, 'utf8').toString('base64'); return 'WL5-' + b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function readCode(s) {
+  try { s = String(s || '').trim(); if (!/^WL5-[\w-]+$/.test(s)) return null; let b = s.slice(4).replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+    const j = typeof atob === 'function' ? decodeURIComponent(escape(atob(b))) : Buffer.from(b, 'base64').toString('utf8'), o = JSON.parse(j);
+    if (!o || typeof o !== 'object' || !D.C[o.iso] || !(o.seed >>> 0)) return null;
+    return { iso: o.iso, seed: o.seed >>> 0, diff: clamp(+o.diff || 0, 0, 3), traits: (o.traits || []).filter(t => TR[t]).slice(0, D.TRAIT_POINTS), name: String(o.name || '').slice(0, 40), setup: normSetup(o.setup) };
+  } catch (e) { return null; }
+}
+const gameCode = () => shareCode({ iso: S.player, seed: S.seed, diff: S.diff, traits: S.leader.traits, name: S.leader.n, setup: Object.assign({}, S.setup, { rel0: undefined }) });
+/* reto semanal: la semana del año fija semilla, país, escenario y dos reglas */
+function weekly(now) {
+  const w = Math.floor(((now || Date.now()) / 864e5 + 3) / 7), R = D.WEEK_RULES, a = R[w % R.length], b = R[(w * 3 + 1) % R.length], opts = {};
+  for (const r of a === b ? [a] : [a, b]) opts[r.id] = 1; if (opts.alt) opts.alt = 1;
+  const sc = D.SCEN.filter(x => !x.lock)[w % 6];
+  return { w, iso: D.WEEK_COUNTRIES[w % D.WEEK_COUNTRIES.length], seed: (w * 7919) % 2147483647 || 1, scen: sc.id, rules: (a === b ? [a] : [a, b]).map(r => r.n), setup: { mode: 'semana', scen: sc.id, opts, week: w, dk: { ai: 1, eco: 1, stab: 1, ev: 1 } } };
+}
+
+
+/* ---------- engine/7h-victory.js ---------- */
+/* =====================================================================
+   SISTEMA · FASE 5 · VICTORIAS, PUNTUACIÓN, EPÍLOGO Y EVENTOS PROCEDURALES
+   Umbrales y pesos en src/data-scenario.js (D.VICT) y src/data-progress.js (D.SCORE).
+   ===================================================================== */
+const myTr = t => S.tr.filter(x => (x.a === S.player || x.b === S.player) && (!t || t.includes(x.t))).length;
+function metrics() {
+  const me = S.player, c = P(), p = S.p5 || P5DEF(), o = S.over, K = S.camp;
+  return {
+    turn: S.turn, gdp: c.gdp, gdpX: c.gdp / Math.max(.001, S.stats.gdp0 || c.gdp), gdpRank: rankOf(z => S.c[z].gdp, me), powRank: rankOf(rawPow, me),
+    appr: approval(), stab: c.stab, com: myTr(['com']), ali: myTr(['ali', 'def']), pna: myTr(['pna']), laws: S.stats.laws, wars: S.stats.wars, warsWon: p.warsWon, annex: S.stats.annexed,
+    occ: ISOS.reduce((n, z) => n + (z === me ? 0 : S.c[z].terr.filter(t => t.o === me).length), 0), med: p.med, tech: S.tech.done.length, firsts: firstsOf(me),
+    conf: S.rep.conf, paz: S.rep.paz, dem: S.rep.dem, gen: S.rep.gen, debt: debtRatio(), cash: c.tr / Math.max(1, c.gdp),
+    sancOn: S.sanc.filter(s => s.on === me).length, sancBy: S.sanc.filter(s => s.by === me).length, crimes: (S.war3 || {}).crimes || 0, elections: S.stats.elections,
+    treat: p.treat, spy: p.spy, coups: p.coups, nukes: p.nukes, visits: p.visits, betray: p.betray, lowStab: p.lowStab, redTurns: p.redTurns, edited: p.edited,
+    friends: alive().filter(z => z !== me && rel(me, z) >= 50).length, mode: mode(), scen: (S.setup || {}).scen, perm: opt('perm'),
+    camp: K ? K.id : null, campStage: K ? K.st : 0, campEnd: K && K.end != null ? K.id + ':' + K.end : null, vic: p.vic, over: !!o, overR: o ? o.r : null, traits: S.leader.traits.slice()
+  };
+}
+/* ---- puntuación equilibrada: ocho bloques, ninguno pasa de su máximo ---- */
+function score() {
+  const m = metrics(), c = P(), ap = S.hist.appr.length ? S.hist.appr.reduce((a, b) => a + b, 0) / S.hist.appr.length : m.appr, k01 = v => clamp(v, 0, 1);
+  const K = S.camp, k = K && CA(K.id), objV = k ? (K.done.length / k.stages.length) : m.vic ? 1 : 0;
+  const V = {
+    eco: k01(.5 + (m.gdpX - 1)) - (m.debt > 1 ? .2 : 0), soc: k01(ap / 100 * .6 + c.stab / 100 * .4), dip: k01(myTr() / 25 * .5 + Math.max(0, m.conf) / 60 * .3 + m.med / 4 * .2),
+    paz: k01((m.paz + 50) / 100 * .6 + (m.gen + 50) / 100 * .4 - m.crimes * .1), sci: k01(m.tech / 15 * .6 + m.firsts / 5 * .4),
+    pow: k01((1 - (m.powRank - 1) / 30) * .6 + Math.min(1, m.warsWon / 3) * .2 + Math.min(1, m.annex / 3) * .2), dur: k01(m.turn / 60), obj: k01(objV)
+  };
+  const parts = D.SCORE.map(([id, n, max, why]) => ({ id, n, max, why, v: Math.round(clamp(V[id], 0, 1) * max * 10) / 10 }));
+  return { total: Math.round(parts.reduce((a, x) => a + x.v, 0)), parts };
+}
+/* ---- victorias alternativas (partida libre, reto semanal y sandbox) ---- */
+function victCheck() {
+  const me = S.player, c = P(), m = metrics(), all = alive().reduce((a, z) => a + power(z), 0) || 1, second = alive().filter(z => z !== me).reduce((a, z) => Math.max(a, S.c[z].gdp), 0);
+  return {
+    dom: power(me) / all >= .25 && m.annex >= 3, eco: c.gdp >= second * 1.6 && m.gdpX >= 1.5, dip: m.ali >= 12 && m.com >= 30 && m.conf >= 50,
+    tec: m.firsts >= 7 && m.tech >= 12, sup: m.turn >= 120, leg: m.turn >= 60 && legacy().score >= 85
+  };
+}
+hook('late', () => {
+  if (S.over || !['libre', 'semana', 'sandbox'].includes(mode())) return; const v = victCheck(), p = S.p5;
+  for (const x of D.VICT) if (v[x.id] && !p.vicDone[x.id]) { p.vicDone[x.id] = S.turn; p.vic = x.id; p.tl.push({ t: S.turn, x: 'Victoria: ' + x.n }); news(`${S.leader.n} logra la ${x.n.toLowerCase()}`, 'pol', S.player, 3); return over('vic_' + x.id); }
+  const cu = (S.setup || {}).custom; if (cu && cu.goals && cu.goals.length && !p.vicDone.obj && cu.goals.every(goalOk)) { p.vicDone.obj = S.turn; p.vic = 'obj'; p.tl.push({ t: S.turn, x: 'Objetivo del escenario cumplido' }); return over('vic_obj'); }
+});
+/* eventos programados de un escenario propio */
+hook('late', () => { const cu = (S.setup || {}).custom; if (!cu || !cu.events || S.pend.length) return; for (const e of cu.events) if (e.at === S.turn && EV[e.id]) fireEvent(EV[e.id], null); });
+
+/* ---- eventos procedurales: plantilla + país + líder + recurso + situación, sin repetir combinación ---- */
+function procEvent() {
+  const P5 = D.PROC, cd = S.procCd = S.procCd || {}, seen = S.procSeen = S.procSeen || [];
+  for (const tp of shuffle(P5.tpl.filter(x => !(cd[x.id] > S.turn)))) {
+    const T = tp.tgt ? pickTarget(tp.tgt) : pick(alive().filter(z => z !== S.player && S.c[z].gdp > 200)); if (!T || !S.c[T]) continue;
+    const rk = Object.keys(S.c[T].rec).filter(r => S.c[T].rec[r] > 0 && D.COMMODITIES[r]), K = rk.length ? pick(rk) : pick(Object.keys(D.COMMODITIES)), SIT = pick(P5.sit), key = [tp.id, T, K, SIT].join('|');
+    if (seen.includes(key)) continue; seen.push(key); if (seen.length > 60) seen.shift(); cd[tp.id] = S.turn + P5.cool;
+    const sub = s => s.split('{RES}').join(D.COMMODITIES[K].n.toLowerCase()).split('{K}').join(K).split('{SIT}').join(SIT);
+    return fireEvent({ id: 'proc_' + tp.id, tgt: null, t: sub(tp.t), x: sub(tp.x), opts: tp.opts.map(o => ({ t: sub(o[0]), fx: D.fx(sub(o[1])) })) }, T);
+  }
+  return false;
+}
+{ const pe0 = playerEvent; playerEvent = () => { const n = S.pend.length; pe0(); if (!S.over && S.pend.length === n && chance(D.PROC.p * p5k('ev'))) safe('evento procedural', procEvent); }; }
+
+/* ---- epílogo: el mundo sigue 10–20 turnos sin ti; luego todo vuelve a su sitio ---- */
+function epilogue(n) {
+  n = clamp(Math.round(n || 12), 1, 20); const snap = save(), me = S.player, c0 = P(), g0 = c0.gdp, top0 = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5), heads = [];
+  let last = S.nid, played = 0;
+  try {
+    for (; played < n; played++) { S.over = null; S.pend = []; if (!P().alive) break; ACT.endTurn(); S.pend = [];
+      for (const x of S.news) if (x.id > last && x.p >= 3) heads.push({ t: x.t, x: x.x, k: x.k }); last = S.nid; }
+  } catch (e) { heads.push({ t: S.turn, x: 'La crónica se interrumpe aquí.', k: 'pol' }); }
+  const c = P(), top = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5);
+  const res = { n: played, date: dateStr(), alive: c.alive, gdpCh: c.alive ? (c.gdp / g0 - 1) * 100 : -100, stab: Math.round(c.stab), leader: c.lider && c.lider.n !== S.leader.n ? c.lider.n : null,
+    wars: S.wars.length, top, top0, heads: heads.filter(h => !/ asume el poder| tus /.test(h.x)).slice(-14), rise: top.filter(z => !top0.includes(z)), fall: top0.filter(z => !top.includes(z)) };
+  load(snap); return res;
+}
+
+/* ---- acciones nuevas: mediar por iniciativa propia y herramientas del editor ---- */
+ACT.mediate = a => { const w = warById(+a.w), me = S.player; if (!w) return fail('Esa guerra ya terminó');
+  if (w.att.includes(me) || w.def.includes(me)) return fail('No puedes mediar en tu propia guerra');
+  if (rel(me, w.att[0]) < -25 || rel(me, w.def[0]) < -25) return fail('Uno de los bandos no te ve como neutral: necesitas relación de −25 o más con ambos');
+  if ((w.medT || 0) > S.turn) return fail(`Ya lo intentaste: espera ${w.medT - S.turn} turnos`); if (!useCP(2)) return fail('Necesitas 2 de capital político');
+  w.medT = S.turn + 4; OPS.mediate({ w: w.id }); return { msg: warById(w.id) ? 'La mediación fracasa por ahora: podrás volver a intentarlo' : 'Mediación lograda: firman la paz' }; };
+ACT.fireProc = () => procEvent() ? { msg: 'Evento procedural lanzado' } : fail('No hay ninguna combinación nueva disponible ahora');
+ACT.campSkip = () => { const K = S.camp; if (!K || K.end != null) return fail('No hay etapa de campaña en curso'); const k = CA(K.id); K.done.push(S.turn);
+  if (K.st + 1 < k.stages.length) { K.st++; K.s0 = S.turn; Bus.emit('campStage', { i: K.st - 1, n: k.stages[K.st - 1].n }); return { msg: 'Etapa cumplida desde el editor' }; }
+  K.end = k.endings.findIndex(x => !x.if || x.if.every(goalOk)); over('camp_win'); return { msg: 'Campaña completada desde el editor' }; };
+ACT.testVic = a => { const v = D.VICT.find(x => x.id === a.k); if (!v) return fail('Victoria desconocida'); S.p5.vicDone[v.id] = S.turn; S.p5.vic = v.id; over('vic_' + v.id); return { msg: 'Victoria de prueba: ' + v.n }; };
+Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1 });
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -4930,6 +5682,7 @@ WL.Game = {
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
     justInfo,
+    p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
     resInfo,
@@ -7215,6 +7968,311 @@ const JCOL = ['bad', 'gold', 'good', 'good'], JTXT = [
     ${J.score >= 15 ? `<div class="arow"><div class="grow"><b>${gi('ultimatum')} Exigir disculpas y reparaciones</b><small>El paso previo a la guerra. Si aceptan, pagan y los agravios quedan saldados; si se niegan, tu justificación crece. Aceptan más si eres mucho más fuerte y si no son agresivos ni rencorosos.</small></div><button class="btn sm gold" data-a="apology" data-iso="${iso}" ${cd ? 'disabled' : ''}>${cd ? `Espera ${c.ask.apo - t} t` : 'Exigir · 1 CP'}</button></div>` : ''}</div>`; }; }
 H.apology = d => sheetAct('demandApology', { iso: d.iso });
 { const s0 = sheetHTML; sheetHTML = iso => { const J = Q.justInfo(iso); return s0(iso).replace('Declarar guerra · 4 CP', `Declarar guerra · 4 CP · justificación ${J.name.toLowerCase()}`); }; }
+
+
+/* ---------- ui/5e-modes.js ---------- */
+/* =====================================================================
+   INTERFAZ · FASE 5 · modos, escenarios, campañas, logros, récords,
+   tarjeta de resultado, legado ampliado y editor de escenarios.
+   El progreso del jugador vive en el navegador (wl_prog), nunca en la partida.
+   ===================================================================== */
+const P5 = Q.p5, clampU = (v, a, b) => Math.max(a, Math.min(b, v));
+Object.assign(NG, { mode: 'libre', scen: 'actual', camp: null, opts: {}, dk: { ai: 1, eco: 1, stab: 1, ev: 1 }, alt: { lid: 1, bor: 1, est: 1 }, week: null, view: null, cscen: -1 });
+GI.trofeo = 'M7 3h10v2h3v3a5 5 0 01-4.6 5A5 5 0 0113 15.9V18h3v3H8v-3h3v-2.1A5 5 0 018.6 13 5 5 0 014 8V5h3zm0 4H6v1a3 3 0 001.4 2.5A7 7 0 017 8zm10 0v1a7 7 0 01-.4 2.5A3 3 0 0018 8V7z';
+GI.bandera = 'M5 2h2v20H5zm3 1h11l-2.5 4.5L19 12H8z';
+GI.check = 'M9 16.2l-4.2-4.2-1.4 1.4L9 19 21 7l-1.4-1.4z';
+GI.candado = 'M7 10V7a5 5 0 0110 0v3h1a1 1 0 011 1v9a1 1 0 01-1 1H6a1 1 0 01-1-1v-9a1 1 0 011-1zm2 0h6V7a3 3 0 00-6 0zm3 4a1.5 1.5 0 00-1 2.6V18h2v-1.4a1.5 1.5 0 00-1-2.6z';
+
+/* ---- progreso local: logros, desbloqueos, estadísticas y récords ---- */
+const PROG = (() => { const d = { v: 1, ach: {}, unl: {}, g: { games: 0, leaders: {}, countries: {}, campEnds: {} }, rec: {}, gm: {}, theme: 'clasico', frame: 'none' };
+  try { const x = JSON.parse(localStorage.getItem('wl_prog') || 'null'); if (x && x.v === 1) { Object.assign(d, x); d.g = Object.assign({ games: 0, leaders: {}, countries: {}, campEnds: {} }, x.g); } } catch (e) { } return d; })();
+const progSave = () => { try { localStorage.setItem('wl_prog', JSON.stringify(PROG)); } catch (e) { } };
+const isUnl = id => !id || !!PROG.unl[id];
+const lockHint = id => { const a = D.ACH.find(x => x[6] === id), c = (D.UNLOCK_BY_COUNT || []).find(x => x[1] === id); return a ? `Logro «${a[2]}»` : c ? `${c[0]} logros` : 'un logro'; };
+function gStats() {
+  const L = Object.values(PROG.gm), sum = k => L.reduce((a, x) => a + (x[k] || 0), 0), top = o => Object.entries(o).sort((a, b) => b[1] - a[1])[0];
+  const ce = PROG.g.campEnds, tl = top(PROG.g.leaders), tc = top(PROG.g.countries);
+  return { games: PROG.g.games, turns: sum('t'), warsWon: sum('w'), treat: sum('tr'), annex: sum('an'), laws: sum('l'), wins: L.filter(x => x.vic || x.r === 'camp_win').length, losses: L.filter(x => x.r && x.r !== 'camp_win' && !/^vic_/.test(x.r) && x.r !== 'tiempo').length,
+    campDone: Object.keys(ce).length, twoEnds: Object.values(ce).some(e => e.length >= 2), leader: tl ? tl[0] + ' (' + tl[1] + ')' : '—', country: tc && D.C[tc[0]] ? D.C[tc[0]].n + ' (' + tc[1] + ')' : '—', ach: Object.keys(PROG.ach).length };
+}
+function unlock(id) { if (!id || PROG.unl[id] || !D.UNLOCK[id]) return; PROG.unl[id] = Date.now(); setTimeout(() => toast(`Desbloqueado: ${D.UNLOCK[id].n}`), 900); }
+function snapGame() {
+  const s = S(); if (!s || !s.p5) return; if (!s.p5.gid) s.p5.gid = Date.now().toString(36); const p = s.p5;
+  PROG.gm[p.gid] = { t: s.turn, w: p.warsWon, tr: p.treat, an: s.stats.annexed, l: s.stats.laws, iso: s.player, vic: p.vic, r: s.over ? s.over.r : null, sc: s.setup.scen, m: s.setup.mode };
+  const ks = Object.keys(PROG.gm); if (ks.length > 300) delete PROG.gm[ks[0]];
+}
+/* comprobación de logros: al final de cada turno y al terminar la partida */
+function achCheck() {
+  const s = S(); if (!s || !s.p5 || UI.sim) return; snapGame();
+  const m = P5.metrics(); if (s.over) m.score = P5.score().total; const g = gStats(), cheat = m.edited && m.mode !== 'sandbox', got = [];
+  for (const a of D.ACH) { if (PROG.ach[a[0]] || (cheat && a[0] !== 'sandbox')) continue; let ok = false; try { ok = !!a[4](m, g); } catch (e) { } if (ok) { PROG.ach[a[0]] = Date.now(); got.push(a); if (a[6]) unlock(a[6]); } }
+  const n = Object.keys(PROG.ach).length; for (const [k, id] of D.UNLOCK_BY_COUNT || []) if (n >= k) unlock(id);
+  progSave(); got.slice(0, 4).forEach((a, i) => setTimeout(() => achPop(a, !i), i * 700));
+}
+function achPop(a, snd) {
+  let box = $('#achbox'); if (!box) { box = document.createElement('div'); box.id = 'achbox'; box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+  const d = document.createElement('div'); d.className = 'achpop'; d.innerHTML = `<span class="ach-ic">${gi(a[1])}</span><div><small>Logro desbloqueado</small><b>${esc(a[2])}</b><small>${esc(a[3])}</small></div>`;
+  box.appendChild(d); if (snd) Sfx.play('fanfare'); setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 500); }, 4200);
+}
+Bus.on('turn', () => setTimeout(achCheck, 50));
+Bus.on('over', () => setTimeout(() => { achCheck(); recordGame(); permaClean(); }, 60));
+Bus.on('loaded', () => { const s = S(); if (s && s.p5mig) { const x = s.p5mig; delete s.p5mig; setTimeout(() => toast(x), 400); } });
+
+/* ---- estilos de interfaz y marcos de retrato ---- */
+function applyTheme() {
+  const r = document.documentElement; for (const t in D.THEMES) for (const k in D.THEMES[t].v) r.style.removeProperty(k);
+  const t = D.THEMES[PROG.theme]; if (t && isUnl(t.lock)) for (const k in t.v) r.style.setProperty(k, t.v[k]);
+  document.body.dataset.frame = isUnl((D.FRAMES[PROG.frame] || {}).lock) ? PROG.frame : 'none';
+}
+H.theme = d => { if (!isUnl((D.THEMES[d.k] || {}).lock)) return toast('Ese estilo aún está bloqueado', false); PROG.theme = d.k; progSave(); applyTheme(); UI.render(); };
+H.frame = d => { if (!isUnl((D.FRAMES[d.k] || {}).lock)) return toast('Ese marco aún está bloqueado', false); PROG.frame = d.k; progSave(); applyTheme(); UI.render(); };
+const styleHTML = () => `<h4>${gi('ojo')} Estilo de la interfaz</h4><div class="chips">${Object.entries(D.THEMES).map(([k, t]) => `<button class="chip ${PROG.theme === k ? 'gold' : ''}" data-a="theme" data-k="${k}" ${isUnl(t.lock) ? '' : 'disabled title="Se desbloquea con ' + esc(lockHint(t.lock)) + '"'}>${isUnl(t.lock) ? '' : gi('candado')} ${esc(t.n)}</button>`).join('')}</div>
+  <h4>${gi('pin')} Marco del retrato</h4><div class="chips">${Object.entries(D.FRAMES).map(([k, t]) => `<button class="chip ${PROG.frame === k ? 'gold' : ''}" data-a="frame" data-k="${k}" ${isUnl(t.lock) ? '' : 'disabled title="Se desbloquea con ' + esc(lockHint(t.lock)) + '"'}>${isUnl(t.lock) ? '' : gi('candado')} ${esc(t.n)}</button>`).join('')}</div>`;
+setTimeout(applyTheme, 0);
+
+/* ---- pantalla de inicio: modos de juego ---- */
+const MODE_IC = { libre: 'pin', camp: 'bandera', semana: 'trofeo', rapido: 'ofensiva', sandbox: 'ojo' };
+function resetSetup(m) { Object.assign(NG, { mode: m, scen: 'actual', camp: null, opts: m === 'rapido' ? { rapido: 1 } : {}, dk: { ai: 1, eco: 1, stab: 1, ev: 1 }, week: null, cscen: -1 }); }
+const modeCards = () => `<div class="modes5">${D.MODES.map(m => `<button class="mcard" data-a="${m.id === 'libre' ? 'ngStart' : 'ngMode'}" data-m="${m.id}">${gi(MODE_IC[m.id])}<b>${esc(m.n)}</b><small>${esc(m.x)}</small></button>`).join('')}</div>`;
+{ const s0 = startHTML; startHTML = () => NG.view === 'camp' ? campPickHTML() : NG.view === 'prog' ? `<div class="start"><div class="start-in wide5">${progHTML()}<div class="row end"><button class="btn" data-a="ngView" data-v="">Volver</button></div></div></div>` : NG.view === 'code' ? codeHTML()
+  : s0().replace('Fase 2', 'Fase 5').replace(/<button class="btn gold lg" data-a="ngStart">Nueva partida<\/button>/, '').replace('<div class="start-btns">', modeCards() + '<div class="start-btns">')
+    .replace(/(<button class="btn ghost lg" data-a="importOpen">[^<]*<\/button>)/, '$1<button class="btn ghost lg" data-a="ngView" data-v="code">Código de partida</button><button class="btn ghost lg" data-a="ngView" data-v="prog">Logros y récords</button>'); }
+H.ngView = d => { NG.view = d.v || null; UI.render(); };
+{ const st0 = H.ngStart; H.ngStart = d => { if (!d || !d.keep) resetSetup('libre'); st0(d); if (NG.mode === 'camp' || NG.mode === 'semana') { NG.step = 1; UI.render(); } }; }
+H.ngMode = d => {
+  resetSetup(d.m);
+  if (d.m === 'camp') { NG.view = 'camp'; return UI.render(); }
+  if (d.m === 'semana') { const w = P5.weekly(); NG.week = w; NG.iso = w.iso; NG.seed = String(w.seed); NG.scen = w.scen; NG.custom = false; NG.diff = '1'; }
+  NG.view = null; H.ngStart({ keep: 1 });
+};
+function campPickHTML() {
+  return `<div class="start"><div class="start-in wide5"><p class="eyebrow">Campañas</p><h2>Elige una historia</h2><div class="camps">${D.CAMP.map(k => { const ends = PROG.g.campEnds[k.id] || [];
+    return `<div class="card camp"><div class="row"><span class="flag xl">${flag(k.iso)}</span><div class="grow"><h3>${esc(k.n)}</h3><small class="mut">${esc(D.C[k.iso].n)} · ${esc(P5.SC(k.scen).n)} · <span class="chip">${esc(k.d)}</span></small></div></div>
+      <p>${esc(k.x)}</p><ol class="stages">${k.stages.map(s => `<li>${esc(s.n)}</li>`).join('')}</ol>
+      <small class="mut">Finales descubiertos: ${ends.length}/3${ends.length ? ' · ' + ends.map(i => esc(k.endings[i].t)).join(', ') : ''}</small>
+      <div class="row end"><button class="btn gold" data-a="ngCamp" data-id="${k.id}">Jugar</button></div></div>`; }).join('')}</div>
+    <div class="row end"><button class="btn" data-a="ngView" data-v="">Volver</button></div></div></div>`;
+}
+H.ngCamp = d => { const k = P5.CA(d.id); if (!k) return; resetSetup('camp'); NG.camp = k.id; NG.scen = k.scen; NG.iso = k.iso; NG.custom = false; NG.name = NG.name || k.lead; NG.partido = ''; NG.view = null; H.ngStart({ keep: 1 }); };
+function codeHTML() {
+  return `<div class="start"><div class="start-in"><p class="eyebrow">Compartir sin servidor</p><h2>Código de partida</h2><p class="mut">Pega el código que te pasaron: incluye la semilla, el país, el escenario, el modo y las reglas. Empezaréis exactamente con el mismo mundo.</p>
+    <textarea id="ng:code" class="code5" rows="4" placeholder="WL5-…" spellcheck="false"></textarea>
+    <div class="row end"><button class="btn" data-a="ngView" data-v="">Volver</button><button class="btn gold" data-a="codeGo">Empezar con este código</button></div></div></div>`;
+}
+H.codeGo = () => { const el = $('#ng\\:code'), o = P5.readCode(el ? el.value : ''); if (!o) return toast('Ese código no es válido o está incompleto', false);
+  NG.view = null; NG.mode = o.setup.mode; G.newGame({ diff: o.diff, iso: o.iso, name: o.name || 'Líder', traits: o.traits, seed: o.seed, img: '', pseed: 0, partido: '', custom: null, setup: o.setup }); enterGame(true); };
+
+/* ---- creación: paso 4 «Mundo» (escenario, reglas, dificultad por partes) ---- */
+const fixedCountry = () => NG.mode === 'camp' || NG.mode === 'semana';
+const myScens = () => { try { const L = JSON.parse(localStorage.getItem('wl_scen') || '[]'); return Array.isArray(L) ? L : []; } catch (e) { return []; } };
+const OPTS = [['perm', 'Muerte permanente', 'Sin ranuras manuales; al perder se borra la partida.'], ['solo', 'Un solo país, sin editor', 'El editor queda bloqueado toda la partida.'], ['escasez', 'Escasez de recursos', 'Materias primas un 35% más caras y reservas al 40%.'], ['hostil', 'Mundo hostil', 'Todos empiezan desconfiando de ti y son más agresivos.'], ['alt', 'Mundo alternativo', 'Baraja líderes, fronteras o estados iniciales con reglas de coherencia.']];
+function worldHTML() {
+  if (NG.mode === 'semana' && NG.week) { const w = NG.week; return `<div class="card"><p class="eyebrow">Reto de la semana ${w.w}</p><h3>${flag(w.iso)} ${esc(D.C[w.iso].n)} · ${esc(P5.SC(w.scen).n)}</h3><p>Reglas: <b>${w.rules.map(esc).join(' · ')}</b></p><p class="mut">Todo el que juegue esta semana empieza con la misma semilla (${w.seed}), el mismo país y las mismas reglas. Compara tu puntuación con tus amigos.</p></div>`; }
+  const dk = Object.entries(D.DK).map(([k, x]) => `<label class="vol"><span>${esc(x[0])}</span><input type="range" min="${x[1]}" max="${x[2]}" step="0.05" value="${NG.dk[k]}" data-c="ngDk" data-k="${k}"><b>×${(+NG.dk[k]).toFixed(2)}</b></label>`).join('');
+  const k = NG.mode === 'camp' && P5.CA(NG.camp);
+  const modes = `<div class="chips">${['libre', 'rapido', 'sandbox'].map(m => `<button class="chip ${NG.mode === m ? 'gold' : ''}" data-a="ngSetMode" data-m="${m}">${gi(MODE_IC[m])} ${esc(D.MODES.find(x => x.id === m).n)}</button>`).join('')}</div>`;
+  const scen = k ? `<div class="card"><p class="eyebrow">Campaña</p><h3>${esc(k.n)}</h3><p>${esc(k.x)}</p><small class="mut">Escenario: ${esc(P5.SC(k.scen).n)}</small></div>`
+    : `<h4>${gi('pin')} Escenario</h4><div class="scens">${D.SCEN.map(s => { const ok = isUnl(s.lock); return `<button class="scard ${NG.scen === s.id && NG.cscen < 0 ? 'on' : ''}" data-a="ngScen" data-id="${s.id}" ${ok ? '' : 'disabled'}><b>${ok ? '' : gi('candado')} ${esc(s.n)}</b> <span class="chip">${esc(s.d)}</span><small>${esc(ok ? s.x : 'Se desbloquea con ' + lockHint(s.lock))}</small><small class="gold">Objetivo: ${esc(s.obj)}</small></button>`; }).join('')}
+      ${myScens().map((c, i) => `<button class="scard ${NG.cscen === i ? 'on' : ''}" data-a="ngMyScen" data-i="${i}"><b>${gi('obras')} ${esc(c.n || 'Escenario propio')}</b> <span class="chip">Tuyo</span><small>${esc(c.x || '')}</small></button>`).join('')}</div>`;
+  return `${k ? '' : `<h4>${gi('ojo')} Modo</h4>${modes}<p class="mut fine">${esc(D.MODES.find(x => x.id === NG.mode).x)}</p>`}${scen}
+    <h4>${gi('presion')} Reglas opcionales</h4>${OPTS.map(o => `<label class="check opt5"><input type="checkbox" data-c="ngOpt" data-k="${o[0]}" ${NG.opts[o[0]] ? 'checked' : ''}><span><b>${o[1]}</b><small class="mut">${o[2]}</small></span></label>`).join('')}
+    ${NG.opts.alt ? `<div class="chips sub5">${[['lid', 'Líderes'], ['bor', 'Fronteras'], ['est', 'Estados iniciales']].map(x => `<label class="check"><input type="checkbox" data-c="ngAlt" data-k="${x[0]}" ${NG.alt[x[0]] ? 'checked' : ''}> ${x[1]}</label>`).join('')}</div>` : ''}
+    <h4>${gi('seg')} Dificultad por partes <small class="mut">sobre el nivel elegido en «Líder»</small></h4><div class="vols">${dk}</div>
+    ${NG.mode === 'libre' || NG.mode === 'sandbox' ? `<h4>${gi('trofeo')} Caminos a la victoria</h4><ul class="vlist">${D.VICT.map(v => `<li>${gi(v.ic)} <b>${esc(v.n)}</b>: ${esc(v.x)}</li>`).join('')}</ul>` : NG.mode === 'rapido' ? `<p class="mut">Partida de ${D.QUICK_TURNS} turnos: al final cuenta la puntuación (ver la fórmula en Partida → Objetivos).</p>` : ''}`;
+}
+H.ngSetMode = d => { NG.mode = d.m; NG.opts.rapido = d.m === 'rapido' ? 1 : 0; UI.render(); };
+H.ngScen = d => { NG.scen = d.id; NG.cscen = -1; UI.render(); };
+H.ngMyScen = d => { const c = myScens()[+d.i]; if (!c) return; NG.cscen = +d.i; NG.scen = c.base || 'actual'; UI.render(); };
+H.ngOpt = (d, el) => { NG.opts[el.dataset.k] = el.checked ? 1 : 0; UI.render(); };
+H.ngAlt = (d, el) => { NG.alt[el.dataset.k] = el.checked ? 1 : 0; };
+H.ngDk = (d, el) => { NG.dk[el.dataset.k] = +el.value; const b = el.parentNode.querySelector('b'); if (b) b.textContent = '×' + (+el.value).toFixed(2); };
+H.ngHist = d => { const h = D.HISTNATIONS.find(x => x.id === d.id); if (!h || !isUnl(h.lock)) return; NG.iso = h.iso; NG.custom = true; NG.cname = h.n; NG.creg = h.reg; NG.cideo = String(h.ideo); Globe.focus(h.iso); Globe.select([h.iso]); UI.render(); };
+{ const c0 = createHTML; createHTML = () => {
+  const st = NG.step, fx = fixedCountry(); if (st === 3) NG.step = 2; let h = c0(); NG.step = st;
+  const names = [fx ? 'País: ' + D.C[NG.iso].n : 'País', 'Líder', 'Personalidad', 'Mundo'];
+  h = h.replace(/<div class="steps">[\s\S]*?<\/div><\/header>/, `<div class="steps">${names.map((s, i) => `<button data-a="ngStep" data-s="${i}" class="${i === st ? 'on' : ''}" ${fx && !i ? 'disabled' : ''}>${i + 1}. ${esc(s)}</button>`).join('')}</div></header>`);
+  if (st === 3) h = h.replace(/<div class="create-body">[\s\S]*<\/div>\s*<footer>/, `<div class="create-body scroll" data-sc="ngw">${worldHTML()}</div>\n    <footer>`);
+  if (st === 2) for (const t of D.TRAITS) if (t.lock && !isUnl(t.lock)) h = h.replace(`class="trait  " data-a="ngTrait" data-id="${t.id}"`, `class="trait locked" data-a="ngTrait" data-id="${t.id}" title="Se desbloquea con ${esc(lockHint(t.lock))}"`).replace(`class="trait  locked" data-a="ngTrait" data-id="${t.id}"`, `class="trait locked" data-a="ngTrait" data-id="${t.id}"`);
+  if (st === 0 && NG.custom) { const L = D.HISTNATIONS.filter(x => isUnl(x.lock)); if (L.length) h = h.replace('<div class="searchbox">', `<div class="chips">${L.map(x => `<button class="chip" data-a="ngHist" data-id="${x.id}" title="${esc(x.x)}">${flag(x.iso)} ${esc(x.n)}</button>`).join('')}</div><div class="searchbox">`); }
+  const back = st === 0 || (fx && st === 1) ? `<button class="btn ghost" data-a="ngBack">Atrás</button>` : `<button class="btn ghost" data-a="ngStep" data-s="${st - 1}">Atrás</button>`;
+  return h.replace(/<footer>[\s\S]*<\/footer>/, `<footer>${back}${st === 2 ? `<button class="btn" data-a="ngStep" data-s="3">Mundo y reglas</button>` : ''}${st < 2 ? `<button class="btn gold" data-a="ngStep" data-s="${st + 1}">Siguiente</button>` : `<button class="btn gold" data-a="ngGo">Comenzar mandato</button>`}</footer>`);
+}; }
+H.ngBack = () => { NG.view = NG.mode === 'camp' ? 'camp' : null; H.toStart(); };
+H.ngStep = d => { NG.step = clampU(+d.s, fixedCountry() ? 1 : 0, 3); UI.render(); };
+{ const p0 = H.ngPick; H.ngPick = d => { if (fixedCountry()) return toast('En este modo el país viene fijado', false); p0(d); }; }
+{ const t0 = H.ngTrait; H.ngTrait = d => { const t = D.TRAITS.find(x => x.id === d.id); if (t && t.lock && !isUnl(t.lock)) return toast(`Rasgo bloqueado: se consigue con ${lockHint(t.lock)}`, false); t0(d); }; }
+function curSetup() {
+  if (NG.mode === 'semana' && NG.week) return NG.week.setup;
+  const c = NG.cscen >= 0 ? myScens()[NG.cscen] : null, opts = Object.assign({}, NG.opts); if (opts.alt) opts.alt = Object.assign({}, NG.alt);
+  return { mode: NG.mode, scen: NG.scen, camp: NG.camp, opts, dk: Object.assign({}, NG.dk), custom: c ? { n: c.n, ops: c.ops || [], goals: c.goals || [], events: c.events || [] } : null };
+}
+{ const g0 = G.newGame; G.newGame = o => { const r = g0(Object.assign({ setup: curSetup() }, o)); const s = S(); s.p5.gid = Date.now().toString(36);
+  PROG.g.games++; PROG.g.leaders[s.leader.n] = (PROG.g.leaders[s.leader.n] || 0) + 1; PROG.g.countries[s.player] = (PROG.g.countries[s.player] || 0) + 1; snapGame(); progSave(); return r; }; }
+{ const g0 = H.ngGo; H.ngGo = d => { if (NG.mode === 'semana' && NG.week) { NG.iso = NG.week.iso; NG.seed = String(NG.week.seed); NG.custom = false; } g0(d); const s = S(); if (!s || UI.screen !== 'game' || s.turn !== 0) return; briefing(); }; }
+/* informe inicial: escenario o campaña, antes del tutorial */
+function briefing() {
+  const s = S(), ci = P5.campInfo(), sc = P5.SC(s.setup.scen), cu = s.setup.custom;
+  const html = ci ? `<p class="eyebrow">Campaña · ${esc(ci.k.d)}</p><h2>${esc(ci.k.n)}</h2><p>${esc(ci.k.x)}</p><div class="card"><small class="eyebrow">Etapa 1 de ${ci.k.stages.length} · ${esc(ci.st.n)}</small><p>${esc(ci.st.x)}</p>${goalsHTML(ci)}</div>`
+    : `<p class="eyebrow">${esc(D.MODES.find(m => m.id === s.setup.mode).n)} · ${esc(sc.d)}</p><h2>${esc(cu ? cu.n : sc.n)}</h2><p>${esc(sc.x)}</p><p class="gold">${esc(sc.obj)}</p>${s.setup.mode === 'rapido' ? `<p>Tienes ${D.QUICK_TURNS} turnos. Al final cuenta la puntuación.</p>` : ''}${cu && cu.goals.length ? `<div class="card"><small class="eyebrow">Objetivo del escenario</small><ul>${cu.goals.map(g => `<li>${esc(P5.goalText(g))}</li>`).join('')}</ul></div>` : ''}`;
+  SQ.unshift(modalScene(html, 'event')); runSQ();
+}
+const goalsHTML = ci => `<ul class="goals5">${ci.goals.map(g => `<li class="${g.ok ? 'ok' : ''}">${gi(g.ok ? 'check' : 'pin')} ${esc(g.t)}</li>`).join('')}</ul>${ci.left != null ? `<small class="${ci.left <= 4 ? 'red' : 'mut'}">Plazo: ${Math.max(0, ci.left)} turnos</small>` : ''}`;
+Bus.on('campStage', e => { const ci = P5.campInfo(); if (!ci || ci.K.end != null) return; scene(modalScene(`<p class="eyebrow">Etapa cumplida · ${esc(e.n)}</p><h2>${esc(ci.st.n)}</h2><p>${esc(ci.st.x)}</p>${goalsHTML(ci)}`, 'event')); });
+
+/* ---- en partida: objetivos, mediación, sin editor y muerte permanente ---- */
+PTABS.sys.splice(1, 0, ['obj', 'Objetivos']);
+{ const s0 = PANELS.sys; PANELS.sys = t => t === 'obj' ? objHTML() : t === 'aju' ? s0(t) + styleHTML() : t === 'gen' ? s0(t) + codeBoxHTML() : s0(t); }
+function objHTML() {
+  const s = S(), ci = P5.campInfo(), sc = P5.score(), v = P5.victCheck(), cu = s.setup.custom, md = s.setup.mode;
+  const camp = ci ? `<div class="card"><p class="eyebrow">Campaña · etapa ${Math.min(ci.K.st + 1, ci.k.stages.length)} de ${ci.k.stages.length}</p><h3>${esc(ci.k.n)} · ${esc(ci.st.n)}</h3><p>${esc(ci.st.x)}</p>${goalsHTML(ci)}
+    <small class="mut">Derrota si: ${(ci.k.lose || []).map(g => esc(P5.goalText(g))).join(' · ') || 'pierdes el poder'}</small></div>` : '';
+  const vic = md === 'libre' || md === 'semana' || md === 'sandbox' ? `<h4>${gi('trofeo')} Victorias</h4><ul class="vlist">${D.VICT.map(x => `<li class="${s.p5.vicDone[x.id] ? 'ok' : ''}">${gi(x.ic)} <b>${esc(x.n)}</b>${s.p5.vicDone[x.id] ? ' · conseguida' : v[x.id] ? ' · ¡al alcance!' : ''}<small>${esc(x.x)}</small></li>`).join('')}</ul>${cu && cu.goals.length ? `<h4>Objetivo del escenario</h4><ul class="goals5">${cu.goals.map(g => `<li class="${P5.goalOk(g) ? 'ok' : ''}">${esc(P5.goalText(g))}</li>`).join('')}</ul>` : ''}` : md === 'rapido' ? `<p class="card">Turno ${s.turn + 1} de ${D.QUICK_TURNS}: al final cuenta la puntuación.</p>` : '';
+  return `${camp}${vic}<h4>${gi('trofeo')} Puntuación actual: ${sc.total} / 100</h4>${scoreHTML(sc)}<p class="mut fine">La fórmula es pública: ocho bloques con un máximo cada uno, así que ni la guerra ni el dinero bastan por sí solos.</p>
+    <p class="mut">Escenario: ${esc(P5.SC(s.setup.scen).n)} · Modo: ${esc(D.MODES.find(m => m.id === md).n)}${Object.keys(s.setup.opts).filter(k => s.setup.opts[k]).length ? ' · Reglas: ' + Object.keys(s.setup.opts).filter(k => s.setup.opts[k]).map(k => (OPTS.find(o => o[0] === k) || [0, k === 'rapido' ? 'Rápido' : k])[1]).join(', ') : ''}</p>`;
+}
+const scoreHTML = sc => `<div class="score5">${sc.parts.map(p => `<div class="arow"><div class="grow"><b>${esc(p.n)}</b><small>${esc(p.why)}</small></div>${bar(p.v, p.max, p.v / p.max >= .6 ? 'green' : p.v / p.max < .3 ? 'red' : '')}<b class="num">${p.v.toFixed(1)}/${p.max}</b></div>`).join('')}</div>`;
+const codeBoxHTML = () => `<h4>${gi('acuerdo')} Compartir esta partida</h4><p class="mut fine">El código guarda la semilla y la configuración inicial: quien lo pegue empezará con el mismo mundo.</p><input class="code5" readonly value="${esc(P5.gameCode())}" onclick="this.select()">`;
+{ const d0 = dockHTML; dockHTML = () => { let h = d0(); const s = S(), ci = s && P5.campInfo(); if (s && P5.opt('solo') && s.setup.mode !== 'sandbox') h = h.replace(/<button data-a="open" data-p="edit"[\s\S]*?<\/button>/, '');
+  if (ci && ci.K.end == null) h += `<button class="camp-pill glass" data-a="objOpen" title="Objetivos de la campaña">${gi('bandera')} ${esc(ci.st.n)} · ${ci.goals.filter(g => g.ok).length}/${ci.goals.length}${ci.left != null ? ` · ${Math.max(0, ci.left)}t` : ''}</button>`;
+  else if (s && s.setup.mode === 'rapido') h += `<button class="camp-pill glass" data-a="objOpen">${gi('ofensiva')} Turno ${s.turn + 1}/${D.QUICK_TURNS}</button>`; return h; }; }
+H.objOpen = () => { UI.panel = 'sys'; UI.tab.sys = 'obj'; UI.render(); };
+{ const x0 = sheetExtra; sheetExtra = iso => { const s = S(), w = s.wars.filter(w => (w.att.includes(iso) || w.def.includes(iso)) && !w.att.includes(me()) && !w.def.includes(me()));
+  return x0(iso) + (w.length && iso !== me() ? `<h4>${gi('paz')} Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
+H.mediate = d => { act('mediate', { w: +d.w }); };
+const permaClean = () => { const s = S(); if (s && s.over && P5.opt('perm')) { try { localStorage.removeItem('wl_save'); localStorage.removeItem('wl_save_bak'); } catch (e) { } } };
+{ const a0 = autosave; autosave = () => { const s = S(); if (s && s.over && P5.opt('perm')) return permaClean(); a0(); }; }
+for (const k of ['slotSave', 'slotLoad']) { const f0 = H[k]; H[k] = d => S() && P5.opt('perm') && UI.screen === 'game' ? toast('Muerte permanente: no hay ranuras manuales en esta partida', false) : f0(d); }
+
+/* ---- final de partida: textos nuevos, puntuación, legado ampliado y epílogo ---- */
+Object.assign(OVER, {
+  tiempo: ['Se acabó el tiempo', 'La partida rápida ha terminado. Ahora habla la puntuación.'], camp_lose: ['La campaña fracasa', 'Lo que te propusiste se ha vuelto imposible. Otros escribirán el final de esta historia.'],
+  camp_time: ['Se agotó el plazo', 'La historia no espera: el momento ha pasado sin que lograras el objetivo de la etapa.'], camp_win: ['Campaña completada', ''], vic_obj: ['Objetivo cumplido', 'Has completado el objetivo de tu escenario.']
+});
+for (const v of D.VICT) OVER['vic_' + v.id] = [v.n, v.x];
+{ const o0 = showOver; showOver = () => { o0(); const box = $('#modal .over'), s = S(); if (!box || !s || !s.over) return; const ci = P5.campInfo(), sc = P5.score(), r = s.over.r, win = /^vic_|camp_win/.test(r);
+  const head = ci && ci.end ? `<div class="card ending"><p class="eyebrow">Final ${ci.K.end + 1} de 3</p><h2>${esc(ci.end.t)}</h2><p>${esc(ci.end.x)}</p></div>` : '';
+  box.querySelector('h1').insertAdjacentHTML('afterend', head);
+  const legacyCard = box.querySelector('.card.legacy');
+  (legacyCard || box.querySelector('.kvs')).insertAdjacentHTML('afterend', `<details class="p5det" open><summary>${gi('trofeo')} Puntuación: <b>${sc.total} / 100</b></summary>${scoreHTML(sc)}</details>
+    <details class="p5det"><summary>${gi('pin')} La línea del tiempo de tu mandato</summary>${timelineHTML()}</details>
+    <details class="p5det"><summary>${gi('regalo')} Cómo te recuerda cada país</summary>${memoryHTML()}</details>
+    <details class="p5det" id="epiBox"><summary>${gi('ojo')} Qué pasó después</summary><p class="mut">Simula el mundo durante los años siguientes sin ti. Nada de lo que pase cambia tu partida.</p><button class="btn" data-a="epilogue">Ver el epílogo (12 turnos)</button></details>`);
+  box.querySelector('.row.end').insertAdjacentHTML('afterbegin', `${win && !s.p5.cont ? '<button class="btn gold" data-a="keepPlaying">Seguir gobernando</button>' : ''}<button class="btn" data-a="resultCard">Tarjeta de resultado</button>`); }; }
+H.keepPlaying = () => { const r = act('keepPlaying'); if (r.ok) { closeModal(); UI.render(); refreshMap(); autosave(); } };
+function timelineHTML() { const s = S(), L = (s.p5.tl || []).concat((s.diary || []).filter(d => ['war', 'peace', 'elec', 'coup'].includes(d.k)).map(d => ({ t: d.t, x: d.x }))).sort((a, b) => a.t - b.t);
+  const seen = new Set(), out = L.filter(x => { const k = x.t + x.x; if (seen.has(k)) return false; seen.add(k); return true; }).slice(-30);
+  return `<ol class="tl5">${out.map(x => `<li><small>${esc(turnDate(x.t))}</small> ${esc(x.x)}</li>`).join('') || '<li class="mut">Un mandato sin sobresaltos.</li>'}</ol>`; }
+const turnDate = t => { const s = S(), a = s.year * 4 + s.q - (s.turn - t); return 'T' + (t + 1) + ' · ' + Math.floor(a / 4); };
+function memoryHTML() { const s = S(), L = Object.keys(s.c).filter(z => z !== me() && CC(z).alive).sort((a, b) => CC(b).gdp - CC(a).gdp).slice(0, 10).concat(Q.nb(me()).filter(z => CC(z).alive)).filter((z, i, a) => a.indexOf(z) === i).slice(0, 14);
+  return `<div class="mem5">${L.map(z => { const r = Q.rel(me(), z), m = Q.memOf(me(), z).sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0], w = r >= 50 ? 'como un gran amigo' : r >= 20 ? 'con simpatía' : r > -20 ? 'con indiferencia' : r > -50 ? 'con recelo' : 'como un enemigo';
+    return `<div class="arow"><span>${flag(z)}</span><div class="grow"><b>${cname(z)}</b><small>Te recuerda ${w}${m ? ' · sobre todo: «' + esc(m.k) + '»' : ''}</small></div><b class="num ${r >= 0 ? 'green' : 'red'}">${sgn(r)}</b></div>`; }).join('')}</div>`; }
+H.epilogue = () => { const box = $('#epiBox'); if (!box) return; const h = Bus.h; Bus.h = {}; UI.sim = 1; let e; try { e = P5.epilogue(12); } finally { Bus.h = h; UI.sim = 0; }
+  box.innerHTML = `<summary>${gi('ojo')} Qué pasó después</summary><p class="eyebrow">Hasta ${esc(e.date)} (${e.n} trimestres)</p>
+    <p>${e.alive ? `${cname(me())} ${e.gdpCh >= 0 ? 'siguió creciendo' : 'perdió fuelle'} (${sgn(e.gdpCh, 0)}% de PIB) con estabilidad de ${e.stab}.` : `${cname(me())} no sobrevivió a los años siguientes.`} ${e.wars ? `Quedaron ${e.wars} guerras abiertas en el mundo.` : 'El mundo vivió en paz.'}
+    ${e.rise.length ? ` Ascendieron ${e.rise.map(cname).join(', ')}.` : ''}${e.fall.length ? ` Cayeron del podio ${e.fall.map(cname).join(', ')}.` : ''}</p>
+    <ol class="tl5">${e.heads.map(x => `<li>${esc(x.x)}</li>`).join('') || '<li class="mut">Años tranquilos.</li>'}</ol>`; box.open = true; };
+function recordGame() {
+  const s = S(); if (!s || !s.over || UI.sim) return; const sc = P5.score(), L = Q.legacy(), key = s.setup.camp ? 'camp:' + s.setup.camp : s.setup.mode === 'semana' ? 'semana:' + s.setup.week : s.setup.scen, gid = s.p5.gid || '';
+  const R = PROG.rec[key] = (PROG.rec[key] || []).filter(x => x.gid !== gid); R.push({ gid, n: s.leader.n, iso: s.player, sc: sc.total, t: s.turn, r: s.over.r, leg: L.title, d: Q.dateStr(), m: s.setup.mode });
+  R.sort((a, b) => b.sc - a.sc); R.splice(10);
+  const ci = P5.campInfo(); if (ci && ci.K.end != null) { const E = PROG.g.campEnds[ci.k.id] = PROG.g.campEnds[ci.k.id] || []; if (!E.includes(ci.K.end)) E.push(ci.K.end); }
+  progSave(); achCheck();
+}
+/* ---- tarjeta de resultado (lienzo → imagen) ---- */
+H.resultCard = () => {
+  const s = S(), c = CC(me()), sc = P5.score(), L = Q.legacy(), txt = (OVER[s.over ? s.over.r : ''] || ['En curso'])[0], ci = P5.campInfo(), W = 1200, Hh = 630, cv = document.createElement('canvas'); cv.width = W; cv.height = Hh;
+  const x = cv.getContext('2d'), cs = getComputedStyle(document.documentElement), gold = cs.getPropertyValue('--gold').trim() || '#e8c36a', cyan = cs.getPropertyValue('--cyan').trim() || '#4fd8ff';
+  const g = x.createLinearGradient(0, 0, W, Hh); g.addColorStop(0, '#0b1426'); g.addColorStop(1, '#03060d'); x.fillStyle = g; x.fillRect(0, 0, W, Hh);
+  x.strokeStyle = gold; x.globalAlpha = .5; x.lineWidth = 2; x.strokeRect(24, 24, W - 48, Hh - 48); x.globalAlpha = 1;
+  for (let i = 0; i < 60; i++) { x.fillStyle = `rgba(160,190,255,${.05 + (i % 5) * .03})`; x.beginPath(); x.arc((i * 197) % W, (i * 89) % Hh, 1 + (i % 3), 0, 7); x.fill(); }
+  const t = (s2, X, Y, f, col, al) => { x.font = f; x.fillStyle = col; x.textAlign = al || 'left'; x.fillText(s2, X, Y); };
+  t('WORLD LEADER', 60, 92, '600 30px Georgia, serif', gold); t(ci ? 'Campaña · ' + ci.k.n : P5.SC(s.setup.scen).n + ' · ' + D.MODES.find(m => m.id === s.setup.mode).n, 60, 128, '400 22px system-ui, sans-serif', '#8d9bb4');
+  t(flag(me()) + ' ' + c.n, 60, 215, '700 56px system-ui, sans-serif', '#e9eef7'); t(s.leader.n + ', ' + L.title, 60, 262, 'italic 400 30px Georgia, serif', '#e9eef7');
+  t(txt + (ci && ci.end ? ' · ' + ci.end.t : ''), 60, 318, '600 28px system-ui, sans-serif', /^vic_|camp_win/.test(s.over ? s.over.r : '') ? '#5fe3a1' : s.over ? '#ff8a7a' : cyan);
+  t(s.turn + ' trimestres · ' + Q.dateStr() + ' · legado ' + L.score + '/100', 60, 360, '400 22px system-ui, sans-serif', '#8d9bb4');
+  sc.parts.forEach((p, i) => { const X = 60 + (i % 4) * 270, Y = 420 + Math.floor(i / 4) * 80; t(p.n, X, Y, '500 18px system-ui, sans-serif', '#8d9bb4'); x.fillStyle = 'rgba(255,255,255,.1)'; x.fillRect(X, Y + 12, 230, 10); x.fillStyle = gold; x.fillRect(X, Y + 12, 230 * p.v / p.max, 10); t(p.v.toFixed(1) + '/' + p.max, X + 230, Y, '600 18px system-ui, sans-serif', '#e9eef7', 'right'); });
+  t(String(sc.total), W - 70, 230, '700 150px Georgia, serif', gold, 'right'); t('PUNTOS', W - 74, 270, '600 20px system-ui, sans-serif', '#8d9bb4', 'right');
+  t(P5.gameCode().slice(0, 64) + (P5.gameCode().length > 64 ? '…' : ''), 60, Hh - 44, '400 14px ui-monospace, monospace', '#5b6a85');
+  let url = ''; try { url = cv.toDataURL('image/png'); } catch (e) { return toast('Tu navegador no permite crear la imagen', false); }
+  openModal(`<h2>Tarjeta de resultado</h2><img class="rcard" src="${url}" alt="Tarjeta de resultado de la partida"><p class="mut fine">Mantén pulsada la imagen o usa el botón para guardarla.</p>
+    <div class="row end"><button class="btn" data-a="backOver">Volver</button><a class="btn gold" download="world-leader-${esc(me())}.png" href="${url}">Descargar PNG</a></div>`, false, 'event wide');
+};
+{ const b0 = H.backOver; H.backOver = () => S() && S().over ? b0() : closeModal(); }
+
+/* ---- logros, estadísticas y récords (inicio y Partida) ---- */
+function progHTML() {
+  const g = gStats(), got = Object.keys(PROG.ach).length, recs = Object.entries(PROG.rec);
+  const scName = k => k.startsWith('camp:') ? 'Campaña · ' + ((P5.CA(k.slice(5)) || {}).n || k) : k.startsWith('semana:') ? 'Reto semanal ' + k.slice(7) : P5.SC(k).n;
+  return `<p class="eyebrow">Tu historial en este navegador</p><h2>Logros y récords</h2>
+    <div class="kvs big">${kv('Partidas', g.games)}${kv('Victorias', g.wins)}${kv('Derrotas', g.losses)}${kv('Turnos jugados', g.turns)}${kv('Guerras ganadas', g.warsWon)}${kv('Tratados firmados', g.treat)}${kv('Anexiones', g.annex)}${kv('Leyes', g.laws)}${kv('Líder más usado', esc(g.leader))}${kv('País favorito', esc(g.country))}${kv('Campañas terminadas', g.campDone + '/8')}${kv('Logros', got + '/' + D.ACH.length)}</div>
+    <h4>${gi('trofeo')} Récords por escenario</h4>${recs.length ? recs.map(([k, R]) => `<details class="p5det"><summary><b>${esc(scName(k))}</b> · mejor: ${R[0].sc} pts</summary><table class="rec5"><tr><th>#</th><th>Líder</th><th>País</th><th>Pts</th><th>Turnos</th><th>Final</th></tr>${R.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.n)}</td><td>${flag(r.iso)} ${esc((D.C[r.iso] || {}).n || r.iso)}</td><td class="num">${r.sc}</td><td class="num">${r.t}</td><td>${esc((OVER[r.r] || [r.r])[0])}</td></tr>`).join('')}</table></details>`).join('') : '<p class="mut">Termina una partida para estrenar la tabla.</p>'}
+    <h4>${gi('pin')} Logros (${got}/${D.ACH.length})</h4><div class="ach5">${D.ACH.map(a => { const on = PROG.ach[a[0]], hid = a[5] && !on; return `<div class="ach ${on ? 'on' : ''}" title="${esc(hid ? 'Logro oculto' : a[3])}"><span class="ach-ic">${gi(hid ? 'candado' : a[1])}</span><div><b>${esc(hid ? '???' : a[2])}</b><small>${esc(hid ? 'Logro oculto: sigue jugando' : a[3])}${a[6] ? ' · desbloquea ' + esc(D.UNLOCK[a[6]].n) : ''}</small></div></div>`; }).join('')}</div>
+    <h4>${gi('regalo')} Desbloqueables</h4><ul class="vlist">${Object.entries(D.UNLOCK).map(([k, u]) => `<li class="${PROG.unl[k] ? 'ok' : ''}">${gi(PROG.unl[k] ? 'check' : 'candado')} ${esc(u.n)} <small>${PROG.unl[k] ? 'desbloqueado' : 'se consigue con ' + esc(lockHint(k))}</small></li>`).join('')}</ul>${styleHTML()}`;
+}
+PTABS.sys.push(['log', 'Logros']);
+{ const s0 = PANELS.sys; PANELS.sys = t => t === 'log' ? progHTML() : s0(t); }
+
+/* ---- editor: escenario propio y simulación rápida con la IA jugando por ti ---- */
+PTABS.edit.push(['esc', 'Escenarios']);
+{ const e0 = PANELS.edit; PANELS.edit = t => t === 'esc' ? edScenHTML() : e0(t); }
+const OPHELP = 'rel US CN -30 · war RU UA · peace * * · sanc US IR · tr com MX US · gdp * 0.9 · stab P -10 · coups 3 · wars 2 · crisis 4 · price pet 1.5 · inf 4 · leader US "Nombre" · reg VE dem · tension -20';
+const GOALHELP = 'gdpX 1.5 · gdpRank 5 · powRank 3 · tr com 10 · stab 60 · appr 55 · rep paz 20 · peace · annex 1 · rel US 30 · tech 8 · med 2 · laws 10 · turn 40';
+function parseLines(txt) { return String(txt || '').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(l => (l.match(/"[^"]*"|\S+/g) || []).map(w => /^".*"$/.test(w) ? w.slice(1, -1) : isFinite(+w) && w !== '*' ? +w : w)); }
+const unparse = L => (L || []).map(a => a.map(v => typeof v === 'string' && /\s/.test(v) ? `"${v}"` : v).join(' ')).join('\n');
+function edScenHTML() {
+  const s = S(), dk = s.setup.dk, f = UI.form.esc || {}, L = myScens(), ci = P5.campInfo();
+  return `<h4>${gi('ojo')} Simulación rápida: la IA juega por ti</h4><p class="mut fine">Juega N turnos con un bot (decide siempre la primera opción). Sirve para probar el balance. Al terminar puedes deshacer.</p>
+    <div class="row wrap"><label>Turnos ${inp('ed:sim', '20', 'inputmode="numeric" style="width:5em"')}</label><label>Estilo ${sel('ed:bot', [['eq', 'Equilibrado'], ['com', 'Comerciante'], ['pas', 'Pasivo'], ['mil', 'Militarista']], 'eq')}</label><button class="btn gold" data-a="autoSim">Simular</button></div><div id="simOut"></div>
+    <h4>${gi('presion')} Esta partida (Fase 5)</h4><div class="vols">${Object.entries(D.DK).map(([k, x]) => `<label class="vol"><span>${esc(x[0])}</span><input type="range" min="${x[1]}" max="${x[2]}" step="0.05" value="${dk[k]}" data-c="edDk" data-k="${k}"><b>×${(+dk[k]).toFixed(2)}</b></label>`).join('')}</div>
+    <div class="row wrap">${['perm', 'solo', 'rapido'].map(k => `<label class="check"><input type="checkbox" data-c="edOpt" data-k="${k}" ${s.setup.opts[k] ? 'checked' : ''}> ${k === 'perm' ? 'Muerte permanente' : k === 'solo' ? 'Sin editor' : 'Límite de ' + D.QUICK_TURNS + ' turnos'}</label>`).join('')}</div>
+    <div class="row wrap"><button class="btn sm" data-a="edProc">Lanzar evento procedural</button>${ci && ci.K.end == null ? `<button class="btn sm" data-a="edStage">Cumplir la etapa «${esc(ci.st.n)}»</button>` : ''}${D.VICT.map(v => `<button class="btn sm" data-a="edVic" data-k="${v.id}">Probar ${esc(v.n.toLowerCase())}</button>`).join('')}</div>
+    <h4>${gi('obras')} Crear un escenario propio</h4><p class="mut fine">Una línea por elemento. Las líneas con # se ignoran.</p>
+    <div class="grid2"><label>Nombre${inp('esc:n', f.n || '', 'maxlength="40"')}</label><label>Escenario base${sel('esc:base', D.SCEN.filter(x => !x.lock).map(x => [x.id, x.n]), f.base || 'actual')}</label></div>
+    <label>Descripción${inp('esc:x', f.x || '', 'maxlength="160"')}</label>
+    <label>Estado inicial <small class="mut">${esc(OPHELP)}</small><textarea id="esc:ops" data-f="esc:ops" rows="4" spellcheck="false">${esc(f.ops || '')}</textarea></label>
+    <label>Objetivos <small class="mut">${esc(GOALHELP)}</small><textarea id="esc:goals" data-f="esc:goals" rows="3" spellcheck="false">${esc(f.goals || '')}</textarea></label>
+    <label>Eventos activos <small class="mut">«turno id»: ${esc(Object.keys(Q.EV()).slice(0, 8).join(', '))}…</small><textarea id="esc:ev" data-f="esc:ev" rows="2" spellcheck="false">${esc(f.ev || '')}</textarea></label>
+    <div class="row wrap"><button class="btn gold" data-a="escSave">Guardar escenario</button><button class="btn" data-a="escImport">Importar JSON</button></div>
+    ${L.length ? `<h4>Tus escenarios</h4>${L.map((c, i) => `<div class="arow"><div class="grow"><b>${esc(c.n)}</b><small>${(c.ops || []).length} operaciones · ${(c.goals || []).length} objetivos · ${(c.events || []).length} eventos</small></div><button class="btn sm" data-a="escEdit" data-i="${i}">Editar</button><button class="btn sm" data-a="escExport" data-i="${i}">Exportar</button><button class="btn sm red" data-a="escDel" data-i="${i}" data-confirm="1">Borrar</button></div>`).join('')}<p class="mut fine">Aparecen en Nueva partida → paso «Mundo».</p>` : ''}`;
+}
+H['in:esc'] = (v, el) => { (UI.form.esc = UI.form.esc || {})[el.dataset.f.split(':')[1]] = v; };
+H.edDk = (d, el) => { S().setup.dk[el.dataset.k] = +el.value; S().p5.edited = 1; const b = el.parentNode.querySelector('b'); if (b) b.textContent = '×' + (+el.value).toFixed(2); };
+H.edOpt = (d, el) => { S().setup.opts[el.dataset.k] = el.checked ? 1 : 0; S().p5.edited = 1; UI.render(); };
+H.edProc = () => { act('fireProc'); runSQ(); };
+H.edStage = () => { act('campSkip'); runSQ(); };
+H.edVic = d => { act('testVic', { k: d.k }); };
+const clrEsc = () => { UI.form.esc = {}; for (const k of ['n', 'x', 'base', 'ops', 'goals', 'ev']) delete UI.form['esc:' + k]; };
+function readEsc() { const v = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+  const goals = parseLines(v('esc:goals')), ops = parseLines(v('esc:ops')), events = parseLines(v('esc:ev')).filter(a => typeof a[0] === 'number' && a[1]).map(a => ({ at: a[0], id: String(a[1]) }));
+  return { n: v('esc:n').trim() || 'Escenario propio', base: v('esc:base') || 'actual', x: v('esc:x').trim(), ops, goals, events, verificado: false }; }
+function escValid(c) { const bad = c.goals.filter(g => P5.goalText(g) === g[0] && !['flag', 'noflag'].includes(g[0])).map(g => g[0]), badE = c.events.filter(e => !Q.EV()[e.id]).map(e => e.id);
+  return bad.length ? 'Objetivo desconocido: ' + bad.join(', ') : badE.length ? 'Evento desconocido: ' + badE.join(', ') : ''; }
+H.escSave = () => { const c = readEsc(), e = escValid(c); if (e) return toast(e, false); const L = myScens(), i = L.findIndex(x => x.n === c.n); if (i >= 0) L[i] = c; else L.push(c);
+  try { localStorage.setItem('wl_scen', JSON.stringify(L.slice(-20))); toast(`Escenario «${c.n}» guardado`); } catch (er) { toast('No se pudo guardar en este navegador', false); } clrEsc(); UI.render(); };
+H.escEdit = d => { const c = myScens()[+d.i]; if (!c) return; clrEsc(); UI.form.esc = { n: c.n, base: c.base, x: c.x, ops: unparse(c.ops), goals: unparse(c.goals), ev: (c.events || []).map(e => e.at + ' ' + e.id).join('\n') }; UI.render(); };
+H.escDel = d => { const L = myScens(); L.splice(+d.i, 1); try { localStorage.setItem('wl_scen', JSON.stringify(L)); } catch (e) { } UI.render(); };
+H.escExport = d => { const c = myScens()[+d.i]; if (!c) return; openModal(`<h2>Exportar «${esc(c.n)}»</h2><p class="mut">Copia este JSON y compártelo.</p><textarea class="code5" rows="10" readonly onclick="this.select()">${esc(JSON.stringify(c, null, 1))}</textarea><div class="row end"><button class="btn gold" data-a="closeModal">Cerrar</button></div>`, true); };
+H.escImport = () => openModal(`<h2>Importar escenario</h2><textarea id="escJson" class="code5" rows="10" placeholder='{"n": "...", "ops": [...], "goals": [...], "events": [...]}' spellcheck="false"></textarea><div class="row end"><button class="btn" data-a="closeModal">Cancelar</button><button class="btn gold" data-a="escImportGo">Importar</button></div>`, true);
+H.escImportGo = () => { let c; try { c = JSON.parse($('#escJson').value); } catch (e) { return toast('Ese texto no es un JSON válido', false); }
+  if (!c || typeof c !== 'object' || !Array.isArray(c.ops || []) || !Array.isArray(c.goals || []) || !Array.isArray(c.events || [])) return toast('Al JSON le faltan ops, goals o events (listas)', false);
+  c = { n: String(c.n || 'Escenario importado').slice(0, 40), base: D.SCEN.some(x => x.id === c.base) ? c.base : 'actual', x: String(c.x || '').slice(0, 160), ops: (c.ops || []).filter(Array.isArray).slice(0, 80), goals: (c.goals || []).filter(Array.isArray).slice(0, 12), events: (c.events || []).filter(e => e && Q.EV()[e.id]).map(e => ({ at: +e.at || 1, id: String(e.id) })).slice(0, 20), verificado: false };
+  const e = escValid(c); if (e) return toast(e, false); const L = myScens(); L.push(c); try { localStorage.setItem('wl_scen', JSON.stringify(L.slice(-20))); } catch (er) { } closeModal(); toast(`Importado: ${c.n}`); UI.render(); };
+const BOTS = {
+  eq: (s, z) => { const t = s.turn; if (t % 3 === 0) G.act('proposeLaw', { id: ['edu_publica', 'pymes', 'becas_tec', 'banda_ancha', 'salud_universal', 'vacunas'][(t / 3) % 6] }); if (!s.tech.cur) { const x = D.TECHS.find(y => Q.techOpen(y)); if (x) G.act('research', { id: x.id }); } G.act('buildInd', { k: 'man' }); const c = Object.keys(s.c).filter(y => y !== z && s.c[y].alive && !Q.hasT('com', z, y)).sort((a, b) => Q.rel(z, b) - Q.rel(z, a)); if (t % 2 && c[0]) G.act('propose', { iso: c[0], t: 'com' }); },
+  com: (s, z) => { const c = Object.keys(s.c).filter(y => y !== z && s.c[y].alive && !Q.hasT('com', z, y)).sort((a, b) => Q.rel(z, b) - Q.rel(z, a)); if (c[0]) G.act('propose', { iso: c[0], t: 'com' }); if (c[1]) G.act('visit', { iso: c[1] }); },
+  pas: () => { },
+  mil: (s, z) => { for (const k of ['inf', 'tan', 'art']) G.act('recruit', { k, n: 2 }); }
+};
+H.autoSim = () => {
+  const n = clampU(+fv('ed:sim', 20) || 20, 1, 120), bot = BOTS[fv('ed:bot', 'eq')] || BOTS.eq, s0 = S(), snap = G.save(), sc0 = P5.score().total, g0 = CC(me()).gdp, h = Bus.h; Bus.h = {}; UI.sim = 1; let i = 0;
+  try { for (; i < n && !S().over; i++) { let k = 0; while (S().pend.length && k++ < 40) G.act('decide', { i: 0 }); if (S().over) break; bot(S(), me()); k = 0; while (S().pend.length && k++ < 40) G.act('decide', { i: 0 }); G.act('endTurn'); } }
+  catch (e) { toast('La simulación se detuvo: ' + e.message, false); } finally { Bus.h = h; UI.sim = 0; }
+  const s = S(), sc = P5.score().total; UI.simSnap = snap;
+  const out = `<div class="card"><b>${i} turnos simulados</b>${s.over ? ` · la partida terminó: ${esc((OVER[s.over.r] || [s.over.r])[0])}` : ''}<div class="kvs">${kv('PIB', sgn((CC(me()).gdp / g0 - 1) * 100, 0) + '%')}${kv('Aprobación', Math.round(Q.approval()) + '%')}${kv('Estabilidad', Math.round(CC(me()).stab))}${kv('Guerras', Q.warsOf(me()).length)}${kv('Puntos', sc0 + ' → ' + sc)}${kv('Errores', (s.errs || []).length)}</div>
+    <div class="row end"><button class="btn" data-a="simUndo">Deshacer la simulación</button><button class="btn gold" data-a="simKeep">Quedarme con el resultado</button></div></div>`;
+  UI.render(); refreshMap(); const o = $('#simOut'); if (o) o.innerHTML = out; };
+H.simUndo = () => { if (!UI.simSnap) return; const h = Bus.h; Bus.h = {}; try { G.load(UI.simSnap); } finally { Bus.h = h; } UI.simSnap = null; UI.render(); refreshMap(); toast('Simulación deshecha'); };
+H.simKeep = () => { UI.simSnap = null; S().p5.edited = 1; autosave(); UI.render(); if (S().over) showOver(); toast('Resultado conservado (la partida queda marcada como editada: no cuenta para logros)'); };
 
 
 /* ---------- ui/90-boot.js ---------- */

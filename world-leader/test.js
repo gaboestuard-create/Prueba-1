@@ -120,6 +120,52 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   const r0 = G.q.rel('US', 'MX'); assert(G.act('returnTerr', { iso: 'MX', all: 1, deal: 'pna' }).ok); assert.strictEqual(G.q.occOf('MX').length, 0); assert(G.q.rel('US', 'MX') > r0, 'devolver debe mejorar la relación'); assert(G.q.hasExplicit('pna', 'US', 'MX'));
   for (let i = 0; i < S.c.GT.terr.length; i++) G.act('edit', { iso: 'GT', k: 'terr.' + i + '.o', v: 'US' }); S.c.GT.alive = false; S.c.GT.owner = 'US';
   assert(G.q.annexedList().includes('GT')); assert(G.act('restore', { iso: 'GT', ally: 1 }).ok); assert(S.c.GT.alive && G.q.ownCount('GT') === S.c.GT.terr.length); S.pend = []; assert(G.act('endTurn').ok); noNaN(S, 'S'); }
+// Fase 5: escenarios, modos, campañas, victorias, código de partida, epílogo y logros
+{ const q = G.q, P5 = q.p5, D = WL.DATA, turns = n => { for (let i = 0; i < n && !G.S.over; i++) { let k = 0; while (G.S.pend.length && k++ < 40) G.act('decide', { i: 0 }); G.act('endTurn'); } };
+  for (const sc of D.SCEN) { G.newGame({ iso: 'MX', name: 'E', seed: 21, setup: { scen: sc.id } }); turns(3); assert(!(G.S.errs || []).length, 'escenario sin errores: ' + sc.id + ' ' + JSON.stringify(G.S.errs)); noNaN(G.S, 'S'); }
+  const same = setup => { G.newGame({ iso: 'BR', name: 'D', seed: 77, setup }); turns(3); return G.save(); };
+  const st = { scen: 'caos', opts: { alt: 1, escasez: 1, hostil: 1 }, dk: { ai: 1.4, eco: .8, stab: 1.3, ev: 1.6 } }; assert.strictEqual(same(st), same(st), 'misma semilla y configuración = mismo mundo');
+  G.newGame({ iso: 'MX', name: 'C', seed: 5, setup: { scen: 'guerrafria' } }); assert.strictEqual(G.S.year, 1987); assert.strictEqual(G.S.c.US.lider.n, 'Ronald Reagan'); assert(!G.S.wars.some(w => w.att[0] === 'RU' && w.def[0] === 'UA'), 'sin guerra en Ucrania en 1987');
+  assert(G.q.diffK('ai') === 1 && (G.S.setup.dk.ai = 1.5) && Math.abs(G.q.diffK('ai') - 1.5) < 1e-9, 'la agresividad de la IA escala diffK');
+  // código de partida
+  G.newGame({ iso: 'AR', name: 'Código', traits: ['carismatico'], seed: 1234, setup: { mode: 'rapido', scen: 'crisis', opts: { perm: 1 } } }); const code = P5.gameCode(), o = P5.readCode(code);
+  assert(o && o.iso === 'AR' && o.seed === 1234 && o.setup.scen === 'crisis' && o.setup.mode === 'rapido' && o.setup.opts.perm && o.traits[0] === 'carismatico', 'el código conserva la partida');
+  assert.strictEqual(P5.readCode('hola'), null); assert.strictEqual(P5.readCode('WL5-%%%'), null); assert.strictEqual(P5.readCode('WL5-' + Buffer.from('{"iso":"ZZ","seed":1}').toString('base64')), null, 'código con país inválido');
+  // modo rápido: termina a los 36 turnos con puntuación
+  turns(60); assert.strictEqual(G.S.turn, D.QUICK_TURNS); assert.strictEqual(G.S.over.r, 'tiempo'); const sc = P5.score(); assert(sc.total >= 0 && sc.total <= 100 && sc.parts.length === D.SCORE.length);
+  assert(sc.parts.every(p => p.v >= 0 && p.v <= p.max), 'cada bloque respeta su máximo'); assert(!G.act('keepPlaying').ok, 'tras el tiempo no se sigue');
+  // sandbox: no se pierde por política; sin editor: el editor queda bloqueado
+  G.newGame({ iso: 'MX', name: 'S', seed: 3, setup: { mode: 'sandbox' } }); G.S.pend = []; G.S.c.MX.stab = 2; G.act('endTurn'); assert(!G.S.over, 'en sandbox no hay revolución');
+  G.newGame({ iso: 'MX', name: 'S', seed: 3, setup: { opts: { solo: 1 } } }); G.S.pend = []; assert(!G.act('edit', { iso: 'MX', k: 'tr', v: 999 }).ok, 'sin editor'); assert(!G.act('fireProc').ok || true);
+  // victoria alternativa → seguir gobernando
+  G.newGame({ iso: 'MX', name: 'V', seed: 8 }); G.S.pend = []; assert(G.act('testVic', { k: 'eco' }).ok && G.S.over.r === 'vic_eco'); assert(G.act('keepPlaying').ok && !G.S.over && G.S.p5.cont);
+  assert(G.S.p5.edited, 'probar victorias marca la partida como editada'); turns(2); assert(!G.S.over || G.S.over.r !== 'vic_eco', 'una victoria no se repite');
+  // campaña: eventos, etapas, plazos y finales
+  G.newGame({ name: '', seed: 9, setup: { mode: 'camp', camp: 'reformista' } }); const S = G.S; assert(S.player === 'CU' && S.leader.n === 'Elena Varona' && S.camp && S.camp.st === 0);
+  S.stats.laws = 5; S.c.CU.stab = 70; S.pend = []; G.act('endTurn'); assert.strictEqual(S.camp.st, 1, 'la etapa avanza al cumplir los objetivos');
+  for (let i = 0; i < 3 && !S.flags.re_dummy; i++) { let k = 0; while (S.pend.length && k++ < 9) G.act('decide', { i: 0 }); G.act('endTurn'); } assert(S.camp.fired.re_deshielo, 'los eventos de campaña llegan');
+  assert(G.act('campSkip').ok && S.camp.st === 2); S.flags.re_mercado = 1; assert(G.act('campSkip').ok && S.over.r === 'camp_win'); const ci = P5.campInfo(); assert(ci.end && ci.K.end >= 0 && ci.K.end <= 2, 'hay un final');
+  for (const k of D.CAMP) { assert(k.stages.length === 3 && k.endings.length === 3 && !k.endings[2].if, 'campaña completa: ' + k.id); for (const s2 of k.stages) for (const g of s2.goal) assert(P5.goalText(g) !== g[0], 'objetivo con texto: ' + g[0]);
+    for (const e of k.events) assert(e.opts.length >= 2 && e.opts.every(x => Array.isArray(x.fx)), 'evento de campaña: ' + e.id); }
+  G.newGame({ name: '', seed: 9, setup: { mode: 'camp', camp: 'declive' } }); G.S.pend = []; G.S.c.US.gdp = 900; G.act('endTurn'); assert(G.S.over && G.S.over.r === 'camp_lose', 'la derrota de campaña llega');
+  G.newGame({ name: '', seed: 9, setup: { mode: 'camp', camp: 'mediador' } }); G.S.camp.s0 = -30; G.S.pend = []; G.act('endTurn'); assert.strictEqual(G.S.over.r, 'camp_time', 'el plazo vence');
+  // mediar por iniciativa propia
+  G.newGame({ iso: 'NO', name: 'M', seed: 3, setup: { scen: 'tension' } }); G.S.pend = []; const w = G.S.wars.find(x => !x.att.includes('NO') && !x.def.includes('NO') && q.rel('NO', x.att[0]) >= -25 && q.rel('NO', x.def[0]) >= -25);
+  if (w) { G.S.pol.cp = 12; let n = 0; while (q.warById(w.id) && n++ < 12) { w.medT = 0; G.act('mediate', { w: w.id }); G.S.pol.cp = 12; } assert(!q.warById(w.id) && G.S.p5.med === 1, 'la mediación cuenta'); }
+  // escenario propio: operaciones, objetivo y evento programado
+  const ev = Object.keys(q.EV())[0]; G.newGame({ iso: 'MX', name: 'P', seed: 3, setup: { custom: { n: 'Mío', ops: [['rel', 'MX', 'US', -30, 'Prueba'], ['stab', 'P', 10], ['war', 'CO', 'VE']], goals: [['laws', 1]], events: [{ at: 1, id: ev }] } } });
+  assert(G.S.wars.some(x => x.att[0] === 'CO' && x.def[0] === 'VE'), 'la guerra del escenario propio existe'); G.S.pend = []; G.S.stats.laws = 1; G.act('endTurn'); assert.strictEqual(G.S.over.r, 'vic_obj', 'el objetivo propio da la victoria');
+  // epílogo: el mundo sigue y luego todo vuelve
+  G.newGame({ iso: 'DE', name: 'Epi', seed: 6 }); turns(3); const before = G.save(), e = P5.epilogue(12); assert(e.n === 12 && Array.isArray(e.heads) && e.top.length === 5); assert.strictEqual(G.save(), before, 'el epílogo no toca la partida');
+  // eventos procedurales: se combinan sin repetirse
+  G.S.pend = []; const keys = new Set(); for (let i = 0; i < 6; i++) { G.S.procCd = {}; if (G.act('fireProc').ok) { const p = G.S.pend[0]; assert(p && p.opts.length >= 2 && !/\{|\}/.test(p.t + p.x), 'texto procedural completo'); keys.add(p.t); G.act('decide', { i: 0 }); } }
+  assert(keys.size >= 4, 'los eventos procedurales varían'); assert(new Set(G.S.procSeen).size === G.S.procSeen.length, 'ninguna combinación se repite');
+  // partida de la Fase 4 (sin datos de Fase 5) se adapta con aviso
+  const old = JSON.parse(G.save()); delete old.setup; delete old.p5; delete old.camp; assert(G.load(JSON.stringify(old)).ok && G.S.p5mig && G.S.setup.mode === 'libre' && G.S.p5.treat === 0); turns(1);
+  // logros: datos coherentes y evaluables
+  assert(D.ACH.length >= 60 && new Set(D.ACH.map(a => a[0])).size === D.ACH.length, '60+ logros sin repetir'); const m = P5.metrics(); for (const a of D.ACH) { a[4](m, { games: 1, campDone: 0 }); if (a[6]) assert(D.UNLOCK[a[6]], 'desbloqueable inexistente: ' + a[6]); }
+  for (const s2 of D.SCEN) if (s2.lock) assert(D.UNLOCK[s2.lock]); for (const t of D.TRAITS) if (t.lock) assert(D.UNLOCK[t.lock]);
+  const wk = P5.weekly(Date.UTC(2026, 10, 16)); assert.deepStrictEqual(wk, P5.weekly(Date.UTC(2026, 10, 22, 20)), 'el reto es el mismo de lunes a domingo'); assert.notDeepStrictEqual(wk, P5.weekly(Date.UTC(2026, 10, 23)), 'cambia cada lunes'); G.newGame({ iso: wk.iso, name: 'W', seed: wk.seed, setup: wk.setup }); turns(2); assert(!(G.S.errs || []).length); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

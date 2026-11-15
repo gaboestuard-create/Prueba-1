@@ -6,7 +6,8 @@
    jugador: una estimación con ruido de lo que planea cada país.
    ===================================================================== */
 const DIFF = { n: ['Relajado', 'Normal', 'Realista', 'Despiadado'], need: [1.5, 1, .85, .7], inc: [1.12, 1, .96, .92], ai: [.8, 1, 1.1, 1.25], spy: [.1, 0, -.05, -.1] };
-const diffK = k => DIFF[k][S.diff == null ? 1 : S.diff];
+/* Fase 5: los componentes de dificultad (S.setup.dk) ajustan cada nivel: ai = agresividad, eco = economía */
+const diffK = k => { const v = DIFF[k][S.diff == null ? 1 : S.diff], dk = (S.setup && S.setup.dk) || {}; return k === 'ai' ? v * (dk.ai || 1) : k === 'need' ? v / (dk.ai || 1) : k === 'inc' ? v * (dk.eco || 1) : v; };
 const GOALS = { expansion: 'Expandir su territorio', hegemonia: 'Dominar su región', seguridad: 'Garantizar su seguridad', riqueza: 'Enriquecerse con el comercio', estabilidad: 'Sobrevivir en el poder' };
 
 function initBrain() {
