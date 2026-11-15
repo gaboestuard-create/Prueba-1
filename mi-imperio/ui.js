@@ -49,21 +49,21 @@
         <span class="rot">Dinero inicial</span>${opc('dinero', D.dineroInicial.map(v => [v, $$(v)]))}
         <span class="rot">Dificultad</span>${opc('dificultad', Object.entries(D.dificultades).map(([k, d]) => [k, d.nombre]))}
         <span class="rot">Modo</span>${opc('modo', [['historia', 'Historia'], ['libre', 'Libre']])}
-        <p class="tenue">${n.modo === 'historia' ? `Ganas al llegar a un patrimonio de ${$$(D.dificultades[n.dificultad].meta)}.` : 'Sin meta ni final.'} Pierdes si pasas ${B.diasQuiebra} días con saldo negativo.</p>
+        <p class="tenue">${n.modo === 'historia' ? `Ganas al llegar a un patrimonio de ${$$(D.dificultades[n.dificultad].meta)}.` : 'Sin meta ni final.'} Si pasas ${B.diasQuiebra} días con saldo negativo, el banco embarga tus bienes; pierdes cuando ni eso alcanza.</p>
         ${bt('Empezar', 'ui:empezar', {}, 'pri')}</div>
       <div class="tarjeta"><h3>Traer una partida de otro dispositivo</h3><label>Texto exportado<textarea id="importa">${esc(ui.importa)}</textarea></label>${bt('Importar', 'ui:importar')}</div>
     </div></main>`;
   }
 
   function vFinal() {
-    if (S.fin === 'derrota') return `<div class="final"><b>Bancarrota.</b><span>${B.diasQuiebra} días seguidos con saldo negativo. Llegaste al día ${M.dia(S)}.</span>${bt('Nueva partida', 'ui:salir')}</div>`;
+    if (S.fin === 'derrota') return `<div class="final"><b>Bancarrota.</b><span>El embargo no alcanzó a cubrir tu deuda. Llegaste al día ${M.dia(S)}.</span>${bt('Nueva partida', 'ui:salir')}</div>`;
     return `<div class="final"><b>Meta alcanzada.</b><span>Patrimonio de ${$$(M.patrimonio(S))} en ${M.dia(S) - 1} días.</span>${bt('Seguir en modo libre', 'seguirLibre')}</div>`;
   }
 
   function vCabecera() {
     const J = S.jugador, a = M.asesor(S);
     return `<div class="dentro">
-      <div class="fila"><span class="reloj">Día ${M.dia(S)} · ${hora(M.hh(S))}</span><span class="dinero ${S.dinero < 0 ? 'neg' : ''}">${$$(S.dinero)}</span></div>
+      <div class="fila"><span class="reloj">Día ${M.dia(S)} · ${D.semana[(M.dia(S) - 1) % 7]} ${hora(M.hh(S))}</span><span class="dinero ${S.dinero < 0 ? 'neg' : ''}">${$$(S.dinero)}</span></div>
       <div class="vel">${VEL.map(v => bt(v ? 'x' + v : 'Pausa', 'ui:vel', { v }, ui.vel === v ? 'on' : '')).join('')}</div>
       <div class="nec">${[['Energía', J.energia], ['Comida', J.hambre], ['Ánimo', J.animo]].map(([n, v]) => `<div>${n}${barra(v)}</div>`).join('')}</div>
       ${S.fin ? vFinal() : a ? bt(`<b>Asesor:</b> ${esc(a.texto)}`, 'ui:tab', { tab: a.tab }, 'asesor') : '<span></span>'}
@@ -101,43 +101,54 @@
     } else if (N) cuerpo = `<div class="botones">${bt('Descargar mercancía', 'descargar', { id: N.id }, 'pri', !aqui || !M.cargaUsada(S))}${bt('Limpiar (1 h)', 'limpiar', { id: N.id }, '', !aqui)}${bt('Ver negocio', 'ui:neg', { id: N.id })}</div>${aqui ? '<p class="tenue">Mientras estés aquí y el local esté abierto, tú atiendes.</p>' : ''}`;
     else {
       const renta = Math.round(p.renta * dist.renta * M.dif(S).costos);
-      cuerpo = `<p class="tenue">Renta ${$$(renta)} al día. Afluencia ${p.trafico >= 1 ? 'alta' : 'baja'} para la zona. Caben ${p.espacio} equipos y ${p.almacen} unidades de mercancía. El depósito son ${B.depositoDias} días de renta.</p>
-        <div class="lista">${D.negocios.map(T => `<div class="renglon"><div><b>${T.nombre}</b><div class="tenue">${T.desc} ${T.equipo.nombre}: ${$$(T.equipo.costo)} c/u.</div></div>${bt(`Abrir · ${$$(renta * B.depositoDias)}`, 'rentar', { local: p.id, tipo: T.id }, 'pri')}</div>`).join('')}</div>`;
+      cuerpo = `<p class="tenue">Renta ${$$(renta)} al día. Afluencia ${p.trafico >= 1 ? 'alta' : 'baja'} para la zona. Caben ${p.espacio} muebles y ${p.almacen} unidades de mercancía. El depósito son ${B.depositoDias} días de renta.</p>
+        <div class="lista">${D.negocios.map(T => `<div class="renglon"><div><b>${T.nombre}</b><div class="tenue">${T.desc} Muebles mínimos: ${$$(T.muebles.reduce((s, m) => s + D.muebles[m].costo, 0))}.</div></div>${bt(`Abrir · ${$$(renta * B.depositoDias)}`, 'rentar', { local: p.id, tipo: T.id }, 'pri')}</div>`).join('')}</div>`;
     }
     return `<div class="tarjeta"><div class="fila"><div class="crece"><h3>${esc(N ? N.nombre : p.nombre)}</h3><p class="tenue">${dist.nombre} · clase ${dist.clase}</p></div>
       ${aqui ? '<b>Estás aquí</b>' : bt(`Viajar · ${v.horas ? v.horas + ' h · ' : ''}${$$(v.costo)}`, 'viajar', { a: p.id }, 'pri')}</div>${cuerpo}</div>`;
   }
 
   function semaforo(N) {
-    if (!N.equipo) return ['mal', 'Sin equipo, no abre'];
+    if (!M.capacidad(N)) return ['mal', 'Le faltan muebles, no abre'];
     const i = M.insight(S, N);
     const [v, t] = [[i.stock ?? 100, 'Falta mercancía'], [i.servicio ?? 100, 'Servicio flojo'], [i.precio, 'Precios altos'], [i.limpieza, 'Está sucio']].sort((a, b) => a[0] - b[0])[0];
     return [nivel(v), v < 65 ? t : 'En orden'];
   }
 
   function vNegocios() {
-    if (!S.negocios.length) return `<div class="tarjeta"><h2>Negocios</h2><p class="tenue">Todavía no tienes negocios. En el Mapa, toca un local libre para rentarlo.</p>${bt('Ir al mapa', 'ui:tab', { tab: 'mapa' }, 'pri')}</div>`;
+    if (!S.negocios.length) return `<div class="tarjeta"><h2>Negocios</h2><p class="tenue">Todavía no tienes negocios. En el Mapa, toca un local libre para rentarlo.</p>${bt('Ir al mapa', 'ui:tab', { tab: 'mapa' }, 'pri')}</div>${vMercado()}`;
     const N = por(S.negocios, ui.neg);
     if (N) return vNegocio(N);
     const h = M.hh(S);
     return `<h2>Negocios</h2>` + S.negocios.map(N => {
       const [c, t] = semaforo(N), T = por(D.negocios, N.tipo);
       return `<button class="negocio" data-a="ui:neg" data-args="${esc(JSON.stringify({ id: N.id }))}"><span class="fila"><i class="luz ${c}"></i><b class="crece">${esc(N.nombre)}</b><span>${$$(N.hoy.ingresos)} hoy</span></span>
-        <span class="tenue">${t} · reputación ${Math.round(N.reputacion)} · ${N.equipo && h >= N.abre && h < N.cierra ? 'abierto' : 'cerrado'} (${hora(N.abre)}–${hora(N.cierra % 24)})${T.modelo === 'membresia' ? ` · ${N.miembros} socios` : ''}</span></button>`;
-    }).join('');
+        <span class="tenue">${t} · reputación ${Math.round(N.reputacion)} · ${M.capacidad(N) && h >= N.abre && h < N.cierra ? 'abierto' : 'cerrado'} (${hora(N.abre)}–${hora(N.cierra % 24)})${T.modelo === 'membresia' ? ` · ${N.miembros} socios` : ''}</span></button>`;
+    }).join('') + vMercado();
+  }
+
+  // Demanda por barrio: qué conviene vender en cada distrito.
+  function vMercado() {
+    const cats = { abarrotes: 'Abarrotes', bebidas: 'Bebidas', cafe: 'Café', reposteria: 'Pan y comida', fitness: 'Gimnasio' };
+    const pal = v => (v >= 1.15 ? ['', 'Alta'] : v >= 0.9 ? ['aviso', 'Media'] : ['mal', 'Baja']);
+    return `<div class="tarjeta"><h3>Mercado por barrio</h3><div class="tabla"><table><tr><th></th>${D.distritos.map(d => `<th>${d.nombre}</th>`).join('')}</tr>
+      ${Object.entries(cats).map(([k, n]) => `<tr><td>${n}</td>${D.distritos.map(d => { const [c, t] = pal(d.demanda[k]); return `<td><i class="luz ${c}"></i> ${t}</td>`; }).join('')}</tr>`).join('')}
+      <tr><td>Precios</td>${D.distritos.map(d => `<td>${d.precio > 1 ? '+' : ''}${Math.round((d.precio - 1) * 100)}%</td>`).join('')}</tr>
+      <tr><td>Renta</td>${D.distritos.map(d => `<td>×${d.renta}</td>`).join('')}</tr></table></div>
+      <p class="tenue">Demanda de cada tipo de producto y cuánto más o menos paga la gente respecto al precio base.</p></div>`;
   }
 
   function vNegocio(N) {
     const T = por(D.negocios, N.tipo), L = por(D.locales, N.local), Dt = por(D.distritos, L.distrito), i = M.insight(S, N), a = i.datos, inv = T.modelo === 'inventario';
     const secs = [['insight', 'Insight'], ['productos', inv ? 'Productos' : 'Socios'], ['personal', 'Personal'], ['local', 'Local']].filter(([k]) => k !== 'personal' || M.desbloqueado(S, 'empleados'));
-    const propios = S.empleados.filter(e => e.negocio === N.id);
+    const propios = S.empleados.filter(e => e.negocio === N.id), cap = M.capacidad(N), corto = D.muebles[M.cuello(N)].nombre.toLowerCase();
     let cuerpo = '';
     if (ui.sec === 'insight') {
-      const r = T.productos.reduce((s, p) => s + M.ratioPrecio(N, p), 0) / T.productos.length, pc = Math.round(Math.abs(r - 1) * 100);
+      const r = N.productos.length ? N.productos.reduce((s, p) => s + M.ratioPrecio(N, p), 0) / N.productos.length : 1, pc = Math.round(Math.abs(r - 1) * 100);
       cuerpo = `<div class="tarjeta">${par('Reputación', Math.round(N.reputacion))}${barra(N.reputacion)}<p class="tenue">Cambia poco a poco según lo que ves abajo, y atrae o aleja clientes.</p></div>
         <div class="tarjeta">
           ${medida('Precio', i.precio, pc ? `Estás ${pc}% ${r > 1 ? 'sobre' : 'bajo'} el mercado de la zona.` : 'Estás al precio del mercado.')}
-          ${medida('Servicio', i.servicio, !a.horas ? 'Sin datos hasta que abra.' : inv ? `Se atendió a ${a.atendidos} de ${a.clientes} clientes; ${a.horas - a.cubiertas} h sin personal.` : `${a.cubiertas} de ${a.horas} h abiertas con personal.`)}
+          ${medida('Servicio', i.servicio, !a.horas ? 'Sin datos hasta que abra.' : inv ? `Se atendió a ${a.atendidos} de ${a.clientes} clientes; ${a.horas - a.cubiertas} h sin personal.${a.limEquipo ? ` En ${a.limEquipo} h el tope fue ${corto}.` : ''}` : `${a.cubiertas} de ${a.horas} h abiertas con personal.`)}
           ${inv ? medida('Mercancía', i.stock, a.demanda ? `Se vendieron ${a.vendidos} de ${a.demanda} unidades pedidas.` : '') : ''}
           ${medida('Tráfico', i.trafico, `${Dt.nombre}, ${L.nombre}. No cambia.`)}
           ${medida('Limpieza', i.limpieza, 'Baja con cada cliente. Sube con personal que limpie o si limpias tú.')}
@@ -146,34 +157,48 @@
         <div class="tarjeta">${par('Ingresos de hoy', $$(i.ingresos))}${par('Gastos de hoy', $$(i.gastos))}${par('Resultado', $$(i.ingresos - i.gastos), i.ingresos < i.gastos ? 'neg' : '')}
           <p class="tenue">Los gastos incluyen renta, servicios, sueldos, marketing y el costo de lo vendido.${N.hoy.horas ? '' : ' Las puntuaciones son de ayer hasta que abra.'}</p></div>`;
     } else if (ui.sec === 'productos') {
-      const usado = T.productos.reduce((s, p) => s + (N.stock[p] || 0), 0), cap = N.equipo * T.equipo.capacidad;
+      const usado = Object.values(N.stock).reduce((x, y) => x + y, 0), otros = inv ? M.catalogo().filter(p => !N.productos.includes(p)) : [];
       cuerpo = `<div class="tarjeta">${inv ? par('Almacén', `${usado} de ${L.almacen}`) : par('Socios', `${N.miembros} de ${cap}`) + `<p class="tenue">Ayer: ${N.ayer.nuevos} altas y ${N.ayer.bajas} bajas. Cada socio paga por semana; se cobra un séptimo cada día.</p>`}
-        <div class="lista">${T.productos.map(p => {
+        <div class="lista">${N.productos.map(p => {
           const P = D.productos[p], m = P.mercado * Dt.precio, precio = N.precios[p], paso = P.mercado < 5 ? 0.05 : P.mercado < 15 ? 0.25 : 1;
-          return `<div class="renglon"><div><b>${P.nombre}</b><div class="tenue">${inv ? `Quedan ${N.stock[p]} · costo ${$c(P.costo)} · ` : ''}mercado ${$c(m)} · sugerido ${$c(P.sugerido * Dt.precio)}</div>${barra(M.puntosPrecio(precio / m))}</div>
-            <div class="botones">${bt('−', 'precio', { id: N.id, prod: p, valor: r2(precio - paso) }, 'mini', precio - paso < 0.05)}<span class="precio">${$c(precio)}</span>${bt('+', 'precio', { id: N.id, prod: p, valor: r2(precio + paso) }, 'mini')}</div></div>`;
-        }).join('')}</div><p class="tenue">La barra es la satisfacción por precio: baja si te pasas del mercado. Más barato vende más, con menos margen.</p></div>`;
+          return `<div class="renglon"><div><b>${P.nombre}</b>${T.productos.includes(p) ? '' : ' <span class="tenue">(fuera de giro)</span>'}<div class="tenue">${inv ? `Quedan ${N.stock[p]} · costo ${$c(P.costo)} · ` : ''}mercado ${$c(m)} · sugerido ${$c(P.sugerido * Dt.precio)}</div>${barra(M.puntosPrecio(precio / m))}</div>
+            <div class="botones">${bt('−', 'precio', { id: N.id, prod: p, valor: r2(precio - paso) }, 'mini', precio - paso < 0.05)}<span class="precio">${$c(precio)}</span>${bt('+', 'precio', { id: N.id, prod: p, valor: r2(precio + paso) }, 'mini')}${inv ? bt('Quitar', 'producto', { id: N.id, prod: p }) : ''}</div></div>`;
+        }).join('') || '<p class="tenue">No vendes nada. Agrega productos abajo.</p>'}</div><p class="tenue">La barra es la satisfacción por precio: baja si te pasas del mercado. Más barato vende más, con menos margen.</p></div>
+        ${otros.length ? `<div class="tarjeta"><h3>Agregar productos</h3><p class="tenue">Puedes vender cualquier producto si tienes el mueble que lo exhibe. Fuera de tu giro se vende menos de la mitad.</p>
+          <div class="lista">${otros.map(p => { const P = D.productos[p], mu = D.muebles[M.muebleDe(P.cat)], ok = M.exhibe(N, P.cat), prov = D.proveedores.find(x => x.productos.includes(p));
+            return `<div class="renglon"><div><b>${P.nombre}</b><div class="tenue">${ok ? '' : `Necesita ${mu.nombre.toLowerCase()} · `}costo ${$c(P.costo)} · mercado ${$c(P.mercado * Dt.precio)} · se compra en ${prov.nombre}</div></div>${bt('Vender', 'producto', { id: N.id, prod: p }, '', !ok)}</div>`; }).join('')}</div></div>` : ''}`;
     } else if (ui.sec === 'personal') {
       let huecos = 0;
-      for (let h = N.abre; h < N.cierra; h++) if (!propios.some(e => M.enTurno(e.turno, h))) huecos++;
+      const hoy = (M.dia(S) - 1) % 7;
+      for (let h = N.abre; h < N.cierra; h++) if (!propios.some(e => e.dias[hoy] && M.enTurno(e.turno, h))) huecos++;
       const turno = t => { const x = por(D.turnos, t); return `${x.nombre} ${hora(x.de)}–${hora(x.a)}`; };
-      cuerpo = `<div class="tarjeta"><h3>Tu equipo</h3><p class="tenue">Horario ${hora(N.abre)}–${hora(N.cierra % 24)}. ${huecos ? `${huecos} h sin personal contratado: ahí solo vendes si estás tú.` : 'Todo el horario está cubierto.'}</p>
-        <div class="lista">${propios.map(e => `<div class="renglon"><div><b>${esc(e.nombre)}</b><div class="tenue">${turno(e.turno)} · servicio ${e.hab.servicio} · limpieza ${e.hab.limpieza} · ${$c(e.sueldo)}/h · ${e.capacita ? `en capacitación hasta el día ${e.capacita.hasta}` : M.dia(S) < e.inicia ? 'llega mañana' : 'activo'}</div></div>
-          <div class="botones">${D.habilidades.map(h => bt(`Capacitar ${h.nombre.toLowerCase()} ${$$(B.capacitar.costo)}`, 'capacitar', { emp: e.id, hab: h.id }, '', !!e.capacita)).join('')}${bt('Despedir', 'despedir', { emp: e.id }, 'peligro')}</div></div>`).join('') || '<p class="tenue">Nadie todavía.</p>'}</div></div>
+      const cond = x => [D.jornadas[x.jornada].nombre + ` (máx. ${D.jornadas[x.jornada].maxDias} días)`, ...x.demandas.map(k => D.demandas[k].toLowerCase())].join(' · ');
+      const curso = por(D.cursos, 'rrhh');
+      cuerpo = !S.cursos.rrhh ? `<div class="tarjeta"><h3>Todavía no puedes contratar</h3><p class="tenue">${curso.desc} Cuesta ${$$(curso.costo)} y toma ${curso.horas} h.</p>${bt(`Tomar ${curso.nombre}`, 'curso', { id: 'rrhh' }, 'pri')}</div>` : `<div class="tarjeta"><h3>Tu equipo</h3><p class="tenue">Horario ${hora(N.abre)}–${hora(N.cierra % 24)}. ${huecos ? `Hoy hay ${huecos} h sin personal: ahí solo vendes si estás tú.` : 'Hoy todo el horario está cubierto.'}</p>
+        <div class="lista">${propios.map(e => { const v = M.violaciones(e);
+          return `<div class="renglon"><div><b>${esc(e.nombre)}</b><div class="tenue">${turno(e.turno)} · servicio ${e.hab.servicio} · limpieza ${e.hab.limpieza} · ${$c(e.sueldo)}/h · ${e.capacita ? `en capacitación hasta el día ${e.capacita.hasta}` : M.dia(S) < e.inicia ? 'llega mañana' : 'activo'}</div>
+            <div class="tenue">${cond(e)}</div><div class="par"><span class="tenue">Satisfacción</span><b>${Math.round(e.satisfaccion)}</b></div>${barra(e.satisfaccion)}${v.length ? `<p class="neg">${v.join(' ')} Va a renunciar si sigue así.</p>` : ''}
+            <div class="dias">${D.semana.map((n, d) => bt(n, 'diaLaboral', { emp: e.id, d }, e.dias[d] ? 'on' : '')).join('')}</div></div>
+          <div class="botones">${D.habilidades.map(h => bt(`Capacitar ${h.nombre.toLowerCase()} ${$$(B.capacitar.costo)}`, 'capacitar', { emp: e.id, hab: h.id }, '', !!e.capacita)).join('')}${bt(`Aumento ${Math.round(B.satisfaccion.aumento * 100)}%`, 'aumento', { emp: e.id })}${bt('Despedir', 'despedir', { emp: e.id }, 'peligro')}</div></div>`; }).join('') || '<p class="tenue">Nadie todavía.</p>'}</div>
+          <p class="tenue">Toca los días para armar su semana. Se paga solo el día trabajado.</p></div>
+        <div class="tarjeta"><h3>Agencia de empleo</h3><p class="tenue">Cada búsqueda trae ${B.candidatosPorBusqueda} candidatos. Con prisa cuesta más.${S.busquedas.length ? ` En camino: ${S.busquedas.map(b => 'día ' + b.llega).join(', ')}.` : ''}</p>
+          <div class="botones">${B.agencia.map(o => bt(`${o.dias} ${o.dias > 1 ? 'días' : 'día'} · ${$$(o.costo * B.candidatosPorBusqueda)}`, 'buscar', { dias: o.dias })).join('')}</div></div>
         <div class="tarjeta"><h3>Candidatos</h3><p class="tenue">Toca un turno para contratar. Empiezan al día siguiente. Capacitar toma ${B.capacitar.dias} días sin que vengan a trabajar.</p>
-        <div class="lista">${S.candidatos.map(c => `<div class="renglon"><div><b>${esc(c.nombre)}</b><div class="tenue">servicio ${c.hab.servicio} · limpieza ${c.hab.limpieza} · pide ${$c(c.sueldo)}/h (${$$(c.sueldo * B.horasTurno)} al día) · disponible hasta el día ${c.expira}</div></div>
-          <div class="botones">${c.turnos.map(t => bt(turno(t), 'contratar', { cand: c.id, negocio: N.id, turno: t })).join('')}</div></div>`).join('') || '<p class="tenue">No hay candidatos hoy. Llegan nuevos cada día.</p>'}</div></div>`;
+        <div class="lista">${S.candidatos.map(c => `<div class="renglon"><div><b>${esc(c.nombre)}</b><div class="tenue">servicio ${c.hab.servicio} · limpieza ${c.hab.limpieza} · pide ${$c(c.sueldo)}/h (${$$(c.sueldo * B.horasTurno)} al día) · disponible hasta el día ${c.expira}</div><div class="tenue">${cond(c)}</div></div>
+          <div class="botones">${c.turnos.map(t => bt(turno(t), 'contratar', { cand: c.id, negocio: N.id, turno: t })).join('')}</div></div>`).join('') || '<p class="tenue">No hay candidatos. Pide una búsqueda a la agencia.</p>'}</div></div>`;
     } else {
-      const sig = B.interior[N.interior + 1], hor = (abre, cierra) => ({ id: N.id, abre, cierra });
-      cuerpo = `<div class="tarjeta"><h3>Horario</h3>
+      const sig = B.interior[N.interior + 1], hor = (abre, cierra) => ({ id: N.id, abre, cierra }), lleno = M.numMuebles(N) >= L.espacio;
+      cuerpo = `<div class="tarjeta"><h3>Muebles</h3>${par(inv ? 'Capacidad' : 'Cupo', cap ? `${cap} ${inv ? 'clientes por hora' : 'socios'}` : 'No puede abrir')}${par('Espacio usado', `${M.numMuebles(N)} de ${L.espacio}`)}
+          <p class="tenue">${cap ? `El negocio rinde lo que su mueble más corto. Hoy te limita: ${corto}.` : 'Necesitas al menos uno de cada mueble obligatorio.'}</p>
+          <div class="lista">${M.mueblesPosibles(N).map(m => { const mu = D.muebles[m], n = N.muebles[m] || 0, obl = T.muebles.includes(m);
+            return `<div class="renglon"><div><b>${mu.nombre}</b> × ${n}<div class="tenue">${obl ? `${n * mu.capacidad} de capacidad (${mu.capacidad} c/u)` : 'Opcional: permite vender otros productos'}${mu.cats ? ` · exhibe ${mu.cats.join(', ')}` : ''}</div></div>${bt(`Comprar · ${$$(mu.costo * M.dif(S).costos)}`, 'equipo', { id: N.id, mueble: m }, obl && !n ? 'pri' : '', lleno)}</div>`; }).join('')}</div></div>
+        <div class="tarjeta"><h3>Horario</h3>
           <div class="renglon"><div>Abre</div><div class="botones">${bt('−', 'horario', hor(N.abre - 1, N.cierra), 'mini', N.abre <= 0)}<span class="precio">${hora(N.abre)}</span>${bt('+', 'horario', hor(N.abre + 1, N.cierra), 'mini', N.abre + 1 >= N.cierra)}</div></div>
           <div class="renglon"><div>Cierra</div><div class="botones">${bt('−', 'horario', hor(N.abre, N.cierra - 1), 'mini', N.cierra - 1 <= N.abre)}<span class="precio">${hora(N.cierra % 24)}</span>${bt('+', 'horario', hor(N.abre, N.cierra + 1), 'mini', N.cierra >= 24)}</div></div></div>
-        <div class="tarjeta"><h3>${T.equipo.nombre}</h3>${par('Instaladas', `${N.equipo} de ${L.espacio}`)}<p class="tenue">${inv ? `Cada una despacha hasta ${T.equipo.capacidad} clientes por hora.` : `Cada una da lugar a ${T.equipo.capacidad} socios.`}</p>
-          ${bt(`Comprar · ${$$(T.equipo.costo * M.dif(S).costos)}`, 'equipo', { id: N.id }, 'pri', N.equipo >= L.espacio)}</div>
         ${M.desbloqueado(S, 'mejoras') ? `<div class="tarjeta"><h3>Marketing diario</h3><div class="botones">${B.marketing.map(v => bt(v ? $$(v) : 'Nada', 'marketing', { id: N.id, valor: v }, N.marketing === v ? 'on' : '')).join('')}</div>
           <h3>Interior</h3>${par('Nivel', `${N.interior} de ${B.interior.length - 1}`)}${sig ? bt(`Mejorar · ${$$(sig)}`, 'interior', { id: N.id }) : ''}<p class="tenue">Ambos traen más clientes. El interior también sube la reputación.</p></div>` : ''}
         <div class="tarjeta">${medida('Limpieza', N.limpieza)}${S.jugador.lugar === N.local ? bt('Limpiar (1 h)', 'limpiar', { id: N.id }) : '<p class="tenue">Para limpiar tú mismo tienes que estar en el local.</p>'}</div>
-        <div class="tarjeta">${ui.confirma === 'cerrar' ? bt('Sí, cerrar y despedir a todos', 'cerrar', { id: N.id }, 'peligro') : bt('Cerrar este negocio', 'ui:confirma', { k: 'cerrar' }, 'peligro')}<p class="tenue">Recuperas ${Math.round(B.reventaEquipo * 100)}% del equipo. El depósito y la mercancía se pierden.</p></div>`;
+        <div class="tarjeta">${ui.confirma === 'cerrar' ? bt('Sí, cerrar y despedir a todos', 'cerrar', { id: N.id }, 'peligro') : bt('Cerrar este negocio', 'ui:confirma', { k: 'cerrar' }, 'peligro')}<p class="tenue">Recuperas ${Math.round(B.reventaEquipo * 100)}% de los muebles. El depósito y la mercancía se pierden.</p></div>`;
     }
     return `<div class="fila">${bt('‹ Todos', 'ui:neg', { id: null })}<h2 class="crece">${esc(N.nombre)}</h2></div>
       <div class="botones">${secs.map(([k, n]) => bt(n, 'ui:sec', { sec: k }, ui.sec === k ? 'on' : '')).join('')}</div>${cuerpo}`;
@@ -186,6 +211,7 @@
         ${M.rendimiento(S) < 1 ? '<p class="neg">Una necesidad está en cero: atiendes y cobras a menos de la mitad.</p>' : ''}
         <div class="botones">${bt(enCasa ? `Comer en casa ${$$(B.comerCasa.costo)}` : `Comer fuera ${$$(B.comerFuera.costo)}`, 'comer')}${bt(`Ocio ${B.ocio.horas} h · ${$$(B.ocio.costo)}`, 'ocio')}${bt('Dormir', 'dormir', {}, '', !enCasa)}</div></div>
       <div class="tarjeta"><h3>Carga</h3>${carga.length ? carga.map(([p, n]) => par(D.productos[p].nombre, n)).join('') : '<p class="tenue">No llevas mercancía. Caben ' + B.cargaMax + ' unidades.</p>'}</div>
+      <div class="tarjeta"><h3>Cursos</h3><div class="lista">${D.cursos.map(c => `<div class="renglon"><div><b>${c.nombre}</b><div class="tenue">${c.desc} Toma ${c.horas} h.</div></div>${S.cursos[c.id] ? '<b>Terminado</b>' : bt(`Tomar · ${$$(c.costo)}`, 'curso', { id: c.id }, 'pri')}</div>`).join('')}</div></div>
       <div class="tarjeta"><h3>Vivienda</h3><div class="lista">${D.departamentos.map(d => `<div class="renglon"><div><b>${d.nombre}</b><div class="tenue">${por(D.distritos, d.distrito).nombre} · ${$$(d.renta)} al día · descanso ${d.animo >= 3 ? 'excelente' : d.animo >= 1.5 ? 'bueno' : 'básico'}</div></div>
         ${J.depto === d.id ? '<b>Vives aquí</b>' : bt(`Mudarme · ${$$(d.renta * B.depositoDias)}`, 'mudarse', { depto: d.id })}</div>`).join('')}</div>
         <p class="tenue">Un lugar mejor sube el ánimo al dormir. El gusto de estrenar casa se desvanece con los días.</p></div>`;
@@ -201,7 +227,9 @@
     return `<h2>Finanzas</h2>
       <div class="tarjeta">${par('Efectivo', $$(S.dinero), S.dinero < 0 ? 'neg' : '')}${par('Deuda', $$(M.deuda(S)))}${par('Patrimonio', $$(pat))}
         ${S.modo === 'historia' ? `${par('Meta', $$(meta))}${barra(pat / meta * 100, '')}` : '<p class="tenue">Modo libre, sin meta.</p>'}${graf}
-        <p class="tenue">Patrimonio = efectivo + mercancía + mitad del valor del equipo − deuda. Impuestos: ${Math.round(B.impuesto * 100)}% de la ganancia de la semana, cada 7 días.</p></div>
+        <p class="tenue">Patrimonio = efectivo + mercancía + mitad del valor de los muebles − deudas e impuestos.</p></div>
+      <div class="tarjeta"><h3>Impuestos</h3>${S.impuesto ? `${par('Debes', $$(S.impuesto.monto), 'neg')}${par('Vence', 'día ' + S.impuesto.vence)}${bt('Pagar impuestos', 'pagarImpuestos', {}, 'pri', S.dinero < S.impuesto.monto)}` : `<p>No debes nada. Próximo corte: día ${Math.ceil(M.dia(S) / B.impuestoPeriodo) * B.impuestoPeriodo}.</p>`}
+        <p class="tenue">${Math.round(B.impuesto * 100)}% de la ganancia de cada ${B.impuestoPeriodo} días. Tienes ${B.impuestoPlazo} días para pagar; después cobran ${Math.round(B.impuestoRecargo * 100)}% de recargo y embargan mercancía y muebles.</p></div>
       ${R ? `<div class="tarjeta"><h3>Resumen del día ${R.dia}</h3>${par('Ingresos', $$(R.ingresos))}${Object.entries(R.gastos).map(([k, v]) => par(GASTOS[k] || k, $$(-v))).join('')}${par('<b>Resultado</b>', $$(R.neto), R.neto < 0 ? 'neg' : '')}
         ${R.problemas.length ? `<ul>${R.problemas.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}<p><b>Qué hacer:</b> ${esc(R.sugerencia)}</p></div>` : '<div class="tarjeta"><p class="tenue">El primer resumen llega a medianoche.</p></div>'}
       ${M.desbloqueado(S, 'prestamos') ? `<div class="tarjeta"><h3>Préstamos</h3><p class="tenue">El banco te presta hasta ${$$(lim)}. Pagas en ${P.semanas} semanas, con ${(P.interesSemanal * 100).toFixed(1)}% de interés semanal sobre el monto original. Si no alcanza para la cuota, el saldo se va a negativo.</p>
@@ -259,7 +287,7 @@
   }
 
   // ---------- Guardado ----------
-  const valida = g => g && g.v === 1 && g.jugador && Array.isArray(g.negocios) && Number.isFinite(g.dinero);
+  const valida = g => g && g.v === M.VERSION && g.jugador && Array.isArray(g.negocios) && Number.isFinite(g.dinero);
   const guardar = () => disco.guardar(CLAVE, JSON.stringify(S));
   function leerGuardado() { try { const g = JSON.parse(disco.leer(CLAVE)); return valida(g) ? g : null; } catch (e) { return null; } }
   function iniciar(estado) {
