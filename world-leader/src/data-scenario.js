@@ -262,7 +262,7 @@
      {T} país, {L} su líder, {RES} recurso, {SIT} situación. Efectos con el mini-lenguaje. */
   D.PROC = {
     p: .22, cool: 10,
-    sit: ['una sequía histórica', 'una huelga general', 'unas elecciones reñidas', 'un escándalo de corrupción', 'una ola de protestas estudiantiles', 'un terremoto', 'una crisis de deuda', 'un boom tecnológico', 'una epidemia de gripe', 'un golpe fallido'],
+    sit: ['una sequía histórica', 'una huelga general', 'unas elecciones reñidas', 'un escándalo de corrupción', 'una ola de protestas estudiantiles', 'un terremoto', 'una crisis de deuda', 'un boom tecnológico', 'una epidemia de gripe', 'un golpe fallido', 'un apagón nacional', 'una ola de calor', 'un escándalo de espionaje', 'una inundación'],
     tpl: [
       { id: 'res_oferta', tgt: 'any', t: '{L} ofrece {RES}', x: '{T}, golpeado por {SIT}, necesita liquidez y te ofrece {RES} a precio de saldo a cambio de pago inmediato.',
         opts: [['Comprar', '$g-.3;prod.{K}+1;rel.T+6:Compra en un mal momento'], ['Ofrecer un préstamo en su lugar', '$g-.2;rel.T+10:Préstamo solidario;rep.conf+2'], ['No interesa', 'rel.T-2:Ignoraste su oferta']] },
@@ -278,6 +278,14 @@
         opts: [['Responder con dureza', 'sec.all+2;rel.T-8:Guerra de palabras'], ['Ignorarlo', 'rep.conf+2'], ['Llamarle en privado', 'rel.T+4:Llamada discreta']] },
       { id: 'res_boom', tgt: '', t: 'Fiebre de {RES}', x: 'El precio mundial de {RES} se dispara por {SIT} en {T}. Tus productores piden permisos de explotación urgentes.',
         opts: [['Dar permisos', 'prod.{K}+1;sec.emp+5;sec.rur-3'], ['Impuesto a las ganancias extraordinarias', '$g+.3;sec.emp-5'], ['Proteger el medio ambiente', 'sec.jov+5;sec.emp-4']] },
+      { id: 'esp_cazado', tgt: 'rival', t: 'Espía de {T} detenido', x: 'Tu contraespionaje detiene a un agente de {T} fotografiando instalaciones de {RES}. {L} niega todo.',
+        opts: [['Expulsar diplomáticos', 'rel.T-8:Expulsión de diplomáticos;sec.mil+3'], ['Canjearlo en secreto', 'rel.T+4:Canje discreto;rep.conf+2'], ['Juicio público', 'sec.all+2;rel.T-12:Juicio a su espía']] },
+      { id: 'dep_final', tgt: 'neighbor', t: 'Final contra {T}', x: 'Tu selección juega la final continental contra {T}. Si ganas, el país estará de fiesta.',
+        opts: [['Asistir al estadio', 'cp-1;chance.5{sec.all+4}{sec.all-2}'], ['Felicitar a ambos equipos', 'rel.T+4:Deportividad'], ['Ignorarlo', '']] },
+      { id: 'invento', tgt: 'power', t: 'Un invento en {T}', x: 'Científicos de {T} logran un avance en la extracción de {RES}. {L} ofrece licenciarlo.',
+        opts: [['Comprar la licencia', '$g-.3;prod.{K}+1;rel.T+5:Licencia tecnológica'], ['Copiarlo con espionaje', 'prod.{K}+1;chance.4{rel.T-15:Robo tecnológico}{}'], ['Desarrollar el nuestro', 'grow+.05/4']] },
+      { id: 'catastrofe', tgt: '', t: 'Emergencia en {R}', x: 'Tras {SIT}, la región de {R} pide ayuda urgente. {T} se ofrece a enviar equipos de rescate.',
+        opts: [['Aceptar ayuda extranjera', 'rel.T+6:Ayuda de emergencia;stab+1'], ['Solo recursos propios', '$g-.3;sec.all+2'], ['Minimizar el problema', 'stab-3;sec.rur-5']] },
       { id: 'sit_refug', tgt: 'neighbor', t: 'Éxodo desde {T}', x: '{SIT} en {T} empuja a miles de personas hacia tu frontera.',
         opts: [['Acogerlos', '$g-.2;rel.T+8:Acogida de refugiados;rep.gen+5;sec.obr-3'], ['Campamentos en la frontera', '$g-.1;rel.T+2:Campamentos'], ['Cerrar la frontera', 'sec.mil+3;rel.T-6:Frontera cerrada;rep.gen-4']] }
     ]
