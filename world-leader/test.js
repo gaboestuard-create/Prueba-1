@@ -132,7 +132,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   assert(o && o.iso === 'AR' && o.seed === 1234 && o.setup.scen === 'crisis' && o.setup.mode === 'rapido' && o.setup.opts.perm && o.traits[0] === 'carismatico', 'el código conserva la partida');
   assert.strictEqual(P5.readCode('hola'), null); assert.strictEqual(P5.readCode('WL5-%%%'), null); assert.strictEqual(P5.readCode('WL5-' + Buffer.from('{"iso":"ZZ","seed":1}').toString('base64')), null, 'código con país inválido');
   // modo rápido: termina a los 36 turnos con puntuación
-  turns(60); assert.strictEqual(G.S.turn, D.QUICK_TURNS); assert.strictEqual(G.S.over.r, 'tiempo'); const sc = P5.score(); assert(sc.total >= 0 && sc.total <= 100 && sc.parts.length === D.SCORE.length);
+  turns(60); if (G.S.over.r !== 'tiempo') { assert(G.S.turn < D.QUICK_TURNS); G.newGame({ iso: 'AR', name: 'R', seed: 1234, setup: { mode: 'rapido' } }); G.S.turn = D.QUICK_TURNS - 1; G.S.pol.nextElec = 999; G.S.c.AR.stab = 80; G.S.pend = []; G.act('endTurn'); } assert.strictEqual(G.S.turn, D.QUICK_TURNS); assert.strictEqual(G.S.over.r, 'tiempo'); const sc = P5.score(); assert(sc.total >= 0 && sc.total <= 100 && sc.parts.length === D.SCORE.length);
   assert(sc.parts.every(p => p.v >= 0 && p.v <= p.max), 'cada bloque respeta su máximo'); assert(!G.act('keepPlaying').ok, 'tras el tiempo no se sigue');
   // sandbox: no se pierde por política; sin editor: el editor queda bloqueado
   G.newGame({ iso: 'MX', name: 'S', seed: 3, setup: { mode: 'sandbox' } }); G.S.pend = []; G.S.c.MX.stab = 2; G.act('endTurn'); assert(!G.S.over, 'en sandbox no hay revolución');

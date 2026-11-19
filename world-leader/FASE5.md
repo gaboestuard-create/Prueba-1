@@ -27,7 +27,7 @@ Código: `src/engine/7g-scenarios.js` (escenarios, modos, dificultad, campañas,
 | Económica | PIB ≥ 1,6 × el segundo **y** ≥ 1,5 × el inicial | EE. UU. con juego económico la logra hacia el turno 42. Lo segundo evita que EE. UU. gane en el turno 1. |
 | Diplomática | 12 alianzas o pactos de defensa, 30 tratados comerciales, confianza 50 | Alemania la logra hacia el turno 52 firmando sin parar. |
 | Científica | Primero del mundo en 7 descubrimientos y 12 tecnologías | EE. UU. lleva 6 primeros puestos en el turno 42: alcanzable, pero hay que pelearla. |
-| Dominación | 25% del poder militar mundial y 3 anexiones | La más difícil, porque las IAs se rearman sin pagar mantenimiento (ver «Bugs conocidos»). |
+| Dominación | 25% del poder militar mundial y 3 anexiones | La más difícil. Desde la mejora posterior las IAs pagan el 60% de su mantenimiento (`7i-balance.js`) y ya no se rearman sin límite. |
 | Supervivencia | 120 trimestres en el poder | Larga a propósito. |
 | Legado | Turno ≥ 60 y juicio de la historia ≥ 85 | Exige un mandato largo y bueno a la vez. |
 
@@ -58,3 +58,9 @@ Las partidas de fases anteriores cargan como «partida libre, escenario actual»
 ## Pruebas
 
 `npm test` añade escenarios, determinismo con mundo alternativo, código de partida, modo rápido, sandbox, sin editor, victorias y seguir jugando, campañas (etapas, eventos, finales, plazo, derrota), mediación, escenario propio, epílogo (no cambia la partida), eventos procedurales sin repetición, migración de una partida de la Fase 4, logros y reto semanal. Pasa también el soak de 150 turnos.
+
+## Mejoras posteriores
+
+- `src/engine/7i-balance.js`: la IA paga el 60% del mantenimiento de su ejército (130% en guerra). Si su caja baja del −1% del PIB, desmoviliza un 4% por turno. En el escenario actual, India pasa de multiplicar su poder ×16 en 40 turnos a ×3,5. Es el valor `AI_UPKEEP`.
+- Alerta de campaña: cuando a una etapa le quedan 4 turnos o menos, aparece en «Requiere tu atención» con lo que falta, y te lleva a Objetivos.
+- Ajustes: Mongolia pide relación 10 con ambos vecinos; el mediador, reputación de paz 20.

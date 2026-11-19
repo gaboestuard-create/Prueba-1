@@ -140,7 +140,7 @@
     { id: 'pequeno', n: 'Entre gigantes', iso: 'MN', scen: 'tension', d: 'Difícil', lead: 'Oyuun Batbayar',
       x: 'Tres millones de personas entre Rusia y China. Tu independencia depende de que ninguno de los dos crea que eres del otro.',
       stages: [
-        { n: 'Equilibrio', x: 'Gánate a los dos vecinos: relación de 15 con Rusia y con China, sin guerras.', goal: [['rel', 'RU', 15], ['rel', 'CN', 15], ['peace']], turns: 28 },
+        { n: 'Equilibrio', x: 'Gánate a los dos vecinos: relación de 10 con Rusia y con China, sin guerras.', goal: [['rel', 'RU', 10], ['rel', 'CN', 10], ['peace']], turns: 28 },
         { n: 'El tercer vecino', x: 'Diversifica: 6 tratados comerciales y una economía un 20% mayor.', goal: [['tr', 'com', 6], ['gdpX', 1.2]], turns: 30 },
         { n: 'Soberanía', x: 'Aguanta 20 turnos más entero, independiente y con estabilidad de 50.', goal: [['turns', 20], ['stab', 50], ['occFree']], turns: 36 }],
       lose: [['occBy', 3], ['stabLt', 15]],
@@ -160,7 +160,7 @@
       x: 'Un país pequeño, rico y respetado. El mundo arde y tú tienes algo que nadie más tiene: la confianza de casi todos.',
       stages: [
         { n: 'La primera paz', x: 'Media con éxito en una guerra ajena: toca en el globo a uno de los bandos y pulsa «Mediar» en su ficha.', goal: [['med', 1]], turns: 24 },
-        { n: 'El honesto intermediario', x: 'Logra 3 mediaciones y una reputación de paz de 25.', goal: [['med', 3], ['rep', 'paz', 25]], turns: 40 },
+        { n: 'El honesto intermediario', x: 'Logra 3 mediaciones y una reputación de paz de 20.', goal: [['med', 3], ['rep', 'paz', 20]], turns: 40 },
         { n: 'La conciencia del mundo', x: 'Confianza internacional de 20, ninguna gran potencia hostil (relación de −20 o más con las 5 mayores) y sin guerras propias.', goal: [['rep', 'conf', 20], ['relBig', -20], ['peace']], turns: 44 }],
       lose: [['declared', 1]],
       events: [

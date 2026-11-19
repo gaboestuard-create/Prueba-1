@@ -1751,7 +1751,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     { id: 'pequeno', n: 'Entre gigantes', iso: 'MN', scen: 'tension', d: 'Difícil', lead: 'Oyuun Batbayar',
       x: 'Tres millones de personas entre Rusia y China. Tu independencia depende de que ninguno de los dos crea que eres del otro.',
       stages: [
-        { n: 'Equilibrio', x: 'Gánate a los dos vecinos: relación de 15 con Rusia y con China, sin guerras.', goal: [['rel', 'RU', 15], ['rel', 'CN', 15], ['peace']], turns: 28 },
+        { n: 'Equilibrio', x: 'Gánate a los dos vecinos: relación de 10 con Rusia y con China, sin guerras.', goal: [['rel', 'RU', 10], ['rel', 'CN', 10], ['peace']], turns: 28 },
         { n: 'El tercer vecino', x: 'Diversifica: 6 tratados comerciales y una economía un 20% mayor.', goal: [['tr', 'com', 6], ['gdpX', 1.2]], turns: 30 },
         { n: 'Soberanía', x: 'Aguanta 20 turnos más entero, independiente y con estabilidad de 50.', goal: [['turns', 20], ['stab', 50], ['occFree']], turns: 36 }],
       lose: [['occBy', 3], ['stabLt', 15]],
@@ -1771,7 +1771,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
       x: 'Un país pequeño, rico y respetado. El mundo arde y tú tienes algo que nadie más tiene: la confianza de casi todos.',
       stages: [
         { n: 'La primera paz', x: 'Media con éxito en una guerra ajena: toca en el globo a uno de los bandos y pulsa «Mediar» en su ficha.', goal: [['med', 1]], turns: 24 },
-        { n: 'El honesto intermediario', x: 'Logra 3 mediaciones y una reputación de paz de 25.', goal: [['med', 3], ['rep', 'paz', 25]], turns: 40 },
+        { n: 'El honesto intermediario', x: 'Logra 3 mediaciones y una reputación de paz de 20.', goal: [['med', 3], ['rep', 'paz', 20]], turns: 40 },
         { n: 'La conciencia del mundo', x: 'Confianza internacional de 20, ninguna gran potencia hostil (relación de −20 o más con las 5 mayores) y sin guerras propias.', goal: [['rep', 'conf', 20], ['relBig', -20], ['peace']], turns: 44 }],
       lose: [['declared', 1]],
       events: [
@@ -5591,6 +5591,25 @@ ACT.campSkip = () => { const K = S.camp; if (!K || K.end != null) return fail('N
   K.end = k.endings.findIndex(x => !x.if || x.if.every(goalOk)); over('camp_win'); return { msg: 'Campaña completada desde el editor' }; };
 ACT.testVic = a => { const v = D.VICT.find(x => x.id === a.k); if (!v) return fail('Victoria desconocida'); S.p5.vicDone[v.id] = S.turn; S.p5.vic = v.id; over('vic_' + v.id); return { msg: 'Victoria de prueba: ' + v.n }; };
 Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1 });
+
+
+/* ---------- engine/7i-balance.js ---------- */
+/* =====================================================================
+   BALANCE · la IA también paga su ejército, y aviso de plazos de campaña
+   Antes las IAs compraban armas sin coste fijo y sus ejércitos crecían sin
+   límite. Ahora pagan parte del mantenimiento; si se arruinan, desmovilizan.
+   ===================================================================== */
+const AI_UPKEEP = .6; // fracción del mantenimiento que paga la IA (el jugador paga 1)
+hook('world', () => {
+  for (const iso of alive()) { if (isP(iso)) continue; const c = S.c[iso];
+    c.tr -= upkeep(iso) * AI_UPKEEP * (inWar(iso) ? 1.3 : 1);
+    if (c.tr < -c.gdp * .01) { for (const k in c.u) c.u[k] = Math.floor(c.u[k] * .96); c.tr = -c.gdp * .01; } }
+});
+/* campaña: alerta cuando a la etapa le quedan 4 turnos o menos */
+{ const a0 = alerts; alerts = () => { const out = a0(), ci = campInfo();
+  if (ci && ci.K.end == null && ci.left != null && ci.left <= 4) { const miss = ci.goals.filter(g => !g.ok).map(g => g.t);
+    if (miss.length) out.unshift({ p: 5, t: `Campaña: ${Math.max(0, ci.left)} turno${ci.left === 1 ? '' : 's'} para «${ci.st.n}». Falta: ${miss.join(', ')}`, panel: 'sys', tab: 'obj' }); }
+  return out; }; }
 
 
 /* ---------- engine/80-turn.js ---------- */
