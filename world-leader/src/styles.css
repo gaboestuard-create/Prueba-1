@@ -404,3 +404,13 @@ body[data-bg="aurora"] #globe { background: radial-gradient(ellipse at 20% 15%, 
 .camp-pill { border-left: 3px solid var(--gold); }
 input, select, textarea { border-radius: 2px !important; }
 label.check:has([data-c="paperT"]) { color: #5a4a30; }
+/* ===================== CONVERSACIONES ===================== */
+.talk5 .tk-line { display: flex; gap: 8px; align-items: flex-end; margin: 8px 0; } .talk5 .tk-line.tk-r, .talk5 .tk-line.tk-me { flex-direction: row-reverse; } .talk5 .tk-line.tk-x .tk-b { background: rgba(185, 156, 255, .08); }
+.tk-face { position: relative; flex: none; width: 30px; height: 30px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(232, 195, 106, .4); } .tk-face svg, .tk-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tk-face.sys { display: grid; place-items: center; background: rgba(255, 255, 255, .06); } .tk-face.sys .gi { width: 16px; height: 16px; fill: var(--gold); }
+.tk-b { max-width: 78%; padding: 7px 10px; border-radius: 3px; background: rgba(255, 255, 255, .05); border-left: 2px solid var(--line); } .tk-line.tk-r .tk-b { border-left: 0; border-right: 2px solid rgba(255, 90, 77, .5); } .tk-line.tk-l .tk-b { border-left-color: rgba(79, 216, 255, .5); } .tk-line.tk-me .tk-b { border-right: 2px solid var(--gold); border-left: 0; background: rgba(232, 195, 106, .08); }
+.tk-b small { display: block; color: var(--mut); font: 600 11px var(--fc); letter-spacing: .06em; text-transform: uppercase; } .tk-b p { margin: 2px 0 0; }
+.tk-rep { margin-top: 8px; gap: 6px; align-items: center; }
+.tkpop { position: fixed; left: calc(var(--sl) + 86px); bottom: calc(70px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.tkpop p { margin: 4px 0; font-size: 13px; } .tkpop small.gold { color: var(--gold); }
+@media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }

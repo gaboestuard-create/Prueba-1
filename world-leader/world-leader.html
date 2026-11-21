@@ -416,6 +416,16 @@ body[data-bg="aurora"] #globe { background: radial-gradient(ellipse at 20% 15%, 
 .camp-pill { border-left: 3px solid var(--gold); }
 input, select, textarea { border-radius: 2px !important; }
 label.check:has([data-c="paperT"]) { color: #5a4a30; }
+/* ===================== CONVERSACIONES ===================== */
+.talk5 .tk-line { display: flex; gap: 8px; align-items: flex-end; margin: 8px 0; } .talk5 .tk-line.tk-r, .talk5 .tk-line.tk-me { flex-direction: row-reverse; } .talk5 .tk-line.tk-x .tk-b { background: rgba(185, 156, 255, .08); }
+.tk-face { position: relative; flex: none; width: 30px; height: 30px; border-radius: 3px; overflow: hidden; border: 1px solid rgba(232, 195, 106, .4); } .tk-face svg, .tk-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tk-face.sys { display: grid; place-items: center; background: rgba(255, 255, 255, .06); } .tk-face.sys .gi { width: 16px; height: 16px; fill: var(--gold); }
+.tk-b { max-width: 78%; padding: 7px 10px; border-radius: 3px; background: rgba(255, 255, 255, .05); border-left: 2px solid var(--line); } .tk-line.tk-r .tk-b { border-left: 0; border-right: 2px solid rgba(255, 90, 77, .5); } .tk-line.tk-l .tk-b { border-left-color: rgba(79, 216, 255, .5); } .tk-line.tk-me .tk-b { border-right: 2px solid var(--gold); border-left: 0; background: rgba(232, 195, 106, .08); }
+.tk-b small { display: block; color: var(--mut); font: 600 11px var(--fc); letter-spacing: .06em; text-transform: uppercase; } .tk-b p { margin: 2px 0 0; }
+.tk-rep { margin-top: 8px; gap: 6px; align-items: center; }
+.tkpop { position: fixed; left: calc(var(--sl) + 86px); bottom: calc(70px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.tkpop p { margin: 4px 0; font-size: 13px; } .tkpop small.gold { color: var(--gold); }
+@media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
 
 </style>
 
@@ -2019,6 +2029,94 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     ['f4_eclipse', 3, { cool: 25 }, '', 'El gran eclipse', 'Un eclipse total cruzará el país. Millones de turistas quieren venir.', [['Organizar el evento del siglo', '$g-.1;grow+.06/2;sec.emp+3;rep.gen+2'], ['Dejarlo a las provincias', 'sec.rur+2'], ['Decretar festivo', 'sec.all+3;grow-.03/1']]]
   ];
   E.forEach(e => D.EVENTS.push({ id: e[0], w: e[1], if: e[2], tgt: e[3] || e[7] || null, t: e[4], x: e[5], opts: e[6].map(o => ({ t: o[0].replace('{T}', '{T}'), fx: fx(o[1]), hid: fx(o[2]) })), verificado: false }));
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · CONVERSACIONES ENTRE LÍDERES, ASAMBLEA Y PRENSA
+   Conversación: lista de líneas [quién, texto]. Quién: 'A' o 'B' (los dos
+   líderes), 'X' (un tercero). Huecos: {A} {B} {X} países, {LA} {LB} {LX}
+   líderes, {P} tu país, {PL} tú.
+   Contextos: guerra, sanciones, tratado, golpe, anexión, paz, crisis,
+   sobre ti (bien o mal) y charla de cumbre. Todo editable (verificado: false).
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx;
+  D.TALK = {
+    war: [
+      [['X', '{LA}, detén esto. Cada día de guerra contra {B} es una vergüenza para todos.'], ['A', 'No empecé yo esta historia. {B} lleva años provocando.'], ['B', 'Mentira. Que el mundo vea quién cruzó la frontera primero.']],
+      [['B', 'Mis ciudades arden y el mundo mira hacia otro lado.'], ['A', 'Rinde tus posiciones y esto termina mañana.'], ['X', 'Desde {X} pedimos un alto el fuego inmediato. Nadie gana así.']],
+      [['A', 'Nuestra operación avanza según lo previsto.'], ['X', '¿Prevista? Hay columnas de refugiados en tres fronteras, {LA}.'], ['A', 'Los refugiados son responsabilidad de {B}.']]
+    ],
+    sanc: [
+      [['B', '¿Sanciones, {LA}? Pensé que éramos socios.'], ['A', 'Los socios no hacen lo que hizo {B}.'], ['B', 'Lo pagarán vuestras empresas antes que nosotros.']],
+      [['A', 'Las sanciones contra {B} seguirán hasta que cambie de rumbo.'], ['B', 'Nos habéis cerrado un mercado. Abriremos diez.'], ['X', 'Desde {X} miramos con preocupación esta escalada.']],
+      [['B', 'Mi pueblo sabrá a quién culpar cuando falte el pan.'], ['A', 'Que culpe a quien gobierna, {LB}.']]
+    ],
+    treaty: [
+      [['A', 'Un buen acuerdo, {LB}. Nuestros puertos ya lo notan.'], ['B', 'Y lo que viene. Brindemos por la próxima década.'], ['X', 'Desde {X} tomamos nota: quizá queramos sumarnos.']],
+      [['B', 'Tus negociadores son duros, {LA}.'], ['A', 'Los tuyos también. Por eso este tratado va a durar.']],
+      [['A', 'Que lo vea el mundo: {A} y {B} caminan juntos.'], ['B', 'Y que tomen nota los que apostaban a que nos peleáramos.']]
+    ],
+    coup: [
+      [['X', '¿Alguien ha hablado con los nuevos militares de {A}?'], ['B', 'Yo sí. Prometen elecciones "cuando sea posible".'], ['X', 'O sea, nunca.']],
+      [['B', 'Lo que pasa en {A} es un aviso para toda la región.'], ['X', 'Un aviso que nadie quiere escuchar, {LB}.']],
+      [['A', 'La patria estaba en peligro. Hemos restaurado el orden.'], ['B', 'Con tanques en la plaza, {LA}. Curioso orden.']]
+    ],
+    annex: [
+      [['X', '{A} ya no existe en los mapas de {B}. ¿Y ahora?'], ['B', 'Ahora reconstruimos. Es nuestra tierra.'], ['X', 'La historia no olvida estas cosas, {LB}.']],
+      [['B', 'La unificación era inevitable.'], ['X', 'Eso dicen siempre los que se quedan con todo.']]
+    ],
+    peace: [
+      [['A', 'Hemos firmado, {LB}. Que no tengamos que volver a vernos en un campo de batalla.'], ['B', 'Que sea la última vez. Mis soldados vuelven a casa.']],
+      [['X', 'Por fin paz entre {A} y {B}. ¿Cuánto durará?'], ['A', 'Lo que dure la palabra de {LB}.'], ['B', 'Lo mismo digo.']]
+    ],
+    crisis: [
+      [['A', 'Los mercados nos están destrozando, {LB}. Necesito una línea de crédito.'], ['B', 'Te la doy si abres tu sector energético.'], ['A', 'Eso es chantaje.'], ['B', 'Eso es economía.']],
+      [['X', 'La crisis de {A} va a contagiarnos a todos.'], ['B', 'Por eso hay que dejar caer a sus bancos antes de que nos arrastren.']]
+    ],
+    gossipGood: [
+      [['A', '¿Has visto lo que está haciendo {PL} en {P}?'], ['B', 'Sí. Ojalá más líderes trabajaran así.'], ['A', 'Habrá que invitarle a la próxima cumbre.']],
+      [['B', '{P} cumple su palabra. Eso no abunda.'], ['A', 'Por eso mi gobierno quiere acercarse más a {PL}.']]
+    ],
+    gossipBad: [
+      [['A', '¿Te fías de {PL}?'], ['B', 'Ni un poco. Ya viste lo que hizo.'], ['A', 'Entonces vigilemos a {P} de cerca.']],
+      [['B', '{P} se cree más grande de lo que es.'], ['A', 'Alguien tendrá que recordárselo a {PL}.'], ['B', 'Con paciencia. Los imperios pequeños caen solos.']],
+      [['X', 'Dicen que {PL} prepara algo.'], ['A', 'Que lo intente. Estaremos esperando.']]
+    ],
+    chat: [
+      [['A', 'Hace frío en esta cumbre, {LB}.'], ['B', 'Más frío hace en tu política comercial.'], ['A', 'Touché.']],
+      [['B', '¿Cómo van tus elecciones, {LA}?'], ['A', 'Como siempre: prometiendo lo que no puedo cumplir.'], ['B', 'Al menos eres honesto en privado.']],
+      [['A', 'Mi ministro de Economía dice que el año que viene será mejor.'], ['B', 'El mío dice lo mismo desde hace diez años.']],
+      [['X', '¿Alguien sabe quién paga la cena?'], ['A', 'Seguro que {B}, que acaba de firmar un gran contrato.'], ['B', 'Ni lo sueñes.']]
+    ]
+  };
+  /* tus posibles respuestas cuando dos líderes discuten en público */
+  D.TALK_REPLY = {
+    duel: [['Apoyar a {A}', 'rel.A+3:Lo apoyaste en público;rel.B-3:Tomaste partido'], ['Apoyar a {B}', 'rel.B+3:Lo apoyaste en público;rel.A-3:Tomaste partido'], ['Pedir calma a los dos', 'rep.paz+1;rel.A+1:Llamada a la calma;rel.B+1:Llamada a la calma']],
+    gossipGood: [['Agradecer en público', 'rel.A+3:Agradeciste sus palabras;rel.B+2:Agradeciste sus palabras'], ['Tomarlo con humildad', 'rep.conf+1']],
+    gossipBad: [['Responder con dureza', 'sec.all+1;rel.A-4:Le respondiste;rel.B-2:Le respondiste'], ['Invitarlos a dialogar', 'rel.A+2:Tendiste la mano;rel.B+2:Tendiste la mano;rep.paz+1'], ['Ignorarlo', '']]
+  };
+  /* la asamblea de la ONU: discursos según el voto */
+  D.UN_LINES = {
+    si: ['{L} ({C}): «Votamos a favor. El mundo no puede mirar hacia otro lado.»', '{L} ({C}): «Esta resolución es lo mínimo que debemos a las víctimas.»', '{L} ({C}): «{C} apoya la propuesta sin reservas.»'],
+    no: ['{L} ({C}): «Votamos en contra. Esto es injerencia disfrazada de justicia.»', '{L} ({C}): «Una resolución redactada por y para los poderosos.»', '{L} ({C}): «{C} no apoyará este doble rasero.»'],
+    abs: ['{L} ({C}): «Nos abstenemos. Ni con unos ni con otros.»'],
+    fin: { si: 'La presidenta de la Asamblea: «La resolución queda aprobada.» Aplausos en media sala.', no: 'La presidenta de la Asamblea: «La resolución queda rechazada.» Murmullos en el hemiciclo.' }
+  };
+  /* rueda de prensa: preguntas de periodistas según cómo te va */
+  D.MEDIA = ['The Global Times', 'Le Monde Diplomatique', 'Agencia Andina', 'Al Jazira', 'Der Spiegel', 'El Correo del Sur', 'Nikkei Asia', 'Radio Continente'];
+  const Q = [
+    ['war', 'Su guerra cumple otro trimestre. ¿Cuándo volverán a casa los soldados?', [['«Cuando hayamos ganado.»', 'sec.mil+4;sec.jov-3'], ['«Estamos abiertos a negociar.»', 'rep.paz+3;sec.mil-3'], ['«Sin comentarios.»', 'sec.all-1']]],
+    ['war', 'Hay denuncias de víctimas civiles. ¿Abrirá una investigación?', [['«Sí, con observadores internacionales.»', 'rep.gen+4;sec.mil-4'], ['«Son mentiras del enemigo.»', 'rep.gen-3;sec.mil+3']]],
+    ['crisis', 'La crisis golpea a las familias. ¿Qué les dice?', [['«Vienen meses duros, pero saldremos.»', 'sec.all+1'], ['«La culpa es del gobierno anterior.»', 'party.opp-3;rep.conf-1'], ['«Habrá ayudas directas.»', '$g-.3;sec.obr+5']]],
+    ['low', 'Las encuestas le dan su peor nota. ¿Piensa dimitir?', [['«Jamás. El pueblo me eligió.»', 'sec.mil+2;sec.jov-3'], ['«Escucho las críticas y voy a cambiar cosas.»', 'sec.all+2;cp-1'], ['«Las encuestas se equivocan siempre.»', 'sec.all-2']]],
+    ['high', 'Es usted el líder más popular de la década. ¿Su secreto?', [['«Trabajar sin descanso.»', 'sec.all+1'], ['«Escuchar a la gente.»', 'sec.jov+3;sec.obr+2'], ['«Rodearme de los mejores.»', 'sec.emp+3;cp+1']]],
+    ['sanc', 'Varios países le sancionan. ¿Está aislado?', [['«Tenemos más amigos que nunca.»', 'rep.conf-1;sec.mil+2'], ['«Buscaremos el diálogo con todos.»', 'rep.paz+2;rep.conf+2']]],
+    ['any', 'Se rumorea un escándalo de contratos públicos en su gabinete.', [['«Abriré una auditoría independiente.»', 'rep.dem+3;cp-1;sec.all+1'], ['«Es una campaña de desprestigio.»', 'sec.all-2;rep.dem-2'], ['Cortar la pregunta', 'rep.dem-3']]],
+    ['any', '¿Cuál es su prioridad para el próximo año?', [['«La economía.»', 'sec.emp+3'], ['«La educación y la salud.»', 'sec.jov+2;sec.obr+2'], ['«La seguridad.»', 'sec.mil+3;sec.jov-1']]],
+    ['any', 'Una periodista le pregunta por su relación con {X}.', [['«Excelente, y va a mejorar.»', 'rel.T+4:Elogios en rueda de prensa'], ['«Tenemos diferencias que resolver.»', ''], ['«No confiamos en ellos.»', 'rel.T-6:Críticas en rueda de prensa;sec.mil+2']]]
+  ];
+  D.PRESS = Q.map(q => ({ if: q[0], q: q[1], opts: q[2].map(o => ({ t: o[0], fx: fx(o[1]) })) }));
 })();
 
 /* =====================================================================
@@ -5520,7 +5618,7 @@ hook('late', () => {
 });
 function campInfo() {
   const K = S.camp; if (!K) return null; const k = CA(K.id); if (!k) return null; const st = k.stages[Math.min(K.st, k.stages.length - 1)];
-  return { k, K, st, left: st.turns ? st.turns - (S.turn - K.s0) : null, goals: st.goal.map(g => ({ t: goalText(g), ok: goalOk(g) })), end: K.end != null ? k.endings[K.end] : null };
+  return { k, K, st, left: st.turns ? st.turns - (S.turn - K.s0) : null, goals: st.goal.map(g => ({ t: goalText(g), ok: goalOk(g), k: g[0] })), end: K.end != null ? k.endings[K.end] : null };
 }
 
 /* ---- código de partida: semilla + configuración en texto corto ---- */
@@ -5648,6 +5746,73 @@ hook('world', () => {
   if (ci && ci.K.end == null && ci.left != null && ci.left <= 4) { const miss = ci.goals.filter(g => !g.ok).map(g => g.t);
     if (miss.length) out.unshift({ p: 5, t: `Campaña: ${Math.max(0, ci.left)} turno${ci.left === 1 ? '' : 's'} para «${ci.st.n}». Falta: ${miss.join(', ')}`, panel: 'sys', tab: 'obj' }); }
   return out; }; }
+
+
+/* ---------- engine/7j-talk.js ---------- */
+/* =====================================================================
+   SISTEMA · CONVERSACIONES: los líderes hablan entre ellos (y de ti)
+   Durante el turno se anotan los temas (guerras, sanciones, tratados,
+   golpes, anexiones, paces, crisis). Al final se convierten en diálogos
+   que el jugador puede leer y, si quiere, en los que puede intervenir.
+   También: debate en la Asamblea de la ONU y ruedas de prensa.
+   Textos en src/data-talk.js.
+   ===================================================================== */
+hook('new', () => { S.talk = []; S.talkQ = []; S.tkId = 0; }); hook('load', () => { S.talk = S.talk || []; S.talkQ = S.talkQ || []; S.tkId = S.tkId || 0; });
+const notable = z => !!S.c[z] && S.c[z].alive && !isP(z) && (S.c[z].gdp > 300 || nb(S.player).includes(z) || alliesOf(S.player).includes(z));
+const topic = (k, a, b) => { if (S.talkQ && S.c[a] && S.c[b] && a !== b && !isP(a) && !isP(b) && (notable(a) || notable(b))) S.talkQ.push([k, a, b]); };
+{ const w0 = startWar; startWar = (a, d) => { const w = w0(a, d); if (w) topic('war', a, d); return w; }; }
+{ const s0 = addSanction; addSanction = (by, on) => { const r = s0(by, on); if (r) topic('sanc', by, on); return r; }; }
+{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); }; }
+{ const e0 = endWar; endWar = (w, kind) => { const a = w.att[0], d = w.def[0]; e0(w, kind); if (kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); }; }
+{ const c0 = coup; coup = iso => { c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); }; }
+{ const a0 = annex; annex = (v, t) => { const r = a0(v, t); topic('annex', v, t); return r; }; }
+{ const i0 = infect; infect = (iso, src) => { const r = i0(iso, src); if (r) topic('crisis', iso, src || bigOther(iso)); return r; }; }
+const bigOther = (...not) => pick(alive().filter(z => !isP(z) && !not.includes(z)).sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 12));
+
+/* arma un diálogo con una plantilla de D.TALK */
+function converse(k, a, b) {
+  const T = D.TALK[k]; if (!T || !S.c[a] || !S.c[b]) return null; const x = bigOther(a, b), me = S.player;
+  const sub = s => s.split('{A}').join(nm(a)).split('{B}').join(nm(b)).split('{X}').join(x ? nm(x) : 'la comunidad internacional').split('{LA}').join(S.c[a].lider.n).split('{LB}').join(S.c[b].lider.n)
+    .split('{LX}').join(x ? S.c[x].lider.n : '').split('{P}').join(P().n).split('{PL}').join(S.leader.n);
+  const lines = pick(T).filter(l => l[0] !== 'X' || x).map(l => [l[0] === 'A' ? a : l[0] === 'B' ? b : x, sub(l[1])]);
+  const rep = /^gossip/.test(k) ? k : ['war', 'sanc', 'coup', 'annex'].includes(k) ? 'duel' : null;
+  const c = { id: ++S.tkId, t: S.turn, k, a, b, lines, rep, done: 0 }; S.talk.push(c); if (S.talk.length > 40) S.talk.splice(0, S.talk.length - 40); return c;
+}
+hook('late', () => {
+  const Qd = S.talkQ.splice(0), seen = new Set(), done = [];
+  for (const [k, a, b] of shuffle(Qd)) { const key = [a, b].sort().join(); if (seen.has(key) || done.length >= 2) continue; seen.add(key); done.push(converse(k, a, b)); }
+  const me = S.player, L = alive().filter(z => z !== me && S.c[z].gdp > 150);
+  if (chance(.3) && L.length > 3) { const byRel = L.slice().sort((x, y) => rel(me, y) - rel(me, x)), good = chance(.5), pool = good ? byRel.slice(0, 6) : byRel.slice(-6), [a, b] = shuffle(pool);
+    if (a && b && (good ? rel(me, a) > 20 : rel(me, a) < -10)) converse(good ? 'gossipGood' : 'gossipBad', a, b); }
+  if (chance(.1)) { const [a, b] = shuffle(L.filter(z => S.c[z].gdp > 600)); if (a && b) converse('chat', a, b); }
+});
+/* intervenir en una conversación pública */
+ACT.talkReply = a => {
+  const c = S.talk.find(x => x.id === +a.id); if (!c || !c.rep || c.done) return fail('Esa conversación ya no admite respuesta'); if (c.t < S.turn - 2) return fail('Ese debate ya se enfrió');
+  const o = (D.TALK_REPLY[c.rep] || [])[+a.i]; if (!o) return fail('Respuesta inválida');
+  const s = o[1].replace(/rel\.([AB])(?=[+-])/g, (m, w) => 'rel.' + (w === 'A' ? c.a : c.b));
+  applyFx(D.fx(s), {}); c.done = 1; c.lines.push([S.player, o[0].split('{A}').join(nm(c.a)).split('{B}').join(nm(c.b))]); return { msg: 'Tu respuesta da la vuelta al mundo' };
+};
+FREE.talkReply = 1;
+
+/* Asamblea de la ONU: cada voto importante deja discursos */
+{ const v0 = OPS.unVote; OPS.unVote = a => { const r = S.un.cur; v0(a); const last = S.un.last; if (!r || !last || last.r !== r) return;
+  const big = alive().filter(z => !isP(z)).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 14), U = D.UN_LINES, me = S.player, lines = [];
+  const pool = { si: shuffle(U.si.slice()), no: shuffle(U.no.slice()) }, say = (z, side) => lines.push([z, (pool[side].pop() || pick(U[side])).split('{L}').join(S.c[z].lider.n).split('{C}').join(S.c[z].n)]);
+  const yes = shuffle(big.filter(z => unScore(z, r) > .12)).slice(0, 2), no = shuffle(big.filter(z => unScore(z, r) < -.12)).slice(0, 2);
+  yes.forEach(z => say(z, 'si')); no.forEach(z => say(z, 'no')); lines.push([me, `${S.leader.n} (${P().n}): «${a.v > 0 ? 'Votamos a favor.' : a.v < 0 ? 'Votamos en contra.' : 'Nos abstenemos.'}»`]);
+  lines.push(['', `${last.pass ? U.fin.si : U.fin.no} (${last.yes} a favor, ${last.no} en contra, ${last.abs} abstenciones)`]);
+  S.talk.push({ id: ++S.tkId, t: S.turn, k: 'un', a: yes[0] || me, b: no[0] || me, lines, rep: null, done: 1, title: 'Asamblea de la ONU · ' + UNT[r.type] }); }; }
+
+/* rueda de prensa: cada pocos turnos, una pregunta según cómo te va */
+hook('late', () => {
+  if (S.over || S.turn < 3 || S.pend.length > 1 || (S.pressT || 0) > S.turn || !chance(.35)) return;
+  const ap = approval(), ok = { war: inWar(S.player), crisis: !!S.eco.cri, low: ap < 40, high: ap > 62, sanc: S.sanc.filter(s => s.on === S.player).length >= 3, any: true };
+  const Lq = D.PRESS.filter(q => ok[q.if]), hot = Lq.filter(q => q.if !== 'any'), q = pick(hot.length && chance(.7) ? hot : Lq); if (!q) return;
+  const T = pick(alive().filter(z => z !== S.player && (S.c[z].gdp > 400 || nb(S.player).includes(z)))) || null, m = pick(D.MEDIA);
+  S.pressT = S.turn + 5;
+  fireEvent({ id: 'prensa', tgt: null, t: 'Rueda de prensa', x: `${m}: «${q.q.split('{X}').join(T ? nm(T) : 'sus vecinos')}»`, opts: q.opts }, T || S.player);
+});
 
 
 /* ---------- engine/80-turn.js ---------- */
@@ -8195,7 +8360,7 @@ function briefing() {
     : `<p class="eyebrow">${esc(D.MODES.find(m => m.id === s.setup.mode).n)} · ${esc(sc.d)}</p><h2>${esc(cu ? cu.n : sc.n)}</h2><p>${esc(sc.x)}</p><p class="gold">${esc(sc.obj)}</p>${s.setup.mode === 'rapido' ? `<p>Tienes ${D.QUICK_TURNS} turnos. Al final cuenta la puntuación.</p>` : ''}${cu && cu.goals.length ? `<div class="card"><small class="eyebrow">Objetivo del escenario</small><ul>${cu.goals.map(g => `<li>${esc(P5.goalText(g))}</li>`).join('')}</ul></div>` : ''}`;
   SQ.unshift(modalScene(html, 'event')); runSQ();
 }
-const goalsHTML = ci => `<ul class="goals5">${ci.goals.map(g => `<li class="${g.ok ? 'ok' : ''}">${gi(g.ok ? 'check' : 'pin')} ${esc(g.t)}</li>`).join('')}</ul>${ci.left != null ? `<small class="${ci.left <= 4 ? 'red' : 'mut'}">Plazo: ${Math.max(0, ci.left)} turnos</small>` : ''}`;
+const goalsHTML = ci => `<ul class="goals5">${ci.goals.map(g => `<li class="${g.ok ? 'ok' : ''}">${gi(g.ok ? 'check' : 'pin')} ${esc(g.t)}${!g.ok && GOAL_GO[g.k] ? `<button class="btn sm" data-a="goGoal" data-k="${g.k}">Ir</button>` : ''}</li>`).join('')}</ul>${ci.left != null ? `<small class="${ci.left <= 4 ? 'red' : 'mut'}">Plazo: ${Math.max(0, ci.left)} turnos</small>` : ''}`;
 Bus.on('campStage', e => { const ci = P5.campInfo(); if (!ci || ci.K.end != null) return; scene(modalScene(`<p class="eyebrow">Etapa cumplida · ${esc(e.n)}</p><h2>${esc(ci.st.n)}</h2><p>${esc(ci.st.x)}</p>${goalsHTML(ci)}`, 'event')); });
 
 /* ---- en partida: objetivos, mediación, sin editor y muerte permanente ---- */
@@ -8206,14 +8371,17 @@ function objHTML() {
   const camp = ci ? `<div class="card"><p class="eyebrow">Campaña · etapa ${Math.min(ci.K.st + 1, ci.k.stages.length)} de ${ci.k.stages.length}</p><h3>${esc(ci.k.n)} · ${esc(ci.st.n)}</h3><p>${esc(ci.st.x)}</p>${goalsHTML(ci)}
     <small class="mut">Derrota si: ${(ci.k.lose || []).map(g => esc(P5.goalText(g))).join(' · ') || 'pierdes el poder'}</small></div>` : '';
   const vic = md === 'libre' || md === 'semana' || md === 'sandbox' ? `<h4>${gi('trofeo')} Victorias</h4><ul class="vlist">${D.VICT.map(x => `<li class="${s.p5.vicDone[x.id] ? 'ok' : ''}">${gi(x.ic)} <b>${esc(x.n)}</b>${s.p5.vicDone[x.id] ? ' · conseguida' : v[x.id] ? ' · ¡al alcance!' : ''}<small>${esc(x.x)}</small></li>`).join('')}</ul>${cu && cu.goals.length ? `<h4>Objetivo del escenario</h4><ul class="goals5">${cu.goals.map(g => `<li class="${P5.goalOk(g) ? 'ok' : ''}">${esc(P5.goalText(g))}</li>`).join('')}</ul>` : ''}` : md === 'rapido' ? `<p class="card">Turno ${s.turn + 1} de ${D.QUICK_TURNS}: al final cuenta la puntuación.</p>` : '';
-  return `${camp}${vic}<h4>${gi('trofeo')} Puntuación actual: ${sc.total} / 100</h4>${scoreHTML(sc)}<p class="mut fine">La fórmula es pública: ocho bloques con un máximo cada uno, así que ni la guerra ni el dinero bastan por sí solos.</p>
+  return `${camp}${vic}<h4>${gi('trofeo')} Puntuación actual: ${sc.total} / 100${bestRec() != null ? ` <small class="mut">· tu récord aquí: ${bestRec()}</small>` : ''}</h4>${scoreHTML(sc)}<p class="mut fine">La fórmula es pública: ocho bloques con un máximo cada uno, así que ni la guerra ni el dinero bastan por sí solos.</p>
     <p class="mut">Escenario: ${esc(P5.SC(s.setup.scen).n)} · Modo: ${esc(D.MODES.find(m => m.id === md).n)}${Object.keys(s.setup.opts).filter(k => s.setup.opts[k]).length ? ' · Reglas: ' + Object.keys(s.setup.opts).filter(k => s.setup.opts[k]).map(k => (OPTS.find(o => o[0] === k) || [0, k === 'rapido' ? 'Rápido' : k])[1]).join(', ') : ''}</p>`;
 }
 const scoreHTML = sc => `<div class="score5">${sc.parts.map(p => `<div class="arow"><div class="grow"><b>${esc(p.n)}</b><small>${esc(p.why)}</small></div>${bar(p.v, p.max, p.v / p.max >= .6 ? 'green' : p.v / p.max < .3 ? 'red' : '')}<b class="num">${p.v.toFixed(1)}/${p.max}</b></div>`).join('')}</div>`;
 const codeBoxHTML = () => `<h4>${gi('acuerdo')} Compartir esta partida</h4><p class="mut fine">El código guarda la semilla y la configuración inicial: quien lo pegue empezará con el mismo mundo.</p><input class="code5" readonly value="${esc(P5.gameCode())}" onclick="this.select()">`;
 { const d0 = dockHTML; dockHTML = () => { let h = d0(); const s = S(), ci = s && P5.campInfo(); if (s && P5.opt('solo') && s.setup.mode !== 'sandbox') h = h.replace(/<button data-a="open" data-p="edit"[\s\S]*?<\/button>/, '');
   if (ci && ci.K.end == null) h += `<button class="camp-pill glass" data-a="objOpen" title="Objetivos de la campaña">${gi('bandera')} ${esc(ci.st.n)} · ${ci.goals.filter(g => g.ok).length}/${ci.goals.length}${ci.left != null ? ` · ${Math.max(0, ci.left)}t` : ''}</button>`;
-  else if (s && s.setup.mode === 'rapido') h += `<button class="camp-pill glass" data-a="objOpen">${gi('ofensiva')} Turno ${s.turn + 1}/${D.QUICK_TURNS}</button>`; return h; }; }
+  else if (s && s.setup.mode === 'rapido') h += `<button class="camp-pill glass" data-a="objOpen">${gi('ofensiva')} Turno ${s.turn + 1}/${D.QUICK_TURNS} · ${P5.score().total} pts${bestRec() != null ? ' · récord ' + bestRec() : ''}</button>`;
+  else if (s && s.setup.mode === 'semana' && !s.over) h += `<button class="camp-pill glass" data-a="objOpen">${gi('trofeo')} Reto semanal · ${P5.score().total} pts${bestRec() != null ? ' · récord ' + bestRec() : ''}</button>`; return h; }; }
+const GOAL_GO = { tr: ['dip'], rel: ['dip'], relBig: ['dip'], noSanc: ['dip'], bloc: ['dip'], rep: ['dip'], med: ['world'], laws: ['pol'], reg: ['pol'], appr: ['pol'], stab: ['pol'], gdpX: ['eco'], gdpRank: ['eco'], debtLt: ['eco'], tech: ['tec'], firsts: ['tec'], annex: ['mil'], occ: ['mil'], warsWon: ['mil'], powRank: ['mil'], peace: ['mil'] };
+H.goGoal = d => { const g = GOAL_GO[d.k]; if (!g) return; closeModal(); UI.panel = g[0]; UI.render(); refreshMap(); if (d.k === 'med') toast('Toca en el globo a uno de los bandos de una guerra y pulsa «Mediar»'); };
 H.objOpen = () => { UI.panel = 'sys'; UI.tab.sys = 'obj'; UI.render(); };
 { const x0 = sheetExtra; sheetExtra = iso => { const s = S(), w = s.wars.filter(w => (w.att.includes(iso) || w.def.includes(iso)) && !w.att.includes(me()) && !w.def.includes(me()));
   return x0(iso) + (w.length && iso !== me() ? `<h4>${gi('paz')} Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
@@ -8235,7 +8403,7 @@ for (const v of D.VICT) OVER['vic_' + v.id] = [v.n, v.x];
   (legacyCard || box.querySelector('.kvs')).insertAdjacentHTML('afterend', `<details class="p5det" open><summary>${gi('trofeo')} Puntuación: <b>${sc.total} / 100</b></summary>${scoreHTML(sc)}</details>
     <details class="p5det"><summary>${gi('pin')} La línea del tiempo de tu mandato</summary>${timelineHTML()}</details>
     <details class="p5det"><summary>${gi('regalo')} Cómo te recuerda cada país</summary>${memoryHTML()}</details>
-    <details class="p5det" id="epiBox"><summary>${gi('ojo')} Qué pasó después</summary><p class="mut">Simula el mundo durante los años siguientes sin ti. Nada de lo que pase cambia tu partida.</p><button class="btn" data-a="epilogue">Ver el epílogo (12 turnos)</button></details>`);
+    <details class="p5det" id="epiBox"><summary>${gi('ojo')} Qué pasó después</summary><p class="mut">Simula el mundo durante los años siguientes sin ti. Nada de lo que pase cambia tu partida.</p><div class="row wrap">${[10, 15, 20].map(n => `<button class="btn" data-a="epilogue" data-n="${n}">${n} turnos</button>`).join('')}</div></details>`);
   box.querySelector('.row.end').insertAdjacentHTML('afterbegin', `${win && !s.p5.cont ? '<button class="btn gold" data-a="keepPlaying">Seguir gobernando</button>' : ''}<button class="btn" data-a="resultCard">Tarjeta de resultado</button>`); }; }
 H.keepPlaying = () => { const r = act('keepPlaying'); if (r.ok) { closeModal(); UI.render(); refreshMap(); autosave(); } };
 function timelineHTML() { const s = S(), L = (s.p5.tl || []).concat((s.diary || []).filter(d => ['war', 'peace', 'elec', 'coup'].includes(d.k)).map(d => ({ t: d.t, x: d.x }))).sort((a, b) => a.t - b.t);
@@ -8245,13 +8413,15 @@ const turnDate = t => { const s = S(), a = s.year * 4 + s.q - (s.turn - t); retu
 function memoryHTML() { const s = S(), L = Object.keys(s.c).filter(z => z !== me() && CC(z).alive).sort((a, b) => CC(b).gdp - CC(a).gdp).slice(0, 10).concat(Q.nb(me()).filter(z => CC(z).alive)).filter((z, i, a) => a.indexOf(z) === i).slice(0, 14);
   return `<div class="mem5">${L.map(z => { const r = Q.rel(me(), z), m = Q.memOf(me(), z).sort((a, b) => Math.abs(b.v) - Math.abs(a.v))[0], w = r >= 50 ? 'como un gran amigo' : r >= 20 ? 'con simpatía' : r > -20 ? 'con indiferencia' : r > -50 ? 'con recelo' : 'como un enemigo';
     return `<div class="arow"><span>${flag(z)}</span><div class="grow"><b>${cname(z)}</b><small>Te recuerda ${w}${m ? ' · sobre todo: «' + esc(m.k) + '»' : ''}</small></div><b class="num ${r >= 0 ? 'green' : 'red'}">${sgn(r)}</b></div>`; }).join('')}</div>`; }
-H.epilogue = () => { const box = $('#epiBox'); if (!box) return; const h = Bus.h; Bus.h = {}; UI.sim = 1; let e; try { e = P5.epilogue(12); } finally { Bus.h = h; UI.sim = 0; }
+H.epilogue = d => { const box = $('#epiBox'); if (!box) return; const h = Bus.h; Bus.h = {}; UI.sim = 1; let e; try { e = P5.epilogue(+d.n || 12); } finally { Bus.h = h; UI.sim = 0; }
   box.innerHTML = `<summary>${gi('ojo')} Qué pasó después</summary><p class="eyebrow">Hasta ${esc(e.date)} (${e.n} trimestres)</p>
     <p>${e.alive ? `${cname(me())} ${e.gdpCh >= 0 ? 'siguió creciendo' : 'perdió fuelle'} (${sgn(e.gdpCh, 0)}% de PIB) con estabilidad de ${e.stab}.` : `${cname(me())} no sobrevivió a los años siguientes.`} ${e.wars ? `Quedaron ${e.wars} guerras abiertas en el mundo.` : 'El mundo vivió en paz.'}
     ${e.rise.length ? ` Ascendieron ${e.rise.map(cname).join(', ')}.` : ''}${e.fall.length ? ` Cayeron del podio ${e.fall.map(cname).join(', ')}.` : ''}</p>
     <ol class="tl5">${e.heads.map(x => `<li>${esc(x.x)}</li>`).join('') || '<li class="mut">Años tranquilos.</li>'}</ol>`; box.open = true; };
+const recKey = s => s.setup.camp ? 'camp:' + s.setup.camp : s.setup.mode === 'semana' ? 'semana:' + s.setup.week : s.setup.scen;
+const bestRec = () => { const s = S(), R = s && (PROG.rec[recKey(s)] || []).filter(x => x.gid !== s.p5.gid); return R && R.length ? R[0].sc : null; };
 function recordGame() {
-  const s = S(); if (!s || !s.over || UI.sim) return; const sc = P5.score(), L = Q.legacy(), key = s.setup.camp ? 'camp:' + s.setup.camp : s.setup.mode === 'semana' ? 'semana:' + s.setup.week : s.setup.scen, gid = s.p5.gid || '';
+  const s = S(); if (!s || !s.over || UI.sim) return; const sc = P5.score(), L = Q.legacy(), key = recKey(s), gid = s.p5.gid || '';
   const R = PROG.rec[key] = (PROG.rec[key] || []).filter(x => x.gid !== gid); R.push({ gid, n: s.leader.n, iso: s.player, sc: sc.total, t: s.turn, r: s.over.r, leg: L.title, d: Q.dateStr(), m: s.setup.mode });
   R.sort((a, b) => b.sc - a.sc); R.splice(10);
   const ci = P5.campInfo(); if (ci && ci.K.end != null) { const E = PROG.g.campEnds[ci.k.id] = PROG.g.campEnds[ci.k.id] || []; if (!E.includes(ci.K.end)) E.push(ci.K.end); }
@@ -8418,6 +8588,36 @@ Bus.on('turn', t => { if (CFG.rm || !t || !t.news) return; const seen = new Set(
 function recap(L) {
   L.forEach((n, i) => setTimeout(() => { const k = /declara la guerra|ataca|bombarde|invade/i.test(n.x) ? 'war' : /golpe|revoluci|derroca/i.test(n.x) ? 'coup' : /paz|alto el fuego/i.test(n.x) ? 'peace' : n.k;
     ringAt(n.i, RC[k] || RC.pol, n.p >= 3 ? .11 : .07, n.p >= 3 ? 2000 : 1400); if (k === 'war' && n.p >= 3) fxAt('humo', n.i); }, 300 + i * 420)); }
+
+
+/* ---------- ui/5h-talk.js ---------- */
+/* =====================================================================
+   INTERFAZ · CONVERSACIONES: lo que los líderes se dicen entre ellos
+   Mundo → Conversaciones muestra los diálogos como un chat (con retrato y
+   bandera). Tras cada turno, el diálogo más reciente asoma sobre el globo
+   y un arco cian une a quienes hablan. Puedes intervenir en los debates.
+   ===================================================================== */
+PTABS.world.splice(1, 0, ['con', 'Conversaciones']);
+{ const w0 = PANELS.world; PANELS.world = t => t === 'con' ? talkHTML() : w0(t); }
+const TK_N = { war: 'Guerra', sanc: 'Sanciones', treaty: 'Tratado', coup: 'Golpe de Estado', annex: 'Anexión', peace: 'Paz', crisis: 'Crisis', gossipGood: 'Hablan de ti', gossipBad: 'Hablan de ti', chat: 'En los pasillos de la cumbre', un: 'Asamblea de la ONU' };
+const face = z => { if (!z || !CC(z)) return `<span class="tk-face sys">${gi('cultural')}</span>`; const L = z === me() ? S().leader : CC(z).lider; return `<span class="tk-face">${portraitSVG(L.n, hash(L.n) % 97)}${L.img ? `<img src="${esc(L.img)}" alt="" onerror="this.remove()">` : ''}</span>`; };
+function talkCard(c) {
+  const s = S(), open = c.rep && !c.done && c.t >= s.turn - 2, side = z => 'tk-' + (z === me() ? 'me' : z === c.a ? 'l' : z === c.b ? 'r' : 'x');
+  return `<div class="card talk5"><p class="eyebrow">${esc(c.title || TK_N[c.k] || 'Conversación')} · ${esc(turnDate(c.t))}</p>
+    ${c.lines.map(([z, t]) => `<div class="tk-line ${side(z)}">${z ? face(z) : ''}<div class="tk-b">${z && CC(z) ? `<small>${fl(z)} ${esc(z === me() ? S().leader.n : CC(z).lider.n)}</small>` : ''}<p>${esc(t)}</p></div></div>`).join('')}
+    ${open ? `<div class="row wrap tk-rep"><small class="mut">Intervenir:</small>${D.TALK_REPLY[c.rep].map((o, i) => `<button class="btn sm" data-a="talkReply" data-id="${c.id}" data-i="${i}">${esc(o[0].split('{A}').join(CC(c.a).n).split('{B}').join(CC(c.b).n))}</button>`).join('')}</div>` : ''}</div>`;
+}
+const talkHTML = () => { const L = (S().talk || []).slice().reverse(); return L.length ? `<p class="mut fine">Lo que los líderes se dicen en cumbres, pasillos y asambleas. En los debates abiertos puedes intervenir: tomar partido tiene consecuencias.</p>${L.map(talkCard).join('')}` : '<p class="mut pad">Aún no ha hablado nadie. Termina el turno y escucha.</p>'; };
+H.talkReply = d => { act('talkReply', { id: +d.id, i: +d.i }); UI.render(); };
+H.talkOpen = () => { $('#tkpop')?.remove(); UI.panel = 'world'; UI.tab.world = 'con'; UI.render(); };
+/* tras el turno: el diálogo más jugoso asoma sobre el globo */
+Bus.on('turn', () => { const s = S(); if (!s || !s.talk) return; const fresh = s.talk.filter(c => c.t === s.turn); if (!fresh.length) return;
+  const c = fresh.find(x => x.rep) || fresh[0]; let tries = 0; clearInterval(UI.tkT);
+  UI.tkT = setInterval(() => { if (++tries > 120 || !S() || S().turn !== s.turn) return clearInterval(UI.tkT); if (!$('#modal').hidden || !$('#cine').hidden) return; clearInterval(UI.tkT);
+    if (!CFG.rm) fresh.slice(0, 3).forEach((x, i) => x.a !== x.b && setTimeout(() => Globe.trip({ a: x.a, b: x.b, color: 0x4fd8ff }), i * 600));
+    $('#tkpop')?.remove(); const d = document.createElement('button'); d.id = 'tkpop'; d.className = 'tkpop glass'; d.dataset.a = 'talkOpen';
+    d.innerHTML = `<small class="eyebrow">${esc(TK_N[c.k] || 'Conversación')} · ${fresh.length > 1 ? fresh.length + ' conversaciones' : 'escucha'}</small>${c.lines.slice(0, 2).map(([z, t]) => `<p>${z && CC(z) ? fl(z) + ' <b>' + esc(CC(z).lider.n) + ':</b> ' : ''}${esc(t)}</p>`).join('')}<small class="gold">Ver conversación ›</small>`;
+    document.body.appendChild(d); setTimeout(() => d.remove(), 9000); }, 400); });
 
 
 /* ---------- ui/90-boot.js ---------- */

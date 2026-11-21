@@ -169,7 +169,7 @@ hook('late', () => {
 });
 function campInfo() {
   const K = S.camp; if (!K) return null; const k = CA(K.id); if (!k) return null; const st = k.stages[Math.min(K.st, k.stages.length - 1)];
-  return { k, K, st, left: st.turns ? st.turns - (S.turn - K.s0) : null, goals: st.goal.map(g => ({ t: goalText(g), ok: goalOk(g) })), end: K.end != null ? k.endings[K.end] : null };
+  return { k, K, st, left: st.turns ? st.turns - (S.turn - K.s0) : null, goals: st.goal.map(g => ({ t: goalText(g), ok: goalOk(g), k: g[0] })), end: K.end != null ? k.endings[K.end] : null };
 }
 
 /* ---- código de partida: semilla + configuración en texto corto ---- */
