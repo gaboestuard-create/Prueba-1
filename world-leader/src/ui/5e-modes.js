@@ -198,9 +198,10 @@ function memoryHTML() { const s = S(), L = Object.keys(s.c).filter(z => z !== me
     return `<div class="arow"><span>${flag(z)}</span><div class="grow"><b>${cname(z)}</b><small>Te recuerda ${w}${m ? ' · sobre todo: «' + esc(m.k) + '»' : ''}</small></div><b class="num ${r >= 0 ? 'green' : 'red'}">${sgn(r)}</b></div>`; }).join('')}</div>`; }
 H.epilogue = d => { const box = $('#epiBox'); if (!box) return; const h = Bus.h; Bus.h = {}; UI.sim = 1; let e; try { e = P5.epilogue(+d.n || 12); } finally { Bus.h = h; UI.sim = 0; }
   box.innerHTML = `<summary>${gi('ojo')} Qué pasó después</summary><p class="eyebrow">Hasta ${esc(e.date)} (${e.n} trimestres)</p>
-    <p>${e.alive ? `${cname(me())} ${e.gdpCh >= 0 ? 'siguió creciendo' : 'perdió fuelle'} (${sgn(e.gdpCh, 0)}% de PIB) con estabilidad de ${e.stab}.` : `${cname(me())} no sobrevivió a los años siguientes.`} ${e.wars ? `Quedaron ${e.wars} guerras abiertas en el mundo.` : 'El mundo vivió en paz.'}
+    <p>${e.alive ? `${cname(me())} ${e.gdpCh >= 0 ? 'siguió creciendo' : 'perdió fuelle'} (${sgn(e.gdpCh, 0)}% de PIB) con estabilidad de ${e.stab}.` : `${cname(me())} no sobrevivió a los años siguientes.`} ${e.wars ? `Al final quedaban ${e.wars} guerras abiertas en el mundo.` : 'Al final no quedaba ninguna guerra abierta.'}
     ${e.rise.length ? ` Ascendieron ${e.rise.map(cname).join(', ')}.` : ''}${e.fall.length ? ` Cayeron del podio ${e.fall.map(cname).join(', ')}.` : ''}</p>
-    <ol class="tl5">${e.heads.map(x => `<li>${esc(x.x)}</li>`).join('') || '<li class="mut">Años tranquilos.</li>'}</ol>`; box.open = true; };
+    <ol class="tl5">${e.heads.map(x => `<li>${esc(x.x)}</li>`).join('') || '<li class="mut">Años tranquilos.</li>'}</ol>
+    <div class="row wrap"><small class="mut">Otra simulación:</small>${[10, 15, 20].map(n => `<button class="btn sm" data-a="epilogue" data-n="${n}">${n} turnos</button>`).join('')}</div>`; box.open = true; };
 const recKey = s => s.setup.camp ? 'camp:' + s.setup.camp : s.setup.mode === 'semana' ? 'semana:' + s.setup.week : s.setup.scen;
 const bestRec = () => { const s = S(), R = s && (PROG.rec[recKey(s)] || []).filter(x => x.gid !== s.p5.gid); return R && R.length ? R[0].sc : null; };
 function recordGame() {

@@ -41,8 +41,8 @@ hook('late', () => {
 });
 /* intervenir en una conversación pública */
 ACT.talkReply = a => {
-  const c = S.talk.find(x => x.id === +a.id); if (!c || !talkOpen(c)) return fail('Esa conversación ya no admite respuesta');
-  const o = (D.TALK_REPLY[c.rep] || [])[+a.i]; if (!o) return fail('Respuesta inválida');
+  const c = S.talk.find(x => x.id === +a.id); if (!c || !talkOpen(c) || !S.c[c.a].alive || !S.c[c.b].alive) return fail('Esa conversación ya no admite respuesta');
+  const o = Number.isInteger(a.i) && (D.TALK_REPLY[c.rep] || [])[a.i]; if (!o) return fail('Respuesta inválida');
   applyFx(D.fx(o[1].replace(/rel\.([AB])(?=[+-])/g, (all, w) => 'rel.' + (w === 'A' ? c.a : c.b))), {});
   c.done = 1; c.lines.push([S.player, fill(o[0], { A: nm(c.a), B: nm(c.b) })]); return { msg: 'Tu respuesta da la vuelta al mundo' };
 };
