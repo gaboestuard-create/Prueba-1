@@ -172,6 +172,16 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   const r0 = q.rel('MX', 'IN'); assert(G.act('talkReply', { id: c.id, i: 0 }).ok && q.rel('MX', 'IN') > r0, 'apoyar mejora la relación'); assert(!G.act('talkReply', { id: c.id, i: 0 }).ok, 'una sola intervención');
   S.un.queue = null; let un = 0, press = 0; for (let i = 0; i < 40 && !(un && press); i++) { let k = 0; while (S.pend.length && k++ < 20) { if (S.pend[0].id === 'prensa') press++; G.act('decide', { i: 0 }); } G.act('endTurn'); un = S.talk.filter(x => x.k === 'un').length; }
   assert(un && press, 'la ONU deja discursos y hay ruedas de prensa'); assert(S.talk.length <= 40); noNaN(S, 'S'); }
+// regiones con vida: malestar, independentismo, acciones, crisis y desastres
+{ G.newGame({ iso: 'ES', name: 'R', seed: 9 }); const S = G.S, q = G.q; S.pend = []; S.pol.nextElec = 999; const cat = S.c.ES.terr.findIndex(t => t.n === 'Cataluña');
+  assert(cat > 0 && q.sepOf('ES', cat) && q.rlInfo(cat).sep >= 50, 'Cataluña tiene movimiento'); assert(q.rlInfo(1) && q.rlInfo(1).sep == null || q.sepOf('ES', 1), 'solo las regiones con movimiento tienen independentismo');
+  const m0 = q.rlInfo(cat).m; assert(G.act('rlAct', { i: cat, k: 'inv' }).ok && q.rlInfo(cat).m < m0 && q.rlInfo(cat).inv === 6); assert(!G.act('rlAct', { i: cat, k: 'visita' }).ok, 'una acción cada dos turnos');
+  assert(!G.act('rlAct', { i: 1, k: 'aut' }).ok || q.sepOf('ES', 1), 'sin movimiento no hay autonomía'); assert(!G.act('rlAct', { i: cat, k: 'xx' }).ok);
+  S.rl[cat].sep = 95; S.rl[cat].cd = 0; G.act('endTurn'); const p = S.pend.find(x => x.id === 'region'); assert(p && /Crisis independentista/.test(p.t), 'llega la crisis independentista');
+  S.pend = [p]; G.act('decide', { i: 0 }); assert(S.rl[cat].aut && S.rl[cat].sep < 95, 'el referéndum pactado da autonomía');
+  for (let i = 0; i < 30; i++) { let k = 0; while (S.pend.length && k++ < 20) G.act('decide', { i: 0 }); G.act('endTurn'); }
+  assert(!(S.errs || []).length, JSON.stringify(S.errs)); for (const k in S.rl) assert(S.rl[k].m >= 0 && S.rl[k].m <= 100); noNaN(S, 'S');
+  const old = JSON.parse(G.save()); delete old.rl; assert(G.load(JSON.stringify(old)).ok && G.S.rl, 'partida sin regiones vivas carga'); G.S.pend = []; assert(G.S.over || G.act('endTurn').ok); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

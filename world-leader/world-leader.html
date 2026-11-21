@@ -426,6 +426,8 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .tkpop { position: fixed; left: calc(var(--sl) + 86px); bottom: calc(70px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
 .tkpop p { margin: 4px 0; font-size: 13px; } .tkpop small.gold { color: var(--gold); }
 @media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
+.rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
+.rlhot { margin: 6px 0; align-items: center; }
 
 </style>
 
@@ -1647,6 +1649,58 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     CO: { pet: 'Meta,Casanare', car: 'La Guajira,Cesar', caf: 'Huila,Antioquia,Caldas', oro: 'Antioquia' },
     GB: { pet: 'Escocia', gas: 'Escocia' }, DE: { car: 'Renania del Norte-Westfalia,Brandeburgo' }, FR: { tri: 'Centro-Valle de Loira,Alta Francia', ura: 'Nueva Aquitania' }
   };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · REGIONES CON VIDA PROPIA Y DESASTRES LOCALES
+   D.SEPAR: movimientos independentistas o autonomistas reales (aproximado,
+   verificado: false). [país, nombre de la región tal como está en el mapa,
+   movimiento, fuerza inicial 0-100].
+   D.RL: ajustes del malestar regional y de las acciones.
+   D.RDIS: desastres que caen sobre una región concreta.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx;
+  D.SEPAR = [
+    ['ES', 'Cataluña', 'el independentismo catalán', 55], ['ES', 'País Vasco', 'el nacionalismo vasco', 35], ['GB', 'Escocia', 'el independentismo escocés', 50],
+    ['CA', 'Quebec', 'el soberanismo quebequés', 35], ['FR', 'Córcega', 'el nacionalismo corso', 30], ['CN', 'Xinjiang', 'el movimiento uigur', 45], ['CN', 'Tíbet', 'el movimiento tibetano', 45],
+    ['IN', 'Jammu y Cachemira', 'el separatismo cachemir', 55], ['RU', 'Chechenia', 'el separatismo checheno', 40], ['ID', 'Papúa', 'el movimiento por Papúa Libre', 50],
+    ['PK', 'Baluchistán', 'el separatismo baluchi', 50], ['SN', 'Ziguinchor', 'el movimiento de Casamance', 35], ['CM', 'Sudoeste', 'el movimiento anglófono de Ambazonia', 50],
+    ['IT', 'Véneto', 'el autonomismo véneto', 25], ['IT', 'Cerdeña', 'el nacionalismo sardo', 20], ['GE', 'Abjasia', 'el separatismo abjasio', 70], ['BO', 'Santa Cruz', 'el autonomismo cruceño', 35],
+    ['US', 'Texas', 'el movimiento «Texit»', 10], ['MX', 'Chiapas', 'el movimiento zapatista', 30]
+  ];
+  D.RL = {
+    drift: .15, sepDrift: .08, protestAt: 50, riotAt: 68, crisisAt: 60, protestStab: .4, cooldown: 6,
+    acts: {
+      inv: { n: 'Invertir en la región', x: 'Obras y empleo durante 6 turnos: baja el malestar y el independentismo.', cp: 1, gdp: .004, m: -10, sep: -4, turns: 6 },
+      visita: { n: 'Visitar la región', x: 'Te dejas ver: baja el malestar un poco.', cp: 1, m: -8, sep: -2 },
+      dura: { n: 'Mano dura', x: 'Policía y orden durante 4 turnos: baja mucho el malestar, pero sube el independentismo y tu imagen democrática sufre.', cp: 1, m: -15, sep: 8, dem: -2, turns: 4 },
+      aut: { n: 'Conceder autonomía', x: 'Más autogobierno: baja mucho el independentismo. Los militares no lo verán bien.', cp: 2, sep: -25, m: -10, mil: -3, sep_only: 1 }
+    }
+  };
+  /* desastres: nombre, dónde pueden caer (lat mínima/máxima en valor absoluto) y opciones */
+  D.RDIS = [
+    { k: 'huracan', n: 'Un huracán', lat: [8, 32], coast: 1, ic: 'tormenta' },
+    { k: 'terremoto', n: 'Un terremoto', lat: [0, 60], ic: 'des' },
+    { k: 'inundacion', n: 'Inundaciones', lat: [0, 60], ic: 'tormenta' },
+    { k: 'incendio', n: 'Un gran incendio forestal', lat: [15, 55], ic: 'exp' },
+    { k: 'sequia', n: 'Una sequía extrema', lat: [10, 40], ic: 'humo' },
+    { k: 'brote', n: 'Un brote epidémico', lat: [0, 60], ic: 'des' }
+  ];
+  D.RDIS_OPTS = [
+    ['Ayuda masiva del Estado', '$g-.4;sec.all+2', -25], ['Ayuda limitada', '$g-.1', -8],
+    ['Enviar al ejército', 'sec.mil+3', -15], ['Pedir ayuda internacional', 'relAll.big+2:Ayuda en la catástrofe;rep.conf-1', -12]
+  ].map(o => ({ t: o[0], fx: fx(o[1]), m: o[2] }));
+  /* crisis independentista y disturbios: opciones con efectos nacionales y regionales (m = malestar, sep = independentismo) */
+  D.RCRISIS = [
+    { t: 'Referéndum pactado', fx: fx('rep.dem+6;stab-3'), m: -20, sep: -30, aut: 1, ref: 1 },
+    { t: 'Negociar más autogobierno', fx: fx('cp-2;sec.mil-3'), m: -15, sep: -25, aut: 1 },
+    { t: 'Suspender la autonomía', fx: fx('rep.dem-8;sec.mil+4;stab+2'), m: 15, sep: 10 }
+  ];
+  D.RRIOT = [
+    { t: 'Abrir una mesa de diálogo', fx: fx('cp-1'), m: -15 }, { t: 'Paquete de ayudas para la región', fx: fx('$g-.2'), m: -20 },
+    { t: 'Desplegar a la policía antidisturbios', fx: fx('rep.dem-3;sec.mil+2'), m: -25, sep: 8 }
+  ];
 })();
 
 /* =====================================================================
@@ -5821,6 +5875,80 @@ hook('late', () => {
 });
 
 
+/* ---------- engine/7k-regions.js ---------- */
+/* =====================================================================
+   SISTEMA · REGIONES CON VIDA PROPIA
+   Cada región de tu país tiene malestar (0-100) y, si allí hay un
+   movimiento real, independentismo. El malestar sube con la pobreza
+   relativa, la inestabilidad nacional y si la región vota a la oposición.
+   Provoca protestas, disturbios y crisis independentistas. Puedes invertir,
+   visitar, aplicar mano dura o conceder autonomía. Además, desastres que
+   caen sobre una región concreta. Datos en src/data-regions2.js.
+   ===================================================================== */
+hook('new', () => { S.rl = {}; }); hook('load', () => { S.rl = S.rl || {}; });
+const SEPI = {}; D.SEPAR.forEach(([iso, rn, mov, base]) => { const i = D.C[iso] ? D.C[iso].terr.findIndex(t => t.n === rn) : -1; if (i >= 0) (SEPI[iso] = SEPI[iso] || {})[i] = { mov, base }; });
+const sepOf = (iso, i) => (SEPI[iso] || {})[i] || null;
+const ownRegs = () => P().terr.map((t, i) => i).filter(i => P().terr[i].o === S.player);
+function rlOf(i) { const r = S.rl[i]; if (r) return r; const s = sepOf(S.player, i); return S.rl[i] = { m: 20, sep: s ? s.base : 0, inv: 0, dura: 0, aut: 0, cd: 0 }; }
+function rlWhy(i) {
+  const g = D.C[S.player].terr[i], c = P(), t = c.terr[i], n = c.terr.length, rich = (g.e || 0) / Math.max(.0001, g.w || 1 / n), r = rlOf(i), out = [];
+  const add = (v, x) => { if (Math.abs(v) >= 1) out.push([Math.round(v), x]); return v; };
+  let v = add((100 - c.stab) * .6, 'Inestabilidad del país');
+  if ((g.w || 0) >= .003) v += add(clamp(1 - rich, 0, 1) * 32, 'Más pobre que la media'); // los territorios diminutos no tienen datos fiables
+  if (t.p && t.p !== c.partido && t.p !== D.SUB_RULING[S.player]) v += add(12, 'Vota a la oposición');
+  if (r.sep) v += add(r.sep * .3, 'Independentismo');
+  if (r.inv > S.turn) v += add(-15, 'Inversión en curso'); if (r.dura > S.turn) v += add(-20, 'Mano dura');
+  return { target: clamp(v, 0, 100), why: out };
+}
+const rlMod = (i, d) => { const r = rlOf(i); if (d.m) r.m = clamp(r.m + d.m, 0, 100); if (d.sep && sepOf(S.player, i)) r.sep = clamp(r.sep + d.sep, 0, 100); if (d.aut) r.aut = 1; };
+OPS.rlMod = a => { if (P().terr[a.i]) rlMod(a.i, a); };
+const regPend = (t, x, i, list) => pushPend({ k: 'event', id: 'region', t, x, iso: S.player, opts: list.map(o => ({ t: o.t, fx: o.fx.concat([['do', 'rlMod', { i, m: o.m || 0, sep: o.sep || 0, aut: o.aut || 0 }]]) })) });
+hook('player', () => {
+  const L = D.RL, c = P(); let protests = 0;
+  for (const i of ownRegs()) { const r = rlOf(i), s = sepOf(S.player, i), w = rlWhy(i);
+    r.m = clamp(r.m + (w.target - r.m) * L.drift + rr(-4, 4), 0, 100);
+    if (s) r.sep = clamp(r.sep + (s.base * .8 + r.m * .4 + (r.dura > S.turn ? 15 : 0) - (r.aut ? 25 : 0) - (r.inv > S.turn ? 5 : 0) - r.sep) * L.sepDrift, 0, 100);
+    const n = c.terr[i].n;
+    if (r.m > L.protestAt && protests < 2 && chance(.25)) { protests++; c.stab = clamp(c.stab - L.protestStab, 0, 100); news(`Protestas en ${n}: miles de personas contra el gobierno`, 'pol', S.player, 2); Bus.emit('regfx', { iso: S.player, i, k: 'rev' }); }
+    if (r.cd > S.turn || S.pend.length > 1) continue;
+    if (s && r.sep >= L.crisisAt) { r.cd = S.turn + L.cooldown * 2; Bus.emit('regfx', { iso: S.player, i, k: 'rev' });
+      regPend(`Crisis independentista en ${n}`, `${s.mov[0].toUpperCase() + s.mov.slice(1)} convoca un referéndum unilateral. Las calles de ${n} se llenan de banderas.`, i, D.RCRISIS); }
+    else if (r.m >= L.riotAt) { r.cd = S.turn + L.cooldown; Bus.emit('regfx', { iso: S.player, i, k: 'rev' });
+      regPend(`Disturbios en ${n}`, `Barricadas, comercios saqueados y enfrentamientos con la policía en ${n}. Los alcaldes piden una respuesta.`, i, D.RRIOT); }
+  }
+});
+/* acciones regionales */
+ACT.rlAct = a => {
+  const i = +a.i, c = P(), A = D.RL.acts[a.k], r = c.terr[i] && c.terr[i].o === S.player ? rlOf(i) : null;
+  if (!A) return fail('Acción desconocida'); if (!r) return fail('Esa región no está bajo tu control');
+  if (A.sep_only && (!sepOf(S.player, i) || r.aut)) return fail('Esa región no tiene un movimiento al que conceder autonomía');
+  if (r.cd2 > S.turn) return fail(`Ya actuaste en ${c.terr[i].n}: espera ${r.cd2 - S.turn} turno${r.cd2 - S.turn > 1 ? 's' : ''}`);
+  const cost = A.gdp ? c.gdp * A.gdp : 0; if (cost && !canPay(cost)) return fail(`Necesitas ${money(cost)}`); if (!useCP(A.cp)) return fail(`Necesitas ${A.cp} de capital político`);
+  c.tr -= cost; rlMod(i, A); if (a.k === 'inv') r.inv = S.turn + A.turns; if (a.k === 'dura') r.dura = S.turn + A.turns; if (a.k === 'aut') r.aut = 1;
+  if (A.dem) repAdd('dem', A.dem); if (A.mil) secAdd('mil', A.mil); r.cd2 = S.turn + 2; Bus.emit('regfx', { iso: S.player, i, k: a.k === 'dura' ? 'humo' : 'ayuda' });
+  return { msg: `${A.n}: ${c.terr[i].n}` };
+};
+function rlInfo(i) { const s = sepOf(S.player, i); if (!P().terr[i] || P().terr[i].o !== S.player) return null; const r = rlOf(i), w = rlWhy(i);
+  return { m: r.m, sep: s ? r.sep : null, mov: s ? s.mov : null, inv: r.inv > S.turn ? r.inv - S.turn : 0, dura: r.dura > S.turn ? r.dura - S.turn : 0, aut: !!r.aut, cd: r.cd2 > S.turn ? r.cd2 - S.turn : 0, why: w.why }; }
+const rlList = () => ownRegs().map(i => [i, rlOf(i).m]).sort((a, b) => b[1] - a[1]);
+
+/* desastres localizados: en tu país (con decisión) y en el mundo (titular) */
+function disasterAt(iso) {
+  const g = D.C[iso].terr, idx = S.c[iso].terr.map((t, i) => i).filter(i => S.c[iso].terr[i].o === iso && g[i].la != null);
+  const i = idx.length ? wpick(idx, j => (g[j].w || .01) + .02) : -1; if (i < 0) return null; const la = Math.abs(g[i].la);
+  const ok = D.RDIS.filter(d => la >= d.lat[0] && la <= d.lat[1] && (!d.coast || !D.C[iso].land)); return ok.length ? { i, d: pick(ok) } : null;
+}
+hook('world', () => {
+  if (!S.over && chance(.07) && S.pend.length < 2) { const x = disasterAt(S.player); if (x) { const n = P().terr[x.i].n, c = P();
+    c.gdp *= 1 - rr(.002, .006); rlMod(x.i, { m: 20 }); news(`${x.d.n} golpea ${n}`, 'world', S.player, 3); Bus.emit('regfx', { iso: S.player, i: x.i, k: x.d.ic });
+    regPend(`${x.d.n} en ${n}`, `${x.d.n} ha devastado ${n}. Hay víctimas, carreteras cortadas y miles de personas sin hogar. Todo el país mira cómo respondes.`, x.i, D.RDIS_OPTS); } }
+  if (chance(.3)) { const z = pick(alive().filter(y => !isP(y) && S.c[y].terr.length > 2 && S.c[y].gdp > 80)), x = z && disasterAt(z);
+    if (x) { const n = S.c[z].terr[x.i].n; S.c[z].stab = clamp(S.c[z].stab - 2, 0, 100); news(`${x.d.n} golpea ${n} (${S.c[z].n})`, 'world', z, 2); wlog('world', z, '', `${x.d.n} golpea ${n}`); Bus.emit('regfx', { iso: z, i: x.i, k: x.d.ic }); } }
+  if (chance(.08)) { const L = D.SEPAR.filter(s => s[0] !== S.player && S.c[s[0]] && S.c[s[0]].alive && sepOf(s[0], D.C[s[0]].terr.findIndex(t => t.n === s[1]))), s = pick(L);
+    if (s) { const i = D.C[s[0]].terr.findIndex(t => t.n === s[1]); news(`Miles de personas marchan en ${s[1]} (${S.c[s[0]].n}) convocadas por ${s[2]}`, 'pol', s[0], 2); wlog('pol', s[0], '', `Marcha independentista en ${s[1]}`); Bus.emit('regfx', { iso: s[0], i, k: 'rev' }); } }
+});
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -5909,7 +6037,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen,
+    justInfo, talkOpen, rlInfo, rlList, sepOf,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -8625,6 +8753,35 @@ Bus.on('turn', () => { clearInterval(UI.tkT); const s = S(); if (!s || !s.talk) 
     $('#tkpop')?.remove(); const d = document.createElement('button'); d.id = 'tkpop'; d.className = 'tkpop glass'; d.dataset.a = 'talkOpen';
     d.innerHTML = `<small class="eyebrow">${esc(TK_N[c.k] || 'Conversación')} · ${fresh.length > 1 ? fresh.length + ' conversaciones' : 'escucha'}</small>${c.lines.slice(0, 2).map(([z, t]) => `<p>${z && CC(z) ? fl(z) + ' <b>' + esc(CC(z).lider.n) + ':</b> ' : ''}${esc(t)}</p>`).join('')}<small class="gold">Ver conversación ›</small>`;
     document.body.appendChild(d); setTimeout(() => d.remove(), 9000); }, 400); });
+
+
+/* ---------- ui/5i-regions.js ---------- */
+/* =====================================================================
+   INTERFAZ · REGIONES CON VIDA: malestar, independentismo y acciones
+   En la ficha de tu país: las regiones más tensas arriba y, al elegir una,
+   sus barras, los motivos y las acciones. En el modo de mapa «Regiones»,
+   tus regiones se pintan por malestar (verde calma → rojo estallido) y las
+   independentistas se tiñen de violeta. Los sucesos regionales hacen onda.
+   ===================================================================== */
+const RLFX = { rev: [0xff6a3a, 'rev'], ayuda: [0x7dffb0, 'ayuda'], humo: [0x9aa0aa, 'humo'], tormenta: [0xdfe8ff, 'tormenta'], des: [0xb48cff, 'des'], exp: [0xffa040, 'exp'] };
+Bus.on('regfx', e => { const g = D.C[e.iso] && D.C[e.iso].terr[e.i]; if (!g || g.la == null) return; const k = RLFX[e.k] || RLFX.rev;
+  if (!CFG.rm) Globe.ring(g.la, g.lo, k[0], .06, 1600); Globe.fx(k[1], g.la, g.lo); });
+const mCol = m => ramp([[72, 164, 112], [196, 182, 84], [214, 120, 60], [200, 50, 46]], m / 100);
+function rlCard(i) { const r = Q.rlInfo(i); if (!r) return ''; const A = D.RL.acts;
+  return `<div class="rl5"><div class="arow"><div class="grow"><b>Malestar</b><small>${r.why.map(w => `${esc(w[1])} ${sgn(w[0])}`).join(' · ') || 'Sin motivos de queja'}</small></div>${bar(r.m, 100, r.m >= D.RL.protestAt ? 'red' : r.m < 30 ? 'green' : '')}<b class="num">${Math.round(r.m)}</b></div>
+    ${r.sep != null ? `<div class="arow"><div class="grow"><b>Independentismo</b><small>${esc(r.mov)}${r.aut ? ' · con autonomía' : ''}</small></div>${bar(r.sep, 100, r.sep >= D.RL.crisisAt ? 'red' : '')}<b class="num">${Math.round(r.sep)}</b></div>` : ''}
+    <div class="chips">${r.inv ? `<span class="chip good">Inversión: ${r.inv} t</span>` : ''}${r.dura ? `<span class="chip bad">Mano dura: ${r.dura} t</span>` : ''}${r.m >= D.RL.protestAt ? '<span class="chip bad">Protestas probables</span>' : ''}</div>
+    <div class="row wrap">${Object.entries(A).filter(([k, a]) => !a.sep_only || (r.sep != null && !r.aut)).map(([k, a]) => `<button class="btn sm" data-a="rlAct" data-i="${i}" data-k="${k}" title="${esc(a.x)}" ${r.cd ? 'disabled' : ''}>${esc(a.n)} · ${a.cp} CP${a.gdp ? ' + ' + money(CC(me()).gdp * a.gdp) : ''}</button>`).join('')}</div>${r.cd ? `<small class="mut">Podrás volver a actuar aquí en ${r.cd} turno${r.cd > 1 ? 's' : ''}.</small>` : ''}</div>`; }
+{ const r0 = regionsHTML; regionsHTML = iso => { let h = r0(iso); if (iso !== me() || !h) return h;
+  if (UI.terrSel != null && Q.rlInfo(UI.terrSel)) h = h.replace('<div class="row wrap">', rlCard(UI.terrSel) + '<div class="row wrap">');
+  const hot = Q.rlList().filter(x => x[1] >= 40).slice(0, 4);
+  return h.replace('<div class="chips legendp">', `${hot.length ? `<div class="chips rlhot"><small class="mut">Regiones en tensión:</small>${hot.map(([i, m]) => `<button class="chip ${m >= D.RL.protestAt ? 'bad' : ''}" data-a="regSel" data-i="${i}">${esc(CC(me()).terr[i].n)} ${Math.round(m)}</button>`).join('')}</div>` : ''}<div class="chips legendp">`); }; }
+H.rlAct = d => { act('rlAct', { i: +d.i, k: d.k }); UI.render(); refreshMap(); };
+/* mapa «Regiones»: tu país por malestar */
+{ const o0 = regOver; regOver = (colors, over) => { const o = o0(colors, over), m = me(); if (!S() || !CC(m).alive) return o;
+  const mine = o[m] = Object.assign({}, o[m]); for (const [i] of Q.rlList()) { const r = Q.rlInfo(i); let col = mCol(r.m); if (r.sep != null && r.sep >= 50) col = col.map((v, j) => v * .55 + [150, 100, 220][j] * .45); mine[i + 1] = col; }
+  return o; }; }
+LEGEND.reg += ' · tu país: por malestar (violeta = independentismo fuerte)';
 
 
 /* ---------- ui/90-boot.js ---------- */

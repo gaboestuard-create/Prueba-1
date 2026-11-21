@@ -414,3 +414,5 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .tkpop { position: fixed; left: calc(var(--sl) + 86px); bottom: calc(70px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
 .tkpop p { margin: 4px 0; font-size: 13px; } .tkpop small.gold { color: var(--gold); }
 @media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
+.rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
+.rlhot { margin: 6px 0; align-items: center; }

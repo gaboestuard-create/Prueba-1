@@ -85,7 +85,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen,
+    justInfo, talkOpen, rlInfo, rlList, sepOf,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
