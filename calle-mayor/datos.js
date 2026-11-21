@@ -205,5 +205,124 @@ const DATOS = {
     { id: 'calle-llena', nombre: 'La calle es tuya', texto: 'Ten 8 negocios en Calle Mayor', premio: 10000 },
     { id: 'sin-rival', nombre: 'Monopolio', texto: 'Saca a Ferrán de 3 lotes y que no le quede ninguno', premio: 25000 },
   ],
+
+  // ---- Modos, ofertas de compra y finales ----
+  modos: {
+    historia: { nombre: 'Historia', desc: 'Siete capítulos con Doña Chela, Ferrán y Capital Vega. Varios finales.' },
+    sandbox: { nombre: 'Sandbox', desc: 'Calle libre para probar. Tú eliges con cuánto empiezas y si hay rival.', dineros: [300, 5000, 50000] },
+  },
+
+  // Quién puede comprarte negocios. Ferrán paga con su efectivo y se queda el local; Vega cierra y libera el lote.
+  compradores: {
+    ferran: { nombre: 'Grupo Ferrán', persona: 'ferran', color: '#5C3D99' },
+    vega: { nombre: 'Capital Vega', persona: 'vega', color: '#2F4858' },
+  },
+  ofertas: {
+    dias: 3, // cuánto dura una oferta en la mesa
+    inicio: 0.85, baja: 0.07, piso: 0.5, // en rojo: % de lo invertido, que baja cada día que sigues en rojo
+    probRojo: 0.6, maxAbiertas: 2,
+    probPremio: 0.035, premio: [1.1, 1.4], // a veces, cuando te va bien, ofrecen más de lo que vale
+    regatear: 0.15, probRegatear: 0.5,
+  },
+  // Plazo del banco: días seguidos en rojo antes del final. Con más negocios, más plazo para salvarte vendiendo.
+  quiebra: { diasBase: 5, diasPorNegocio: 2, maxExtra: 6 },
+
+  personajes: {
+    chela: { nombre: 'Doña Chela', rol: 'Te rentó tu primer carrito', color: '#C2588F' },
+    ferran: { nombre: 'Ulises Ferrán', rol: 'Director de Grupo Ferrán', color: '#5C3D99' },
+    vega: { nombre: 'Valeria Vega', rol: 'Socia de Capital Vega', color: '#2F4858' },
+    ortiz: { nombre: 'Lic. Ortiz', rol: 'Ejecutivo del Banco Meridiano', color: '#3B5B8C' },
+  },
+
+  // Capítulos del modo historia. objetivo: lo que ve el jugador; el motor revisa cada uno por su id.
+  capitulos: [
+    { id: 'carrito', titulo: 'El carrito', objetivo: 'Abre tu primer puesto y junta $1,000 de patrimonio.', intro: 'cap1', cierre: 'cap1-fin' },
+    { id: 'local', titulo: 'Llave en mano', objetivo: 'Llega a Comerciante y abre tu primer local.', intro: 'cap2', cierre: 'cap2-fin' },
+    { id: 'ferran', titulo: 'La guerra de precios', objetivo: 'Saca a Ferrán de un lote: que cierre o cómprale uno.', intro: 'cap3', cierre: 'cap3-fin' },
+    { id: 'marca', titulo: 'Marca propia', objetivo: 'Llega a Empresario y lanza un producto con nota de 7.5 o más.', intro: 'cap4', cierre: 'cap4-fin' },
+    { id: 'planta', titulo: 'Hecho en casa', objetivo: 'Abre una planta y fabrica 5,000 unidades propias.', intro: 'cap5', cierre: 'cap5-fin' },
+    { id: 'oferta', titulo: 'La oferta', objetivo: 'Llega a Magnate: $100,000 de patrimonio.', intro: 'cap6', cierre: 'cap6-fin' },
+    { id: 'calle', titulo: 'Calle Mayor', objetivo: 'Saca a Ferrán de toda la calle y llega a $500,000 de patrimonio.', intro: 'cap7', cierre: null },
+  ],
+
+  // Diálogos: cada línea es { q: personaje, t: texto }. La última puede traer opciones.
+  dialogos: {
+    cap1: [
+      { q: 'chela', t: 'Así que tú eres el muchacho del que me habló tu tía. Bienvenido a Calle Mayor.' },
+      { q: 'chela', t: 'Treinta años vendí tamales en esta esquina. Hoy la calle está medio vacía, pero la gente sigue pasando. Eso es lo que importa.' },
+      { q: 'chela', t: 'Empieza chiquito: un puesto de limonada. Toca un lote libre y ábrelo. Cuando juntes mil pesos de patrimonio, platicamos.' },
+    ],
+    'cap1-fin': [
+      { q: 'chela', t: '¡Mírate nomás! Mil pesos y ni un mes. Ya sabes lo que es cuadrar la caja al final del día.' },
+      { q: 'chela', t: 'Un carrito da para comer. Un local da para crecer. Esa es la siguiente.' },
+    ],
+    cap2: [
+      { q: 'chela', t: 'Un local paga renta, tiene que abrir aunque llueva y necesita gente que lo atienda. No es juego.' },
+      { q: 'chela', t: 'Junta para llegar a Comerciante y abre tu primer local. Una cafetería en una buena esquina no falla.' },
+    ],
+    'cap2-fin': [
+      { q: 'chela', t: 'Ya tienes llave propia. Ahora sí te van a empezar a ver.' },
+      { q: 'chela', t: 'Y no solo los clientes. Ayer vi a unos de traje midiendo los lotes vacíos. Ten cuidado.' },
+    ],
+    cap3: [
+      { q: 'ferran', t: 'Buenas. Ulises Ferrán, de Grupo Ferrán. Tenemos negocios en media ciudad y ahora queremos esta calle.' },
+      { q: 'ferran', t: 'Nada personal. Vamos a abrir donde haya lugar y a vender más barato que tú. Así funciona el mercado.' },
+      { q: 'chela', t: 'Ya lo oíste. Puedes ganarle en precio hasta que sus números no den, o comprarle un negocio si te alcanza. Sácalo de un lote.' },
+    ],
+    'cap3-fin': [
+      { q: 'ferran', t: 'Bien jugado. No pensé que aguantaras la guerra de precios.' },
+      { q: 'ferran', t: 'Esto no se acaba aquí. Nos vemos en la calle.' },
+      { q: 'chela', t: 'Le pegaste donde duele: en la cartera. Ahora piensa más grande.' },
+    ],
+    cap4: [
+      { q: 'chela', t: 'Vender lo que otros fabrican tiene techo. Las marcas que duran tienen productos propios.' },
+      { q: 'chela', t: 'Cuando seas Empresario, abre un estudio y lanza algo que la prensa califique con 7.5 o más. Prueba, equivócate, aprende.' },
+    ],
+    'cap4-fin': [
+      { q: 'vega', t: 'Valeria Vega, de Capital Vega. Leí la reseña de tu producto. Muy prometedor.' },
+      { q: 'vega', t: 'Nosotros invertimos en empresas que crecen. Y también compramos las que se tropiezan. Tenlo presente.' },
+    ],
+    cap5: [
+      { q: 'chela', t: 'Cada lata que mandas a maquilar le deja ganancia a otro. Con planta propia, la ganancia es tuya.' },
+      { q: 'chela', t: 'Abre una planta y fabrica cinco mil unidades propias. Asígnale tus productos a las líneas y no te olvides de los obreros.' },
+    ],
+    'cap5-fin': [
+      { q: 'chela', t: 'Humo saliendo de una chimenea con tu nombre. Mi difunto Ramón no lo creería.' },
+      { q: 'ferran', t: 'Veo que ya fabricas. Interesante. Pronto vamos a tener que hablar en serio, tú y yo.' },
+    ],
+    cap6: [
+      { q: 'chela', t: 'Ya no eres el del carrito. La gente de la calle te saluda por tu nombre.' },
+      { q: 'chela', t: 'Llega a cien mil de patrimonio y ya veremos quién toca a tu puerta.' },
+    ],
+    'cap6-fin': [
+      { q: 'ferran', t: 'Te propongo algo: fusionemos las dos empresas. Tú pones la calle y la marca; yo pongo la ciudad entera.' },
+      { q: 'vega', t: 'O véndenos todo. Capital Vega paga una vez y media lo que vale tu empresa, en efectivo, hoy.' },
+      { q: 'chela', t: 'O no le vendas a nadie y quédate con toda la calle. Eso sí: Ferrán no se va a dejar.',
+        opciones: [
+          { texto: 'Fusionarte con Ferrán', detalle: 'final: socios', final: 'socios' },
+          { texto: 'Vender todo a Capital Vega', detalle: 'final: vendido', final: 'vendido' },
+          { texto: 'Ir por toda la calle', detalle: 'sigue el capítulo 7', final: 'calle' },
+        ] },
+    ],
+    cap7: [
+      { q: 'ferran', t: 'Así que no hay trato. Muy bien. Grupo Ferrán no se va de Calle Mayor sin pelear.' },
+      { q: 'chela', t: 'Para ganarle tienes que sacarlo de todos sus lotes y llegar a medio millón. Yo aquí te veo.' },
+    ],
+    'ferran-llega': [
+      { q: 'ferran', t: 'Ulises Ferrán, de Grupo Ferrán. Acabamos de abrir en tu calle. Que gane el mejor precio.' },
+    ],
+    'banco-rojo': [
+      { q: 'ortiz', t: 'Buenas noches. Le hablo del Banco Meridiano: su cuenta amaneció en números rojos.' },
+      { q: 'ortiz', t: 'Le damos unos días de gracia. Si no regulariza, tendremos que cerrar la cuenta. Mientras tanto le van a llegar ofertas por sus negocios: evalúelas con calma.' },
+    ],
+  },
+
+  finales: {
+    calle: { titulo: 'Calle Mayor es tuya', tipo: 'bueno', persona: 'chela', texto: 'Ferrán vendió su último lote y se fue a otra ciudad. Cada toldo de la calle lleva tu color. Doña Chela puso tu foto junto a la de Don Ramón, en la fonda.' },
+    socios: { titulo: 'Socios', tipo: 'bueno', persona: 'ferran', texto: 'Ferrán y tú firmaron la fusión. La nueva empresa abre en doce ciudades y tu nombre va primero en el letrero. Calle Mayor sigue siendo el corazón de todo.' },
+    vendido: { titulo: 'Vendido', tipo: 'agridulce', persona: 'vega', texto: 'Capital Vega te pagó una fortuna y cambió los letreros en una semana. Tú ves la calle desde un café que ya no es tuyo, con la cuenta más llena que nunca.' },
+    comprado: { titulo: 'Ferrán se queda con tu negocio', tipo: 'derrota', persona: 'ferran', texto: 'El banco cerró tu cuenta y Grupo Ferrán compró tu negocio por lo que quedaba de la deuda. Tu carrito sigue en la calle, ahora en morado.' },
+    quiebra: { titulo: 'Quiebra', tipo: 'derrota', persona: 'ortiz', texto: 'Tras días en números rojos, el banco cerró tu empresa. Grupo Ferrán y Capital Vega se repartieron tus locales en un remate.' },
+  },
 };
 if (typeof module !== 'undefined') module.exports = DATOS;

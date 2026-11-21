@@ -73,10 +73,18 @@
   const nivelPips = (n, max = 4) => `<span class="nivel" aria-label="Nivel ${n} de ${max}">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
   const medidor = v => `<div class="medidor ${v < 40 ? 'm-mal' : v < 65 ? 'm-aviso' : ''}" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < Math.round(v / 10) ? 'on' : ''}"></i>`).join('')}</div>`;
   const muestras = (accion, actual) => `<div class="muestras" role="group" aria-label="Color de tu marca">${D.coloresMarca.map(c => bt('', accion, { c }, c === actual ? 'on' : '', `style="background:${c}" aria-label="Color ${c}" aria-pressed="${c === actual}"`)).join('')}</div>`;
+  // Retratos de los personajes, dibujados a mano en SVG.
+  const RETRATOS = {
+    chela: '<rect width="64" height="64" fill="#F6D7E6"/><path d="M8 64c0-12 11-19 24-19s24 7 24 19z" fill="#C2588F"/><path d="M24 50h16v14H24z" fill="#F6F1E7"/><rect x="28" y="38" width="8" height="9" fill="#C98E6B"/><circle cx="32" cy="29" r="12" fill="#C98E6B"/><path d="M20 28c0-9 5-14 12-14s12 5 12 14c-2-5-6-8-12-8s-10 3-12 8z" fill="#C9C4BC"/><circle cx="32" cy="13" r="5" fill="#C9C4BC"/><circle cx="27.5" cy="30" r="3.3" fill="none" stroke="#1B1A2E" stroke-width="1.5"/><circle cx="36.5" cy="30" r="3.3" fill="none" stroke="#1B1A2E" stroke-width="1.5"/><path d="M30.8 30h2.4" stroke="#1B1A2E" stroke-width="1.5"/><circle cx="27.5" cy="30" r="1.1" fill="#1B1A2E"/><circle cx="36.5" cy="30" r="1.1" fill="#1B1A2E"/><path d="M28 35.5q4 3 8 0" fill="none" stroke="#1B1A2E" stroke-width="1.6" stroke-linecap="round"/>',
+    ferran: '<rect width="64" height="64" fill="#E2D9F3"/><path d="M8 64c0-12 11-19 24-19s24 7 24 19z" fill="#5C3D99"/><path d="M26 46l6 12 6-12z" fill="#F6F1E7"/><path d="M31 48h2l1.2 8-2.2 3-2.2-3z" fill="#1B1A2E"/><rect x="28" y="38" width="8" height="9" fill="#E2B48E"/><circle cx="32" cy="29" r="12" fill="#E2B48E"/><path d="M20 28c0-9 5-15 13-15 7 0 11 4 11 10-5-4-13-5-24 5z" fill="#1B1A2E"/><path d="M25 27l5 1M39 27l-5 1" stroke="#1B1A2E" stroke-width="1.8" stroke-linecap="round"/><rect x="26.5" y="29.5" width="3" height="2" fill="#1B1A2E"/><rect x="34.5" y="29.5" width="3" height="2" fill="#1B1A2E"/><path d="M27.5 35c2.5-1.4 6.5-1.4 9 0" fill="none" stroke="#1B1A2E" stroke-width="2.2" stroke-linecap="round"/><path d="M29.5 38h5" stroke="#1B1A2E" stroke-width="1.4" stroke-linecap="round"/>',
+    vega: '<rect width="64" height="64" fill="#D6E4EA"/><path d="M8 64c0-12 11-19 24-19s24 7 24 19z" fill="#2F4858"/><path d="M27 46l5 8 5-8z" fill="#F6F1E7"/><rect x="28" y="38" width="8" height="9" fill="#F1C7A6"/><path d="M19 34c-1-12 5-20 13-20s14 8 13 20l-3 3V25c-6 2-14 2-20-1v13z" fill="#4A2F22"/><circle cx="32" cy="29" r="11" fill="#F1C7A6"/><path d="M21 26c2-7 7-10 11-10s9 3 11 10c-6-1-15-2-22 0z" fill="#4A2F22"/><rect x="24.5" y="27.5" width="6.5" height="5" fill="none" stroke="#1B1A2E" stroke-width="1.5"/><rect x="33" y="27.5" width="6.5" height="5" fill="none" stroke="#1B1A2E" stroke-width="1.5"/><path d="M31 30h2" stroke="#1B1A2E" stroke-width="1.5"/><circle cx="27.8" cy="30" r="1" fill="#1B1A2E"/><circle cx="36.2" cy="30" r="1" fill="#1B1A2E"/><path d="M29 35.5q3 1.8 6 0" fill="none" stroke="#B5533E" stroke-width="1.8" stroke-linecap="round"/>',
+    ortiz: '<rect width="64" height="64" fill="#D9E2F0"/><path d="M8 64c0-12 11-19 24-19s24 7 24 19z" fill="#3B5B8C"/><path d="M26 46l6 12 6-12z" fill="#F6F1E7"/><path d="M31 48h2l1.2 8-2.2 3-2.2-3z" fill="#D7392F"/><rect x="28" y="38" width="8" height="9" fill="#B07A55"/><circle cx="32" cy="29" r="12" fill="#B07A55"/><path d="M20 31c0-6 1-10 3.5-11v10zM44 31c0-6-1-10-3.5-11v10z" fill="#8C8C8C"/><circle cx="28" cy="29.5" r="1.3" fill="#1B1A2E"/><circle cx="36" cy="29.5" r="1.3" fill="#1B1A2E"/><path d="M26.5 34.2h11v2.6h-11z" fill="#4A4A4A"/><path d="M30 38.5h4" stroke="#1B1A2E" stroke-width="1.3" stroke-linecap="round"/>',
+  };
+  const retrato = (q, cls = '') => `<span class="retrato ${cls}"><svg viewBox="0 0 64 64" aria-hidden="true">${RETRATOS[q]}</svg></span>`;
   const notaCls = n => (n >= 8 ? 'n-alta' : n >= 6 ? 'n-media' : 'n-baja');
 
   let S = null, vel = 0, velAntes = 1, acc = 0, prev = 0, mostrado = 0, presionando = false, pendiente = false, claveVista = '', ultimaNoticia = '';
-  const ui = { colorInicio: D.coloresMarca[0], lote: null, der: 'imperio', movil: 'lote', confirma: null, capa: null, importa: '', exporta: '', form: { cat: 'bebida', nombre: '', presupuesto: 8000, mezcla: [50, 25, 25] } };
+  const ui = { inicio: { modo: 'historia', dinero: 5000, rival: true }, empresa: '', dialogo: null, oferta: null, colorInicio: D.coloresMarca[0], lote: null, der: 'imperio', movil: 'lote', confirma: null, capa: null, importa: '', exporta: '', form: { cat: 'bebida', nombre: '', presupuesto: 8000, mezcla: [50, 25, 25] } };
   const disco = {
     leer() { try { const g = JSON.parse(localStorage.getItem(CLAVE)); return valida(g) ? g : null; } catch (e) { return null; } },
     guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(S)); return true; } catch (e) { return false; } },
@@ -101,7 +109,7 @@
     $('vel').innerHTML = VEL.map((v, i) => `<button class="${vel === v ? 'on' : ''}" data-a="ui:vel" data-args='{"v":${v}}' aria-pressed="${vel === v}" aria-label="${v ? 'Velocidad ' + v + ' por uno' : 'Pausa'}">${i === 0 ? ic('pausa') : i === 1 ? ic('play') : v + '×'}</button>`).join('');
     $('rango-tel').textContent = R.nombre;
     $('rango').innerHTML = `<span>${ic('trofeo')}${R.nombre}</span><div class="riel" title="${obj.siguiente ? 'Rumbo a ' + obj.siguiente.nombre : 'Rango máximo'}"><i style="width:${obj.avance}%"></i></div>`;
-    $('caja').querySelector('small').innerHTML = `hoy <span class="${hoy >= 0 ? 'mas' : 'menos'}">${hoy >= 0 ? '+' : ''}${din(hoy)}</span>`;
+    $('caja').querySelector('small').innerHTML = S.diasRojos ? `<span class="menos">en rojo · ${M.plazoQuiebra(S) - S.diasRojos} días de plazo</span>` : `hoy <span class="${hoy >= 0 ? 'mas' : 'menos'}">${hoy >= 0 ? '+' : ''}${din(hoy)}</span>`;
     $('eventos').innerHTML = S.eventos.map(e => `<span class="chip-ev">${ic('rayo')}${esc(e.titulo)}<small>${e.fin - M.dia(S) + 1} d</small></span>`).join('');
     const clave = S.noticias.map(n => n.dia + n.texto).join('|');
     if (clave !== ultimaNoticia) { // solo se reinicia la cinta si cambian las noticias
@@ -268,7 +276,14 @@
     }).join('');
     const fila = (k, v, cls = '') => `<div class="renglon"><span class="crece">${k}</span><span class="cifra ${cls}">${v}</span></div>`;
     const NOMBRE = { ventas: 'Ventas en la calle', productos: 'Productos propios', ventaActivos: 'Venta de activos', insumos: 'Insumos', sueldos: 'Sueldos', renta: 'Rentas', permisos: 'Permisos de puestos', marketing: 'Publicidad', energia: 'Energía de plantas', decisiones: 'Decisiones', compromisos: 'Pagos al inversionista', hitos: 'Premios por hitos', inversion: 'Inversiones (no cuentan como gasto)' };
-    return `<div class="hoja">
+    const C = S.modo === 'historia' && !S.fin ? D.capitulos[S.capitulo] : null;
+    const capitulo = C ? `<div class="hoja"><div class="cab">${retrato('chela', 'ch')}<div><p class="eti">Capítulo ${S.capitulo + 1} de ${D.capitulos.length}</p><h2>${C.titulo}</h2><p>${S.esperando ? 'Ferrán y Vega esperan tu respuesta.' : C.objetivo}</p></div></div>
+      <div class="fila">${S.esperando ? bt(`${ic('rayo')} Responder`, 'ui:dialogo', { id: 'cap6-fin' }, 'btn pri') : bt('Volver a escuchar', 'ui:dialogo', { id: C.intro }, 'btn chico')}</div></div>` : '';
+    const ofertas = S.ofertas.length ? `<div class="hoja"><h3>${ic('moneda')} Ofertas en la mesa</h3><div class="lista">${S.ofertas.map(o => {
+      const N = S.negocios.find(n => n.id === o.negocio), Cm = D.compradores[o.comprador];
+      return N ? bt(`${retrato(Cm.persona, 'ch')}<span class="crece"><b class="nom">${Cm.nombre}</b><span class="tenue">Por tu ${D.negocios[N.tipo].corto.toLowerCase()} en ${M.lote(N.lote).corto} · vence el día ${o.vence + 1}</span></span><span class="cifra pos">${corto(o.precio)}</span>`, 'ui:oferta', { id: o.id }, 'renglon') : '';
+    }).join('')}</div></div>` : '';
+    return `${capitulo}${ofertas}<div class="hoja">
         <div class="cab"><span class="sello" style="background:var(--mostaza)">${ic('trofeo')}</span><div><h2>${R ? 'Rumbo a ' + R.nombre : 'Eres leyenda de Calle Mayor'}</h2><p>${R ? `Patrimonio máximo ${corto(S.maxPat)} de ${corto(R.min)}. Desbloquea: ${R.desbloquea.toLowerCase()}.` : 'Ya no hay rango más alto. Sigue construyendo.'}</p></div></div>
         <div class="progreso"><i style="width:${obj.avance}%"></i></div>
         <div class="consejo">${ic('foco')}<span>${esc(obj.consejo)}</span></div></div>
@@ -370,7 +385,7 @@
         <div class="renglon"><span>Toca un lote de la calle para abrir un negocio, o uno tuyo para administrarlo: precio, personal, publicidad y mejoras.</span></div>
         <div class="renglon"><span>Tu patrimonio (efectivo, la mitad de lo invertido, terrenos y acciones) te sube de rango y desbloquea lo siguiente.</span></div>
         <div class="renglon"><span>En el estudio repartes el presupuesto entre calidad, diseño y marketing. Cada categoría tiene su mezcla ideal; con cada lanzamiento aprendes.</span></div>
-        <div class="renglon"><span>Si pasas ${B.diasQuiebra} días seguidos en números rojos, el banco cierra tu empresa. Barra espaciadora: pausa.</span></div></div></div>
+        <div class="renglon"><span>Si tu cuenta queda en números rojos, el banco te da unos días de plazo (más si tienes más negocios). Mientras tanto te ofrecen comprar tus negocios, cada día más barato. Si se acaba el plazo, pierdes la partida. Barra espaciadora: pausa.</span></div></div></div>
       <div class="hoja">${ui.confirma === 'nueva' ? bt('Sí, borrar y empezar de cero', 'ui:nueva', {}, 'btn peligro armado') : bt(`${ic('salir')} Nueva partida`, 'ui:confirma', { k: 'nueva' }, 'btn peligro')}</div>`;
   }
 
@@ -379,9 +394,11 @@
 
   // ---------- Capas (inicio, rangos, lanzamientos, final) ----------
   function abrirCapa(html, tipo) {
-    ui.capa = tipo;
     if (vel) { velAntes = vel; vel = 0; }
+    const repetida = ui.capa === tipo && !$('capa').hidden; // re-pintar la misma capa sin repetir su animación de entrada
+    ui.capa = tipo;
     $('capa').innerHTML = html;
+    if (repetida) $('capa').firstElementChild.classList.add('quieta');
     $('capa').hidden = false;
     const f = $('capa').querySelector('input, .btn.pri');
     if (f) setTimeout(() => f.focus(), 60);
@@ -391,18 +408,22 @@
     ui.capa = null;
     $('capa').hidden = true;
     $('capa').innerHTML = '';
-    if (tipo !== 'inicio' && S && !S.fin) vel = velAntes || 1;
+    if (tipo !== 'inicio' && S && !M.terminal(S)) vel = velAntes || 1;
     procesarAvisos();
   }
   function capaInicio() {
-    const g = disco.leer();
+    const g = disco.leer(), I = ui.inicio;
     abrirCapa(`<div class="modal inicio"><div class="titulo-juego">Calle<br><span>Mayor</span></div>
       <p>Llegas con $300 y una idea. Empieza con un puesto de limonada, abre locales, diseña tus propios productos e invierte en la bolsa hasta que la calle entera lleve tu nombre.</p>
       ${g ? `<div class="kpis">${kpi('Partida guardada', esc(g.empresa))}${kpi('Día', M.dia(g))}${kpi('Patrimonio', corto(M.patrimonio(g)))}</div>${bt(`${ic('play')} Continuar`, 'ui:continuar', {}, 'btn pri ancho')}<hr class="sep">` : ''}
+      <span class="eti">Modo de juego</span>
+      <div class="modos">${Object.entries(D.modos).map(([k, m]) => bt(`<b>${m.nombre}</b><span>${m.desc}</span>`, 'ui:modo', { modo: k }, 'opcion-d' + (I.modo === k ? ' on' : ''), `aria-pressed="${I.modo === k}"`)).join('')}</div>
+      ${I.modo === 'sandbox' ? `<div class="control"><span class="eti">Empiezas con</span><div class="seg">${D.modos.sandbox.dineros.map(v => bt(din(v), 'ui:inicioOpc', { k: 'dinero', v }, I.dinero === v ? 'on' : '')).join('')}</div>
+        <span class="eti">Rival en la calle</span><div class="seg">${[[true, 'Grupo Ferrán'], [false, 'Sin rival']].map(([v, n]) => bt(n, 'ui:inicioOpc', { k: 'rival', v }, I.rival === v ? 'on' : '')).join('')}</div></div>` : ''}
       <label class="eti" for="f-empresa">Nombre de tu empresa</label>
-      <input type="text" id="f-empresa" maxlength="24" placeholder="Ej. Limones Hermanos" autocomplete="off">
+      <input type="text" id="f-empresa" maxlength="24" placeholder="Ej. Limones Hermanos" autocomplete="off" value="${esc(ui.empresa)}">
       <span class="eti">Color de tu marca</span>${muestras('ui:colorInicio', ui.colorInicio)}
-      ${bt(`${ic('carrito')} ${g ? 'Empezar otra partida' : 'Abrir mi primer puesto'}`, 'ui:empezar', {}, g ? 'btn ancho' : 'btn pri ancho')}</div>`, 'inicio');
+      ${bt(`${ic('carrito')} ${I.modo === 'historia' ? 'Empezar la historia' : 'Abrir la calle'}`, 'ui:empezar', {}, g ? 'btn ancho' : 'btn pri ancho')}</div>`, 'inicio');
   }
   function capaRango(r) {
     const R = D.rangos[r];
@@ -429,11 +450,44 @@
       <div class="decision">${d.opciones.map((o, i) => bt(`<b>${o.texto}</b><span>${o.detalle}</span>`, 'ui:decidir', { i }, 'opcion-d' + (i === 0 ? ' pri' : ''), o.efectos.dinero < 0 && S.dinero < -o.efectos.dinero ? 'disabled' : '')).join('')}</div>
       <p class="tenue">El tiempo está en pausa mientras decides.</p></div>`, 'decision');
   }
-  function capaQuiebra() {
-    abrirCapa(`<div class="modal"><div class="estampa">Quiebra<b>${esc(S.empresa)}</b></div>
-      <p class="cita">El banco cerró la empresa tras ${B.diasQuiebra} días en números rojos.</p>
-      <p class="tenue">Llegaste al día ${M.dia(S)} con un patrimonio máximo de ${corto(S.maxPat)}.</p>
-      ${bt('Empezar de nuevo', 'ui:nueva', {}, 'btn pri ancho')}</div>`, 'quiebra');
+  function capaFinal() {
+    const F = D.finales[S.finalId], derrota = F.tipo === 'derrota';
+    abrirCapa(`<div class="modal"><div class="estampa ${derrota ? '' : 'oro'}">${derrota ? 'Fin de la partida' : F.tipo === 'agridulce' ? 'Final agridulce' : 'Final'}<b>${F.titulo}</b></div>
+      <div class="habla">${retrato(F.persona)}<p class="cita" style="text-align:left">${F.texto}</p></div>
+      <div class="kpis">${kpi('Días', M.dia(S) - 1)}${kpi('Patrimonio máximo', corto(S.maxPat))}${kpi('Productos', S.productos.length)}${kpi('Hitos', Object.keys(S.hitos).length + ' / ' + D.hitos.length)}</div>
+      ${derrota ? '' : bt(`${ic('play')} Seguir jugando en sandbox`, 'ui:seguir', {}, 'btn pri ancho')}
+      ${bt('Nueva partida', 'ui:nueva', {}, derrota ? 'btn pri ancho' : 'btn ancho')}</div>`, 'final');
+  }
+  // Diálogo: una línea a la vez, con efecto de máquina de escribir.
+  function capaDialogo() {
+    const lineas = D.dialogos[ui.dialogo.id], L = lineas[ui.dialogo.i], P = D.personajes[L.q], ultima = ui.dialogo.i === lineas.length - 1;
+    const botones = L.opciones && S.esperando === 'final' ? `<div class="decision">${L.opciones.map(o => bt(`<b>${o.texto}</b><span>${o.detalle}</span>`, 'ui:elegirFinal', { valor: o.final }, 'opcion-d')).join('')}</div>`
+      : `<div class="fila"><span class="crece puntos">${lineas.map((_, i) => `<i class="${i <= ui.dialogo.i ? 'on' : ''}"></i>`).join('')}</span>${bt(ultima ? 'Entendido' : `Siguiente ${ic('der')}`, 'ui:siguiente', {}, 'btn pri')}</div>`;
+    abrirCapa(`<div class="modal dialogo"><div class="habla">${retrato(L.q)}<div><p class="nombre-p" style="color:${P.color}">${P.nombre}</p><p class="tenue">${P.rol}</p></div></div>
+      <p class="linea-dialogo" id="linea" aria-live="polite">${esc(L.t)}</p>${botones}</div>`, 'dialogo');
+    escribir($('linea'), L.t);
+  }
+  let escritura = null;
+  function escribir(el, texto) {
+    clearInterval(escritura);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let n = 0;
+    el.textContent = '';
+    escritura = setInterval(() => { n += 2; el.textContent = texto.slice(0, n); if (n >= texto.length) clearInterval(escritura); }, 16);
+  }
+  function capaOferta() {
+    const o = S.ofertas.find(x => x.id === ui.oferta), N = o && S.negocios.find(n => n.id === o.negocio);
+    if (!N) { ui.oferta = null; return; }
+    const C = D.compradores[o.comprador], P = D.personajes[C.persona], T = D.negocios[N.tipo], L = M.lote(N.lote), pct = Math.round(o.precio / N.invertido * 100);
+    const frase = o.motivo === 'rojo' ? (o.comprador === 'ferran' ? '«Su cuenta está en rojo y lo sabemos. Le compro ese negocio hoy. Mañana le ofreceré menos.»' : '«En Capital Vega compramos negocios con problemas. Esta oferta no va a mejorar con los días.»')
+      : '«Nos gusta lo que hizo con ese negocio. Le hacemos una oferta generosa, por si quiere hacer caja.»';
+    abrirCapa(`<div class="modal"><div class="habla">${retrato(C.persona)}<div><p class="nombre-p" style="color:${P.color}">${P.nombre} · ${C.nombre}</p><h2>Quiere comprar tu ${T.nombre.toLowerCase()}</h2><p class="tenue">${esc(L.nombre)} · nivel ${N.nivel}</p></div></div>
+      <p class="cita" style="text-align:left">${frase}</p>
+      <div class="kpis">${kpi('Te ofrecen', din(o.precio), 'pos')}${kpi('Invertiste', din(N.invertido))}${kpi('Es el', pct + '%')}</div>
+      <p class="tenue">Si lo vendieras por tu cuenta te darían ${din(N.invertido * B.valorNegocio)}. ${o.motivo === 'rojo' ? `Plazo del banco: ${M.plazoQuiebra(S) - S.diasRojos} días.` : ''} La oferta vence el día ${o.vence + 1}.${o.comprador === 'ferran' ? ' Ferrán se quedaría con el local.' : ' Vega lo cerraría y el lote quedaría libre.'}</p>
+      <div class="decision">${bt(`<b>Aceptar</b><span>+${din(o.precio)} hoy</span>`, 'ui:ofertaAcepta', { id: o.id }, 'opcion-d pri')}
+        ${o.regateo ? '' : bt(`<b>Regatear</b><span>pedir ${Math.round(D.ofertas.regatear * 100)}% más; pueden levantarse de la mesa</span>`, 'ui:ofertaRegatea', { id: o.id }, 'opcion-d')}
+        <div class="fila">${bt('Pensarlo', 'ui:cerrarCapa', {}, 'btn crece')}${bt('Rechazar', 'ui:ofertaRechaza', { id: o.id }, 'btn peligro crece')}</div></div></div>`, 'oferta');
   }
 
   // ---------- Pintado ----------
@@ -468,10 +522,13 @@
       else if (a.tipo === 'lanzamiento') capaLanzamiento(a.id);
       else if (a.tipo === 'evento') aviso(a.texto, '', 'rayo');
       else if (a.tipo === 'decision') capaDecision();
+      else if (a.tipo === 'dialogo') { ui.dialogo = { id: a.id, i: 0 }; capaDialogo(); }
+      else if (a.tipo === 'oferta') { if (S.ofertas.some(o => o.id === a.id)) { ui.oferta = a.id; capaOferta(); } }
+      else if (a.tipo === 'capitulo') aviso(`Capítulo ${a.n + 1}: ${D.capitulos[a.n].titulo}`, 'bien', 'estrella');
       else if (a.tipo === 'hito') { const H = D.hitos.find(h => h.id === a.id); aviso(`Hito «${H.nombre}»: +${din(H.premio)}`, 'bien', 'estrella'); }
       else if (a.tipo === 'dia') { aviso(`Cierre del día ${a.dia}: ${a.neto >= 0 ? '+' : ''}${din(a.neto)}`, a.neto >= 0 ? 'bien' : 'mal', 'moneda'); disco.guardar(); }
     }
-    if (S.fin === 'quiebra' && !ui.capa) capaQuiebra();
+    if (M.terminal(S) && !ui.capa) capaFinal();
   }
   function despues() { procesarAvisos(); pintar(); }
 
@@ -480,7 +537,7 @@
     prev = t;
     if (S) {
       const ms = MS_HORA / (vel || 1);
-      if (vel && !ui.capa && S.fin !== 'quiebra') {
+      if (vel && !ui.capa && !M.terminal(S)) {
         acc += dt;
         let n = 0;
         while (acc >= ms && n < 3) { acc -= ms; M.tick(S); Escena.ventas(S.ventas); n++; }
@@ -537,7 +594,16 @@
     continuar() { const g = disco.leer(); if (g) iniciar(g); },
     colorInicio({ c }) { ui.colorInicio = c; document.querySelectorAll('.muestras button').forEach(b => { const on = JSON.parse(b.dataset.args).c === c; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); },
     decidir({ i }) { const r = M.hacer(S, 'decidir', { i }); if (r.ok) { cerrarCapa(); aviso(r.msg, '', 'rayo'); } else aviso(r.msg, 'mal'); },
-    empezar() { iniciar(M.nueva({ empresa: ($('f-empresa') || {}).value, color: ui.colorInicio })); aviso('Toca un lote vacío de la calle para abrir tu primer puesto.', '', 'tienda'); },
+    modo({ modo }) { ui.inicio.modo = modo; capaInicio(); },
+    inicioOpc({ k, v }) { ui.inicio[k] = v; capaInicio(); },
+    dialogo({ id }) { ui.dialogo = { id, i: 0 }; capaDialogo(); },
+    siguiente() { const n = D.dialogos[ui.dialogo.id].length; if (++ui.dialogo.i < n) capaDialogo(); else { ui.dialogo = null; cerrarCapa(); } },
+    elegirFinal({ valor }) { M.hacer(S, 'elegirFinal', { valor }); ui.dialogo = null; cerrarCapa(); },
+    oferta({ id }) { ui.oferta = id; capaOferta(); },
+    ofertaAcepta({ id }) { const r = M.hacer(S, 'aceptarOferta', { id }); ui.oferta = null; cerrarCapa(); aviso(r.msg, r.ok ? 'bien' : 'mal', 'moneda'); },
+    ofertaRegatea({ id }) { const r = M.hacer(S, 'regatear', { id }); aviso(r.msg, r.sigue ? 'bien' : 'mal', 'moneda'); if (r.sigue) capaOferta(); else { ui.oferta = null; cerrarCapa(); } },
+    ofertaRechaza({ id }) { M.hacer(S, 'rechazarOferta', { id }); ui.oferta = null; cerrarCapa(); },
+    empezar() { const I = ui.inicio; iniciar(M.nueva({ empresa: ($('f-empresa') || {}).value, color: ui.colorInicio, modo: I.modo, dinero: I.dinero, rival: I.rival })); if (I.modo !== 'historia') aviso('Toca un lote vacío de la calle para abrir tu primer puesto.', '', 'tienda'); },
     cerrarCapa() { cerrarCapa(); },
     seguir() { M.hacer(S, 'seguir'); cerrarCapa(); },
   };
@@ -560,6 +626,7 @@
     const t = e.target;
     if (t.id === 'f-nombre') ui.form.nombre = t.value;
     if (t.id === 'f-importa') ui.importa = t.value;
+    if (t.id === 'f-empresa') ui.empresa = t.value;
     if (t.dataset.mezcla != null) {
       ui.form.mezcla[+t.dataset.mezcla] = +t.value;
       const tot = ui.form.mezcla.reduce((a, b) => a + b, 0) || 1;

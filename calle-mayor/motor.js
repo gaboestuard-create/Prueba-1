@@ -82,7 +82,7 @@ const Motor = (function () {
     S.rango = r;
     S.avisos.push({ tipo: 'rango', rango: r });
     noticia(S, `${S.empresa} asciende a ${D.rangos[r].nombre}.`, 'empresa');
-    if (r === D.rangos.length - 1 && !S.fin) S.fin = 'tycoon';
+    if (r === D.rangos.length - 1 && !S.fin && S.modo !== 'historia') S.fin = 'tycoon';
   }
 
   // ---- Una hora en un negocio ----
@@ -211,7 +211,20 @@ const Motor = (function () {
       }
     }
     S.diasRojos = S.dinero < 0 ? S.diasRojos + 1 : 0;
-    if (S.diasRojos >= B.diasQuiebra && !S.fin) S.fin = 'quiebra';
+    if (S.diasRojos === 1 && !S.vistos.banco) { S.vistos.banco = true; S.avisos.push({ tipo: 'dialogo', id: 'banco-rojo' }); }
+    if (S.diasRojos === 0) S.vistos.banco = false;
+    if (S.diasRojos >= plazoQuiebra(S) && !S.fin) {
+      const quedan = vendibles(S);
+      S.fin = quedan.length <= 1 ? 'comprado' : 'quiebra';
+      S.finalId = S.fin;
+      if (S.fin === 'comprado' && quedan[0] && ['puesto', 'local'].includes(tipo(quedan[0]).clase)) { // Ferrán se queda tu último negocio
+        const N = quedan[0];
+        S.negocios = S.negocios.filter(n => n !== N);
+        S.rival.negocios.push({ ...N, id: 'r' + S.sig++, rival: true, rojos: 0, hoy: vacio() });
+      }
+      noticia(S, D.finales[S.fin].titulo + '.', 'empresa');
+    }
+    if (!S.fin) generarOfertas(S, c);
     const pat = patrimonio(S);
     S.historial.push({ dia: c, pat, dinero: S.dinero });
     if (S.historial.length > 120) S.historial.shift();
@@ -246,7 +259,7 @@ const Motor = (function () {
         S.avisos.push({ tipo: 'evento', texto: `${X.nombre} cerró un negocio: el lote quedó libre.` });
       }
     }
-    if (c < X.diaInicio || c < R.proximo || R.negocios.length >= X.maxNegocios) return;
+    if (!S.rivalActivo || (S.modo === 'historia' && S.capitulo < 2) || (S.modo !== 'historia' && c < X.diaInicio) || c < R.proximo || R.negocios.length >= X.maxNegocios) return;
     const libres = D.lotes.filter(l => !ocupado(S, l.id)).sort((a, b) => b.trafico - a.trafico);
     const tuyos = S.negocios.map(n => n.tipo);
     const giros = Object.keys(D.negocios).filter(t => ['puesto', 'local'].includes(D.negocios[t].clase) && D.negocios[t].rango <= S.rango && D.negocios[t].costo <= R.dinero * 0.8);
@@ -258,7 +271,66 @@ const Motor = (function () {
     R.negocios.push({ id: 'r' + S.sig++, rival: true, tipo: t, lote: L.id, nivel: 1, emp: Math.max(1, Math.ceil(T.empMax / 2)), precio: r2(T.precioRef * X.descuento), mkt: 1, rep: 50, rojos: 0, hoy: vacio(), ayer: vacio() });
     R.proximo = c + X.cadaDias[0] + Math.floor(azar(S) * (X.cadaDias[1] - X.cadaDias[0] + 1));
     noticia(S, `${X.nombre} abre ${T.nombre.toLowerCase()} en ${L.nombre}${tuyos.includes(t) ? ', justo en tu giro' : ''}.`, 'rival');
+    if (!S.vistos.ferran && S.modo !== 'historia') { S.vistos.ferran = true; S.avisos.push({ tipo: 'dialogo', id: 'ferran-llega' }); }
     S.avisos.push({ tipo: 'evento', texto: `${X.nombre} abrió ${T.nombre.toLowerCase()} en la calle.` });
+  }
+
+  // ---- Ofertas de compra ----
+  const vendibles = S => S.negocios.filter(n => ['puesto', 'local', 'fabrica'].includes(tipo(n).clase));
+  const plazoQuiebra = S => D.quiebra.diasBase + Math.min(D.quiebra.maxExtra, D.quiebra.diasPorNegocio * Math.max(0, vendibles(S).length - 1));
+  const terminal = S => ['quiebra', 'comprado', 'final'].includes(S.fin);
+  function generarOfertas(S, c) {
+    const O = D.ofertas;
+    S.ofertas = S.ofertas.filter(o => o.vence > c && S.negocios.some(n => n.id === o.negocio));
+    const libres = vendibles(S).filter(n => !S.ofertas.some(o => o.negocio === n.id));
+    if (!libres.length || S.ofertas.length >= O.maxAbiertas) return;
+    let N, factor, motivo;
+    if (S.dinero < 0 && azar(S) < O.probRojo) { // en rojo: compran barato y cada día más barato
+      const top = [...libres].sort((a, b) => b.invertido - a.invertido).slice(0, 2);
+      N = top[Math.floor(azar(S) * top.length)];
+      factor = Math.max(O.piso, O.inicio - O.baja * (S.diasRojos - 1));
+      motivo = 'rojo';
+    } else if (S.dinero >= 0 && libres.length >= 2 && azar(S) < O.probPremio) { // te va bien: alguien quiere tu mejor negocio
+      N = [...libres].sort((a, b) => (b.ayer.utilidad || 0) - (a.ayer.utilidad || 0))[0];
+      factor = O.premio[0] + azar(S) * (O.premio[1] - O.premio[0]);
+      motivo = 'premio';
+    } else return;
+    const precio = Math.round(N.invertido * factor);
+    const puedeFerran = S.rival.negocios.length < D.rival.maxNegocios + 2 && S.rival.dinero >= precio && ['puesto', 'local'].includes(tipo(N).clase) && S.rivalActivo;
+    const comprador = puedeFerran && (motivo === 'rojo' || azar(S) < 0.5) ? 'ferran' : 'vega';
+    const o = { id: 'o' + S.sig++, negocio: N.id, comprador, precio, vence: c + O.dias, regateo: false, motivo };
+    S.ofertas.push(o);
+    S.avisos.push({ tipo: 'oferta', id: o.id });
+  }
+
+  // ---- Historia ----
+  const CAPITULOS = {
+    carrito: S => S.negocios.length >= 1 && S.maxPat >= 1000,
+    local: S => S.negocios.some(n => tipo(n).clase === 'local'),
+    ferran: S => S.rival.cerrados + S.rival.comprados >= 1,
+    marca: S => S.productos.some(p => p.nota >= 7.5),
+    planta: S => S.negocios.some(n => tipo(n).clase === 'fabrica') && S.productos.reduce((t, p) => t + (p.propias || 0), 0) >= 5000,
+    oferta: S => S.rango >= 3,
+    calle: S => S.rival.negocios.length === 0 && S.rival.cerrados + S.rival.comprados >= 3 && S.maxPat >= 500000,
+  };
+  function avanzarHistoria(S) {
+    if (S.modo !== 'historia' || S.fin || S.esperando) return;
+    const C = D.capitulos[S.capitulo];
+    if (!C || !CAPITULOS[C.id](S)) return;
+    if (C.cierre) S.avisos.push({ tipo: 'dialogo', id: C.cierre });
+    if (C.id === 'oferta') { S.esperando = 'final'; return; } // el diálogo de cierre trae la elección del final
+    if (C.id === 'calle') { terminarHistoria(S, 'calle'); return; }
+    S.capitulo++;
+    const N = D.capitulos[S.capitulo];
+    S.avisos.push({ tipo: 'capitulo', n: S.capitulo });
+    if (N.intro) S.avisos.push({ tipo: 'dialogo', id: N.intro });
+    if (N.id === 'ferran') S.rival.proximo = Math.min(S.rival.proximo, dia(S) - 1); // Ferrán llega con el capítulo
+  }
+  function terminarHistoria(S, id) {
+    S.fin = 'final';
+    S.finalId = id;
+    if (id === 'vendido') ingreso(S, 'ventaActivos', patrimonio(S) * 0.5); // Vega paga 1.5× el patrimonio
+    noticia(S, D.finales[id].titulo + '.', 'empresa');
   }
 
   // ---- Decisiones ----
@@ -315,12 +387,18 @@ const Motor = (function () {
     S.pagos = S.pagos || [];
     S.paro = S.paro || 0;
     S.decision = S.decision || null;
+    S.modo = S.modo === 'historia' ? 'historia' : 'sandbox';
+    S.capitulo = S.capitulo || 0;
+    S.ofertas = S.ofertas || [];
+    S.vistos = S.vistos || {};
+    S.rivalActivo = S.rivalActivo ?? true;
+    S.esperando = S.esperando || null;
     S.proximaDecision = S.proximaDecision ?? dia(S) + 3;
     return S;
   }
 
   function tick(S) {
-    if (S.fin === 'quiebra') return;
+    if (terminal(S)) return;
     migrar(S);
     S.ventas = [];
     for (const N of S.negocios) simHora(S, N, hh(S));
@@ -329,20 +407,26 @@ const Motor = (function () {
     if (hh(S) === 0) cierreDia(S);
     actualizarRango(S);
     revisarHitos(S);
+    avanzarHistoria(S);
   }
 
   function nueva(o = {}) {
     const S = {
       v: VERSION, rng: (o.semilla ?? Date.now()) | 0, empresa: (o.empresa || '').trim() || 'Mi Empresa',
-      hora: D.inicio.hora, dinero: D.inicio.dinero, rango: 0, maxPat: D.inicio.dinero,
+      hora: D.inicio.hora, dinero: o.modo === 'sandbox' && D.modos.sandbox.dineros.includes(o.dinero) ? o.dinero : D.inicio.dinero, rango: 0, maxPat: 0,
       lotes: Object.fromEntries(D.lotes.map(l => [l.id, { propio: false }])), negocios: [],
       eventos: [], noticias: [], tendencias: Object.fromEntries(Object.keys(D.categorias).map(k => [k, 1])),
       bolsa: Object.fromEntries(D.acciones.map(a => [a.id, { precio: a.precio, hist: [a.precio] }])), cartera: {},
       proyecto: null, productos: [], experiencia: {},
       hoy: { ingresos: {}, gastos: {} }, resumen: null, historial: [], avisos: [], ventas: [], diasRojos: 0, sig: 1, fin: null,
       color: D.coloresMarca.includes(o.color) ? o.color : D.coloresMarca[0],
+      modo: o.modo === 'historia' ? 'historia' : 'sandbox', rivalActivo: o.rival !== false,
     };
+    S.maxPat = S.dinero;
     migrar(S);
+    actualizarRango(S); // en sandbox con mucho dinero se arranca con el rango que toca
+    S.avisos = S.avisos.filter(a => a.tipo !== 'rango');
+    if (S.modo === 'historia') S.avisos.push({ tipo: 'dialogo', id: 'cap1' });
     noticia(S, `${S.empresa} llega a Calle Mayor con ${dinero(S.dinero)} y un sueño.`, 'empresa');
     return S;
   }
@@ -442,7 +526,43 @@ const Motor = (function () {
       c.n -= n;
       if (!c.n) delete S.cartera[id];
     },
-    seguir(S) { if (S.fin === 'tycoon') S.fin = 'libre'; },
+    seguir(S) { // después de un final bueno o de llegar a Tycoon, la partida sigue como sandbox
+      if (S.fin === 'tycoon' || (S.fin === 'final' && D.finales[S.finalId].tipo !== 'derrota')) { S.fin = 'libre'; S.modo = 'sandbox'; }
+    },
+    elegirFinal(S, { valor }) {
+      if (S.esperando !== 'final') return 'Todavía no es momento de decidir.';
+      S.esperando = null;
+      if (valor !== 'calle') { terminarHistoria(S, valor); return; }
+      S.capitulo++;
+      S.avisos.push({ tipo: 'capitulo', n: S.capitulo });
+      S.avisos.push({ tipo: 'dialogo', id: 'cap7' });
+      S.rival.dinero = r2(S.rival.dinero + 60000); // Ferrán consigue más socios para la pelea final
+    },
+    aceptarOferta(S, { id }) {
+      const o = por(S.ofertas, id), N = o && negocio(S, o.negocio);
+      if (!o || !N) return 'Esa oferta ya no está en la mesa.';
+      ingreso(S, 'ventaActivos', o.precio);
+      S.negocios = S.negocios.filter(n => n !== N);
+      if (N.tipo === 'estudio') S.proyecto = null;
+      S.ofertas = S.ofertas.filter(x => x !== o);
+      const C = D.compradores[o.comprador];
+      if (o.comprador === 'ferran') {
+        S.rival.dinero = r2(S.rival.dinero - o.precio);
+        S.rival.negocios.push({ ...N, id: 'r' + S.sig++, rival: true, mkt: 1, rojos: 0, hoy: vacio(), ayer: vacio() });
+      }
+      noticia(S, `${C.nombre} compra el ${tipo(N).nombre.toLowerCase()} de ${S.empresa} en ${lote(N.lote).nombre}.`, 'empresa');
+      return { msg: `Vendiste ${nombreDe(N)} a ${C.nombre} por ${dinero(o.precio)}.` };
+    },
+    regatear(S, { id }) {
+      const o = por(S.ofertas, id);
+      if (!o) return 'Esa oferta ya no está en la mesa.';
+      if (o.regateo) return 'Ya regateaste esta oferta.';
+      o.regateo = true;
+      if (azar(S) < D.ofertas.probRegatear) { o.precio = Math.round(o.precio * (1 + D.ofertas.regatear)); return { msg: `Aceptan: ahora ofrecen ${dinero(o.precio)}.`, sigue: true }; }
+      S.ofertas = S.ofertas.filter(x => x !== o);
+      return { msg: 'Se levantan de la mesa. La oferta se cayó.', sigue: false };
+    },
+    rechazarOferta(S, { id }) { S.ofertas = S.ofertas.filter(o => o.id !== id); },
     adquirir(S, { id }) { // comprarle un negocio al rival, con todo y su fama
       const R = S.rival, N = por(R.negocios, id);
       if (!N) return 'Ese negocio ya no es de Ferrán.';
@@ -471,7 +591,7 @@ const Motor = (function () {
   };
   function hacer(S, accion, args) {
     migrar(S);
-    if (S.fin === 'quiebra') return { ok: false, msg: 'La empresa quebró.' };
+    if (terminal(S) && accion !== 'seguir') return { ok: false, msg: 'La partida terminó.' };
     const r = A[accion](S, args || {});
     actualizarRango(S);
     revisarHitos(S);
@@ -488,7 +608,7 @@ const Motor = (function () {
     const planta = S.negocios.find(n => n.lineas && n.lineas.includes(null));
     const sinLinea = planta && S.productos.find(p => p.activo && tipo(planta).sirve.includes(p.cat) && !S.negocios.some(n => n.lineas && n.lineas.includes(p.id)));
     if (!S.negocios.length) consejo = 'Toca un lote vacío de la calle y abre tu primer puesto de limonada.';
-    else if (S.dinero < 0) consejo = `Estás en números rojos. Vende algo o recorta personal: en ${B.diasQuiebra - S.diasRojos} días el banco te cierra.`;
+    else if (S.dinero < 0) consejo = `Estás en números rojos. Recorta personal o acepta alguna oferta: en ${plazoQuiebra(S) - S.diasRojos} días el banco cierra tu cuenta.`;
     else if (perdiendo) consejo = `${nombreDe(perdiendo)} dejó ir a ${perdiendo.ayer.perdidos} clientes ayer. Contrata o sube de nivel.`;
     else if (malaRep) consejo = `La reputación de ${nombreDe(malaRep)} va en picada. Revisa el precio.`;
     else if (S.rango >= 2 && !estudio(S)) consejo = 'Abre un estudio de producto: ahí diseñas y lanzas tus propias marcas.';
@@ -501,7 +621,7 @@ const Motor = (function () {
   }
 
   return {
-    VERSION, lineasActivas, migrar, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
+    VERSION, lineasActivas, migrar, plazoQuiebra, terminal, vendibles, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
     velocidadEstudio, negocioEn, estudio, nombreDe, ciclo, dia, hh, mult, lote,
   };
 })();

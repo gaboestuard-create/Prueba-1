@@ -66,9 +66,10 @@ assert.deepStrictEqual(razonable(120), a, 'misma semilla, mismo resultado');
 const b = M.nueva({ semilla: 3 });
 M.hacer(b, 'construir', { lote: 'l1', tipo: 'limonada' });
 M.hacer(b, 'precio', { id: b.negocios[0].id, valor: 3.6 });
-for (let i = 0; i < 24 * 30 && !b.fin; i++) M.tick(b);
-console.log(`Descuidado: dinero ${b.dinero.toFixed(0)}, reputación ${b.negocios[0].rep.toFixed(0)}`);
-assert(b.dinero < 150 && b.negocios[0].rep < 40, 'el precio abusivo no paga');
+const repB = () => (b.negocios[0] || b.rival.negocios.find(n => n.lote === 'l1')).rep;
+for (let i = 0; i < 24 * 30 && !b.fin; i++) { M.tick(b); b.ofertas = []; } // el descuidado ignora las ofertas
+console.log(`Descuidado: dinero ${b.dinero.toFixed(0)}, reputación ${repB().toFixed(0)}, final ${b.fin}`);
+assert(repB() < 40 && b.fin === 'comprado' && M.rivalEn(b, 'l1'), 'con un solo negocio en rojo, Ferrán se lo queda y se acaba la partida');
 
 // Sin dinero infinito: comprar y vender acciones el mismo día cuesta la comisión.
 const c = M.nueva({ semilla: 1 });
@@ -95,7 +96,42 @@ M.hacer(q, 'construir', { lote: 'l4', tipo: 'cafeteria' });
 M.hacer(q, 'empleados', { id: q.negocios[0].id, cambio: 3 });
 M.hacer(q, 'precio', { id: q.negocios[0].id, valor: 20 });
 for (let i = 0; i < 24 * 40 && !q.fin; i++) M.tick(q);
-assert(q.fin === 'quiebra', 'quiebra tras días en rojo');
+assert(q.fin === 'comprado', 'un solo negocio: final por compra');
+// Varios negocios en rojo: llegan ofertas que bajan cada día, y si no vendes, quiebra.
+const v = M.nueva({ semilla: 6 });
+v.rango = 1; v.dinero = 30000;
+for (const [l, t] of [['l1', 'cafeteria'], ['l2', 'panaderia'], ['l3', 'taller']]) M.hacer(v, 'construir', { lote: l, tipo: t });
+for (const N of v.negocios) { M.hacer(v, 'empleados', { id: N.id, cambio: 2 }); M.hacer(v, 'precio', { id: N.id, valor: N.precio * 3 }); }
+v.dinero = -100;
+const vistas = [];
+for (let i = 0; i < 24 * 30 && !v.fin; i++) { M.tick(v); for (const o of v.ofertas) if (!vistas.some(x => x.id === o.id)) vistas.push({ ...o, inv: v.negocios.find(n => n.id === o.negocio).invertido }); }
+console.log(`Ofertas en rojo: ${vistas.map(o => Math.round(o.precio / o.inv * 100) + '%').join(' ')} · plazo ${M.plazoQuiebra(v)} · final ${v.fin}`);
+assert(vistas.length >= 2 && vistas[vistas.length - 1].precio / vistas[vistas.length - 1].inv < vistas[0].precio / vistas[0].inv, 'las ofertas bajan cada día en rojo');
+assert(v.fin === 'quiebra', 'varios negocios sin vender: quiebra');
+// Aceptar una oferta: el dinero entra y el lote pasa al comprador.
+const w = M.nueva({ semilla: 9 });
+w.rango = 1; w.dinero = 20000;
+M.hacer(w, 'construir', { lote: 'l4', tipo: 'cafeteria' }); M.hacer(w, 'construir', { lote: 'l5', tipo: 'limonada' });
+w.rival.dinero = 1e6;
+w.ofertas.push({ id: 'oX', negocio: w.negocios[0].id, comprador: 'ferran', precio: 5000, vence: 99, regateo: false });
+const antesW = w.dinero;
+assert(M.hacer(w, 'aceptarOferta', { id: 'oX' }).ok && w.dinero === antesW + 5000 && M.rivalEn(w, 'l4'), 'vender a Ferrán');
+// Historia: capítulos en orden y la elección del final.
+const hst = M.nueva({ semilla: 12, modo: 'historia' });
+assert(hst.avisos.some(a => a.tipo === 'dialogo' && a.id === 'cap1'));
+for (let i = 0; i < 24 * 10; i++) M.tick(hst);
+assert(!hst.rival.negocios.length, 'en historia Ferrán no llega antes del capítulo 3');
+M.hacer(hst, 'construir', { lote: 'l4', tipo: 'limonada' }); hst.dinero += 3000;
+for (let i = 0; i < 24; i++) M.tick(hst);
+assert(hst.capitulo === 1, 'capítulo 1 cumplido');
+hst.capitulo = 5; hst.rango = 3; M.tick(hst);
+assert(hst.esperando === 'final' && hst.avisos.some(a => a.id === 'cap6-fin'));
+assert(M.hacer(hst, 'elegirFinal', { valor: 'socios' }).ok && hst.fin === 'final' && hst.finalId === 'socios', 'final socios');
+assert(M.hacer(hst, 'seguir').ok && hst.fin === 'libre' && hst.modo === 'sandbox', 'después del final se sigue en sandbox');
+// Sandbox: dinero inicial y sin rival.
+const sb = M.nueva({ semilla: 13, modo: 'sandbox', dinero: 50000, rival: false });
+for (let i = 0; i < 24 * 20; i++) M.tick(sb);
+assert(sb.rango === 2 && !sb.rival.negocios.length, 'sandbox con $50,000 y sin rival');
 
 // Planta: el mismo producto deja más con planta propia que maquilado, aun pagando obreros y energía.
 function conPlanta(usar) {

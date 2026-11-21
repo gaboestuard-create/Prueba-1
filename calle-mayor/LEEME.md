@@ -14,6 +14,14 @@ compite en precio, quiebra tras días en rojo y te vende sus locales. Cada 4 a 7
 (`decisiones` en `datos.js`). Tu color de marca pinta toldos y letreros; varios negocios del mismo giro forman cadena
 (insumos más baratos y fama compartida). Los hitos dan premios en efectivo.
 
+Modos: **Historia** (7 capítulos con diálogos de Doña Chela, Ulises Ferrán, Valeria Vega y el Lic. Ortiz; finales
+`calle`, `socios`, `vendido` y dos derrotas) y **Sandbox** (dinero inicial y rival a elegir). Guion, capítulos y finales
+viven en `datos.js` (`dialogos`, `capitulos`, `finales`).
+
+Números rojos: el banco da un plazo (más largo con más negocios). Mientras tanto Ferrán y Capital Vega ofrecen comprar
+tus negocios, cada día más barato; se acepta, se regatea una vez o se rechaza. Si se acaba el plazo con un solo negocio,
+Ferrán se lo queda; con varios, quiebra. Ambos son fin de partida.
+
 | Archivo | Capa | Qué contiene |
 | --- | --- | --- |
 | `datos.js` | Datos | Negocios, lotes, rangos, categorías de producto, acciones, eventos y **todo el balance**. |
