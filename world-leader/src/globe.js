@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -22,7 +22,7 @@
   const VERT = `varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     void main(){ vPos=position; vec4 mv=modelViewMatrix*vec4(position,1.); vV=mv.xyz; vN=normalMatrix*normal; gl_Position=projectionMatrix*mv; }`;
   const EARTH = `precision highp float;
-    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime, uNight;
+    uniform sampler2D uId, uPal, uState; uniform vec2 uSize, uProv; uniform vec3 uSun; uniform float uTime, uNight, uReg;
     varying vec3 vPos; varying vec3 vV; varying vec3 vN;
     ${NOISE}
     vec2 idAt(vec2 t){ vec2 uv=(t+.5)/uSize; vec4 x=texture2D(uId,vec2(uv.x,clamp(uv.y,0.,1.))); return floor(vec2(x.r,x.a)*255.+.5); } // (país, provincia)
@@ -44,7 +44,7 @@
       vec2 pid=p00; float a=a00; if(a10>a){pid=p10;a=a10;} if(a01>a){pid=p01;a=a01;} if(a11>a){pid=p11;a=a11;}
       float id=pid.x, aC=(p00.x==id?w00:0.)+(p10.x==id?w10:0.)+(p01.x==id?w01:0.)+(p11.x==id?w11:0.), ew=clamp(1.4*fp/s,.03,.35);
       float edge=clamp((aC-.5)/ew,0.,1.);                                  // frontera entre países: 0 en la línea, 1 dentro
-      float edgeP=mix(1.,clamp((a-.5)/ew,0.,1.),smoothstep(1.7,.9,fp));    // límite entre provincias: solo al acercarse
+      float edgeP=mix(1.,clamp((a-.5)/ew,0.,1.),smoothstep(1.7+uReg*3.,.9,fp));    // límite entre provincias: solo al acercarse
       vec4 pal=texture2D(uPal,vec2((pid.y+.5)/256.,(id+.5)/256.)), stt=texture2D(uState,vec2((id+.5)/256.,.5));
       // relieve procedural: cordilleras por ruido "ridged" + normal perturbada por derivadas
       float hh=fbm(n*6.+2.), elev=pow(1.-abs(2.*hh-1.),2.)*.7+hh*.3;
@@ -60,7 +60,7 @@
         col=base*(.4+.14*day+.8*d*day) + base*.2*pow(max(dot(Nb,V),0.),2.)*(1.-day);
         float city=smoothstep(.86,.95,noise(n*260.))*smoothstep(.5,.75,noise(n*27.))*(1.-day)*(1.-snow);
         col+=vec3(1.,.8,.45)*city*uNight;
-        col*=mix(.6,1.,edgeP);
+        col*=mix(.6-.22*uReg,1.,edgeP);
         col=mix(col*.38,col,edge);                                          // fronteras
         col+=base*.16*step(abs(id-uProv.x)+abs(pid.y-uProv.y),.5);          // provincia bajo el cursor
         col+=base*stt.b*.22;                                                // país bajo el cursor
@@ -120,13 +120,13 @@
     return new Promise((resolve, reject) => {
       if (typeof THREE === 'undefined') return reject(new Error('Three.js no cargó'));
       let renderer;
-      try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' }); } catch (e) { return reject(e); }
+      try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { return reject(e); }
       const mobile = Math.min(innerWidth, innerHeight) < 700;
       renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.5 : 2));
       renderer.setClearColor(0x02040a, 1);
       host.appendChild(renderer.domElement);
       const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(38, 1, .05, 200);
-      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun }, uNight: { value: .5 } };
+      const sun = new THREE.Vector3(1, .25, .4).normalize(), U = { uTime: { value: 0 }, uSun: { value: sun }, uNight: { value: .5 }, uReg: { value: 0 } };
 
       // --- textura de IDs desde el PNG incrustado
       const img = new Image();
@@ -151,13 +151,15 @@
         const cloudU = Object.assign({ uFade: { value: 1 } }, U);
         const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(1.009, 96, 48), new THREE.ShaderMaterial({ uniforms: cloudU, vertexShader: VERT, fragmentShader: CLOUD, transparent: true, depthWrite: false })); scene.add(cloudMesh);
         const aurora = new THREE.Mesh(new THREE.SphereGeometry(1.03, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: AUR, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(aurora);
-        scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: ATMO, side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false })));
+        scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.16, 96, 48), new THREE.ShaderMaterial({ uniforms: U, vertexShader: VERT, fragmentShader: ATMO, side: THREE.BackSide, transparent: true, depthWrite: false, // el halo suma luz pero no tapa el fondo cuando el lienzo es transparente
+          blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor })));
         // estrellas
+        let starsM;
         { const n = 2600, p = new Float32Array(n * 3), c = new Float32Array(n * 3); let r = 7;
           const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
           for (let i = 0; i < n; i++) { const u = rnd() * 2 - 1, t = rnd() * 6.283, q = Math.sqrt(1 - u * u), b = .35 + rnd() * .65, w = rnd(); p[i * 3] = 90 * q * Math.cos(t); p[i * 3 + 1] = 90 * u; p[i * 3 + 2] = 90 * q * Math.sin(t); c[i * 3] = b * (.8 + .2 * w); c[i * 3 + 1] = b * .88; c[i * 3 + 2] = b * (1 - .2 * w); }
           const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('color', new THREE.BufferAttribute(c, 3));
-          scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true }))); }
+          starsM = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.6, sizeAttenuation: false, vertexColors: true })); scene.add(starsM); }
         // marcadores de países diminutos (sin área clicable en el mapa)
         const small = Object.keys(C).filter(i => C[i].px < 60), mkU = { uScale: { value: 9 } };
         { const p = new Float32Array(small.length * 3); small.forEach((iso, i) => { const v = ll2v(C[iso].lat, C[iso].lon, 1.006); p[i * 3] = v.x; p[i * 3 + 1] = v.y; p[i * 3 + 2] = v.z; });
@@ -165,7 +167,7 @@
           scene.add(new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: mkU, vertexShader: MK_V, fragmentShader: MK_F, transparent: true, depthWrite: false }))); }
 
         // --- cámara orbital propia: arrastre con inercia, rueda/pellizco, vuelo suave
-        const cur = { lon: -95, lat: 22, dist: 3.4 }, tgt = { lon: -95, lat: 22, dist: 3.4 }; let moved = true, lastTouch = 0, vw = 1, vh = 1;
+        const cur = { lon: -95, lat: 22, dist: 3.4 }, tgt = { lon: -95, lat: 22, dist: 3.4 }; let moved = true, lastTouch = 0, vw = 1, vh = 1, camMode = 'orbital';
         const el = renderer.domElement, ptr = new Map(); let dragDist = 0, pinch = 0;
         el.style.touchAction = 'none';
         const pickAt = (x, y) => {
@@ -187,12 +189,12 @@
           if (!p) { if (e.pointerType === 'mouse') hoverXY = [e.clientX, e.clientY]; return; }
           const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; lastTouch = performance.now();
           if (ptr.size === 1) { dragDist += Math.abs(dx) + Math.abs(dy); const k = .11 * (tgt.dist - .92) * (700 / Math.max(300, vh)); tgt.lon -= dx * k; tgt.lat = Math.max(-84, Math.min(84, tgt.lat + dy * k)); }
-          else if (ptr.size === 2) { const a = [...ptr.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (pinch) tgt.dist = Math.max(1.3, Math.min(5, tgt.dist * pinch / d)); pinch = d; dragDist += 10; }
+          else if (ptr.size === 2) { const a = [...ptr.values()], d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); if (pinch) tgt.dist = Math.max(1.1, Math.min(5, tgt.dist * pinch / d)); pinch = d; dragDist += 10; }
         });
         const up = e => { if (!ptr.has(e.pointerId)) return; const was = ptr.size; ptr.delete(e.pointerId); pinch = 0; if (was === 1 && dragDist < 7 && e.type === 'pointerup') { const r = pickAt(e.clientX, e.clientY); cbPick(r && r.iso, r && r.prov); } };
         el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
         el.addEventListener('pointerleave', () => { hoverXY = null; cbHover(null); });
-        el.addEventListener('wheel', e => { e.preventDefault(); tgt.dist = Math.max(1.3, Math.min(5, tgt.dist * (1 + Math.sign(e.deltaY) * .1))); G.spin = false; lastTouch = performance.now(); }, { passive: false });
+        el.addEventListener('wheel', e => { e.preventDefault(); tgt.dist = Math.max(1.1, Math.min(5, tgt.dist * (1 + Math.sign(e.deltaY) * .1))); G.spin = false; lastTouch = performance.now(); }, { passive: false });
 
         // --- etiquetas de países (DOM), más cuantas más cerca
         const order = Object.keys(C).filter(i => C[i].px > 0).sort((a, b) => C[b].px - C[a].px), labels = [];
@@ -205,6 +207,14 @@
             if (on) { tmp.copy(l.v).project(cam); l.d.style.transform = `translate(${((tmp.x + 1) / 2 * vw) | 0}px,${((1 - tmp.y) / 2 * vh) | 0}px) translate(-50%,-50%)`; }
             if (on !== l.on) { l.d.hidden = !on; l.on = on; }
           });
+        }
+        let provL = []; const pv = new THREE.Vector3();
+        G.setProvLabels = list => { provL.forEach(l => l.d.remove()); provL = (list || []).map(x => { const d = document.createElement('div'); d.className = 'plabel ' + (x.cls || ''); d.textContent = x.n; d.hidden = true; labelHost.appendChild(d); return { d, v: ll2v(x.la, x.lo, 1.004), on: false }; }); moved = true; };
+        function updProv() { // nombres de estados y provincias solo de cerca, los más centrados primero
+          const near = cur.dist < 1.85, cp = ll2v(cur.lat, cur.lon, 1), vis = [];
+          for (const l of provL) { let ok = near && l.v.dot(cp) > .8; if (ok) { pv.copy(l.v).project(cam); ok = Math.abs(pv.x) < .95 && Math.abs(pv.y) < .9 && pv.z < 1; if (ok) vis.push([pv.x * pv.x + pv.y * pv.y, l, (pv.x + 1) / 2 * vw, (1 - pv.y) / 2 * vh]); } if (!ok && l.on) { l.d.hidden = true; l.on = false; } }
+          vis.sort((a, b) => a[0] - b[0]); const cap = Math.round(vw * vh / 26000), put = [];
+          vis.forEach(x => { const l = x[1], on = put.length < cap && !put.some(q => Math.abs(q[0] - x[2]) < 70 && Math.abs(q[1] - x[3]) < 16); if (on) put.push([x[2], x[3]]); if (on) l.d.style.transform = `translate(${x[2] | 0}px,${x[3] | 0}px) translate(-50%,-50%)`; if (on !== l.on) { l.d.hidden = !on; l.on = on; } });
         }
         G.label = (iso, text, cls) => { const l = labels.find(x => x.iso === iso); if (l) { if (text) l.d.textContent = text; l.d.className = 'glabel ' + (cls || ''); } };
 
@@ -283,7 +293,9 @@
           let dl = ((tgt.lon - cur.lon + 540) % 360) - 180; const k = 1 - Math.pow(.0015, dt);
           if (Math.abs(dl) > .002 || Math.abs(tgt.lat - cur.lat) > .002 || Math.abs(tgt.dist - cur.dist) > .0005) moved = true;
           cur.lon += dl * k; tgt.lon = cur.lon + dl * (1 - k); cur.lat += (tgt.lat - cur.lat) * k; cur.dist += (tgt.dist - cur.dist) * k;
-          cam.position.copy(ll2v(cur.lat, cur.lon, cur.dist)); cam.lookAt(0, 0, 0);
+          const tl = camMode === 'tactica' ? Math.max(0, Math.min(1, (2.3 - cur.dist) / 1.1)) : 0; // inclinación: crece al acercarse
+          if (tl > 0) { cam.position.copy(ll2v(cur.lat - 11 * tl, cur.lon, cur.dist)); cam.lookAt(ll2v(cur.lat + 3 * tl, cur.lon, 1 - .6 * (1 - tl * .5))); }
+          else { cam.position.copy(ll2v(cur.lat, cur.lon, cur.dist)); cam.lookAt(0, 0, 0); }
           const sa = U.uTime.value * .02 + 1.2; sun.set(Math.cos(sa), .28, Math.sin(sa)).normalize();
           cloudU.uFade.value = Math.max(.12, Math.min(1, (cur.dist - 1.5) / 1.3));
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
@@ -292,9 +304,12 @@
           for (const m of thArrows) m.userData.u.uHead.value = ((U.uTime.value * .4 + m.userData.ph) % 1) * 1.25;
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
           if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }
-          if (moved) { cam.updateMatrixWorld(); updLabels(); moved = false; }
+          if (moved) { cam.updateMatrixWorld(); updLabels(); updProv(); moved = false; }
           renderer.render(scene, cam);
         }
+        G.setBg = k => { const sp = !k || k === 'espacio'; renderer.setClearColor(0x02040a, sp ? 1 : 0); if (starsM) starsM.visible = sp; };
+        G.setCam = m => { camMode = m === 'tactica' ? 'tactica' : 'orbital'; moved = true; };
+        G.setReg = on => { U.uReg.value = on ? 1 : 0; };
         G.ready = true; requestAnimationFrame(frame); resolve();
       };
       img.src = GEO.png;

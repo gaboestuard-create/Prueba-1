@@ -25,6 +25,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Motivos para la guerra**: `7f-casus` y `ui/5d-casus.js` (agravios, justificación, exigir disculpas).
 - **Fase 4**: `7d-story` (sinergias, diario, frases, legado), `data-story.js` (rasgos, 40 eventos, frases), `ui/12-cfg.js` (ajustes), `ui/15-sound.js` (audio procedural), `ui/5b-feel.js` (experiencia), y en `globe.js` auroras, partículas y calidad.
 - **Fase 5**: `7g-scenarios` (escenarios, modos, dificultad por partes, campañas, código de partida, reto semanal), `7h-victory` (métricas, puntuación, victorias, epílogo, eventos procedurales, mediación), `data-scenario.js`, `data-progress.js` y `ui/5e-modes.js`. Detalles y balance en `FASE5.md`.
+- **Aspecto**: `ui/5f-look.js` (modo de mapa «Regiones», nombres de estados al acercarte, cámara orbital o táctica, fondos) y en `globe.js` `setBg`, `setCam`, `setReg`, `setProvLabels`. La paleta de países está en `ATLAS` (`ui/30-hud.js`) y el estilo de botones al final de `styles.css`.
 
 ## Cómo extender sin romper
 

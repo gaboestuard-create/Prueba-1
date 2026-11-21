@@ -9,7 +9,9 @@ const LEGEND = {
 const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const ramp = (stops, t) => { t = Math.max(0, Math.min(.9999, t)) * (stops.length - 1); const i = Math.floor(t); return lerp3(stops[i], stops[i + 1], t - i); };
 function hsl(h, s, l) { const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); }; return [f(0), f(8), f(4)]; }
-const polColor = iso => { const h = hash(iso + 'wl'); let hue = h % 360; if (hue > 22 && hue < 68) hue += 60; return hsl(hue, .3 + (h >> 9) % 16 / 100, .42 + (h >> 16) % 11 / 100); };
+/* paleta de atlas: tonos apagados de mapa impreso, con un leve matiz por país para que los vecinos no se confundan */
+const ATLAS = [[176, 98, 82], [92, 128, 106], [172, 140, 82], [86, 112, 150], [146, 96, 128], [120, 140, 88], [190, 122, 70], [96, 140, 146], [150, 120, 98], [118, 104, 160], [160, 150, 110], [104, 124, 98], [168, 110, 106], [80, 128, 128]];
+const polColor = iso => { const h = hash(iso + 'wl'), c = ATLAS[h % ATLAS.length], k = .86 + (h >> 8) % 23 / 100; return c.map(v => Math.min(255, v * k)); };
 const hexRgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 
 function colorOf(iso, mode, ctx) { // iso = país vivo (dueño)
