@@ -403,3 +403,4 @@ body[data-bg="aurora"] #globe { background: radial-gradient(ellipse at 20% 15%, 
 .mcard { border-left: 3px solid rgba(232, 195, 106, .5); } .mcard:hover, .mcard:focus-visible { transform: translateX(3px); }
 .camp-pill { border-left: 3px solid var(--gold); }
 input, select, textarea { border-radius: 2px !important; }
+label.check:has([data-c="paperT"]) { color: #5a4a30; }

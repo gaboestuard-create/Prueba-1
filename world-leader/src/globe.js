@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -230,7 +230,7 @@
         }
         const clear = g => { while (g.children.length) { const m = g.children.pop(); m.geometry.dispose(); m.material.dispose(); } };
         G.setRoutes = list => { clear(routes); list.slice(0, 26).forEach(r => { const m = arcMesh(r.a, r.b, r.gold ? 0xffc94a : 0x35d6ff); if (m) routes.add(m); }); };
-        G.trip = o => { const m = arcMesh(o.a, o.b, o.cargo ? 0x7dffb0 : 0xffe9a8, true); if (!m) return; scene.add(m); trips.push({ m, t0: performance.now() }); };
+        G.trip = o => { const m = arcMesh(o.a, o.b, o.color || (o.cargo ? 0x7dffb0 : 0xffe9a8), true); if (!m) return; scene.add(m); trips.push({ m, t0: performance.now() }); };
         let fx = null; const fxU = { uTime: U.uTime, uScale: { value: 30 } };
         G.setWars = list => {
           if (fx) { scene.remove(fx); fx.geometry.dispose(); fx = null; } if (!list.length) return;
@@ -301,12 +301,17 @@
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
           for (let i = bursts.length - 1; i >= 0; i--) { const b = bursts[i], t = (now - b.t0) / b.life; if (t >= 1) { scene.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); continue; }
             b.u.uT.value = t; const P = b.m.geometry.attributes.position; for (let j = 0; j < b.vel.length; j++) { const v = b.vel[j]; if (b.kind === 'tormenta') v.applyAxisAngle(b.up, dt * 1.6); P.array[j * 3] += v.x * dt; P.array[j * 3 + 1] += v.y * dt; P.array[j * 3 + 2] += v.z * dt; v.multiplyScalar(1 - dt * .6); } P.needsUpdate = true; }
+          for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], t = (now - r.t0) / r.life; if (t >= 1) { scene.remove(r.m); r.m.material.dispose(); rings.splice(i, 1); continue; } const e = 1 - Math.pow(1 - t, 3); r.m.scale.setScalar(r.size * e + .001); r.m.material.opacity = (1 - t) * (1 - t); }
           for (const m of thArrows) m.userData.u.uHead.value = ((U.uTime.value * .4 + m.userData.ph) % 1) * 1.25;
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
           if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }
           if (moved) { cam.updateMatrixWorld(); updLabels(); updProv(); moved = false; }
           renderer.render(scene, cam);
         }
+        const rings = [], ringGeo = new THREE.RingGeometry(.86, 1, 72);
+        G.ring = (lat, lon, color, size, life) => { if (lat == null || rings.length > 18) return;
+          const mat = new THREE.MeshBasicMaterial({ color: color || 0xffd36a, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }), m = new THREE.Mesh(ringGeo, mat), p = ll2v(lat, lon, 1.006);
+          m.position.copy(p); m.lookAt(p.clone().multiplyScalar(2)); m.scale.setScalar(.001); scene.add(m); rings.push({ m, t0: performance.now(), size: size || .09, life: life || 1600 }); };
         G.setBg = k => { const sp = !k || k === 'espacio'; renderer.setClearColor(0x02040a, sp ? 1 : 0); if (starsM) starsM.visible = sp; };
         G.setCam = m => { camMode = m === 'tactica' ? 'tactica' : 'orbital'; moved = true; };
         G.setReg = on => { U.uReg.value = on ? 1 : 0; };

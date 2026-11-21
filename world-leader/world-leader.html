@@ -415,6 +415,7 @@ body[data-bg="aurora"] #globe { background: radial-gradient(ellipse at 20% 15%, 
 .mcard { border-left: 3px solid rgba(232, 195, 106, .5); } .mcard:hover, .mcard:focus-visible { transform: translateX(3px); }
 .camp-pill { border-left: 3px solid var(--gold); }
 input, select, textarea { border-radius: 2px !important; }
+label.check:has([data-c="paperT"]) { color: #5a4a30; }
 
 </style>
 
@@ -5770,7 +5771,7 @@ WL.Game = {
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -5989,7 +5990,7 @@ WL.Game = {
         }
         const clear = g => { while (g.children.length) { const m = g.children.pop(); m.geometry.dispose(); m.material.dispose(); } };
         G.setRoutes = list => { clear(routes); list.slice(0, 26).forEach(r => { const m = arcMesh(r.a, r.b, r.gold ? 0xffc94a : 0x35d6ff); if (m) routes.add(m); }); };
-        G.trip = o => { const m = arcMesh(o.a, o.b, o.cargo ? 0x7dffb0 : 0xffe9a8, true); if (!m) return; scene.add(m); trips.push({ m, t0: performance.now() }); };
+        G.trip = o => { const m = arcMesh(o.a, o.b, o.color || (o.cargo ? 0x7dffb0 : 0xffe9a8), true); if (!m) return; scene.add(m); trips.push({ m, t0: performance.now() }); };
         let fx = null; const fxU = { uTime: U.uTime, uScale: { value: 30 } };
         G.setWars = list => {
           if (fx) { scene.remove(fx); fx.geometry.dispose(); fx = null; } if (!list.length) return;
@@ -6060,12 +6061,17 @@ WL.Game = {
           mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
           for (let i = bursts.length - 1; i >= 0; i--) { const b = bursts[i], t = (now - b.t0) / b.life; if (t >= 1) { scene.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); continue; }
             b.u.uT.value = t; const P = b.m.geometry.attributes.position; for (let j = 0; j < b.vel.length; j++) { const v = b.vel[j]; if (b.kind === 'tormenta') v.applyAxisAngle(b.up, dt * 1.6); P.array[j * 3] += v.x * dt; P.array[j * 3 + 1] += v.y * dt; P.array[j * 3 + 2] += v.z * dt; v.multiplyScalar(1 - dt * .6); } P.needsUpdate = true; }
+          for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], t = (now - r.t0) / r.life; if (t >= 1) { scene.remove(r.m); r.m.material.dispose(); rings.splice(i, 1); continue; } const e = 1 - Math.pow(1 - t, 3); r.m.scale.setScalar(r.size * e + .001); r.m.material.opacity = (1 - t) * (1 - t); }
           for (const m of thArrows) m.userData.u.uHead.value = ((U.uTime.value * .4 + m.userData.ph) % 1) * 1.25;
           for (let i = trips.length - 1; i >= 0; i--) { const t = trips[i], h = (now - t.t0) / 2200; t.m.userData.u.uHead.value = h * 1.25; if (h > 1) { scene.remove(t.m); t.m.geometry.dispose(); t.m.material.dispose(); trips.splice(i, 1); } }
           if (hoverXY && now - lastTouch > 120) { const r = pickAt(hoverXY[0], hoverXY[1]); cbHover(r && r.iso, hoverXY[0], hoverXY[1], r && r.prov); hoverXY = null; }
           if (moved) { cam.updateMatrixWorld(); updLabels(); updProv(); moved = false; }
           renderer.render(scene, cam);
         }
+        const rings = [], ringGeo = new THREE.RingGeometry(.86, 1, 72);
+        G.ring = (lat, lon, color, size, life) => { if (lat == null || rings.length > 18) return;
+          const mat = new THREE.MeshBasicMaterial({ color: color || 0xffd36a, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }), m = new THREE.Mesh(ringGeo, mat), p = ll2v(lat, lon, 1.006);
+          m.position.copy(p); m.lookAt(p.clone().multiplyScalar(2)); m.scale.setScalar(.001); scene.add(m); rings.push({ m, t0: performance.now(), size: size || .09, life: life || 1600 }); };
         G.setBg = k => { const sp = !k || k === 'espacio'; renderer.setClearColor(0x02040a, sp ? 1 : 0); if (starsM) starsM.visible = sp; };
         G.setCam = m => { camMode = m === 'tactica' ? 'tactica' : 'orbital'; moved = true; };
         G.setReg = on => { U.uReg.value = on ? 1 : 0; };
@@ -8385,6 +8391,33 @@ H.cfgBg = d => { CFG.bg = d.v; cfgSave(); applyLook(); UI.render(); };
 { const t = setInterval(() => { if (!Globe.ready) return; clearInterval(t); const L = [];
   for (const iso in D.C) { const g = D.C[iso].terr; if (g.length > 1) g.forEach(x => { if (x.la != null && x.lo != null) L.push({ la: x.la, lo: x.lo, n: x.n }); }); }
   Globe.setProvLabels(L); applyLook(); refreshMap(); }, 250); }
+
+
+/* ---------- ui/5g-anim.js ---------- */
+/* =====================================================================
+   INTERFAZ · EL GLOBO REACCIONA: ondas, ataques y pulsos por cada suceso
+   Ondas expansivas (Globe.ring), arcos de ataque y de tratado (Globe.trip),
+   y tras cada turno un repaso animado de lo que hicieron las demás naciones.
+   Respeta «Reducir movimiento».
+   ===================================================================== */
+const RC = { war: 0xff4a3a, coup: 0xff8a3a, peace: 0xf4f7ff, dip: 0xffd36a, eco: 0xffb04a, elec: 0x4fd8ff, tec: 0xb99cff, mil: 0xff6a5a, pol: 0x9ad8ff };
+const ringAt = (iso, col, size, life) => { if (CFG.rm) return; const p = LL(iso); if (p) Globe.ring(p[0], p[1], col, size, life); };
+const bigRing = (iso, col) => { ringAt(iso, col, .12, 1500); setTimeout(() => ringAt(iso, col, .2, 2200), 260); };
+/* guerra: salvas de misiles del atacante al defensor y onda roja al impactar */
+Bus.on('war', w => { if (CFG.rm || !w.a || !w.d) return; for (let i = 0; i < 3; i++) setTimeout(() => Globe.trip({ a: w.a, b: w.d, color: 0xff5a3a }), i * 280); setTimeout(() => { bigRing(w.d, RC.war); fxAt('exp', w.d); }, 1700); });
+Bus.on('coup', c => bigRing(c.iso, RC.coup));
+Bus.on('annex', a => { bigRing(a.v, RC.war); setTimeout(() => ringAt(a.t, RC.dip, .1, 1600), 500); });
+Bus.on('treaty', t => { if (!t.a || !t.b || t.a === t.b) return ringAt(t.a, RC.dip, .08); ringAt(t.a, RC.dip, .08); ringAt(t.b, RC.dip, .08); if (!CFG.rm) Globe.trip({ a: t.a, b: t.b, color: 0xffd36a }); });
+Bus.on('election', e => bigRing(me(), e.win ? RC.elec : RC.war));
+Bus.on('tech', () => { bigRing(me(), RC.tec); fxAt('des', me()); });
+Bus.on('campStage', () => bigRing(me(), RC.dip));
+/* tras el turno: repaso de lo que pasó en el resto del mundo, en cuanto el globo queda a la vista */
+const globeFree = () => $('#modal').hidden && $('#cine').hidden;
+Bus.on('turn', t => { if (CFG.rm || !t || !t.news) return; const seen = new Set(), L = t.news.filter(n => n.i && n.i !== me() && n.p >= 2 && CC(n.i) && !seen.has(n.i) && seen.add(n.i)).slice(0, 8), turn = S().turn; let tries = 0;
+  clearInterval(UI.recapT); UI.recapT = setInterval(() => { if (!S() || S().turn !== turn || ++tries > 120) return clearInterval(UI.recapT); if (!globeFree()) return; clearInterval(UI.recapT); recap(L); }, 400); });
+function recap(L) {
+  L.forEach((n, i) => setTimeout(() => { const k = /declara la guerra|ataca|bombarde|invade/i.test(n.x) ? 'war' : /golpe|revoluci|derroca/i.test(n.x) ? 'coup' : /paz|alto el fuego/i.test(n.x) ? 'peace' : n.k;
+    ringAt(n.i, RC[k] || RC.pol, n.p >= 3 ? .11 : .07, n.p >= 3 ? 2000 : 1400); if (k === 'war' && n.p >= 3) fxAt('humo', n.i); }, 300 + i * 420)); }
 
 
 /* ---------- ui/90-boot.js ---------- */
