@@ -9,6 +9,11 @@ y teléfonos. Cada línea se asigna a un producto, produce `capLinea` unidades a
 Lo que cabe en tus líneas sale al costo `propio`; el resto se maquila al `costo` de la categoría.
 Sin dependencias: abre `index.html` (las fuentes vienen de Google Fonts y tienen respaldo si no hay internet).
 
+Fase 2 (en curso): Grupo Ferrán es un rival que abre negocios en lotes libres (máximo 3, nunca los últimos 3 libres),
+compite en precio, quiebra tras días en rojo y te vende sus locales. Cada 4 a 7 días llega una decisión con dos salidas
+(`decisiones` en `datos.js`). Tu color de marca pinta toldos y letreros; varios negocios del mismo giro forman cadena
+(insumos más baratos y fama compartida). Los hitos dan premios en efectivo.
+
 | Archivo | Capa | Qué contiene |
 | --- | --- | --- |
 | `datos.js` | Datos | Negocios, lotes, rangos, categorías de producto, acciones, eventos y **todo el balance**. |

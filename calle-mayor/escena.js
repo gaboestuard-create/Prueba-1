@@ -17,6 +17,7 @@ const Escena = (function () {
   let D, S = null, cv, cx, dpr = 1, escala = 1, vistaW = 0;
   let camX = 0, velCam = 0, camMeta = null, arr = null, hover = null, sel = null, alSel = () => {};
   let hora = 8, msHora = 1500, t = 0, prev = 0, oscuro = 0, siguienteAuto = 2;
+  let marca = '#E4572E', letrero = '';
   const peatones = [], monedas = [], autos = [], alturas = [], humo = [], chimeneas = [];
   const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const r = (a, b) => a + Math.random() * (b - a);
@@ -99,7 +100,7 @@ const Escena = (function () {
   }
 
   function puesto(x, N, T, luz) {
-    const c = x + LW / 2, col = T.color;
+    const c = x + LW / 2, col = T.color, sombrilla = marca;
     if (!luz) {
       loteVacio(x, null, null);
       // vendedor detrás del mostrador
@@ -111,8 +112,8 @@ const Escena = (function () {
       rect(c - 44, BASE - 18, 88, 30, col);
       rect(c - 44, BASE - 6, 88, 5, mezcla(col, '#000000', 0.25));
       rect(c - 48, BASE - 22, 96, 5, '#A0794F');
-      rect(c - 30, BASE - 14, 60, 9, '#1B1A2E');
-      texto(T.corto.toUpperCase(), c, BASE - 9.5, 7, tinte('#F6F1E7'));
+      rect(c - 30, BASE - 14, 60, 9, N.rival ? marca : '#1B1A2E');
+      texto((N.rival ? letrero : T.corto).toUpperCase(), c, BASE - 9.5, 7, tinte('#F6F1E7'));
       for (const dx of [-28, 28]) {
         cx.fillStyle = tinte('#23222F'); cx.beginPath(); cx.arc(c + dx, BASE + 14, 8, 0, Math.PI * 2); cx.fill();
         cx.fillStyle = tinte('#9A98A8'); cx.beginPath(); cx.arc(c + dx, BASE + 14, 3, 0, Math.PI * 2); cx.fill();
@@ -139,14 +140,14 @@ const Escena = (function () {
       rect(c - 1.5, BASE - 92, 3, 72, '#4A4A55');
       const n = 8, rx = 58 + N.nivel * 3, ry = 24, cy = BASE - 88;
       for (let i = 0; i < n; i++) {
-        cx.fillStyle = tinte(i % 2 ? '#F6F1E7' : col);
+        cx.fillStyle = tinte(i % 2 ? '#F6F1E7' : sombrilla);
         cx.beginPath();
         cx.moveTo(c, cy - ry);
         cx.ellipse(c, cy, rx, ry, 0, Math.PI + (i / n) * Math.PI, Math.PI + ((i + 1) / n) * Math.PI);
         cx.closePath();
         cx.fill();
       }
-      rect(c - rx, cy - 1, rx * 2, 3, mezcla(col, '#000000', 0.3));
+      rect(c - rx, cy - 1, rx * 2, 3, mezcla(sombrilla, '#000000', 0.3));
       if (N.nivel >= 3) { rect(c + 46, BASE - 46, 4, 26, '#4A4A55'); rect(c + 38, BASE - 62, 22, 18, '#1B1A2E'); texto('$' + N.precio.toFixed(2), c + 49, BASE - 53, 6, tinte('#F2C230')); }
     } else if (oscuro > 0.2) { // foquitos en el borde de la sombrilla
       const rx = 58 + N.nivel * 3;
@@ -186,9 +187,9 @@ const Escena = (function () {
       rect(x0 + w - 36, BASE - 52, 26, 52, '#2A2A3A');
       rect(x0 + w - 33, BASE - 49, 20, 46, '#40516E');
       rect(x0 + w - 17, BASE - 28, 2, 6, '#F2C230');
-      toldo(x0 + 4, BASE - 66, w - 8, 12, T.color);
-      rect(x0 + 10, BASE - altoPB - 4, w - 20, 16, '#1B1A2E');
-      texto(T.corto.toUpperCase(), x0 + w / 2, BASE - altoPB + 4, 10, tinte('#F6F1E7'));
+      toldo(x0 + 4, BASE - 66, w - 8, 12, marca);
+      rect(x0 + 10, BASE - altoPB - 4, w - 20, 16, N.rival ? marca : '#1B1A2E');
+      texto((N.rival ? letrero + ' · ' + T.corto : T.corto).toUpperCase(), x0 + w / 2, BASE - altoPB + 4, N.rival ? 8.5 : 10, tinte('#F6F1E7'));
       // pizarrón con el precio en la banqueta
       rect(x0 + w - 4, BASE + 4, 2, 16, '#5B4636');
       rect(x0 + w - 16, BASE + 2, 26, 16, '#2C4A3E');
@@ -212,7 +213,7 @@ const Escena = (function () {
         cx.fillStyle = `rgba(255, 210, 120, ${0.8 * oscuro})`;
         cx.fillRect(wx, y + 5, 24, 20);
       }
-      texto(T.corto.toUpperCase(), x0 + w / 2, BASE - altoPB + 4, 10, `rgba(255, 230, 170, ${oscuro})`);
+      texto((N.rival ? letrero + ' · ' + T.corto : T.corto).toUpperCase(), x0 + w / 2, BASE - altoPB + 4, N.rival ? 8.5 : 10, `rgba(255, 230, 170, ${oscuro})`);
       if (N.nivel >= 4) { brillo(x0 + w / 2, top - 39, 60, '#F2C230', oscuro * 0.4); texto((S.empresa || '').toUpperCase().slice(0, 18), x0 + w / 2, top - 39, 9, '#FFE08A'); }
       if (N.tipo === 'restaurante') for (let i = 0; i <= 10; i++) brillo(x0 + 4 + i * ((w - 8) / 10), BASE - 70 + Math.sin(i / 10 * Math.PI) * 6, 7, '#FFE0A0', oscuro);
     }
@@ -357,7 +358,8 @@ const Escena = (function () {
     rect(camX - 2, BASE, w + 4, 2, '#8E8A82');
     const dibujarLotes = luz => {
       for (let i = ini; i <= fin; i++) {
-        const L = D.lotes[i], x = MARGEN + i * LW, N = S && S.negocios.find(n => n.lote === L.id);
+        const L = D.lotes[i], x = MARGEN + i * LW, N = S && (S.negocios.find(n => n.lote === L.id) || (S.rival && S.rival.negocios.find(n => n.lote === L.id)));
+        if (N) { marca = N.rival ? D.rival.color : S.color || '#E4572E'; letrero = D.rival.corto; }
         if (!N) { if (!luz) loteVacio(x, L, S ? S.lotes[L.id].propio : false); alturas[i] = BASE - 110; continue; }
         const T = D.negocios[N.tipo];
         alturas[i] = T.clase === 'puesto' ? puesto(x, N, T, luz) : T.clase === 'estudio' ? estudio(x, N, T, luz) : T.clase === 'fabrica' ? fabrica(x, N, T, luz) : local(x, N, T, luz);
@@ -434,12 +436,12 @@ const Escena = (function () {
       if (p.espera > 0) { p.espera -= dt; continue; }
       if (p.estado === 'entra') {
         p.a -= dt * 2.2; p.y -= dt * 18;
-        if (p.a <= 0) { monedas.push({ x: p.meta, y: BASE - 20, texto: p.monto, t: 0 }); peatones.splice(i, 1); }
+        if (p.a <= 0) { if (p.monto) monedas.push({ x: p.meta, y: BASE - 20, texto: p.monto, t: 0 }); peatones.splice(i, 1); }
         continue;
       }
       if (p.estado === 'compra') {
         p.t -= dt;
-        if (p.t <= 0) { p.estado = null; p.bolsa = elige(['#F6F1E7', '#F2C230', '#E07A5F']); monedas.push({ x: p.x, y: BASE - 40, texto: p.monto, t: 0 }); p.meta = null; }
+        if (p.t <= 0) { p.estado = null; p.bolsa = elige(['#F6F1E7', '#F2C230', '#E07A5F']); if (p.monto) monedas.push({ x: p.x, y: BASE - 40, texto: p.monto, t: 0 }); p.meta = null; }
         continue;
       }
       p.x += p.dir * p.vel * dt;
@@ -531,12 +533,13 @@ const Escena = (function () {
   // Ventas de la última hora: algunas se ven como clientes que caminan hasta tu negocio.
   function ventas(lista) {
     for (const v of lista) {
-      const i = D.lotes.findIndex(l => l.id === v.lote), N = S.negocios.find(n => n.lote === v.lote);
+      const i = D.lotes.findIndex(l => l.id === v.lote), N = S.negocios.find(n => n.lote === v.lote) || S.rival.negocios.find(n => n.lote === v.lote);
+      if (!N) continue;
       const k = Math.min(v.n, msHora < 500 ? 1 : msHora < 1000 ? 2 : 3);
       for (let j = 0; j < k; j++) {
         const dir = Math.random() < 0.5 ? 1 : -1, meta = puertaDe(i, N) + r(-6, 6);
         const monto = '+$' + (v.monto / k >= 10 ? Math.round(v.monto / k) : (v.monto / k).toFixed(2));
-        peatones.push(nuevaPersona(meta - dir * r(70, 200), dir, { meta, cliente: true, puesto: D.negocios[N.tipo].clase === 'puesto', monto, vel: r(40, 56), espera: (j / k) * msHora / 1000 * 0.8 }));
+        peatones.push(nuevaPersona(meta - dir * r(70, 200), dir, { meta, cliente: true, puesto: D.negocios[N.tipo].clase === 'puesto', monto: v.rival ? null : monto, vel: r(40, 56), espera: (j / k) * msHora / 1000 * 0.8 }));
       }
     }
   }

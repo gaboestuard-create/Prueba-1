@@ -15,12 +15,18 @@ function razonable(dias, semilla = 7) {
   const lotes = [...D.lotes].sort((a, b) => b.trafico - a.trafico).map(l => l.id);
   let paso = 0;
   while (M.dia(S) <= dias && !S.fin) {
+    if (S.decision) h('decidir', { i: 0 }).ok || h('decidir', { i: 1 }); // el bot toma la primera salida si le alcanza
     if (M.hh(S) === 8) {
       for (const N of S.negocios) {
         if (N.ayer.perdidos > N.ayer.clientes * 0.1 && N.emp < D.negocios[N.tipo].empMax && !['estudio', 'fabrica'].includes(D.negocios[N.tipo].clase)) h('empleados', { id: N.id, cambio: 1 });
         if (N.nivel < M.nivelMax(S) && S.dinero > M.costoMejora(N) * 3) h('mejorar', { id: N.id });
       }
-      const t = PLAN[paso], libre = lotes.find(id => !M.negocioEn(S, id));
+      let t = PLAN[paso], libre = lotes.find(id => !M.ocupado(S, id));
+      const presa = [...S.rival.negocios].sort((x, y) => M.precioCompra(x) - M.precioCompra(y))[0];
+      if (t && !libre && presa && S.dinero > M.precioCompra(presa) * 2) { // sin lugar: le compra a Ferrán y usa el lote
+        const r = h('adquirir', { id: presa.id });
+        if (r.ok) { h('vender', { id: r.id }); libre = presa.lote; }
+      }
       if (t && libre && D.negocios[t].rango <= S.rango && S.dinero > D.negocios[t].costo * 1.3 && h('construir', { lote: libre, tipo: t }).ok) paso++;
       const E = M.estudio(S);
       if (E && !S.proyecto) { // la categoría de moda a su alcance, con la mezcla ideal
@@ -41,7 +47,7 @@ function razonable(dias, semilla = 7) {
     if (M.hh(S) === 0) {
       for (const v of [S.dinero, M.patrimonio(S)]) assert(Number.isFinite(v), 'valor no finito');
       const d = M.dia(S) - 1;
-      if (ver && d % 10 === 0) console.log(`día ${String(d).padStart(3)}  dinero ${S.dinero.toFixed(0).padStart(9)}  neto ${S.resumen.neto.toFixed(0).padStart(7)}  patrimonio ${M.patrimonio(S).toFixed(0).padStart(9)}  rango ${D.rangos[S.rango].nombre.padEnd(11)}  negocios ${S.negocios.map(n => n.tipo + n.nivel + 'x' + n.emp).join(' ')}  productos ${S.productos.map(p => p.nota).join(' ')}`);
+      if (ver && d % 10 === 0) console.log(`día ${String(d).padStart(3)}  dinero ${S.dinero.toFixed(0).padStart(9)}  neto ${S.resumen.neto.toFixed(0).padStart(7)}  patrimonio ${M.patrimonio(S).toFixed(0).padStart(9)}  rango ${D.rangos[S.rango].nombre.padEnd(11)}  negocios ${S.negocios.map(n => n.tipo + n.nivel + 'x' + n.emp).join(' ')}  rival ${S.rival.negocios.map(n => n.tipo).join(' ')} (${S.rival.dinero.toFixed(0)})  hitos ${Object.keys(S.hitos).length}`);
     }
   }
   return S;
@@ -67,6 +73,7 @@ assert(b.dinero < 150 && b.negocios[0].rep < 40, 'el precio abusivo no paga');
 // Sin dinero infinito: comprar y vender acciones el mismo día cuesta la comisión.
 const c = M.nueva({ semilla: 1 });
 c.rango = 2; c.dinero = 10000;
+for (const H of D.hitos) M.migrar(c).hitos[H.id] = 1; // sin premios de hitos que muevan las cuentas
 M.hacer(c, 'comprarAccion', { id: 'NBL', n: 100 });
 M.hacer(c, 'venderAccion', { id: 'NBL', n: 100 });
 assert(c.dinero < 10000 && !c.cartera.NBL, 'la bolsa no regala dinero');
@@ -115,5 +122,23 @@ console.log(`Planta: 30 días sin planta ${sin.neto.toFixed(0)}, con planta ${co
 assert(con.propias > 0 && con.neto > sin.neto, 'la planta paga');
 const Fq = con.S.negocios.find(n => n.tipo === 'planta');
 assert(Fq.lineas.every(x => x === null || con.S.productos.some(p => p.id === x && p.activo)), 'un producto retirado libera su línea');
+
+// Rival: abre después de su día de inicio, nunca ahoga la calle, y se le puede comprar.
+const r = M.nueva({ semilla: 5 });
+for (let i = 0; i < 24 * 40; i++) M.tick(r);
+const libres = D.lotes.filter(l => !M.ocupado(r, l.id)).length;
+console.log(`Rival: ${r.rival.negocios.length} negocios el día 40, ${libres} lotes libres`);
+assert(r.rival.negocios.length > 0 && r.rival.negocios.length <= D.rival.maxNegocios && libres >= D.rival.lotesLibresMin - 1, 'el rival juega sin ahogar la calle');
+r.dinero = 50000;
+const presa = r.rival.negocios[0];
+assert(!M.hacer(r, 'construir', { lote: presa.lote, tipo: 'limonada' }).ok, 'no se construye sobre el rival');
+const compra = M.hacer(r, 'adquirir', { id: presa.id });
+assert(compra.ok && M.negocioEn(r, presa.lote) && r.rival.comprados === 1 && r.hitos['gana-rival'], 'comprarle al rival');
+// Decisiones: se ofrecen, se resuelven una vez, y la huelga detiene las plantas.
+const q2 = M.nueva({ semilla: 8 });
+for (let i = 0; i < 24 * 12 && !q2.decision; i++) M.tick(q2);
+assert(q2.decision, 'llega una decisión');
+q2.dinero = 5000;
+assert(M.hacer(q2, 'decidir', { i: 1 }).ok && !q2.decision && !M.hacer(q2, 'decidir', { i: 0 }).ok, 'se decide una sola vez');
 
 console.log('OK: economía estable, determinista y sin trucos de dinero infinito.');

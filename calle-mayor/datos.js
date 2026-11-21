@@ -111,5 +111,99 @@ const DATOS = {
     { id: 'crisis', titulo: 'Pánico financiero', texto: 'un banco extranjero quiebra y arrastra a los mercados.', dias: 4, tag: 'bolsa', rango: 2, efectos: { bolsa: -0.025 } },
     { id: 'moda', titulo: 'Nueva moda', texto: 'todo el mundo habla de {cat}.', dias: 1, tag: 'mercado', rango: 2, efectos: {} },
   ],
+
+  // ---- Fase 2 ----
+  // Colores de marca que puede elegir el jugador (el morado es del rival).
+  coloresMarca: ['#E4572E', '#2E86AB', '#1C8F4E', '#F4B41A', '#D62E6F', '#2D3047'],
+
+  // El rival abre negocios en lotes libres, compite en precio y puede quebrar o venderte sus locales.
+  rival: {
+    nombre: 'Grupo Ferrán', corto: 'FERRÁN', color: '#5C3D99',
+    dineroInicial: 2500, diaInicio: 6, maxNegocios: 3, cadaDias: [3, 6], // abre uno nuevo cada 3 a 6 días
+    lotesLibresMin: 3, // nunca ocupa los últimos lotes libres: la calle no se ahoga
+    apoyo: 30, apoyoPorRango: 80, // lo que le inyectan sus socios cada día
+    descuento: 0.9, // arranca con precios 10% abajo del de la zona
+    diasRojosCierre: 6, sobreprecioCompra: 1.3,
+  },
+
+  // Cadena: con varios negocios del mismo giro, los insumos salen más baratos y la fama se comparte.
+  cadena: { descuentoInsumos: 0.08, maxDescuento: 0.24, rep: 3 },
+
+  // Situaciones con dos salidas. requiere: alguna de estas condiciones (tipo:x, clase:x, rival, empleados).
+  // efectos: dinero, dineroPct (del patrimonio), rep (todos los negocios de la calle), evento {titulo, dias, efectos},
+  // pagos {monto, dias}, paro (días de huelga en plantas), rivalPausa (días), rivalDinero, quitaEmpleado, azar {prob, si, no}.
+  decisiones: [
+    { id: 'inspector', titulo: 'Visita del inspector', texto: 'Un inspector de salubridad encontró detalles en tus negocios: pisos, etiquetas, una tarja que gotea.',
+      opciones: [
+        { texto: 'Arreglar todo hoy', detalle: '−$400, la reputación sube', efectos: { dinero: -400, rep: 5 }, resultado: 'Todo quedó impecable y los clientes lo notan.' },
+        { texto: 'Pedir prórroga', detalle: 'gratis, la reputación baja', efectos: { rep: -6 }, resultado: 'Corre el rumor de que tus negocios no están limpios.' },
+      ] },
+    { id: 'influencer', titulo: 'Una creadora de contenido quiere filmar', texto: 'Tiene 800 mil seguidores y quiere grabar un video recorriendo tus negocios.',
+      opciones: [
+        { texto: 'Pagarle el video', detalle: '−$600, más gente 3 días', efectos: { dinero: -600, evento: { titulo: 'Tu calle se hizo viral', dias: 3, efectos: { trafico: 1.3 } } }, resultado: 'El video despega: llega gente que nunca había pisado Calle Mayor.' },
+        { texto: 'Decir que no', detalle: 'nada cambia', efectos: {}, resultado: 'Se va a filmar con Grupo Ferrán.' },
+      ] },
+    { id: 'angel', titulo: 'Un inversionista toca la puerta', rango: 1, texto: 'Te ofrece efectivo hoy a cambio de una parte de tus ganancias durante dos semanas.',
+      opciones: [
+        { texto: 'Aceptar el dinero', detalle: '+20% de tu patrimonio hoy, luego pagos diarios', efectos: { dineroPct: 0.2, pagos: { dias: 14 } }, resultado: 'Entra el dinero. Durante 14 días le pagarás su parte.' },
+        { texto: 'Seguir solo', detalle: 'nada cambia', efectos: {}, resultado: 'Prefieres no deberle a nadie.' },
+      ] },
+    { id: 'catering', titulo: 'Pedido para una boda', texto: 'Una familia quiere 300 bocadillos para mañana. Tu gente tendría que doblar turno.',
+      opciones: [
+        { texto: 'Aceptar el pedido', detalle: '+$900, tu equipo queda agotado', efectos: { dinero: 900, rep: -3 }, resultado: 'La boda fue un éxito; tu gente llega desvelada al día siguiente.' },
+        { texto: 'Rechazarlo', detalle: 'nada cambia', efectos: {}, resultado: 'La familia busca a otro proveedor.' },
+      ] },
+    { id: 'proveedor', titulo: 'Insumos baratos', texto: 'Un proveedor nuevo ofrece insumos 30% más baratos. Nadie conoce bien su calidad.',
+      opciones: [
+        { texto: 'Probarlo una semana', detalle: 'insumos −30% por 7 días, la reputación baja', efectos: { evento: { titulo: 'Insumos de oferta', dias: 7, efectos: { insumos: 0.7 } }, rep: -5 }, resultado: 'Ahorras en insumos; algunos clientes notan la diferencia.' },
+        { texto: 'Quedarte con el de siempre', detalle: 'nada cambia', efectos: {}, resultado: 'Mejor lo conocido.' },
+      ] },
+    { id: 'concurso', titulo: 'Concurso de la mejor limonada', requiere: ['tipo:limonada'], texto: 'El mercado organiza un concurso. La inscripción cuesta $150 y el premio es de $800.',
+      opciones: [
+        { texto: 'Inscribirse', detalle: '−$150, puedes ganar $800', efectos: { dinero: -150, azar: { prob: 0.55, si: { dinero: 800, rep: 8, resultado: '¡Ganaste! Tu limonada es la mejor de la ciudad.' }, no: { resultado: 'Quedaste en tercer lugar. Por poco.' } } }, resultado: '' },
+        { texto: 'Pasar', detalle: 'nada cambia', efectos: {}, resultado: 'Este año no compites.' },
+      ] },
+    { id: 'huelga', titulo: 'Los obreros amenazan con huelga', requiere: ['clase:fabrica'], texto: 'Piden un bono por el ritmo de trabajo de las últimas semanas.',
+      opciones: [
+        { texto: 'Pagar el bono', detalle: '−$1,500', efectos: { dinero: -1500 }, resultado: 'Las plantas siguen trabajando a todo vapor.' },
+        { texto: 'Aguantar la huelga', detalle: 'tus plantas se detienen 2 días', efectos: { paro: 2 }, resultado: 'Las plantas paran: dos días de pura maquila.' },
+      ] },
+    { id: 'ruido', titulo: 'Los vecinos se quejan', requiere: ['tipo:restaurante', 'clase:fabrica'], texto: 'Dicen que el ruido no los deja dormir y juntan firmas.',
+      opciones: [
+        { texto: 'Insonorizar', detalle: '−$1,200', efectos: { dinero: -1200, rep: 2 }, resultado: 'Paredes nuevas y vecinos tranquilos.' },
+        { texto: 'Ignorarlos', detalle: 'la reputación baja', efectos: { rep: -8 }, resultado: 'Las firmas llegan al periódico local.' },
+      ] },
+    { id: 'caza', titulo: 'Ferrán quiere a tu gente', requiere: ['rival'], texto: 'Grupo Ferrán le ofreció más sueldo a uno de tus mejores empleados.',
+      opciones: [
+        { texto: 'Igualar la oferta', detalle: '−$500', efectos: { dinero: -500 }, resultado: 'Se queda contigo, y se nota agradecido.' },
+        { texto: 'Dejarlo ir', detalle: 'pierdes un empleado', efectos: { quitaEmpleado: true, rivalDinero: 300 }, resultado: 'Se va con Ferrán. Hay que reorganizar turnos.' },
+      ] },
+    { id: 'tregua', titulo: 'Ferrán propone una tregua', requiere: ['rival'], texto: 'El director de Grupo Ferrán te invita a comer: quiere dejar de pelearse la calle un tiempo.',
+      opciones: [
+        { texto: 'Aceptar la tregua', detalle: 'no abre nada en 12 días', efectos: { rivalPausa: 12 }, resultado: 'Ferrán se queda quieto un par de semanas.' },
+        { texto: 'Rechazarla', detalle: 'tu fama sube, Ferrán se enoja', efectos: { rep: 3, rivalDinero: 1500 }, resultado: 'Ferrán consigue más socios y viene con todo.' },
+      ] },
+    { id: 'entrevista', titulo: 'Te quieren entrevistar', rango: 2, texto: 'Un periódico de negocios quiere tu historia: del carrito a la empresa.',
+      opciones: [
+        { texto: 'Dar la entrevista', detalle: 'más gente y fama', efectos: { rep: 4, evento: { titulo: 'Sales en el periódico', dias: 2, efectos: { trafico: 1.15 } } }, resultado: 'La nota sale en portada de la sección de negocios.' },
+        { texto: 'Declinar', detalle: 'nada cambia', efectos: {}, resultado: 'Prefieres el perfil bajo.' },
+      ] },
+  ],
+
+  // Metas cortas con premio en efectivo.
+  hitos: [
+    { id: 'primer-negocio', nombre: 'Primera venta', texto: 'Abre tu primer negocio', premio: 50 },
+    { id: 'tres-negocios', nombre: 'Esto va en serio', texto: 'Ten 3 negocios a la vez', premio: 200 },
+    { id: 'primer-local', nombre: 'Con llave', texto: 'Abre tu primer local', premio: 500 },
+    { id: 'dia-mil', nombre: 'Día de mil', texto: 'Cierra un día con $1,000 de utilidad', premio: 500 },
+    { id: 'terreno', nombre: 'Dueño de la tierra', texto: 'Compra un terreno', premio: 800 },
+    { id: 'cadena', nombre: 'Cadena', texto: 'Ten 3 negocios del mismo giro', premio: 1000 },
+    { id: 'gana-rival', nombre: 'Primera victoria', texto: 'Saca a Ferrán de un lote: que cierre o cómprale', premio: 1500 },
+    { id: 'nota-ocho', nombre: 'La prensa te quiere', texto: 'Lanza un producto con nota de 8 o más', premio: 2000 },
+    { id: 'planta', nombre: 'Hecho en casa', texto: 'Abre tu primera planta', premio: 3000 },
+    { id: 'diez-mil', nombre: 'Éxito de ventas', texto: 'Vende 10,000 unidades de un producto', premio: 5000 },
+    { id: 'calle-llena', nombre: 'La calle es tuya', texto: 'Ten 8 negocios en Calle Mayor', premio: 10000 },
+    { id: 'sin-rival', nombre: 'Monopolio', texto: 'Saca a Ferrán de 3 lotes y que no le quede ninguno', premio: 25000 },
+  ],
 };
 if (typeof module !== 'undefined') module.exports = DATOS;

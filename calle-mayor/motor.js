@@ -25,6 +25,11 @@ const Motor = (function () {
   const tipo = N => D.negocios[N.tipo];
   const lote = id => por(D.lotes, id);
   const negocioEn = (S, id) => S.negocios.find(n => n.lote === id);
+  const rivalEn = (S, id) => S.rival.negocios.find(n => n.lote === id);
+  const ocupado = (S, id) => negocioEn(S, id) || rivalEn(S, id);
+  const mismoGiro = (S, N) => S.negocios.filter(n => n.tipo === N.tipo).length;
+  const descuentoCadena = (S, N) => Math.min(D.cadena.maxDescuento, D.cadena.descuentoInsumos * (mismoGiro(S, N) - 1));
+  const precioCompra = N => Math.round(tipo(N).costo * (1 + 0.6 * (N.nivel - 1)) * D.rival.sobreprecioCompra);
   const estudio = S => S.negocios.find(n => n.tipo === 'estudio');
   const precioLote = L => L.renta * B.diasLote;
   const capacidad = N => tipo(N).capBase * N.emp * (1 + B.mejoraCap * (N.nivel - 1));
@@ -40,6 +45,7 @@ const Motor = (function () {
   const lineasActivas = N => (tipo(N).clase !== 'fabrica' ? 0 : Math.min(N.lineas.filter(Boolean).length, Math.floor(N.emp / tipo(N).porLinea)));
   function capacidadPropia(S, prodId) { // unidades al día que tus plantas pueden fabricar de un producto
     const cap = [];
+    if (S.paro > 0) return cap; // huelga
     for (const N of S.negocios) {
       if (tipo(N).clase !== 'fabrica') continue;
       let k = lineasActivas(N);
@@ -84,8 +90,12 @@ const Motor = (function () {
     const T = tipo(N), L = lote(N.lote);
     if (T.clase === 'estudio' || T.clase === 'fabrica' || h < T.horario[0] || h >= T.horario[1]) return;
     const pasan = D.trafico[h] * L.trafico * mult(S, 'trafico');
-    const rivales = Math.pow(S.negocios.filter(n => n.tipo === N.tipo).length, 0.6);
+    const mios = S.negocios.filter(n => n.tipo === N.tipo), suyos = S.rival.negocios.filter(n => n.tipo === N.tipo);
+    const otros = N.rival ? mios : suyos; // contra el otro bando pesa el precio: el más barato se lleva más
+    const peso = otros.reduce((s, o) => s + clamp(N.precio / o.precio, 0.6, 1.7), 0);
+    const rivales = Math.pow((N.rival ? suyos : mios).length + peso, 0.6);
     const r = N.precio / T.precioRef;
+    const cu = T.costoUnidad * mult(S, 'insumos') * (N.rival ? 1 : 1 - descuentoCadena(S, N));
     const fPrecio = r <= 1 ? 1 + (1 - r) * 0.8 : Math.max(0, 1 - (r - 1) * 1.4); // barato vende más; caro espanta
     const miran = pasan * T.interes * D.curvas[T.curva][h] * mult(S, 'cat:' + T.cat) * (0.5 + N.rep / 100) * (1 + D.marketing[N.mkt].efecto) / rivales * (0.85 + 0.3 * azar(S));
     const dem = entero(S, miran * fPrecio);
@@ -94,13 +104,14 @@ const Motor = (function () {
     N.hoy.clientes += v;
     N.hoy.perdidos += dem - v;
     N.hoy.ingresos = r2(N.hoy.ingresos + monto);
-    N.hoy.costo = r2(N.hoy.costo + v * T.costoUnidad);
-    ingreso(S, 'ventas', monto);
-    gasto(S, 'insumos', v * T.costoUnidad);
-    if (v) S.ventas.push({ lote: N.lote, n: v, monto });
+    N.hoy.costo = r2(N.hoy.costo + v * cu);
+    if (N.rival) S.rival.dinero = r2(S.rival.dinero + monto - v * cu);
+    else { ingreso(S, 'ventas', monto); gasto(S, 'insumos', v * cu); }
+    if (v) S.ventas.push({ lote: N.lote, n: v, monto, rival: !!N.rival });
     if (miran >= 0.5) { // la reputación se acerca poco a poco a lo que vivió quien se asomó esta hora
       const precio = clamp(100 - Math.max(0, r - 0.9) * 150);
-      const meta = 0.35 * precio + 0.35 * (dem ? v / dem : 0) * 100 + 0.3 * calidad(N);
+      const fama = N.rival ? 0 : Math.min(3, mios.length - 1) * D.cadena.rep; // la cadena comparte fama
+      const meta = 0.35 * precio + 0.35 * (dem ? v / dem : 0) * 100 + 0.3 * calidad(N) + fama;
       N.rep = clamp(N.rep + (meta - N.rep) * B.repVel);
     }
   }
@@ -163,6 +174,18 @@ const Motor = (function () {
       N.ayer = N.hoy;
       N.hoy = vacio();
     }
+    if (S.paro > 0) S.paro--;
+    for (const p of S.pagos) { gasto(S, 'compromisos', p.monto); p.dias--; }
+    S.pagos = S.pagos.filter(p => p.dias > 0);
+    cierreRival(S, c);
+    if (!S.decision && c >= S.proximaDecision) {
+      const ops = D.decisiones.filter(d => (d.rango ?? 0) <= S.rango && cumple(S, d.requiere));
+      if (ops.length) {
+        S.decision = ops[Math.floor(azar(S) * ops.length)].id;
+        S.proximaDecision = c + 4 + Math.floor(azar(S) * 4);
+        S.avisos.push({ tipo: 'decision' });
+      }
+    }
     for (const k in S.tendencias) S.tendencias[k] = r2(clamp(S.tendencias[k] * Math.exp(0.06 * gauss(S)) + (1 - S.tendencias[k]) * 0.04, 0.5, 1.8));
     const choque = S.eventos.reduce((s, e) => s + (e.efectos.bolsa || 0), 0);
     for (const A of D.acciones) {
@@ -198,13 +221,114 @@ const Motor = (function () {
     S.hoy = { ingresos: {}, gastos: {} };
   }
 
+  // ---- Rival: Grupo Ferrán ----
+  function cierreRival(S, c) {
+    const R = S.rival, X = D.rival;
+    R.dinero = r2(R.dinero + X.apoyo + X.apoyoPorRango * S.rango);
+    for (const N of [...R.negocios]) {
+      const T = tipo(N), fijo = (T.clase === 'puesto' ? T.permiso : lote(N.lote).renta) + T.sueldo * N.emp + D.marketing[N.mkt].costo;
+      R.dinero = r2(R.dinero - fijo);
+      const util = N.hoy.ingresos - N.hoy.costo - fijo;
+      N.rojos = util < 0 ? N.rojos + 1 : 0;
+      // reacciona: si tú vendes lo mismo más barato, baja; si su fama cae, sube hacia el precio de la zona
+      const tuyo = S.negocios.filter(n => n.tipo === N.tipo).map(n => n.precio);
+      if (tuyo.length && Math.min(...tuyo) < N.precio) N.precio = r2(Math.max(T.precioRef * 0.75, N.precio * 0.95));
+      else if (N.rep < 40) N.precio = r2(Math.min(T.precioRef, N.precio * 1.04));
+      if (N.hoy.perdidos > N.hoy.clientes * 0.2 && N.emp < T.empMax) N.emp++;
+      if (N.nivel < 3 && R.dinero > costoMejora(N) * 2) { R.dinero = r2(R.dinero - costoMejora(N)); N.nivel++; }
+      N.ayer = N.hoy;
+      N.hoy = vacio();
+      if (N.rojos >= X.diasRojosCierre || R.dinero < -2000) {
+        R.negocios = R.negocios.filter(n => n !== N);
+        R.cerrados++;
+        R.dinero = r2(R.dinero + T.costo * 0.3);
+        noticia(S, `${X.nombre} cierra su ${T.nombre.toLowerCase()} en ${lote(N.lote).nombre}.`, 'rival');
+        S.avisos.push({ tipo: 'evento', texto: `${X.nombre} cerró un negocio: el lote quedó libre.` });
+      }
+    }
+    if (c < X.diaInicio || c < R.proximo || R.negocios.length >= X.maxNegocios) return;
+    const libres = D.lotes.filter(l => !ocupado(S, l.id)).sort((a, b) => b.trafico - a.trafico);
+    const tuyos = S.negocios.map(n => n.tipo);
+    const giros = Object.keys(D.negocios).filter(t => ['puesto', 'local'].includes(D.negocios[t].clase) && D.negocios[t].rango <= S.rango && D.negocios[t].costo <= R.dinero * 0.8);
+    if (libres.length < X.lotesLibresMin || !giros.length) return;
+    const atacar = giros.filter(t => tuyos.includes(t)); // la mitad de las veces abre justo lo que tú vendes
+    const t = (atacar.length && azar(S) < 0.5 ? atacar : giros)[Math.floor(azar(S) * (atacar.length && azar(S) < 0.5 ? atacar : giros).length)];
+    const L = libres[Math.floor(azar(S) * Math.min(3, libres.length))], T = D.negocios[t];
+    R.dinero = r2(R.dinero - T.costo);
+    R.negocios.push({ id: 'r' + S.sig++, rival: true, tipo: t, lote: L.id, nivel: 1, emp: Math.max(1, Math.ceil(T.empMax / 2)), precio: r2(T.precioRef * X.descuento), mkt: 1, rep: 50, rojos: 0, hoy: vacio(), ayer: vacio() });
+    R.proximo = c + X.cadaDias[0] + Math.floor(azar(S) * (X.cadaDias[1] - X.cadaDias[0] + 1));
+    noticia(S, `${X.nombre} abre ${T.nombre.toLowerCase()} en ${L.nombre}${tuyos.includes(t) ? ', justo en tu giro' : ''}.`, 'rival');
+    S.avisos.push({ tipo: 'evento', texto: `${X.nombre} abrió ${T.nombre.toLowerCase()} en la calle.` });
+  }
+
+  // ---- Decisiones ----
+  function cumple(S, req) {
+    if (!req) return true;
+    return req.some(r => r === 'rival' ? S.rival.negocios.length > 0
+      : r.startsWith('tipo:') ? S.negocios.some(n => n.tipo === r.slice(5))
+      : r.startsWith('clase:') ? S.negocios.some(n => tipo(n).clase === r.slice(6)) : false);
+  }
+  function aplicar(S, e) { // devuelve el texto del resultado si el efecto lo cambia (por azar)
+    if (e.dinero > 0) ingreso(S, 'decisiones', e.dinero);
+    if (e.dinero < 0) gasto(S, 'decisiones', -e.dinero);
+    if (e.dineroPct) ingreso(S, 'decisiones', Math.max(500, patrimonio(S) * e.dineroPct));
+    if (e.rep) for (const N of S.negocios) N.rep = clamp(N.rep + e.rep);
+    if (e.evento) S.eventos.push({ id: 'dec' + S.sig++, titulo: e.evento.titulo, fin: dia(S) - 1 + e.evento.dias, efectos: { ...e.evento.efectos } });
+    if (e.pagos) S.pagos.push({ monto: e.pagos.base, dias: e.pagos.dias }); // la base la calcula decidir() con el patrimonio de ese momento
+    if (e.paro) S.paro = e.paro;
+    if (e.rivalPausa) S.rival.proximo = Math.max(S.rival.proximo, dia(S) - 1 + e.rivalPausa);
+    if (e.rivalDinero) S.rival.dinero = r2(S.rival.dinero + e.rivalDinero);
+    if (e.quitaEmpleado) { const N = [...S.negocios].filter(n => n.emp > 1 && ['puesto', 'local'].includes(tipo(n).clase)).sort((a, b) => b.emp - a.emp)[0]; if (N) N.emp--; }
+    if (e.azar) { const rama = azar(S) < e.azar.prob ? e.azar.si : e.azar.no; aplicar(S, rama); return rama.resultado; }
+    return null;
+  }
+
+  // ---- Hitos ----
+  const CHEQUEOS = {
+    'primer-negocio': S => S.negocios.length >= 1,
+    'tres-negocios': S => S.negocios.length >= 3,
+    'primer-local': S => S.negocios.some(n => tipo(n).clase === 'local'),
+    'dia-mil': S => S.resumen && S.resumen.neto >= 1000,
+    terreno: S => Object.values(S.lotes).some(l => l.propio),
+    cadena: S => S.negocios.some(n => ['puesto', 'local'].includes(tipo(n).clase) && mismoGiro(S, n) >= 3),
+    'gana-rival': S => S.rival.cerrados + S.rival.comprados >= 1,
+    'nota-ocho': S => S.productos.some(p => p.nota >= 8),
+    planta: S => S.negocios.some(n => tipo(n).clase === 'fabrica'),
+    'diez-mil': S => S.productos.some(p => p.unidades >= 10000),
+    'calle-llena': S => S.negocios.length >= 8,
+    'sin-rival': S => S.rival.cerrados + S.rival.comprados >= 3 && !S.rival.negocios.length,
+  };
+  function revisarHitos(S) {
+    for (const H of D.hitos) {
+      if (S.hitos[H.id] || !CHEQUEOS[H.id](S)) continue;
+      S.hitos[H.id] = dia(S);
+      ingreso(S, 'hitos', H.premio);
+      S.avisos.push({ tipo: 'hito', id: H.id });
+    }
+  }
+
+  // Partidas guardadas antes de la Fase 2 reciben lo que les falta.
+  function migrar(S) {
+    S.rival = S.rival || { dinero: D.rival.dineroInicial, negocios: [], proximo: D.rival.diaInicio, cerrados: 0, comprados: 0 };
+    S.color = S.color || D.coloresMarca[0];
+    S.hitos = S.hitos || {};
+    S.pagos = S.pagos || [];
+    S.paro = S.paro || 0;
+    S.decision = S.decision || null;
+    S.proximaDecision = S.proximaDecision ?? dia(S) + 3;
+    return S;
+  }
+
   function tick(S) {
     if (S.fin === 'quiebra') return;
+    migrar(S);
     S.ventas = [];
     for (const N of S.negocios) simHora(S, N, hh(S));
+    for (const N of S.rival.negocios) simHora(S, N, hh(S));
     S.hora++;
     if (hh(S) === 0) cierreDia(S);
     actualizarRango(S);
+    revisarHitos(S);
   }
 
   function nueva(o = {}) {
@@ -216,7 +340,9 @@ const Motor = (function () {
       bolsa: Object.fromEntries(D.acciones.map(a => [a.id, { precio: a.precio, hist: [a.precio] }])), cartera: {},
       proyecto: null, productos: [], experiencia: {},
       hoy: { ingresos: {}, gastos: {} }, resumen: null, historial: [], avisos: [], ventas: [], diasRojos: 0, sig: 1, fin: null,
+      color: D.coloresMarca.includes(o.color) ? o.color : D.coloresMarca[0],
     };
+    migrar(S);
     noticia(S, `${S.empresa} llega a Calle Mayor con ${dinero(S.dinero)} y un sueño.`, 'empresa');
     return S;
   }
@@ -228,7 +354,7 @@ const Motor = (function () {
     construir(S, { lote: id, tipo: t }) {
       const T = D.negocios[t], L = lote(id);
       if (!T || !L) return 'No existe.';
-      if (negocioEn(S, id)) return 'Ese lote ya está ocupado.';
+      if (ocupado(S, id)) return rivalEn(S, id) ? `Ese lote es de ${D.rival.nombre}. Puedes comprárselo.` : 'Ese lote ya está ocupado.';
       if (T.rango > S.rango) return `Se desbloquea al llegar a ${D.rangos[T.rango].nombre}.`;
       if (t === 'estudio' && estudio(S)) return 'Ya tienes un estudio.';
       const e = pagar(S, 'inversion', T.costo);
@@ -317,11 +443,38 @@ const Motor = (function () {
       if (!c.n) delete S.cartera[id];
     },
     seguir(S) { if (S.fin === 'tycoon') S.fin = 'libre'; },
+    adquirir(S, { id }) { // comprarle un negocio al rival, con todo y su fama
+      const R = S.rival, N = por(R.negocios, id);
+      if (!N) return 'Ese negocio ya no es de Ferrán.';
+      const precio = precioCompra(N), e = pagar(S, 'inversion', precio);
+      if (e) return e;
+      R.negocios = R.negocios.filter(n => n !== N);
+      R.comprados++;
+      R.dinero = r2(R.dinero + precio * 0.5);
+      const M = { id: 'n' + S.sig++, tipo: N.tipo, lote: N.lote, nivel: N.nivel, emp: N.emp, precio: N.precio, mkt: 0, rep: N.rep, invertido: precio, hoy: vacio(), ayer: N.ayer, hist: [] };
+      S.negocios.push(M);
+      noticia(S, `${S.empresa} compra el ${tipo(N).nombre.toLowerCase()} de ${D.rival.nombre} en ${lote(N.lote).nombre}.`, 'empresa');
+      return { msg: `Ahora es tuyo: ${tipo(N).nombre.toLowerCase()} en ${lote(N.lote).nombre}.`, id: M.id };
+    },
+    decidir(S, { i }) {
+      const d = por(D.decisiones, S.decision), o = d && d.opciones[i];
+      if (!o) return 'No hay nada que decidir.';
+      if (o.efectos.dinero < 0 && S.dinero < -o.efectos.dinero) return `Te faltan ${dinero(-o.efectos.dinero - S.dinero)} para esa opción.`;
+      const efectos = { ...o.efectos };
+      if (efectos.pagos) efectos.pagos = { base: r2(Math.max(500, patrimonio(S) * 0.2) * 1.35 / efectos.pagos.dias), dias: efectos.pagos.dias };
+      const resultado = aplicar(S, efectos) || o.resultado;
+      S.decision = null;
+      noticia(S, `${d.titulo}: ${resultado}`, 'empresa');
+      return { msg: resultado };
+    },
+    color(S, { c }) { if (!D.coloresMarca.includes(c)) return 'Color no válido.'; S.color = c; },
   };
   function hacer(S, accion, args) {
+    migrar(S);
     if (S.fin === 'quiebra') return { ok: false, msg: 'La empresa quebró.' };
     const r = A[accion](S, args || {});
     actualizarRango(S);
+    revisarHitos(S);
     return typeof r === 'string' ? { ok: false, msg: r } : { ok: true, ...r };
   }
 
@@ -348,7 +501,7 @@ const Motor = (function () {
   }
 
   return {
-    VERSION, lineasActivas, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
+    VERSION, lineasActivas, migrar, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
     velocidadEstudio, negocioEn, estudio, nombreDe, ciclo, dia, hh, mult, lote,
   };
 })();

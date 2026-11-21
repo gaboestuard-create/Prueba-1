@@ -34,6 +34,7 @@
     guardar: '<path d="M5 3.5h11l3.5 3.5v13.5h-14.5zM8 3.5v5h7v-5M8 20.5v-6.5h8v6.5"/>',
     noticias: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7.5 9h6M7.5 12.5h6M7.5 16h3.5"/>',
     rayo: '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
+    estrella: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
     salir: '<path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/>',
     alerta: '<path d="M12 4l9 16H3zM12 10v4M12 17v.5"/>',
     vaso: '<path d="M6 4h12l-1.6 16H7.6zM6.6 9h10.8M14 4l2.5-2.5"/>',
@@ -71,10 +72,11 @@
   const sello = (t, cls = '') => { const T = D.negocios[t]; return `<span class="sello ${cls}" style="background:${T.color};color:${luz(T.color) > 0.5 ? 'var(--tinta)' : 'var(--papel)'}">${ic(ICONO_TIPO[t])}</span>`; };
   const nivelPips = (n, max = 4) => `<span class="nivel" aria-label="Nivel ${n} de ${max}">${Array.from({ length: max }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
   const medidor = v => `<div class="medidor ${v < 40 ? 'm-mal' : v < 65 ? 'm-aviso' : ''}" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < Math.round(v / 10) ? 'on' : ''}"></i>`).join('')}</div>`;
+  const muestras = (accion, actual) => `<div class="muestras" role="group" aria-label="Color de tu marca">${D.coloresMarca.map(c => bt('', accion, { c }, c === actual ? 'on' : '', `style="background:${c}" aria-label="Color ${c}" aria-pressed="${c === actual}"`)).join('')}</div>`;
   const notaCls = n => (n >= 8 ? 'n-alta' : n >= 6 ? 'n-media' : 'n-baja');
 
   let S = null, vel = 0, velAntes = 1, acc = 0, prev = 0, mostrado = 0, presionando = false, pendiente = false, claveVista = '', ultimaNoticia = '';
-  const ui = { lote: null, der: 'imperio', movil: 'lote', confirma: null, capa: null, importa: '', exporta: '', form: { cat: 'bebida', nombre: '', presupuesto: 8000, mezcla: [50, 25, 25] } };
+  const ui = { colorInicio: D.coloresMarca[0], lote: null, der: 'imperio', movil: 'lote', confirma: null, capa: null, importa: '', exporta: '', form: { cat: 'bebida', nombre: '', presupuesto: 8000, mezcla: [50, 25, 25] } };
   const disco = {
     leer() { try { const g = JSON.parse(localStorage.getItem(CLAVE)); return valida(g) ? g : null; } catch (e) { return null; } },
     guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(S)); return true; } catch (e) { return false; } },
@@ -121,7 +123,8 @@
   // ---------- Lote seleccionado ----------
   function vLote() {
     if (!ui.lote) return vElegirLote();
-    const L = M.lote(ui.lote), N = M.negocioEn(S, ui.lote);
+    const L = M.lote(ui.lote), N = M.negocioEn(S, ui.lote), R = M.rivalEn(S, ui.lote);
+    if (R) return vRival(R, L);
     if (!N) return vVacio(L);
     return N.tipo === 'estudio' ? vEstudioLote(N, L) : D.negocios[N.tipo].clase === 'fabrica' ? vFabrica(N, L) : vNegocio(N, L);
   }
@@ -130,7 +133,20 @@
   function vElegirLote() {
     return `<div class="hoja"><div class="vacio"><div class="sello">${ic('tienda')}</div><h2>Elige un lote de la calle</h2>
       <p class="tenue">Arrastra la calle para recorrerla y toca un lote. También puedes elegirlo aquí abajo.</p></div>
-      <div class="lotes">${D.lotes.map(L => { const N = M.negocioEn(S, L.id); return bt(`${L.esquina ? L.nombre : L.corto}<span>${N ? D.negocios[N.tipo].corto : S.lotes[L.id].propio ? 'Terreno propio' : 'Libre · ×' + L.trafico}</span>`, 'ui:lote', { id: L.id, enfocar: true }, N ? 'lleno' : ''); }).join('')}</div></div>`;
+      <div class="lotes">${D.lotes.map(L => { const N = M.negocioEn(S, L.id), R = M.rivalEn(S, L.id); return bt(`${L.esquina ? L.nombre : L.corto}<span>${N ? D.negocios[N.tipo].corto : R ? 'Ferrán · ' + D.negocios[R.tipo].corto : S.lotes[L.id].propio ? 'Terreno propio' : 'Libre · ×' + L.trafico}</span>`, 'ui:lote', { id: L.id, enfocar: true }, N ? 'lleno' : R ? 'rival' : ''); }).join('')}</div></div>`;
+  }
+
+  function vRival(N, L) {
+    const T = D.negocios[N.tipo], X = D.rival, precio = M.precioCompra(N), a = N.ayer;
+    const mios = S.negocios.filter(n => n.tipo === N.tipo);
+    const duelo = mios.length ? `Tú vendes lo mismo a ${din(Math.min(...mios.map(n => n.precio)), true)}. Si estás más barato que Ferrán, te llevas más clientes; él responde bajando.` : 'No compites con él en este giro.';
+    return `<div class="hoja">
+      <div class="cab"><span class="sello" style="background:${X.color};color:var(--papel)">${ic(ICONO_TIPO[N.tipo])}</span><div><p class="eti">${X.nombre}</p><h2>${T.nombre}</h2><p>${esc(L.nombre)} · ${nivelPips(N.nivel)}</p></div>${cerrarLote}</div>
+      <div class="kpis">${kpi('Su precio', din(N.precio, N.precio < 100))}${kpi('Reputación', Math.round(N.rep))}${kpi('Clientes ayer', a.clientes)}${kpi('Personal', N.emp)}</div>
+      <div class="consejo">${ic('rayo')}<span>${duelo}</span></div>
+      <p class="tenue">Ferrán cierra un negocio tras ${X.diasRojosCierre} días seguidos perdiendo dinero. También puedes comprárselo: te quedas con su nivel, su personal y su fama; él recibe la mitad.</p>
+      ${bt(`${ic('bandera')} Comprarle el negocio <small>${din(precio)}</small>`, 'adquirir', { id: N.id }, 'btn pri ancho', S.dinero < precio ? 'disabled' : '')}
+      ${S.dinero < precio ? `<p class="tenue neg">Te faltan ${din(precio - S.dinero)}.</p>` : ''}</div>`;
   }
 
   function vVacio(L) {
@@ -151,6 +167,12 @@
       }).join('')}</div></div>`;
   }
 
+  function extras(N, T) { // cadena propia y competencia de Ferrán en el mismo giro
+    const n = M.mismoGiro(S, N), suyos = S.rival.negocios.filter(r => r.tipo === N.tipo), out = [];
+    if (n >= 2) out.push(`<span class="insignia">${ic('edificio')} Cadena ×${n} · insumos −${Math.round(M.descuentoCadena(S, N) * 100)}% · más fama</span>`);
+    if (suyos.length) out.push(`<span class="insignia rival">${ic('rayo')} Ferrán vende lo mismo a ${din(Math.min(...suyos.map(r => r.precio)), true)}</span>`);
+    return out.length ? `<div class="fila">${out.join('')}</div>` : '';
+  }
   function barrasUtilidad(hist) {
     if (!hist.length) return '<p class="tenue">Las barras aparecen al cerrar el primer día.</p>';
     const max = Math.max(1, ...hist.map(Math.abs));
@@ -171,6 +193,7 @@
       <div class="cab">${sello(N.tipo)}<div><h2>${T.nombre}</h2><p>${esc(L.nombre)} · ${nivelPips(N.nivel)}</p></div>${cerrarLote}</div>
       <div class="fila"><span class="eti crece">${abierto ? 'Abierto ahora' : 'Cerrado'} · ${hora(T.horario[0])}–${hora(T.horario[1])}</span><span class="eti">Reputación ${Math.round(N.rep)}</span></div>
       ${medidor(N.rep)}
+      ${extras(N, T)}
       <div class="kpis">${kpi('Clientes hoy', y.clientes)}${kpi('Se fueron', y.perdidos, y.perdidos ? 'neg' : '')}${kpi('Ventas hoy', din(y.ingresos))}${kpi('Utilidad ayer', a.utilidad == null ? '—' : din(a.utilidad), a.utilidad < 0 ? 'neg' : a.utilidad > 0 ? 'pos' : '')}</div>
       <hr class="sep">
       <div class="control"><div class="fila"><span class="eti">Precio</span><span class="tenue">Precio de la zona ${din(T.precioRef, true)}</span></div>
@@ -244,7 +267,7 @@
       return bt(`${sello(N.tipo, 'ch')}<span class="crece"><b class="nom">${T.corto}</b><span class="tenue">${M.lote(N.lote).corto} · nivel ${N.nivel}${T.clase === 'estudio' ? '' : T.clase === 'fabrica' ? ' · ' + M.lineasActivas(N) + ' líneas activas' : ' · reputación ' + Math.round(N.rep)}</span></span><span class="cifra ${u < 0 ? 'neg' : u > 0 ? 'pos' : ''}">${u == null ? '—' : din(u)}<br><span class="tenue">${T.clase === 'estudio' ? 'estudio' : T.clase === 'fabrica' ? (N.ayer.producidas || 0).toLocaleString('es-MX') + ' hechas' : N.ayer.clientes + ' clientes'}</span></span>`, 'ui:lote', { id: N.lote, enfocar: true }, 'renglon');
     }).join('');
     const fila = (k, v, cls = '') => `<div class="renglon"><span class="crece">${k}</span><span class="cifra ${cls}">${v}</span></div>`;
-    const NOMBRE = { ventas: 'Ventas en la calle', productos: 'Productos propios', ventaActivos: 'Venta de activos', insumos: 'Insumos', sueldos: 'Sueldos', renta: 'Rentas', permisos: 'Permisos de puestos', marketing: 'Publicidad', energia: 'Energía de plantas', inversion: 'Inversiones (no cuentan como gasto)' };
+    const NOMBRE = { ventas: 'Ventas en la calle', productos: 'Productos propios', ventaActivos: 'Venta de activos', insumos: 'Insumos', sueldos: 'Sueldos', renta: 'Rentas', permisos: 'Permisos de puestos', marketing: 'Publicidad', energia: 'Energía de plantas', decisiones: 'Decisiones', compromisos: 'Pagos al inversionista', hitos: 'Premios por hitos', inversion: 'Inversiones (no cuentan como gasto)' };
     return `<div class="hoja">
         <div class="cab"><span class="sello" style="background:var(--mostaza)">${ic('trofeo')}</span><div><h2>${R ? 'Rumbo a ' + R.nombre : 'Eres leyenda de Calle Mayor'}</h2><p>${R ? `Patrimonio máximo ${corto(S.maxPat)} de ${corto(R.min)}. Desbloquea: ${R.desbloquea.toLowerCase()}.` : 'Ya no hay rango más alto. Sigue construyendo.'}</p></div></div>
         <div class="progreso"><i style="width:${obj.avance}%"></i></div>
@@ -252,6 +275,9 @@
       <div class="hoja"><h3>${ic('edificio')} ${esc(S.empresa)}</h3>
         <div class="kpis">${kpi('Patrimonio', corto(pat))}${kpi('Efectivo', corto(S.dinero), S.dinero < 0 ? 'neg' : '')}${kpi('Utilidad ayer', ayer ? din(ayer.neto) : '—', ayer && ayer.neto < 0 ? 'neg' : 'pos')}${kpi('Productos en venta', S.productos.filter(p => p.activo).length)}</div>
         ${grafica}</div>
+      ${vHitos()}
+      ${S.rival.negocios.length || S.rival.cerrados || S.rival.comprados ? `<div class="hoja"><div class="cab"><span class="sello" style="background:${D.rival.color};color:var(--papel)">${ic('rayo')}</span><div><h3>${D.rival.nombre}</h3><p>${S.rival.negocios.length} negocios en la calle · le has sacado de ${S.rival.cerrados + S.rival.comprados} ${S.rival.cerrados + S.rival.comprados === 1 ? 'lote' : 'lotes'}</p></div></div>
+        ${S.rival.negocios.length ? `<div class="lista">${S.rival.negocios.map(N => bt(`<span class="sello ch" style="background:${D.rival.color};color:var(--papel)">${ic(ICONO_TIPO[N.tipo])}</span><span class="crece"><b class="nom">${D.negocios[N.tipo].corto}</b><span class="tenue">${M.lote(N.lote).corto} · nivel ${N.nivel} · reputación ${Math.round(N.rep)}</span></span><span class="cifra">${din(N.precio, N.precio < 100)}<br><span class="tenue">compra ${corto(M.precioCompra(N))}</span></span>`, 'ui:lote', { id: N.lote, enfocar: true }, 'renglon')).join('')}</div>` : '<p class="tenue">Por ahora no le queda nada en la calle.</p>'}</div>` : ''}
       <div class="hoja"><h3>${ic('tienda')} Tus negocios</h3>${S.negocios.length ? `<div class="lista">${lista}</div>` : '<p class="tenue">Todavía nada. Toca un lote libre de la calle para abrir tu primer puesto.</p>'}</div>
       ${ayer ? `<div class="hoja"><h3>${ic('moneda')} Cierre del día ${ayer.dia}</h3><div class="lista">
         ${Object.entries(ayer.ingresos).map(([k, v]) => fila(NOMBRE[k] || k, '+' + din(v), 'pos')).join('')}
@@ -259,6 +285,12 @@
         ${fila('<b>Utilidad del día</b>', din(ayer.neto), ayer.neto < 0 ? 'neg' : 'pos')}</div></div>` : ''}`;
   }
 
+  function vHitos() {
+    const hechos = D.hitos.filter(h => S.hitos[h.id]).length, sig = D.hitos.filter(h => !S.hitos[h.id]).slice(0, 3);
+    return `<div class="hoja"><div class="fila"><h3 class="crece">${ic('estrella')} Hitos</h3><span class="eti">${hechos} de ${D.hitos.length}</span></div>
+      <div class="medidor" aria-hidden="true" style="grid-template-columns:repeat(${D.hitos.length},1fr)">${D.hitos.map(h => `<i class="${S.hitos[h.id] ? 'on' : ''}"></i>`).join('')}</div>
+      ${sig.length ? `<div class="lista">${sig.map(h => `<div class="renglon"><span class="sello ch" style="background:var(--papel-2)">${ic('estrella')}</span><span class="crece"><b class="nom">${h.nombre}</b><span class="tenue">${h.texto}</span></span><span class="cifra pos">+${din(h.premio)}</span></div>`).join('')}</div>` : '<p class="tenue">Completaste todos los hitos.</p>'}</div>`;
+  }
   function bloqueado(r, texto) {
     return `<div class="hoja"><div class="bloqueo"><span class="candado">${ic('candado')} ${D.rangos[r].nombre} · patrimonio ${din(D.rangos[r].min)}</span><h2>${texto}</h2>
       <p class="tenue">Vas en ${din(M.patrimonio(S))}. Sigue creciendo en la calle.</p></div></div>`;
@@ -328,7 +360,8 @@
   }
 
   function vAjustes() {
-    return `<div class="hoja"><h3>${ic('guardar')} Partida</h3><p class="tenue">${esc(S.empresa)} · día ${M.dia(S)}. Se guarda sola en este dispositivo al cierre de cada día.</p>
+    return `<div class="hoja"><h3>${ic('estrella')} Tu marca</h3><p class="tenue">El color se pinta en los toldos, sombrillas y letreros de tus negocios.</p>${muestras('color', S.color)}</div>
+      <div class="hoja"><h3>${ic('guardar')} Partida</h3><p class="tenue">${esc(S.empresa)} · día ${M.dia(S)}. Se guarda sola en este dispositivo al cierre de cada día.</p>
         <div class="fila">${bt(`${ic('guardar')} Guardar ahora`, 'ui:guardar', {}, 'btn pri')}${bt('Cargar último guardado', 'ui:cargar')}</div></div>
       <div class="hoja"><h3>Pasar la partida a otro dispositivo</h3>${bt('Exportar como texto', 'ui:exportar')}
         ${ui.exporta ? `<textarea id="f-exporta" readonly aria-label="Partida exportada">${esc(ui.exporta)}</textarea>${bt('Copiar', 'ui:copiar')}` : ''}
@@ -368,6 +401,7 @@
       ${g ? `<div class="kpis">${kpi('Partida guardada', esc(g.empresa))}${kpi('Día', M.dia(g))}${kpi('Patrimonio', corto(M.patrimonio(g)))}</div>${bt(`${ic('play')} Continuar`, 'ui:continuar', {}, 'btn pri ancho')}<hr class="sep">` : ''}
       <label class="eti" for="f-empresa">Nombre de tu empresa</label>
       <input type="text" id="f-empresa" maxlength="24" placeholder="Ej. Limones Hermanos" autocomplete="off">
+      <span class="eti">Color de tu marca</span>${muestras('ui:colorInicio', ui.colorInicio)}
       ${bt(`${ic('carrito')} ${g ? 'Empezar otra partida' : 'Abrir mi primer puesto'}`, 'ui:empezar', {}, g ? 'btn ancho' : 'btn pri ancho')}</div>`, 'inicio');
   }
   function capaRango(r) {
@@ -386,6 +420,14 @@
       <p class="cita">${cita}</p>
       <p class="tenue">Las ventas arrancan hoy, tocan techo en unos días y luego bajan. Sigue cada producto en la pestaña Estudio.</p>
       ${bt('Ver cómo se vende', 'ui:cerrarCapa', {}, 'btn pri ancho')}</div>`, 'lanzamiento');
+  }
+  function capaDecision() {
+    const d = D.decisiones.find(x => x.id === S.decision);
+    if (!d) return;
+    abrirCapa(`<div class="modal"><div><p class="eti">${ic('rayo')} Decisión · día ${M.dia(S)}</p><h2 style="font-size:28px">${d.titulo}</h2></div>
+      <p class="cita" style="text-align:left">${d.texto}</p>
+      <div class="decision">${d.opciones.map((o, i) => bt(`<b>${o.texto}</b><span>${o.detalle}</span>`, 'ui:decidir', { i }, 'opcion-d' + (i === 0 ? ' pri' : ''), o.efectos.dinero < 0 && S.dinero < -o.efectos.dinero ? 'disabled' : '')).join('')}</div>
+      <p class="tenue">El tiempo está en pausa mientras decides.</p></div>`, 'decision');
   }
   function capaQuiebra() {
     abrirCapa(`<div class="modal"><div class="estampa">Quiebra<b>${esc(S.empresa)}</b></div>
@@ -425,6 +467,8 @@
       if (a.tipo === 'rango') capaRango(a.rango);
       else if (a.tipo === 'lanzamiento') capaLanzamiento(a.id);
       else if (a.tipo === 'evento') aviso(a.texto, '', 'rayo');
+      else if (a.tipo === 'decision') capaDecision();
+      else if (a.tipo === 'hito') { const H = D.hitos.find(h => h.id === a.id); aviso(`Hito «${H.nombre}»: +${din(H.premio)}`, 'bien', 'estrella'); }
       else if (a.tipo === 'dia') { aviso(`Cierre del día ${a.dia}: ${a.neto >= 0 ? '+' : ''}${din(a.neto)}`, a.neto >= 0 ? 'bien' : 'mal', 'moneda'); disco.guardar(); }
     }
     if (S.fin === 'quiebra' && !ui.capa) capaQuiebra();
@@ -450,7 +494,8 @@
   }
 
   function iniciar(estado) {
-    S = estado;
+    S = M.migrar(estado);
+    if (S.decision) S.avisos.push({ tipo: 'decision' });
     mostrado = S.dinero;
     ultimaNoticia = '';
     Object.assign(ui, { lote: null, der: 'imperio', movil: 'lote', confirma: null, exporta: '', importa: '' });
@@ -490,7 +535,9 @@
     },
     nueva() { S = null; ui.confirma = null; Escena.estado(null); capaInicio(); },
     continuar() { const g = disco.leer(); if (g) iniciar(g); },
-    empezar() { iniciar(M.nueva({ empresa: ($('f-empresa') || {}).value })); aviso('Toca un lote vacío de la calle para abrir tu primer puesto.', '', 'tienda'); },
+    colorInicio({ c }) { ui.colorInicio = c; document.querySelectorAll('.muestras button').forEach(b => { const on = JSON.parse(b.dataset.args).c === c; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); },
+    decidir({ i }) { const r = M.hacer(S, 'decidir', { i }); if (r.ok) { cerrarCapa(); aviso(r.msg, '', 'rayo'); } else aviso(r.msg, 'mal'); },
+    empezar() { iniciar(M.nueva({ empresa: ($('f-empresa') || {}).value, color: ui.colorInicio })); aviso('Toca un lote vacío de la calle para abrir tu primer puesto.', '', 'tienda'); },
     cerrarCapa() { cerrarCapa(); },
     seguir() { M.hacer(S, 'seguir'); cerrarCapa(); },
   };

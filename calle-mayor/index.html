@@ -224,6 +224,23 @@ input[type=range]::-webkit-slider-runnable-track { height: 8px; background: var(
 input[type=range]::-moz-range-track { height: 8px; background: var(--papel-3); border: 2px solid var(--tinta); }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 24px; margin-top: -10px; background: var(--mostaza); border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta); }
 input[type=range]::-moz-range-thumb { width: 18px; height: 22px; background: var(--mostaza); border: 2px solid var(--tinta); border-radius: 0; box-shadow: 2px 2px 0 var(--tinta); }
+.insignia { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--tinta); color: var(--mostaza-claro); font: 700 11.5px var(--texto); border: 2px solid var(--tinta); }
+.insignia .ic { width: 14px; height: 14px; }
+.insignia.rival { background: #5C3D99; border-color: var(--tinta); color: #fff; }
+.lotes button.rival { background: #5C3D99; color: #fff; }
+.lotes button.rival span { color: #D9CCF2; }
+.muestras { display: flex; gap: 10px; flex-wrap: wrap; }
+.muestras button { width: 40px; height: 40px; border: 2px solid var(--tinta); box-shadow: 2px 2px 0 var(--tinta); cursor: pointer; padding: 0; }
+.muestras button.on { outline: 3px solid var(--tinta); outline-offset: 3px; }
+.decision { display: grid; gap: 10px; }
+.opcion-d { display: grid; gap: 2px; text-align: left; padding: 12px 14px; background: var(--blanco); color: var(--tinta); border: 2px solid var(--tinta); box-shadow: 3px 3px 0 var(--tinta); cursor: pointer; font: inherit; transition: transform 0.08s, box-shadow 0.08s; }
+.opcion-d.pri { background: var(--mostaza); }
+.opcion-d b { font: 800 17px var(--display); }
+.opcion-d span { font: 600 12.5px var(--mono); color: var(--tenue); }
+.opcion-d.pri span { color: var(--tinta); }
+.opcion-d:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--tinta); }
+.opcion-d:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+.opcion-d:disabled { opacity: 0.45; cursor: not-allowed; }
 .linea { border: 2px solid var(--papel-3); padding: 8px 10px; display: grid; gap: 8px; background: var(--papel); }
 .linea.on { border-color: var(--tinta); background: var(--blanco); }
 .btn.chico { min-height: 34px; padding: 4px 10px; font-size: 13px; box-shadow: 2px 2px 0 var(--tinta); }
