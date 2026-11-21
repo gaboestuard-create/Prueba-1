@@ -108,8 +108,134 @@ const Motor = (function () {
     if (r === D.rangos.length - 1 && !S.fin && S.modo !== 'historia') S.fin = 'tycoon';
   }
 
+  // ---- Interior: la tiendita ----
+  const I = D.interior;
+  const tamDe = m => { const t = I.muebles[m.tipo].tam; return m.rot ? [t[1], t[0]] : t; };
+  function casillas(m) { const [w, h] = tamDe(m), out = []; for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) out.push([m.x + i, m.y + j]); return out; }
+  const casillasPuerta = () => I.puerta.flatMap(x => [[x, I.fondo - 1], [x, I.fondo - 2]]);
+  function cuadricula(muebles) {
+    const g = Array.from({ length: I.fondo }, () => Array(I.ancho).fill(null));
+    for (const m of muebles) for (const [x, y] of casillas(m)) if (g[y] && x >= 0 && x < I.ancho) g[y][x] = m.id;
+    return g;
+  }
+  function alcanzables(muebles) { // casillas libres a las que se llega caminando desde la puerta
+    const g = cuadricula(muebles), vis = new Set(), cola = I.puerta.map(x => [x, I.fondo - 1]).filter(([x, y]) => !g[y][x]);
+    for (const [x, y] of cola) vis.add(x + ',' + y);
+    while (cola.length) {
+      const [x, y] = cola.shift();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= I.ancho || ny >= I.fondo || g[ny][nx] || vis.has(nx + ',' + ny)) continue;
+        vis.add(nx + ',' + ny);
+        cola.push([nx, ny]);
+      }
+    }
+    return vis;
+  }
+  function accesible(m, vis) { // la caja se atiende por enfrente; lo demás, desde cualquier lado
+    if (m.tipo === 'caja') return casillas(m).some(([x, y]) => vis.has(x + ',' + (y + 1)));
+    return casillas(m).some(([x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => vis.has((x + dx) + ',' + (y + dy))));
+  }
+  const capMueble = m => { const X = I.muebles[m.tipo]; return m.nivel > 1 && X.mejora ? X.mejora.capacidad : X.capacidad; };
+  const capCaja = m => (m.nivel > 1 ? I.muebles.caja.mejora.cap : I.muebles.caja.cap);
+  function estadoInterior(N) { // lo que el acomodo significa en números
+    const In = N.interior, vis = alcanzables(In.muebles), ok = In.muebles.filter(m => accesible(m, vis));
+    const cajas = ok.filter(m => m.tipo === 'caja'), cajeros = Math.min(In.cajeros, cajas.length);
+    const ocupadas = In.muebles.reduce((t, m) => t + casillas(m).length, 0), libre = 1 - ocupadas / (I.ancho * I.fondo);
+    const apretado = libre < I.apretado;
+    const cap = cajas.map(capCaja).sort((a, b) => b - a).slice(0, cajeros).reduce((a, b) => a + b, 0) * (apretado ? 0.8 : 1);
+    return { vis, ok, cajas: cajas.length, cajeros, cap, apretado, libre, decor: ok.filter(m => m.tipo === 'planta').length, bloqueados: In.muebles.length - ok.length };
+  }
+  function reponer(N, unidades) { // de la bodega a los anaqueles, primero lo más vacío
+    const In = N.interior;
+    let mov = 0;
+    for (const m of In.muebles.filter(x => x.prod).sort((a, b) => a.stock / capMueble(a) - b.stock / capMueble(b))) {
+      const q = Math.min(capMueble(m) - m.stock, In.bodega[m.prod] || 0, unidades - mov);
+      if (q > 0) { m.stock += q; In.bodega[m.prod] -= q; mov += q; }
+      if (mov >= unidades) break;
+    }
+    return mov;
+  }
+  const enBodega = In => Object.values(In.bodega).reduce((a, b) => a + b, 0);
+  function entregarPedidos(S, N) { // el pedido automático llega de noche: se completa la bodega hasta lo que pediste
+    const In = N.interior, Q = I.calidades[In.calidad];
+    let costo = 0;
+    for (const k in In.pedidos) {
+      const q = Math.max(0, Math.min(In.pedidos[k] - In.bodega[k], I.bodega - enBodega(In)));
+      if (!q) continue;
+      In.bodega[k] += q;
+      costo += q * I.productos[k].costo * Q.costo;
+    }
+    if (costo) { gasto(S, 'mercancia', costo); N.hoy.costo = r2(N.hoy.costo + costo); }
+  }
+  function nuevoInterior() {
+    const In = { muebles: [], bodega: {}, pedidos: {}, precios: {}, calidad: 'normal', cajeros: 1, reponedores: 1, sig: 1 };
+    for (const k in I.productos) { In.precios[k] = I.productos[k].precioRef; In.bodega[k] = 0; In.pedidos[k] = 0; }
+    for (const m of I.inicial) {
+      In.muebles.push({ id: 'm' + In.sig++, tipo: m.tipo, x: m.x, y: m.y, rot: m.rot, nivel: 1, prod: m.prod || null, stock: 0 });
+      if (m.prod) In.pedidos[m.prod] = 120;
+    }
+    return In;
+  }
+  function lugarInvalido(In, m, ignorar) { // null si el mueble cabe ahí sin bloquear a nadie
+    const otros = In.muebles.filter(x => x.id !== ignorar);
+    for (const [x, y] of casillas(m)) {
+      if (x < 0 || y < 0 || x >= I.ancho || y >= I.fondo) return 'No cabe ahí.';
+      if (casillasPuerta().some(([px, py]) => px === x && py === y)) return 'Hay que dejar libre la entrada.';
+      if (otros.some(o => casillas(o).some(([ox, oy]) => ox === x && oy === y))) return 'Ese lugar ya está ocupado.';
+    }
+    const antes = alcanzables(otros), despues = alcanzables([...otros, m]);
+    if (!accesible(m, despues)) return m.tipo === 'caja' ? 'La caja necesita espacio libre enfrente para la fila.' : 'Nadie podría llegar a ese mueble.';
+    if (otros.some(o => accesible(o, antes) && !accesible(o, despues))) return 'Así bloquearías el paso a otro mueble.';
+    return null;
+  }
+  function anaquelPropio(S, N, v) { // tu producto en tu mostrador: algunos clientes se lo llevan también
+    const P = !N.rival && N.anaquel && S.productos.find(p => p.id === N.anaquel && p.activo);
+    if (!P || !v) return;
+    const C = D.categorias[P.cat], q = entero(S, v * D.anaquel.tasa * P.nota / 10);
+    // shortcut: si una planta lo fabrica se cobra el costo propio aunque sus líneas estén llenas; separar inventario cuando exista el almacén
+    const cuP = capacidadPropia(S, P.id).length ? C.propio : C.costo, margen = r2(q * (C.precio * D.anaquel.sobreprecio - cuP));
+    if (!q) return;
+    ingreso(S, 'productos', margen);
+    P.tiendaHoy = (P.tiendaHoy || 0) + q; P.tienda = (P.tienda || 0) + q; P.ganado = r2(P.ganado + margen);
+    N.hoy.anaquel = (N.hoy.anaquel || 0) + q; N.hoy.anaquelMonto = r2((N.hoy.anaquelMonto || 0) + margen);
+  }
+  const DEMANDA_TOTAL = Object.values(I.productos).reduce((t, p) => t + p.demanda, 0);
+  function simTienda(S, N, h) {
+    const T = tipo(N), L = lote(N.lote), In = N.interior, Q = I.calidades[In.calidad];
+    if (In.reponedores && h >= T.horario[0] - 2 && h < T.horario[1]) reponer(N, In.reponedores * I.reponerHora); // reponen desde antes de abrir
+    if (h < T.horario[0] || h >= T.horario[1]) return;
+    const E = estadoInterior(N), mios = S.negocios.filter(n => n.tipo === N.tipo).length;
+    const pasan = D.trafico[h] * L.trafico * mult(S, 'trafico');
+    const miran = pasan * T.interes * D.curvas[T.curva][h] * mult(S, 'cat:' + T.cat) * factorVecindad(S, N.lote, N.tipo) * (0.5 + N.rep / 100) * (1 + D.marketing[N.mkt].efecto) / Math.pow(mios, 0.6) * (0.85 + 0.3 * azar(S));
+    const dem = entero(S, miran), v = Math.min(dem, entero(S, E.cap));
+    let monto = 0, quieren = 0, vendidos = 0, puntosPrecio = 0, falto = null;
+    for (const k in I.productos) {
+      const P = I.productos[k], r = In.precios[k] / P.precioRef - Q.acepta;
+      puntosPrecio += clamp(100 - Math.max(0, r - 0.9) * 150) * P.demanda / DEMANDA_TOTAL;
+      const q = entero(S, v * I.itemsPorCliente * P.demanda / DEMANDA_TOTAL * (r <= 1 ? 1 + (1 - r) * 0.8 : Math.max(0, 1 - (r - 1) * 1.4)));
+      if (!q) continue;
+      const estantes = E.ok.filter(m => m.prod === k), venta = Math.min(q, estantes.reduce((t, m) => t + m.stock, 0));
+      let resta = venta;
+      for (const m of estantes) { const d = Math.min(m.stock, resta); m.stock -= d; resta -= d; }
+      quieren += q; vendidos += venta; monto += venta * In.precios[k];
+      if (venta < q && (!falto || q - venta > falto.n)) falto = { prod: k, n: q - venta };
+    }
+    monto = r2(monto);
+    N.hoy.clientes += v; N.hoy.perdidos += dem - v; N.hoy.sinProducto = (N.hoy.sinProducto || 0) + quieren - vendidos;
+    N.hoy.ingresos = r2(N.hoy.ingresos + monto);
+    ingreso(S, 'ventas', monto);
+    if (v) S.ventas.push({ lote: N.lote, n: v, monto, falto: falto && falto.prod });
+    anaquelPropio(S, N, v);
+    if (dem) {
+      const meta = 0.25 * puntosPrecio + 0.3 * (v / dem) * 100 + 0.25 * (quieren ? vendidos / quieren : 1) * 100 + 0.2 * calidad(N) + Math.min(3, E.decor) * D.interior.muebles.planta.decor + Q.rep;
+      N.rep = clamp(N.rep + (meta - N.rep) * B.repVel);
+    }
+  }
+
   // ---- Una hora en un negocio ----
   function simHora(S, N, h) {
+    if (N.interior) return simTienda(S, N, h);
     const T = tipo(N), L = lote(N.lote);
     if (T.clase === 'estudio' || T.clase === 'fabrica' || h < T.horario[0] || h >= T.horario[1]) return;
     const pasan = D.trafico[h] * L.trafico * mult(S, 'trafico');
@@ -131,13 +257,7 @@ const Motor = (function () {
     if (N.rival) S.rival.dinero = r2(S.rival.dinero + monto - v * cu);
     else { ingreso(S, 'ventas', monto); gasto(S, 'insumos', v * cu); }
     if (v) S.ventas.push({ lote: N.lote, n: v, monto, rival: !!N.rival });
-    const P = !N.rival && N.anaquel && S.productos.find(p => p.id === N.anaquel && p.activo);
-    if (P && v) { // tu producto en tu mostrador: algunos clientes se lo llevan también
-      const C = D.categorias[P.cat], q = entero(S, v * D.anaquel.tasa * P.nota / 10);
-      // shortcut: si una planta lo fabrica se cobra el costo propio aunque sus líneas estén llenas; separar inventario cuando exista el almacén
-      const cuP = capacidadPropia(S, P.id).length ? C.propio : C.costo, margen = r2(q * (C.precio * D.anaquel.sobreprecio - cuP));
-      if (q) { ingreso(S, 'productos', margen); P.tiendaHoy = (P.tiendaHoy || 0) + q; P.tienda = (P.tienda || 0) + q; P.ganado = r2(P.ganado + margen); N.hoy.anaquel = (N.hoy.anaquel || 0) + q; N.hoy.anaquelMonto = r2((N.hoy.anaquelMonto || 0) + margen); }
-    }
+    anaquelPropio(S, N, v);
     if (miran >= 0.5) { // la reputación se acerca poco a poco a lo que vivió quien se asomó esta hora
       const precio = clamp(100 - Math.max(0, r - 0.9) * 150);
       const fama = N.rival ? 0 : Math.min(3, mios.length - 1) * D.cadena.rep; // la cadena comparte fama
@@ -201,6 +321,7 @@ const Motor = (function () {
       gasto(S, 'sueldos', T.sueldo * N.emp);
       if (N.mkt) gasto(S, 'marketing', D.marketing[N.mkt].costo);
       if (T.energia) gasto(S, 'energia', T.energia * lineasActivas(N));
+      if (N.interior) entregarPedidos(S, N);
       N.hoy.producidas = Math.round(N.hoy.producidas);
       N.hoy.utilidad = r2(N.hoy.ingresos - N.hoy.costo - fijos(S, N));
       N.hist.push(N.hoy.utilidad);
@@ -251,7 +372,7 @@ const Motor = (function () {
       const quedan = vendibles(S);
       S.fin = quedan.length <= 1 ? 'comprado' : 'quiebra';
       S.finalId = S.fin;
-      if (S.fin === 'comprado' && quedan[0] && ['puesto', 'local'].includes(tipo(quedan[0]).clase)) { // Ferrán se queda tu último negocio
+      if (S.fin === 'comprado' && quedan[0] && ['puesto', 'local'].includes(tipo(quedan[0]).clase) && !tipo(quedan[0]).interior) { // Ferrán se queda tu último negocio
         const N = quedan[0];
         S.negocios = S.negocios.filter(n => n !== N);
         S.rival.negocios.push({ ...N, id: 'r' + S.sig++, rival: true, rojos: 0, hoy: vacio() });
@@ -296,7 +417,7 @@ const Motor = (function () {
     if (!S.rivalActivo || (S.modo === 'historia' && S.capitulo < 2) || (S.modo !== 'historia' && c < X.diaInicio) || c < R.proximo || R.negocios.length >= X.maxNegocios) return;
     const libres = D.lotes.filter(l => !ocupado(S, l.id)).sort((a, b) => b.trafico - a.trafico);
     const tuyos = S.negocios.map(n => n.tipo);
-    const giros = Object.keys(D.negocios).filter(t => ['puesto', 'local'].includes(D.negocios[t].clase) && D.negocios[t].rango <= S.rango && D.negocios[t].costo <= R.dinero * 0.8);
+    const giros = Object.keys(D.negocios).filter(t => ['puesto', 'local'].includes(D.negocios[t].clase) && !D.negocios[t].interior && D.negocios[t].rango <= S.rango && D.negocios[t].costo <= R.dinero * 0.8);
     if (libres.length < X.lotesLibresMin || !giros.length) return;
     const atacar = giros.filter(t => tuyos.includes(t)); // la mitad de las veces abre justo lo que tú vendes
     const lista = atacar.length && azar(S) < 0.5 ? atacar : giros; // se elige la lista una sola vez
@@ -331,7 +452,7 @@ const Motor = (function () {
       motivo = 'premio';
     } else return;
     const precio = Math.round(N.invertido * factor);
-    const puedeFerran = S.rival.negocios.length < D.rival.maxNegocios + 2 && S.rival.dinero >= precio && ['puesto', 'local'].includes(tipo(N).clase) && S.rivalActivo;
+    const puedeFerran = S.rival.negocios.length < D.rival.maxNegocios + 2 && S.rival.dinero >= precio && ['puesto', 'local'].includes(tipo(N).clase) && !tipo(N).interior && S.rivalActivo;
     const comprador = puedeFerran && (motivo === 'rojo' || azar(S) < 0.5) ? 'ferran' : 'vega';
     const o = { id: 'o' + S.sig++, negocio: N.id, comprador, precio, vence: c + O.dias, regateo: false, motivo };
     S.ofertas.push(o);
@@ -480,6 +601,12 @@ const Motor = (function () {
       if (e) return e;
       const N = { id: 'n' + S.sig++, tipo: t, lote: id, nivel: 1, emp: T.porLinea || 1, precio: T.precioRef, mkt: 0, rep: 50, invertido: T.costo, hoy: vacio(), ayer: vacio(), hist: [] };
       if (T.clase === 'fabrica') N.lineas = [null];
+      if (T.interior) {
+        N.interior = nuevoInterior();
+        N.emp = N.interior.cajeros + N.interior.reponedores;
+        entregarPedidos(S, N);
+        reponer(N, 1e9);
+      }
       S.negocios.push(N);
       noticia(S, `Abre ${T.nombre.toLowerCase()} en ${L.nombre}.`, 'calle');
       return { msg: `Abriste ${T.nombre.toLowerCase()}.`, id: N.id };
@@ -510,6 +637,78 @@ const Motor = (function () {
       }
       N.lineas[i] = prod || null;
     },
+    mueble(S, { id, tipo: t, x, y, rot }) {
+      const N = negocio(S, id), In = N && N.interior, X = I.muebles[t];
+      if (!In || !X) return 'Aquí no se pueden poner muebles.';
+      const m = { id: 'm' + In.sig, tipo: t, x, y, rot: rot ? 1 : 0, nivel: 1, prod: null, stock: 0 };
+      const malo = lugarInvalido(In, m);
+      if (malo) return malo;
+      const e = pagar(S, 'inversion', X.costo);
+      if (e) return e;
+      In.sig++;
+      In.muebles.push(m);
+      N.invertido += X.costo;
+      return { msg: `${X.nombre} instalado.`, mid: m.id };
+    },
+    moverMueble(S, { id, mid, x, y, rot }) {
+      const In = negocio(S, id).interior, m = por(In.muebles, mid);
+      if (!m) return 'Ese mueble ya no está.';
+      const nuevo = { ...m, x, y, rot: rot ? 1 : 0 }, malo = lugarInvalido(In, nuevo, mid);
+      if (malo) return malo;
+      Object.assign(m, { x, y, rot: nuevo.rot });
+    },
+    venderMueble(S, { id, mid }) {
+      const N = negocio(S, id), In = N.interior, m = por(In.muebles, mid), X = m && I.muebles[m.tipo];
+      if (!m) return 'Ese mueble ya no está.';
+      if (m.prod) In.bodega[m.prod] += m.stock;
+      In.muebles = In.muebles.filter(x => x !== m);
+      const vuelve = X.costo * B.valorNegocio;
+      ingreso(S, 'ventaActivos', vuelve);
+      N.invertido = Math.max(0, N.invertido - X.costo);
+      return { msg: `Vendiste ${X.nombre.toLowerCase()} por ${dinero(vuelve)}.` };
+    },
+    mejorarMueble(S, { id, mid }) {
+      const N = negocio(S, id), m = por(N.interior.muebles, mid), X = m && I.muebles[m.tipo];
+      if (!X || !X.mejora || m.nivel > 1) return 'No tiene mejora.';
+      const e = pagar(S, 'inversion', X.mejora.costo);
+      if (e) return e;
+      m.nivel = 2;
+      N.invertido += X.mejora.costo;
+      return { msg: `Ahora es ${X.mejora.nombre.toLowerCase()}.` };
+    },
+    surtir(S, { id, mid, prod }) { // qué producto exhibe un anaquel o refri
+      const In = negocio(S, id).interior, m = por(In.muebles, mid), X = m && I.muebles[m.tipo];
+      if (!X || !X.para) return 'Ese mueble no exhibe productos.';
+      if (prod && I.productos[prod].para !== X.para) return X.para === 'frio' ? 'En el refri solo van bebidas.' : 'Las bebidas van en el refri.';
+      if (m.prod) In.bodega[m.prod] += m.stock;
+      m.prod = prod || null;
+      m.stock = 0;
+      if (prod && !In.pedidos[prod]) In.pedidos[prod] = 120;
+    },
+    pedido(S, { id, prod, objetivo }) { negocio(S, id).interior.pedidos[prod] = clamp(Math.round(objetivo), 0, I.bodega); },
+    pedirYa(S, { id, prod, cant }) {
+      const N = negocio(S, id), In = N.interior, q = Math.min(cant, I.bodega - enBodega(In));
+      if (q <= 0) return 'La bodega está llena.';
+      const costo = q * I.productos[prod].costo * I.calidades[In.calidad].costo * I.express, e = pagar(S, 'mercancia', costo);
+      if (e) return e;
+      In.bodega[prod] += q;
+      N.hoy.costo = r2(N.hoy.costo + costo);
+      return { msg: `Llegaron ${q} de ${I.productos[prod].nombre.toLowerCase()} por ${dinero(costo)}.` };
+    },
+    reponerYa(S, { id }) {
+      const q = reponer(negocio(S, id), 1e9);
+      return q ? { msg: `Acomodaste ${q} piezas en los anaqueles.` } : 'No hay nada en bodega para acomodar, o los anaqueles están llenos.';
+    },
+    personalTienda(S, { id, rol, cambio }) {
+      const N = negocio(S, id), In = N.interior, n = In[rol] + cambio;
+      if (!['cajeros', 'reponedores'].includes(rol)) return 'No válido.';
+      if (n < (rol === 'cajeros' ? 1 : 0)) return rol === 'cajeros' ? 'Alguien tiene que cobrar.' : 'Ya no hay reponedores.';
+      if (In.cajeros + In.reponedores + cambio > tipo(N).empMax) return 'No cabe más gente en este local.';
+      In[rol] = n;
+      N.emp = In.cajeros + In.reponedores;
+    },
+    calidadSurtido(S, { id, nivel }) { if (!I.calidades[nivel]) return 'No válido.'; negocio(S, id).interior.calidad = nivel; },
+    precioTienda(S, { id, prod, valor }) { if (!(valor >= 0.05)) return 'Precio no válido.'; negocio(S, id).interior.precios[prod] = r2(valor); },
     anaquel(S, { id, prod }) { // qué producto tuyo se vende en el mostrador de este negocio; prod null lo vacía
       const N = negocio(S, id);
       if (prod && !anaquelesPara(S, N).some(p => p.id === prod)) return 'Ese producto no cabe en este negocio.';
@@ -647,10 +846,12 @@ const Motor = (function () {
     let consejo;
     const planta = S.negocios.find(n => n.lineas && n.lineas.includes(null));
     const sinAnaquel = S.negocios.find(n => !n.anaquel && anaquelesPara(S, n).length);
+    const vacia = S.negocios.find(n => n.interior && n.ayer.sinProducto > 20);
     const sinLinea = planta && S.productos.find(p => p.activo && tipo(planta).sirve.includes(p.cat) && !S.negocios.some(n => n.lineas && n.lineas.includes(p.id)));
     if (!S.negocios.length) consejo = 'Toca un lote vacío de la calle y abre tu primer puesto de limonada.';
     else if (S.dinero < 0) consejo = `Estás en números rojos. Recorta personal o acepta alguna oferta: en ${plazoQuiebra(S) - S.diasRojos} días el banco cierra tu cuenta.`;
-    else if (perdiendo) consejo = `${nombreDe(perdiendo)} dejó ir a ${perdiendo.ayer.perdidos} clientes ayer. Contrata o sube de nivel.`;
+    else if (vacia) consejo = `En ${nombreDe(vacia)} se quedaron ${vacia.ayer.sinProducto} pedidos sin producto ayer. Sube tus pedidos o pon un reponedor.`;
+    else if (perdiendo) consejo = perdiendo.interior ? `${nombreDe(perdiendo)} dejó ir a ${perdiendo.ayer.perdidos} clientes ayer: faltan cajas o cajeros.` : `${nombreDe(perdiendo)} dejó ir a ${perdiendo.ayer.perdidos} clientes ayer. Contrata o sube de nivel.`;
     else if (malaRep) consejo = `La reputación de ${nombreDe(malaRep)} va en picada. Revisa el precio.`;
     else if (S.rango >= 2 && !estudio(S)) consejo = 'Abre un estudio de producto: ahí diseñas y lanzas tus propias marcas.';
     else if (estudio(S) && !S.proyecto) consejo = 'Tu estudio está libre. Diseña un producto en la pestaña Estudio.';
@@ -663,7 +864,7 @@ const Motor = (function () {
   }
 
   return {
-    VERSION, efectosVecindad, factorVecindad, anaquelesPara, lineasActivas, migrar, plazoQuiebra, terminal, vendibles, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
+    VERSION, estadoInterior, casillas, capMueble, capCaja, lugarInvalido, enBodega, efectosVecindad, factorVecindad, anaquelesPara, lineasActivas, migrar, plazoQuiebra, terminal, vendibles, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
     velocidadEstudio, negocioEn, estudio, nombreDe, ciclo, dia, hh, mult, lote,
   };
 })();

@@ -201,4 +201,22 @@ assert(Pa.tienda > 0 && Pa.tiendaAyer > 0, 'se vende en tu mostrador');
 Pa.dia = 999; M.tick(an); for (let i = 0; i < 24; i++) M.tick(an);
 assert(!Pa.activo && Na.anaquel === null, 'un producto retirado sale del anaquel');
 
+// Tiendita: el acomodo decide. Una caja sola deja ir gente; con dos cajas y más anaqueles gana más.
+function tienda(mejorar) {
+  const S = M.nueva({ semilla: 3, modo: 'sandbox', dinero: 50000, rival: false });
+  M.hacer(S, 'construir', { lote: 'l3', tipo: 'tiendita' });
+  const N = S.negocios[0], h = (a, b) => M.hacer(S, a, { id: N.id, ...b });
+  assert(!h('mueble', { tipo: 'anaquel', x: 4, y: 6, rot: 0 }).ok, 'la entrada queda libre');
+  assert(!h('mueble', { tipo: 'caja', x: 1, y: 3, rot: 0 }).ok, 'no se encierra un anaquel');
+  if (mejorar) {
+    assert(h('mueble', { tipo: 'caja', x: 7, y: 3, rot: 0 }).ok && h('personalTienda', { rol: 'cajeros', cambio: 1 }).ok);
+    for (const [x, y, rot, prod] of [[1, 6, 0, 'dulces'], [4, 2, 1, 'limpieza']]) { const r = h('mueble', { tipo: 'anaquel', x, y, rot }); assert(r.ok, r.msg); h('surtir', { mid: r.mid, prod }); }
+  }
+  for (let i = 0; i < 24 * 8; i++) M.tick(S);
+  return N.hist.slice(-5).reduce((a, b) => a + b, 0) / 5;
+}
+const tBase = tienda(false), tMejor = tienda(true);
+console.log(`Tiendita: utilidad diaria ${tBase.toFixed(0)} con el acomodo inicial, ${tMejor.toFixed(0)} mejorada`);
+assert(tBase > 0 && tMejor > tBase * 2, 'mejorar el acomodo paga');
+
 console.log('OK: economía estable, determinista y sin trucos de dinero infinito.');

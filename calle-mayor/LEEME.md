@@ -26,11 +26,17 @@ Vecindad (`vecindad` en `datos.js`): lo que hay en los lotes de al lado sube o b
 flores con restaurante, mismo giro pared con pared, planta junto a una tienda). Anaquel (`anaquel`): tus productos se
 venden en el mostrador de tus negocios compatibles y eso los da a conocer en las tiendas de fuera.
 
+Interiores (prototipo con la Tiendita de la esquina, `interior` en `datos.js`): entras al local en 3D cenital y
+acomodas muebles en una cuadrícula. Las cajas con cajero fijan cuántos clientes se atienden por hora, los anaqueles y
+refris exhiben productos y se vacían, los reponedores los llenan desde la bodega y el pedido automático llega de noche.
+Un mueble al que nadie puede llegar no cuenta, y los pasillos apretados restan.
+
 | Archivo | Capa | Qué contiene |
 | --- | --- | --- |
 | `datos.js` | Datos | Negocios, lotes, rangos, categorías de producto, acciones, eventos y **todo el balance**. |
 | `motor.js` | Simulación | Horas, clientes, reputación, productos, fábricas, bolsa y rangos. Sin interfaz, determinista por semilla. |
 | `escena.js` | Presentación | La calle en canvas: día y noche, edificios por nivel, peatones, clientes, autos, monedas. |
+| `interior.js` | Presentación | Interior en 3D cenital con three.js (copia local en `vendor/`, licencia MIT): muebles, clientes, cajeros, reponedores. |
 | `ui.js` + `index.html` | Presentación | Paneles, iconos SVG propios y animaciones. Manda acciones con `Motor.hacer(estado, accion, args)`. |
 
 - `node prueba.js` (o `node prueba.js --ver`): un bot juega 120 días y comprueba ritmo de rangos, quiebra,

@@ -106,7 +106,7 @@
     const d = M.dia(S), obj = M.objetivo(S), R = D.rangos[S.rango];
     const hoy = Object.values(S.hoy.ingresos).reduce((a, b) => a + b, 0) - Object.entries(S.hoy.gastos).filter(([k]) => k !== 'inversion').reduce((a, [, v]) => a + v, 0);
     $('reloj').innerHTML = `${ic('reloj')}<span>Día ${d} · ${SEMANA[(d - 1) % 7]} ${hora(M.hh(S))}</span>`;
-    $('vel').innerHTML = VEL.map((v, i) => `<button class="${vel === v ? 'on' : ''}" data-a="ui:vel" data-args='{"v":${v}}' aria-pressed="${vel === v}" aria-label="${v ? 'Velocidad ' + v + ' por uno' : 'Pausa'}">${i === 0 ? ic('pausa') : i === 1 ? ic('play') : v + '×'}</button>`).join('');
+    $('vel').innerHTML = $('int-vel').innerHTML = VEL.map((v, i) => `<button class="${vel === v ? 'on' : ''}" data-a="ui:vel" data-args='{"v":${v}}' aria-pressed="${vel === v}" aria-label="${v ? 'Velocidad ' + v + ' por uno' : 'Pausa'}">${i === 0 ? ic('pausa') : i === 1 ? ic('play') : v + '×'}</button>`).join('');
     $('rango-tel').textContent = R.nombre;
     $('rango').innerHTML = `<span>${ic('trofeo')}${R.nombre}</span><div class="riel" title="${obj.siguiente ? 'Rumbo a ' + obj.siguiente.nombre : 'Rango máximo'}"><i style="width:${obj.avance}%"></i></div>`;
     $('caja').querySelector('small').innerHTML = S.diasRojos ? `<span class="menos">en rojo · ${M.plazoQuiebra(S) - S.diasRojos} días de plazo</span>` : `hoy <span class="${hoy >= 0 ? 'mas' : 'menos'}">${hoy >= 0 ? '+' : ''}${din(hoy)}</span>`;
@@ -134,6 +134,7 @@
     const L = M.lote(ui.lote), N = M.negocioEn(S, ui.lote), R = M.rivalEn(S, ui.lote);
     if (R) return vRival(R, L);
     if (!N) return vVacio(L);
+    if (N.interior) return vTienda(N, L);
     return N.tipo === 'estudio' ? vEstudioLote(N, L) : D.negocios[N.tipo].clase === 'fabrica' ? vFabrica(N, L) : vNegocio(N, L);
   }
   const cerrarLote = bt(ic('cerrar'), 'ui:lote', { id: null }, 'btn', 'aria-label="Cerrar"');
@@ -142,6 +143,25 @@
     return `<div class="hoja"><div class="vacio"><div class="sello">${ic('tienda')}</div><h2>Elige un lote de la calle</h2>
       <p class="tenue">Arrastra la calle para recorrerla y toca un lote. También puedes elegirlo aquí abajo.</p></div>
       <div class="lotes">${D.lotes.map(L => { const N = M.negocioEn(S, L.id), R = M.rivalEn(S, L.id); return bt(`${L.esquina ? L.nombre : L.corto}<span>${N ? D.negocios[N.tipo].corto : R ? 'Ferrán · ' + D.negocios[R.tipo].corto : S.lotes[L.id].propio ? 'Terreno propio' : 'Libre · ×' + L.trafico}</span>`, 'ui:lote', { id: L.id, enfocar: true }, N ? 'lleno' : R ? 'rival' : ''); }).join('')}</div></div>`;
+  }
+
+  function vTienda(N, L) {
+    const T = D.negocios[N.tipo], E = M.estadoInterior(N), a = N.ayer, In = N.interior, h = M.hh(S), abierto = h >= T.horario[0] && h < T.horario[1];
+    const vender = ui.confirma === 'vender' ? bt(`Sí, vender por ${din(N.invertido * B.valorNegocio)}`, 'vender', { id: N.id }, 'btn peligro armado') : bt(`${ic('salir')} Vender negocio`, 'ui:confirma', { k: 'vender' }, 'btn peligro');
+    const terreno = S.rango >= 1 && !S.lotes[L.id].propio ? bt(`${ic('bandera')} Comprar terreno <small>${din(M.precioLote(L))}</small>`, 'comprarLote', { lote: L.id }) : '';
+    const vacios = In.muebles.filter(m => D.interior.muebles[m.tipo].para && (!m.prod || m.stock === 0)).length;
+    return `<div class="hoja">
+      <div class="cab">${sello(N.tipo)}<div><h2>${T.nombre}</h2><p>${esc(L.nombre)} · ${In.muebles.length} muebles</p></div>${cerrarLote}</div>
+      <div class="fila"><span class="eti crece">${abierto ? 'Abierto ahora' : 'Cerrado'} · ${hora(T.horario[0])}–${hora(T.horario[1])}</span><span class="eti">Reputación ${Math.round(N.rep)}</span></div>
+      ${medidor(N.rep)}
+      ${extras(N, T)}
+      <div class="kpis">${kpi('Clientes ayer', a.clientes)}${kpi('Se fueron', a.perdidos, a.perdidos ? 'neg' : '')}${kpi('Sin producto', a.sinProducto || 0, a.sinProducto ? 'neg' : '')}${kpi('Utilidad ayer', a.utilidad == null ? '—' : din(a.utilidad), a.utilidad < 0 ? 'neg' : a.utilidad > 0 ? 'pos' : '')}</div>
+      <p class="tenue">${E.cajeros} de ${E.cajas} cajas atendiendo · ${Math.round(E.cap)} clientes por hora · bodega ${M.enBodega(In)} de ${D.interior.bodega}${vacios ? ` · <b class="neg">${vacios} anaquel${vacios > 1 ? 'es' : ''} vacío${vacios > 1 ? 's' : ''}</b>` : ''}</p>
+      ${bt(`${ic('tienda')} Entrar a la tiendita`, 'ui:entrar', { id: N.id }, 'btn pri ancho')}
+      <div class="control"><span class="eti">Publicidad</span><div class="seg">${D.marketing.map((m, i) => bt(`${m.nombre}<small>${m.costo ? din(m.costo) + '/día' : 'gratis'}</small>`, 'marketing', { id: N.id, nivel: i }, N.mkt === i ? 'on' : '', `aria-pressed="${N.mkt === i}"`)).join('')}</div></div>
+      ${vAnaquel(N)}
+      <div class="control"><span class="eti">Utilidad de los últimos ${N.hist.length || 14} días</span>${barrasUtilidad(N.hist)}</div>
+      <div class="fila">${terreno}${vender}</div></div>`;
   }
 
   function vRival(N, L) {
@@ -541,7 +561,7 @@
     }
     if (M.terminal(S) && !ui.capa) capaFinal();
   }
-  function despues() { procesarAvisos(); pintar(); }
+  function despues() { procesarAvisos(); pintar(); if (Interior.abierto) Interior.actualizar(); }
 
   function bucle(t) {
     const dt = Math.min(250, t - prev || 0);
@@ -551,7 +571,7 @@
       if (vel && !ui.capa && !M.terminal(S)) {
         acc += dt;
         let n = 0;
-        while (acc >= ms && n < 3) { acc -= ms; M.tick(S); Escena.ventas(S.ventas); n++; }
+        while (acc >= ms && n < 3) { acc -= ms; M.tick(S); Escena.ventas(S.ventas); Interior.ventas(S.ventas, ms); n++; }
         if (n === 3) acc = 0;
         if (n) despues();
       }
@@ -601,7 +621,7 @@
       try { g = JSON.parse(ui.importa); } catch (e) { /* se avisa abajo */ }
       if (valida(g)) { iniciar(g); disco.guardar(); aviso('Partida importada.', 'bien'); } else aviso('Ese texto no es una partida de Calle Mayor. Cópialo completo desde Exportar.', 'mal');
     },
-    nueva() { S = null; ui.confirma = null; Escena.estado(null); capaInicio(); },
+    nueva() { if (Interior.abierto) Interior.cerrar(); S = null; ui.confirma = null; Escena.estado(null); capaInicio(); },
     continuar() { const g = disco.leer(); if (g) iniciar(g); },
     colorInicio({ c }) { ui.colorInicio = c; document.querySelectorAll('.muestras button').forEach(b => { const on = JSON.parse(b.dataset.args).c === c; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); },
     decidir({ i }) { const r = M.hacer(S, 'decidir', { i }); if (r.ok) { cerrarCapa(); aviso(r.msg, '', 'rayo'); } else aviso(r.msg, 'mal'); },
@@ -614,6 +634,7 @@
     ofertaAcepta({ id }) { const r = M.hacer(S, 'aceptarOferta', { id }); ui.oferta = null; cerrarCapa(); aviso(r.msg, r.ok ? 'bien' : 'mal', 'moneda'); },
     ofertaRegatea({ id }) { const r = M.hacer(S, 'regatear', { id }); aviso(r.msg, r.sigue ? 'bien' : 'mal', 'moneda'); if (r.sigue) capaOferta(); else { ui.oferta = null; cerrarCapa(); } },
     ofertaRechaza({ id }) { M.hacer(S, 'rechazarOferta', { id }); ui.oferta = null; cerrarCapa(); },
+    entrar({ id }) { Interior.abrir(S, id, { aviso, despues }); },
     empezar() { const I = ui.inicio; iniciar(M.nueva({ empresa: ($('f-empresa') || {}).value, color: ui.colorInicio, modo: I.modo, dinero: I.dinero, rival: I.rival })); if (I.modo !== 'historia') aviso('Toca un lote vacío de la calle para abrir tu primer puesto.', '', 'tienda'); },
     cerrarCapa() { cerrarCapa(); },
     seguir() { M.hacer(S, 'seguir'); cerrarCapa(); },
@@ -656,6 +677,11 @@
   $('pan-izq').innerHTML = ic('izq');
   $('pan-der').innerHTML = ic('der');
   $('pan-izq').onclick = () => Escena.desplazar(-1);
+  $('int-volver').onclick = () => Interior.cerrar();
+  $('int-giro-izq').onclick = () => Interior.girarCamara(-1);
+  $('int-giro-der').onclick = () => Interior.girarCamara(1);
+  $('int-mas').onclick = () => Interior.acercar(1.2);
+  $('int-menos').onclick = () => Interior.acercar(1 / 1.2);
   $('pan-der').onclick = () => Escena.desplazar(1);
   $('etq-noticias').innerHTML = ic('noticias') + 'Al minuto';
   Escena.iniciar($('lienzo'), D, { alSeleccionar: id => { U.lote({ id }); despues(); } });

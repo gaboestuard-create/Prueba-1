@@ -240,6 +240,35 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 22px; background: var
 .modos .opcion-d.on span { color: var(--mostaza-claro); }
 .modos .opcion-d span { font: 500 12.5px/1.35 var(--texto); }
 @media (max-width: 420px) { .modos { grid-template-columns: 1fr; } .linea-dialogo { font-size: 17px; } }
+#interior { position: fixed; inset: 0; z-index: 25; display: flex; flex-direction: column; background: var(--tinta); padding-top: env(safe-area-inset-top, 0px); }
+#interior[hidden] { display: none; }
+.int-barra { display: flex; align-items: center; gap: 12px; padding-block: 8px; border-bottom: 2px solid var(--negro); }
+.int-barra h2 { font-size: 18px; color: var(--papel); }
+.int-barra p { font: 600 12px var(--mono); color: var(--tenue-claro); }
+.int-barra .crece { flex: 1; min-width: 0; }
+.int-vista { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.int-escena { position: relative; flex: 0 0 50%; min-height: 230px; overflow: hidden; }
+.int-escena canvas { display: block; touch-action: none; cursor: pointer; }
+.int-controles { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); bottom: 10px; display: flex; gap: 6px; }
+.int-controles .btn { min-width: 40px; min-height: 40px; padding: 4px; font-size: 18px; justify-content: center; }
+#int-panel { flex: 1; min-height: 0; overflow-y: auto; background: var(--papel); color: var(--tinta); border-top: 3px solid var(--negro); padding-block: 12px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.int-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.int-tabs .btn { min-height: 36px; padding: 4px 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+.int-tabs .btn.on { background: var(--tinta); color: var(--papel); }
+.int-cuerpo-panel { display: grid; gap: 12px; }
+.int-cuerpo-panel .opcion { grid-template-columns: 1fr; }
+.opcion.activa { background: var(--mostaza); }
+.surtido { display: grid; gap: 6px; padding: 10px 0; border-top: 2px dashed var(--papel-3); }
+.surtido:first-child { border-top: 0; }
+.surtido .paso button { width: 34px; min-height: 34px; }
+.surtido .paso output { min-width: 70px; font-size: 15px; }
+.punto-color { display: inline-block; width: 11px; height: 11px; border: 2px solid var(--tinta); flex: none; margin-right: 4px; vertical-align: -1px; }
+@media (max-width: 600px) { .int-barra h2 { font-size: 15px; } .int-barra p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .int-barra .vel button { min-width: 34px; } }
+@media (min-width: 1000px) {
+  .int-vista { flex-direction: row; }
+  .int-escena { flex: 1; }
+  #int-panel { flex: 0 0 430px; border-top: 0; border-left: 3px solid var(--negro); }
+}
 .insignia { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--tinta); color: var(--mostaza-claro); font: 700 11.5px var(--texto); border: 2px solid var(--tinta); }
 .insignia .ic { width: 14px; height: 14px; }
 .insignia.pos { background: #E3F4EA; color: var(--verde); border-color: var(--verde); }
@@ -375,10 +404,30 @@ textarea { width: 100%; min-height: 80px; font: 12px var(--mono); border: 2px so
   </main>
   <nav class="nav-tel" id="nav" aria-label="Secciones"></nav>
 </div>
+<div id="interior" hidden>
+  <header class="int-barra borde">
+    <button class="btn" id="int-volver" aria-label="Volver a la calle">‹ Calle</button>
+    <div class="crece"><h2 id="int-titulo"></h2><p id="int-sub"></p></div>
+    <div class="vel" id="int-vel" role="group" aria-label="Velocidad del tiempo"></div>
+  </header>
+  <div class="int-vista">
+    <div class="int-escena"><canvas id="int-lienzo" aria-label="Interior del local en 3D. Toca un mueble para administrarlo."></canvas>
+      <div class="int-controles">
+        <button class="btn" id="int-giro-izq" aria-label="Girar la vista a la izquierda">⟲</button>
+        <button class="btn" id="int-giro-der" aria-label="Girar la vista a la derecha">⟳</button>
+        <button class="btn" id="int-menos" aria-label="Alejar">−</button>
+        <button class="btn" id="int-mas" aria-label="Acercar">+</button>
+      </div>
+    </div>
+    <aside id="int-panel" class="borde"></aside>
+  </div>
+</div>
 <div id="capa" hidden></div>
 <script src="datos.js"></script>
 <script src="motor.js"></script>
 <script src="escena.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="interior.js"></script>
 <script src="ui.js"></script>
 </body>
 </html>

@@ -51,6 +51,7 @@ const DATOS = {
     panaderia: { nombre: 'Panadería', corto: 'Panadería', clase: 'local', rango: 1, costo: 5000, sueldo: 32, empMax: 3, capBase: 16, costoUnidad: 0.45, precioRef: 2.2, interes: 0.24, cat: 'comida', curva: 'manana', horario: [6, 19], calidad: 55, color: '#D9963F', desc: 'Mucho volumen, ticket bajo. Madruga.' },
     taller: { nombre: 'Taller de bicis', corto: 'Bicis', clase: 'local', rango: 1, costo: 9000, sueldo: 40, empMax: 3, capBase: 3, costoUnidad: 5, precioRef: 24, interes: 0.025, cat: 'servicio', curva: 'dia', horario: [9, 19], calidad: 55, color: '#4C7A34', desc: 'Pocos clientes y buen margen. Cada mecánico atiende tres por hora.' },
     boutique: { nombre: 'Boutique de ropa', corto: 'Boutique', clase: 'local', rango: 1, costo: 14000, sueldo: 45, empMax: 3, capBase: 4, costoUnidad: 16, precioRef: 42, interes: 0.022, cat: 'ropa', curva: 'dia', horario: [10, 21], calidad: 60, color: '#3B5B8C', desc: 'Ticket alto. Le encanta la quincena.' },
+    tiendita: { nombre: 'Tiendita de la esquina', corto: 'Tiendita', clase: 'local', interior: true, rango: 1, costo: 5000, sueldo: 30, empMax: 6, capBase: 0, costoUnidad: 0, precioRef: 2, interes: 0.2, cat: 'tienda', curva: 'dia', horario: [7, 22], calidad: 50, color: '#2E86AB', desc: 'Entras al local: acomodas muebles, surtes anaqueles, haces pedidos y pones cajeros.' },
     estudio: { nombre: 'Estudio de producto', corto: 'Estudio', clase: 'estudio', rango: 2, costo: 15000, sueldo: 80, empMax: 4, capBase: 0, costoUnidad: 0, precioRef: 0, interes: 0, cat: 'estudio', curva: 'dia', horario: [9, 18], calidad: 60, color: '#2E6F8E', desc: 'Diseña y lanza tus propios productos al mercado. Más diseñadores, desarrollo más rápido.' },
     // Fábricas: no atienden clientes. Cada línea produce capLinea unidades al día de un producto tuyo
     // de las categorías que sirve, y necesita porLinea obreros. energia: costo diario por línea encendida.
@@ -349,8 +350,46 @@ const DATOS = {
   // con nota 10. sobreprecio: el precio de mostrador sobre el de mayoreo. fama: impulso máximo a las ventas en tiendas
   // de fuera según lo vendido ayer en las tuyas (porCada unidades = +100% de ese impulso).
   anaquel: {
-    giros: { bebida: ['bebida', 'comida', 'cafe'], snack: ['bebida', 'comida', 'cafe'], audifonos: ['ropa'], tenis: ['ropa'], telefono: ['ropa', 'servicio'] },
+    giros: { bebida: ['bebida', 'comida', 'cafe', 'tienda'], snack: ['bebida', 'comida', 'cafe', 'tienda'], audifonos: ['ropa'], tenis: ['ropa'], telefono: ['ropa', 'servicio'] },
     tasa: 0.25, sobreprecio: 1.5, fama: 0.3, porCada: 400,
+  },
+
+  // ---- Interior de los locales (por ahora la tiendita) ----
+  // Cuadrícula de ancho × fondo. La puerta está al frente, al centro; sus casillas y las de enfrente quedan libres.
+  // tam: casillas que ocupa sin girar. Las cajas atienden por el lado del frente (y + 1).
+  interior: {
+    ancho: 10, fondo: 8, puerta: [4, 5], bodega: 800,
+    muebles: {
+      caja: { nombre: 'Caja registradora', costo: 600, tam: [2, 1], cap: 14, mejora: { nombre: 'Caja rápida', costo: 900, cap: 24 }, desc: 'Cada caja con cajero atiende a cierta cantidad de clientes por hora.' },
+      anaquel: { nombre: 'Anaquel', costo: 300, tam: [2, 1], para: 'seco', capacidad: 60, mejora: { nombre: 'Anaquel alto', costo: 400, capacidad: 110 }, desc: 'Exhibe un producto seco: botanas, abarrotes, dulces o limpieza.' },
+      refri: { nombre: 'Refrigerador', costo: 900, tam: [1, 1], para: 'frio', capacidad: 50, mejora: { nombre: 'Refri de doble puerta', costo: 1100, capacidad: 100 }, desc: 'Mantiene frías las bebidas. Sin refri no vendes refrescos ni agua.' },
+      planta: { nombre: 'Planta', costo: 120, tam: [1, 1], decor: 3, desc: 'Decoración: sube un poco la reputación.' },
+    },
+    productos: {
+      refresco: { nombre: 'Refrescos', costo: 0.7, precioRef: 1.5, demanda: 0.35, para: 'frio', color: '#D1495B' },
+      agua: { nombre: 'Agua', costo: 0.3, precioRef: 0.9, demanda: 0.25, para: 'frio', color: '#5FA8D9' },
+      botanas: { nombre: 'Botanas', costo: 0.8, precioRef: 1.6, demanda: 0.3, para: 'seco', color: '#F2C230' },
+      abarrotes: { nombre: 'Abarrotes', costo: 1.1, precioRef: 2.2, demanda: 0.25, para: 'seco', color: '#81B29A' },
+      dulces: { nombre: 'Dulces', costo: 0.3, precioRef: 0.8, demanda: 0.2, para: 'seco', color: '#E07A5F' },
+      limpieza: { nombre: 'Limpieza', costo: 1.8, precioRef: 3.5, demanda: 0.12, para: 'seco', color: '#7D5BA6' },
+    },
+    itemsPorCliente: 1.6,
+    calidades: {
+      basico: { nombre: 'Básico', costo: 0.8, acepta: -0.1, rep: -8 },
+      normal: { nombre: 'Normal', costo: 1, acepta: 0, rep: 0 },
+      premium: { nombre: 'Premium', costo: 1.3, acepta: 0.15, rep: 8 },
+    },
+    reponerHora: 60, // unidades que mueve un reponedor de la bodega a los anaqueles cada hora
+    express: 1.25, // pedir para ya cuesta más que el pedido automático de la noche
+    apretado: 0.45, // si quedan libres menos de este tanto de casillas, la gente se estorba
+    // Acomodo con el que abre una tiendita nueva.
+    inicial: [
+      { tipo: 'caja', x: 7, y: 5, rot: 0 },
+      { tipo: 'anaquel', x: 1, y: 2, rot: 0, prod: 'botanas' },
+      { tipo: 'anaquel', x: 1, y: 4, rot: 0, prod: 'abarrotes' },
+      { tipo: 'refri', x: 7, y: 0, rot: 0, prod: 'refresco' },
+      { tipo: 'refri', x: 8, y: 0, rot: 0, prod: 'agua' },
+    ],
   },
 };
 if (typeof module !== 'undefined') module.exports = DATOS;
