@@ -49,4 +49,4 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 
 ## Ajustes del jugador
 
-Se guardan en el navegador (`wl_cfg`), no en la partida. El progreso de la Fase 5 (logros, récords, estadísticas, estilo) está en `wl_prog` y los escenarios propios en `wl_scen`. Ajustes: calidad (auto, baja, media o alta), reducir movimiento, volúmenes por canal, silencio, portada del periódico, cámara cinematográfica y modo observador. El autoguardado está en `wl_save`, con una copia del turno anterior en `wl_save_bak`; las ranuras manuales en `wl_slot1` a `wl_slot3`.
+Se guardan en el navegador (`wl_cfg`), no en la partida. El progreso de la Fase 5 (logros, récords, estadísticas, estilo) está en `wl_prog` y los escenarios propios en `wl_scen`. Ajustes: calidad (auto, baja, media o alta), reducir movimiento, volúmenes por canal, silencio, portada del periódico, cámara cinematográfica y modo observador. El autoguardado está en `wl_save`, con una copia del turno anterior en `wl_save_bak`; las ranuras manuales en `wl_slot1` a `wl_slot6`.
