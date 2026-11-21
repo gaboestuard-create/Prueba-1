@@ -87,3 +87,32 @@
   ];
   D.PRESS = Q.map(q => ({ if: q[0], q: q[1], opts: q[2].map(o => ({ t: o[0], fx: fx(o[1]) })) }));
 })();
+/* ---------- negociación en persona: 3 rondas; cada personalidad reacciona distinto ----------
+   Personalidades (archetype en el motor): halcon, paloma, rencor, pragma.
+   Enfoques: efecto en la disposición por personalidad. "amenaza" depende además de tu poder. */
+(function () {
+  const D = globalThis.WL.DATA;
+  D.PARLEY = {
+    cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
+    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 70] },
+    ways: {
+      elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: -4, pragma: 4 } },
+      firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 4, pragma: 2 } },
+      oferta: { n: 'Poner dinero sobre la mesa', fx: { halcon: 8, paloma: 6, rencor: 10, pragma: 14 }, gift: 1 },
+      valores: { n: 'Apelar a la historia y los valores comunes', fx: { halcon: -2, paloma: 12, rencor: 2, pragma: 4 }, ideo: 1 },
+      amenaza: { n: 'Insinuar consecuencias', fx: { halcon: 10, paloma: -25, rencor: -15, pragma: -6 }, power: 1 }
+    },
+    open: {
+      halcon: ['{L} te recibe sin sonreír: «Vaya al grano. Mi tiempo vale caro.»', '{L} cruza los brazos: «Espero que no venga a pedir favores.»'],
+      paloma: ['{L} te estrecha la mano con calidez: «Siempre es buen momento para hablar.»', '{L} sirve té: «Dígame en qué podemos entendernos.»'],
+      rencor: ['{L} no olvida: «Recuerdo bien lo que su país nos ha hecho. Hable.»', '{L} te mira de reojo: «Sorpréndame.»'],
+      pragma: ['{L} abre una carpeta: «Números, presidente. ¿Qué gana mi país?»', '{L} sonríe a medias: «Escucho ofertas.»']
+    },
+    react: {
+      up: ['{L}: «Eso suena razonable.»', '{L} asiente despacio: «Por ahí podemos avanzar.»', '{L}: «Empieza a gustarme esta conversación.»'],
+      flat: ['{L}: «Ya veremos.»', '{L} toma notas sin levantar la vista.', '{L}: «No me convence del todo.»'],
+      down: ['{L} frunce el ceño: «No me hable en ese tono.»', '{L}: «Así no vamos a ninguna parte.»', '{L} mira el reloj con impaciencia.']
+    },
+    end: { ok: '{L}: «Trato hecho. Que lo sepan los periodistas.»', no: '{L} se levanta: «Lo siento. Hoy no habrá acuerdo.»' }
+  };
+})();

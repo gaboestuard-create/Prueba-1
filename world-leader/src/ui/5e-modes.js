@@ -167,7 +167,7 @@ const GOAL_GO = { tr: ['dip'], rel: ['dip'], relBig: ['dip'], noSanc: ['dip'], b
 H.goGoal = d => { const g = GOAL_GO[d.k]; if (!g) return; closeModal(); UI.panel = g[0]; UI.render(); refreshMap(); if (d.k === 'med') toast('Toca en el globo a uno de los bandos de una guerra y pulsa «Mediar»'); };
 H.objOpen = () => { UI.panel = 'sys'; UI.tab.sys = 'obj'; UI.render(); };
 { const x0 = sheetExtra; sheetExtra = iso => { const s = S(), w = s.wars.filter(w => (w.att.includes(iso) || w.def.includes(iso)) && !w.att.includes(me()) && !w.def.includes(me()));
-  return x0(iso) + (w.length && iso !== me() ? `<h4>${gi('paz')} Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
+  return x0(iso) + (w.length && iso !== me() ? `<h4>Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
 H.mediate = d => { act('mediate', { w: +d.w }); };
 const permaClean = () => { const s = S(); if (s && s.over && P5.opt('perm')) { try { localStorage.removeItem('wl_save'); localStorage.removeItem('wl_save_bak'); } catch (e) { } } };
 { const a0 = autosave; autosave = () => { const s = S(); if (s && s.over && P5.opt('perm')) return permaClean(); a0(); }; }

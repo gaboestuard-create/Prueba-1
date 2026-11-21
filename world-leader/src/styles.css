@@ -416,3 +416,4 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
 .rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
 .rlhot { margin: 6px 0; align-items: center; }
+.pyways { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }

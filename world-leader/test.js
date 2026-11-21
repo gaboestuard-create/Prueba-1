@@ -182,6 +182,13 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   for (let i = 0; i < 30; i++) { let k = 0; while (S.pend.length && k++ < 20) G.act('decide', { i: 0 }); G.act('endTurn'); }
   assert(!(S.errs || []).length, JSON.stringify(S.errs)); for (const k in S.rl) assert(S.rl[k].m >= 0 && S.rl[k].m <= 100); noNaN(S, 'S');
   const old = JSON.parse(G.save()); delete old.rl; assert(G.load(JSON.stringify(old)).ok && G.S.rl, 'partida sin regiones vivas carga'); G.S.pend = []; assert(G.S.over || G.act('endTurn').ok); }
+// negociación en persona y capitales regionales
+{ G.newGame({ iso: 'BR', name: 'P', seed: 4 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 12;
+  assert(!G.act('parleyStart', { iso: 'AR', g: 'xx' }).ok && !G.act('parleySay', { w: 'elogio' }).ok, 'sin negociación abierta no se habla');
+  assert(G.act('parleyStart', { iso: 'AR', g: 'pna' }).ok && !G.act('parleyStart', { iso: 'CL', g: 'pna' }).ok, 'una negociación a la vez');
+  for (const w of ['elogio', 'valores', 'oferta']) G.act('parleySay', { w }); assert(!q.parley() && S.talk.slice(-1)[0].k === 'parley' && S.talk.slice(-1)[0].lines.length >= 8, 'la reunión queda registrada');
+  assert(!G.act('parleyStart', { iso: 'AR', g: 'com' }).ok, 'enfriamiento tras reunirse'); assert(G.act('parleyStart', { iso: 'CL', g: 'pna' }).ok); G.act('endTurn'); assert(!q.parley(), 'el turno cierra la reunión');
+  const D = WL.DATA; for (const iso in D.RCAP) for (const k in D.RCAP[iso]) assert(D.C[iso].terr.some(t => t.n === k), 'capital de una región inexistente: ' + k); noNaN(S, 'S'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

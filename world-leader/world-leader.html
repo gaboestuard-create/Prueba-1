@@ -428,6 +428,7 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
 .rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
 .rlhot { margin: 6px 0; align-items: center; }
+.pyways { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
 
 </style>
 
@@ -1709,6 +1710,28 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 })();
 
 /* =====================================================================
+   WORLD LEADER · DATOS · CAPITALES REGIONALES (aproximado, verificado: false)
+   "Región=Capital" separadas por ";". El nombre de la región debe coincidir
+   con el del mapa. Se muestran en la ficha de cada región.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, R = {
+    US: 'Distrito de Columbia=Washington;Alaska=Juneau;Texas=Austin;Montana=Helena;California=Sacramento;Nuevo México=Santa Fe;Nevada=Carson City;Arizona=Phoenix;Míchigan=Lansing;Wyoming=Cheyenne;Oregón=Salem;Colorado=Denver;Minnesota=Saint Paul;Idaho=Boise;Utah=Salt Lake City;Dakota del Sur=Pierre;Kansas=Topeka;Nebraska=Lincoln;Dakota del Norte=Bismarck;Washington=Olympia;Wisconsin=Madison;Misuri=Jefferson City;Oklahoma=Oklahoma City;Illinois=Springfield;Iowa=Des Moines;Nueva York=Albany;Georgia=Atlanta;Florida=Tallahassee;Arkansas=Little Rock;Carolina del Norte=Raleigh;Alabama=Montgomery;Pensilvania=Harrisburg;Ohio=Columbus;Luisiana=Baton Rouge;Misisipi=Jackson;Tennessee=Nashville;Virginia=Richmond;Kentucky=Frankfort;Indiana=Indianápolis;Maine=Augusta;Carolina del Sur=Columbia;Virginia Occidental=Charleston;Maryland=Annapolis;Vermont=Montpelier;Nuevo Hampshire=Concord;Massachusetts=Boston;Nueva Jersey=Trenton;Hawái=Honolulu;Connecticut=Hartford;Puerto Rico=San Juan;Delaware=Dover;Rhode Island=Providence;Guam=Hagåtña',
+    MX: 'Ciudad de México=Ciudad de México;Chihuahua=Chihuahua;Sonora=Hermosillo;Coahuila=Saltillo;Durango=Durango;Oaxaca=Oaxaca;Baja California=Mexicali;Baja California Sur=La Paz;Tamaulipas=Ciudad Victoria;Jalisco=Guadalajara;Zacatecas=Zacatecas;Veracruz=Xalapa;Chiapas=Tuxtla Gutiérrez;Nuevo León=Monterrey;San Luis Potosí=San Luis Potosí;Guerrero=Chilpancingo;Sinaloa=Culiacán;Michoacán=Morelia;Campeche=Campeche;Quintana Roo=Chetumal;Yucatán=Mérida;Puebla=Puebla;Guanajuato=Guanajuato;Nayarit=Tepic;Tabasco=Villahermosa;Estado de México=Toluca;Hidalgo=Pachuca;Querétaro=Querétaro;Colima=Colima;Aguascalientes=Aguascalientes;Morelos=Cuernavaca;Tlaxcala=Tlaxcala',
+    BR: 'Distrito Federal=Brasilia;Amazonas=Manaos;Pará=Belém;Mato Grosso=Cuiabá;Minas Gerais=Belo Horizonte;Bahía=Salvador;Mato Grosso del Sur=Campo Grande;Goiás=Goiânia;Maranhão=São Luís;Río Grande del Sur=Porto Alegre;Tocantins=Palmas;São Paulo=São Paulo;Piauí=Teresina;Rondonia=Porto Velho;Roraima=Boa Vista;Paraná=Curitiba;Acre=Rio Branco;Ceará=Fortaleza;Amapá=Macapá;Santa Catarina=Florianópolis;Pernambuco=Recife;Paraíba=João Pessoa;Río Grande del Norte=Natal;Río de Janeiro=Río de Janeiro;Espírito Santo=Vitória;Alagoas=Maceió;Sergipe=Aracaju',
+    ES: 'Madrid=Madrid;Castilla y León=Valladolid;Andalucía=Sevilla;Castilla-La Mancha=Toledo;Aragón=Zaragoza;Extremadura=Mérida;Cataluña=Barcelona;Galicia=Santiago de Compostela;Comunidad Valenciana=Valencia;Asturias=Oviedo;Murcia=Murcia;Navarra=Pamplona;Canarias=Las Palmas y Santa Cruz;País Vasco=Vitoria;Baleares=Palma;Cantabria=Santander;La Rioja=Logroño',
+    DE: 'Berlín=Berlín;Baviera=Múnich;Baja Sajonia=Hannover;Renania del Norte-Westfalia=Düsseldorf;Baden-Wurtemberg=Stuttgart;Brandeburgo=Potsdam;Mecklemburgo-Pomerania=Schwerin;Sajonia-Anhalt=Magdeburgo;Hesse=Wiesbaden;Renania-Palatinado=Maguncia;Schleswig-Holstein=Kiel;Sajonia=Dresde;Turingia=Erfurt;Sarre=Saarbrücken;Hamburgo=Hamburgo;Bremen=Bremen',
+    AR: 'Ciudad de Buenos Aires=Buenos Aires;Buenos Aires=La Plata;Santa Cruz=Río Gallegos;Chubut=Rawson;Río Negro=Viedma;Córdoba=Córdoba;Mendoza=Mendoza;La Pampa=Santa Rosa;Salta=Salta;Santa Fe=Santa Fe;Santiago del Estero=Santiago del Estero;Neuquén=Neuquén;Catamarca=San Fernando del Valle;Chaco=Resistencia;La Rioja=La Rioja;San Juan=San Juan;Corrientes=Corrientes;Entre Ríos=Paraná;San Luis=San Luis;Formosa=Formosa;Jujuy=San Salvador de Jujuy;Tierra del Fuego=Ushuaia;Misiones=Posadas;Tucumán=San Miguel de Tucumán',
+    CA: 'Ontario=Toronto;Nunavut=Iqaluit;Territorios del Noroeste=Yellowknife;Quebec=Quebec;Columbia Británica=Victoria;Alberta=Edmonton;Manitoba=Winnipeg;Saskatchewan=Regina;Yukón=Whitehorse;Terranova y Labrador=San Juan de Terranova;Nuevo Brunswick=Fredericton;Nueva Escocia=Halifax;Isla del Príncipe Eduardo=Charlottetown',
+    CN: 'Pekín=Pekín;Xinjiang=Urumqi;Mongolia Interior=Hohhot;Tíbet=Lhasa;Qinghai=Xining;Heilongjiang=Harbin;Sichuan=Chengdu;Gansu=Lanzhou;Yunnan=Kunming;Jilin=Changchun;Guangxi=Nanning;Shaanxi=Xi\'an;Hebei=Shijiazhuang;Hunan=Changsha;Hubei=Wuhan;Henan=Zhengzhou;Liaoning=Shenyang;Shandong=Jinan;Cantón=Cantón (Shenzhen, su gran polo)' + ';Shanxi=Taiyuan;Guizhou=Guiyang;Jiangxi=Nanchang;Anhui=Hefei;Fujian=Fuzhou;Jiangsu=Nankín;Zhejiang=Hangzhou;Chongqing=Chongqing;Ningxia=Yinchuan;Hainan=Haikou;Tianjin=Tianjin;Shanghái=Shanghái;Hong Kong=Hong Kong',
+    IN: 'Delhi=Nueva Delhi;Rajastán=Jaipur;Madhya Pradesh=Bhopal;Maharashtra=Bombay;Uttar Pradesh=Lucknow;Guyarat=Gandhinagar;Karnataka=Bangalore;Andhra Pradesh=Amaravati;Odisha=Bhubaneswar;Chhattisgarh=Raipur;Tamil Nadu=Chennai;Telangana=Hyderabad;Bihar=Patna;Bengala Occidental=Calcuta;Arunachal Pradesh=Itanagar;Assam=Dispur;Jharkhand=Ranchi;Ladakh=Leh;Himachal Pradesh=Shimla;Uttarakhand=Dehradun;Punyab=Chandigarh;Jammu y Cachemira=Srinagar;Haryana=Chandigarh;Kerala=Thiruvananthapuram;Meghalaya=Shillong;Manipur=Imphal;Mizoram=Aizawl;Nagaland=Kohima;Tripura=Agartala;Sikkim=Gangtok;Goa=Panaji;Puducherry=Puducherry',
+    IT: 'Lacio=Roma;Piamonte=Turín;Sicilia=Palermo;Cerdeña=Cagliari;Lombardía=Milán;Toscana=Florencia;Emilia-Romaña=Bolonia;Apulia=Bari;Véneto=Venecia;Calabria=Catanzaro;Trentino-Alto Adigio=Trento;Campania=Nápoles;Abruzos=L\'Aquila;Marcas=Ancona;Basilicata=Potenza;Umbría=Perugia;Friuli-Venecia Julia=Trieste;Liguria=Génova;Molise=Campobasso;Valle de Aosta=Aosta',
+    CO: 'Bogotá=Bogotá;Amazonas=Leticia;Vichada=Puerto Carreño;Caquetá=Florencia;Meta=Villavicencio;Guainía=Inírida;Antioquia=Medellín;Guaviare=San José del Guaviare;Vaupés=Mitú;Chocó=Quibdó;Casanare=Yopal;Cauca=Popayán;Santander=Bucaramanga;Nariño=Pasto;Bolívar=Cartagena;Córdoba=Montería;Putumayo=Mocoa;Magdalena=Santa Marta;Arauca=Arauca;Tolima=Ibagué;Boyacá=Tunja;Cundinamarca=Bogotá;La Guajira=Riohacha;Norte de Santander=Cúcuta;Cesar=Valledupar;Valle del Cauca=Cali;Huila=Neiva;Sucre=Sincelejo;Caldas=Manizales;Atlántico=Barranquilla;Risaralda=Pereira;Quindío=Armenia'
+  };
+  D.RCAP = {}; for (const iso in R) { const m = D.RCAP[iso] = {}; for (const p of R[iso].split(';')) { const [k, v] = p.split('='); m[k] = v; } }
+})();
+
+/* =====================================================================
    WORLD LEADER · DATOS · FASE 5: escenarios, campañas, victorias,
    reto semanal, eventos procedurales y mundo alternativo.
    Todo es editable. Los datos históricos son aproximados (verificado: false).
@@ -2178,6 +2201,35 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     ['any', 'Una periodista le pregunta por su relación con {X}.', [['«Excelente, y va a mejorar.»', 'rel.T+4:Elogios en rueda de prensa'], ['«Tenemos diferencias que resolver.»', ''], ['«No confiamos en ellos.»', 'rel.T-6:Críticas en rueda de prensa;sec.mil+2']]]
   ];
   D.PRESS = Q.map(q => ({ if: q[0], q: q[1], opts: q[2].map(o => ({ t: o[0], fx: fx(o[1]) })) }));
+})();
+/* ---------- negociación en persona: 3 rondas; cada personalidad reacciona distinto ----------
+   Personalidades (archetype en el motor): halcon, paloma, rencor, pragma.
+   Enfoques: efecto en la disposición por personalidad. "amenaza" depende además de tu poder. */
+(function () {
+  const D = globalThis.WL.DATA;
+  D.PARLEY = {
+    cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
+    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 70] },
+    ways: {
+      elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: -4, pragma: 4 } },
+      firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 4, pragma: 2 } },
+      oferta: { n: 'Poner dinero sobre la mesa', fx: { halcon: 8, paloma: 6, rencor: 10, pragma: 14 }, gift: 1 },
+      valores: { n: 'Apelar a la historia y los valores comunes', fx: { halcon: -2, paloma: 12, rencor: 2, pragma: 4 }, ideo: 1 },
+      amenaza: { n: 'Insinuar consecuencias', fx: { halcon: 10, paloma: -25, rencor: -15, pragma: -6 }, power: 1 }
+    },
+    open: {
+      halcon: ['{L} te recibe sin sonreír: «Vaya al grano. Mi tiempo vale caro.»', '{L} cruza los brazos: «Espero que no venga a pedir favores.»'],
+      paloma: ['{L} te estrecha la mano con calidez: «Siempre es buen momento para hablar.»', '{L} sirve té: «Dígame en qué podemos entendernos.»'],
+      rencor: ['{L} no olvida: «Recuerdo bien lo que su país nos ha hecho. Hable.»', '{L} te mira de reojo: «Sorpréndame.»'],
+      pragma: ['{L} abre una carpeta: «Números, presidente. ¿Qué gana mi país?»', '{L} sonríe a medias: «Escucho ofertas.»']
+    },
+    react: {
+      up: ['{L}: «Eso suena razonable.»', '{L} asiente despacio: «Por ahí podemos avanzar.»', '{L}: «Empieza a gustarme esta conversación.»'],
+      flat: ['{L}: «Ya veremos.»', '{L} toma notas sin levantar la vista.', '{L}: «No me convence del todo.»'],
+      down: ['{L} frunce el ceño: «No me hable en ese tono.»', '{L}: «Así no vamos a ninguna parte.»', '{L} mira el reloj con impaciencia.']
+    },
+    end: { ok: '{L}: «Trato hecho. Que lo sepan los periodistas.»', no: '{L} se levanta: «Lo siento. Hoy no habrá acuerdo.»' }
+  };
 })();
 
 /* =====================================================================
@@ -5957,6 +6009,56 @@ hook('world', () => {
 });
 
 
+/* ---------- engine/7l-parley.js ---------- */
+/* =====================================================================
+   SISTEMA · NEGOCIACIÓN EN PERSONA
+   Eliges un objetivo y, durante 3 rondas, cómo le hablas al otro líder.
+   Su personalidad (halcón, paloma, rencoroso, pragmático) decide cómo
+   reacciona. Si su disposición supera el umbral del objetivo, hay trato.
+   La charla queda en Mundo → Conversaciones. Datos en D.PARLEY (data-talk.js).
+   ===================================================================== */
+hook('new', () => { S.parley = null; }); hook('load', () => { S.parley = S.parley || null; });
+const PY = D.PARLEY;
+const pyLine = (L, z) => pick(L).replace(/^\{L\}: /, '').split('{L}').join(S.c[z].lider.n); /* si la línea empieza por «{L}:», el nombre ya lo pone la burbuja */
+function pyGoalOk(g, z) { const me = S.player;
+  if (g === 'lift') return sanctioned(z, me); if (g === 'aid') return S.c[z].gdp > P().gdp * .5;
+  return !!TNEED[g] && !hasT(g, me, z); }
+ACT.parleyStart = a => {
+  const z = a.iso, c = S.c[z], me = S.player; if (!c || !c.alive || z === me) return fail('País inválido'); if (atWar(me, z)) return fail('Estáis en guerra');
+  if (S.parley) return fail('Ya estás negociando'); if (!PY.goals[a.g] || !pyGoalOk(a.g, z)) return fail('Ese objetivo no tiene sentido con este país ahora');
+  if ((c.ask.parley || 0) > S.turn) return fail(`${c.lider.n} no quiere verte todavía: espera ${c.ask.parley - S.turn} turnos`);
+  if (!useCP(PY.cost)) return fail(`Necesitas ${PY.cost} de capital político`);
+  const k = archetype(z); S.parley = { iso: z, g: a.g, k, mood: clamp(rel(me, z) / 2 + 20 + rr(-5, 5), 0, 100), r: 0, used: {}, lines: [[z, pyLine(PY.open[k], z)]] };
+  Bus.emit('trip', { a: me, b: z }); return { msg: `Reunión con ${c.lider.n}` };
+};
+ACT.parleySay = a => {
+  const p = S.parley, W = PY.ways[a.w]; if (!p) return fail('No hay negociación abierta'); if (!W) return fail('Enfoque desconocido');
+  const z = p.iso, me = S.player; let d = W.fx[p.k] || 0;
+  if (W.gift) { const g = P().gdp * PY.giftGdp; if (!canPay(g)) return fail(`Necesitas ${money(g)} para la oferta`); P().tr -= g; S.c[z].tr += g; }
+  if (W.ideo) d += 6 - Math.abs(S.c[z].ideo - P().ideo) * 6;
+  if (W.power) d = power(me) > power(z) * 1.5 ? Math.abs(d) : -Math.abs(d) - 8;
+  if (p.used[a.w]) d *= PY.repeat; p.used[a.w] = 1; d += rr(-4, 4); p.mood = clamp(p.mood + d, 0, 100); p.r++;
+  p.lines.push([me, W.n + '.'], [z, pyLine(PY.react[d > 3 ? 'up' : d < -3 ? 'down' : 'flat'], z)]);
+  if (p.r < PY.rounds) return { msg: d > 3 ? 'Ha funcionado' : d < -3 ? 'Ha sentado mal' : 'Sin efecto claro' };
+  return parleyEnd();
+};
+function parleyEnd() {
+  const p = S.parley, z = p.iso, me = S.player, c = S.c[z], G = PY.goals[p.g], ok = p.mood >= G[1]; let msg;
+  p.lines.push([z, pyLine([PY.end[ok ? 'ok' : 'no']], z)]);
+  if (ok) { addMod(me, z, 'Negociación en persona', gain(6), .4);
+    if (p.g === 'lift') { const s = S.sanc.find(x => x.by === z && x.on === me); if (s) s.emb = 0; liftSanction(z, me); msg = `${c.n} levanta sus sanciones`; }
+    else if (p.g === 'aid') { const amt = Math.min(c.tr * .3, P().gdp * .01); c.tr -= amt; P().tr += amt; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
+    else { addTreaty(p.g, me, z); msg = `${P().n} y ${c.n} firman: ${TNAME[p.g]}`; }
+    news(msg + ' tras una reunión de alto nivel', 'dip', z, 3); }
+  else { addMod(me, z, 'Negociación fallida', PY.fail, .5); msg = `Sin acuerdo con ${c.n}`; }
+  c.ask.parley = S.turn + PY.cool; addTalk({ k: 'parley', a: me, b: z, lines: p.lines, rep: null, done: 1, title: `Reunión con ${c.lider.n} · ${G[0]}` });
+  S.parley = null; return { ok, msg };
+}
+ACT.parleyQuit = () => { if (!S.parley) return fail('No hay negociación abierta'); S.parley.mood = -1; return parleyEnd(); };
+/* una reunión no sobrevive al fin del trimestre: si la dejas a medias, se da por fallida */
+hook('player', () => { if (S.parley) { S.parley.mood = -1; parleyEnd(); } });
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -6045,7 +6147,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen, rlInfo, rlList, sepOf,
+    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -7201,7 +7303,7 @@ function regionsHTML(iso) {
   const legend = Object.keys(parties).sort((a, b) => parties[b] - parties[a]).slice(0, 8).map(p => `<span class="chip"><i class="dot" style="background:${rgbCss(partyColor(p))}"></i>${esc(p || 'Sin dato')} ${parties[p]}</span>`).join('');
   const sel = UI.terrSel != null && Q.regionInfo(iso, UI.terrSel), i0 = UI.terrSel;
   const card = sel ? `<div class="card regcard"><div class="row"><i class="dot big" style="background:${rgbCss(partyColor(sel.p))}"></i><div class="grow"><b>${esc(sel.n)}</b>${sel.cap ? ' <span class="chip gold">Capital</span>' : ''}<small class="mut">${esc(sel.gob || 'Autoridad sin dato')} · ${esc(sel.p || 'sin partido')} · <span class="chip ${sel.v ? 'good' : ''}">${sel.v ? '✓ verificado' : 'sin verificar'}</span></small></div></div>
-      <div class="kvs">${kv('Población', popFmt(sel.pop))}${kv('Economía', money(sel.gdp))}${kv('Controla', sel.o === iso ? 'Su país' : cname(sel.o))}</div>
+      <div class="kvs">${kv('Población', popFmt(sel.pop))}${kv('Economía', money(sel.gdp))}${kv('Controla', sel.o === iso ? 'Su país' : cname(sel.o))}${(D.RCAP[iso] || {})[sel.n] ? kv('Capital', esc(D.RCAP[iso][sel.n])) : ''}</div>
       <div class="chips">${sel.r.map(k => `<span class="chip gold">${D.COMMODITIES[k].n}</span>`).join('') || '<span class="mut">Sin recursos destacados</span>'}</div>
       <div class="row wrap">${iso !== me() && sel.o === iso && i0 > 0 ? `<button class="btn sm" data-a="regBuy" data-iso="${iso}" data-i="${i0}" data-confirm>Ofrecer compra · 3 CP</button>` : ''}${iso === me() && sel.o === iso && i0 > 0 ? `<small class="mut">Para cederla, abre “Diplomacia y guerra” del país vecino.</small>` : ''}<button class="btn sm ghost" data-a="regEdit" data-iso="${iso}" data-i="${i0}">Editar región</button></div></div>` : '';
   return `<details ${UI.terrOpen ? 'open' : ''} data-keep="terr"><summary>${D.LEVEL_A.includes(iso) ? 'Estados y provincias' : 'Regiones'} · conserva ${own} de ${n}${held ? ' · ocupa ' + held + ' ajenas' : ''}</summary>
@@ -7721,7 +7823,7 @@ const opsHTML = w => Object.keys(D.WAROPS).map(k => `<button class="btn sm" data
 H.warOp = d => { const iso = UI.sheet; act('warOp', { w: +d.w, k: d.k }); if (iso && S() && !S().over && $('#modal .sheet')) { openModal(sheetHTML(iso), true, 'wide'); UI.sheet = iso; } };
 
 /* ---------- ficha de acciones: pestañas con icono, gestos y restitución ---------- */
-const SHT = [['acu', 'Acuerdos', 'acuerdo', ['Tratados', 'Cumbre bilateral', 'Encuentros', 'Gestos']], ['ayu', 'Ayuda y comercio', 'regalo', ['Dar ayuda', 'Pedir ayuda', 'Comercio']], ['pre', 'Presión', 'presion', ['Sanciones en tu contra', 'Presión y presencia', 'Denuncias y amenazas', 'Operaciones encubiertas']], ['ter', 'Territorio', 'pin', ['Restitución', 'Territorio por tratado']], ['gue', 'Guerra', 'tan', ['Guerra', 'Salida personal']]];
+const SHT = [['acu', 'Acuerdos', 'acuerdo', ['Negociar en persona', 'Tratados', 'Cumbre bilateral', 'Encuentros', 'Gestos', 'Mediar']], ['ayu', 'Ayuda y comercio', 'regalo', ['Dar ayuda', 'Pedir ayuda', 'Comercio']], ['pre', 'Presión', 'presion', ['Sanciones en tu contra', 'Presión y presencia', 'Denuncias y amenazas', 'Operaciones encubiertas']], ['ter', 'Territorio', 'pin', ['Restitución', 'Territorio por tratado']], ['gue', 'Guerra', 'tan', ['Guerra', 'Salida personal']]];
 const ROWIC = { 'Viaje diplomático': 'caz', 'Invitar a su líder': 'min', 'Ayuda económica': 'oro', 'Ayuda material': 'ext', 'Ayuda militar': 'tan', 'Solicitar ayuda': 'regalo', 'Contrato de exportación': 'com', 'Sanciones': 'presion', 'Base estratégica': 'cuartel', 'Comprar territorio': 'pin', 'Ceder territorio': 'pin', 'Declarar la guerra': 'ofensiva', 'Convocar una cumbre': 'min', 'Embargo total': 'naval', 'Pedir asilo': 'puerta', 'Marcador de la guerra': 'ejercicio' };
 function occHTML(iso) {
   const o = Q.occOf(iso); if (!o.length) return ''; const pol = Q.occPol(iso), c = CC(iso);
@@ -8526,7 +8628,7 @@ const GOAL_GO = { tr: ['dip'], rel: ['dip'], relBig: ['dip'], noSanc: ['dip'], b
 H.goGoal = d => { const g = GOAL_GO[d.k]; if (!g) return; closeModal(); UI.panel = g[0]; UI.render(); refreshMap(); if (d.k === 'med') toast('Toca en el globo a uno de los bandos de una guerra y pulsa «Mediar»'); };
 H.objOpen = () => { UI.panel = 'sys'; UI.tab.sys = 'obj'; UI.render(); };
 { const x0 = sheetExtra; sheetExtra = iso => { const s = S(), w = s.wars.filter(w => (w.att.includes(iso) || w.def.includes(iso)) && !w.att.includes(me()) && !w.def.includes(me()));
-  return x0(iso) + (w.length && iso !== me() ? `<h4>${gi('paz')} Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
+  return x0(iso) + (w.length && iso !== me() ? `<h4>Mediar</h4>${w.map(x => `<div class="arow"><div class="grow"><b>${cname(x.att[0])} contra ${cname(x.def[0])}</b><small>2 de capital político · necesitas relación de −25 o más con ambos</small></div><button class="btn sm gold" data-a="mediate" data-w="${x.id}">Mediar</button></div>`).join('')}` : ''); }; }
 H.mediate = d => { act('mediate', { w: +d.w }); };
 const permaClean = () => { const s = S(); if (s && s.over && P5.opt('perm')) { try { localStorage.removeItem('wl_save'); localStorage.removeItem('wl_save_bak'); } catch (e) { } } };
 { const a0 = autosave; autosave = () => { const s = S(); if (s && s.over && P5.opt('perm')) return permaClean(); a0(); }; }
@@ -8790,6 +8892,28 @@ H.rlAct = d => { act('rlAct', { i: +d.i, k: d.k }); UI.render(); refreshMap(); }
   const mine = o[m] = Object.assign({}, o[m]); for (const [i] of Q.rlList()) { const r = Q.rlInfo(i); let col = mCol(r.m); if (r.sep != null && r.sep >= D.RL.crisisAt * .8) col = col.map((v, j) => v * .55 + [150, 100, 220][j] * .45); mine[i + 1] = col; }
   return o; }; }
 LEGEND.reg += ' · tu país: por malestar (violeta = independentismo fuerte)';
+
+
+/* ---------- ui/5j-parley.js ---------- */
+/* =====================================================================
+   INTERFAZ · NEGOCIACIÓN EN PERSONA (ficha de cualquier país)
+   ===================================================================== */
+TK_N.parley = 'Reunión en persona';
+const PYK = { halcon: 'Halcón', paloma: 'Paloma', rencor: 'Rencoroso', pragma: 'Pragmático' };
+{ const x0 = sheetExtra; sheetExtra = iso => { const s = S(), c = CC(iso); if (iso === me() || !c.alive || Q.atWar(me(), iso)) return x0(iso);
+  const G = Object.entries(D.PARLEY.goals).filter(([g]) => Q.pyGoalOk(g, iso)), wait = (c.ask.parley || 0) - s.turn;
+  return x0(iso) + `<h4>Negociar en persona</h4><p class="mut fine">${esc(c.lider.n)} tiene carácter de <b>${PYK[Q.archetype(iso)]}</b>. Tres rondas: elige bien cómo le hablas. Cuesta ${D.PARLEY.cost} de capital político.</p>
+    ${wait > 0 ? `<small class="mut">No quiere verte hasta dentro de ${wait} turnos.</small>` : `<div class="row wrap">${G.map(([g, x]) => `<button class="btn sm" data-a="pyStart" data-iso="${iso}" data-g="${g}">${esc(x[0])}</button>`).join('')}</div>`}`; }; }
+function pyModal(res) { const p = Q.parley(); if (!p && !res) return closeModal();
+  const lines = p ? p.lines : res.lines, z = p ? p.iso : res.iso, side = w => w === me() ? 'tk-me' : 'tk-l';
+  openModal(`<p class="eyebrow">Reunión en persona · ${esc(CC(z).n)}${p ? ` · ronda ${p.r + 1} de ${D.PARLEY.rounds}` : ''}</p><h2>${p ? esc(D.PARLEY.goals[p.g][0]) : esc(res.msg)}</h2>
+    <div class="card talk5">${lines.map(([w, t]) => `<div class="tk-line ${side(w)}">${face(w)}<div class="tk-b"><small>${fl(w)} ${esc(w === me() ? S().leader.n : CC(w).lider.n)}</small><p>${esc(t)}</p></div></div>`).join('')}</div>
+    ${p ? `<div class="pyways">${Object.entries(D.PARLEY.ways).map(([k, w]) => `<button class="btn" data-a="pySay" data-w="${k}">${esc(w.n)}${w.gift ? ' · ' + money(CC(me()).gdp * D.PARLEY.giftGdp) : ''}</button>`).join('')}</div>
+      <div class="row end"><button class="btn ghost" data-a="pyQuit">Levantarse de la mesa</button></div>` : `<div class="row end"><button class="btn gold" data-a="closeModal">Cerrar</button></div>`}`, false, 'event');
+}
+H.pyStart = d => { const r = act('parleyStart', { iso: d.iso, g: d.g }); if (r.ok) pyModal(); };
+H.pySay = d => { const p = Q.parley(), lines = p.lines, iso = p.iso, r = act('parleySay', { w: d.w }); if (!Q.parley()) { UI.render(); refreshMap(); pyModal({ lines: S().talk[S().talk.length - 1].lines, iso, msg: r.msg }); } else pyModal(); };
+H.pyQuit = () => { const iso = Q.parley().iso, r = act('parleyQuit'); UI.render(); pyModal({ lines: S().talk[S().talk.length - 1].lines, iso, msg: r.msg }); };
 
 
 /* ---------- ui/90-boot.js ---------- */
