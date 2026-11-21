@@ -324,5 +324,33 @@ const DATOS = {
     comprado: { titulo: 'Ferrán se queda con tu negocio', tipo: 'derrota', persona: 'ferran', texto: 'El banco cerró tu cuenta y Grupo Ferrán compró tu negocio por lo que quedaba de la deuda. Tu carrito sigue en la calle, ahora en morado.' },
     quiebra: { titulo: 'Quiebra', tipo: 'derrota', persona: 'ortiz', texto: 'Tras días en números rojos, el banco cerró tu empresa. Grupo Ferrán y Capital Vega se repartieron tus locales en un remate.' },
   },
+
+  // ---- Vecindad: lo que hay en los lotes de al lado cambia cuánta gente entra ----
+  // a y b son categorías de negocio (cat) o clases (clase:x). efecto: lo que gana (o pierde) a por tener a b al lado.
+  // Se aplica a tus negocios y a los de Ferrán por igual; el total se limita entre −40% y +50%.
+  vecindad: [
+    { a: 'cafe', b: 'comida', efecto: 0.15, texto: 'el pan se acompaña con café' },
+    { a: 'comida', b: 'cafe', efecto: 0.15, texto: 'el café se acompaña con pan' },
+    { a: 'bebida', b: 'comida', efecto: 0.1, texto: 'quien come, tiene sed' },
+    { a: 'comida', b: 'bebida', efecto: 0.1, texto: 'quien toma algo, se antoja' },
+    { a: 'ropa', b: 'cafe', efecto: 0.1, texto: 'la gente pasea entre compras' },
+    { a: 'cafe', b: 'ropa', efecto: 0.1, texto: 'entre compras se toma un café' },
+    { a: 'ropa', b: 'flores', efecto: 0.1, texto: 'calle bonita para pasear' },
+    { a: 'flores', b: 'restaurante', efecto: 0.12, texto: 'cenas con flores en la mesa' },
+    { a: 'restaurante', b: 'flores', efecto: 0.08, texto: 'la entrada se ve bonita' },
+    { a: 'cafe', b: 'clase:estudio', efecto: 0.1, texto: 'los diseñadores viven de café' },
+    { a: 'servicio', b: 'cafe', efecto: 0.08, texto: 'esperan su bici con un café' },
+    { a: 'mismo', b: 'mismo', efecto: -0.1, texto: 'compiten pared con pared' },
+    { a: 'tienda', b: 'clase:fabrica', efecto: -0.15, texto: 'el ruido y el humo espantan' },
+  ],
+
+  // ---- Anaquel: tus productos a la venta en tus propios negocios ----
+  // giros: en qué categorías de negocio cabe cada categoría de producto. tasa: fracción de clientes que lo compra
+  // con nota 10. sobreprecio: el precio de mostrador sobre el de mayoreo. fama: impulso máximo a las ventas en tiendas
+  // de fuera según lo vendido ayer en las tuyas (porCada unidades = +100% de ese impulso).
+  anaquel: {
+    giros: { bebida: ['bebida', 'comida', 'cafe'], snack: ['bebida', 'comida', 'cafe'], audifonos: ['ropa'], tenis: ['ropa'], telefono: ['ropa', 'servicio'] },
+    tasa: 0.25, sobreprecio: 1.5, fama: 0.3, porCada: 400,
+  },
 };
 if (typeof module !== 'undefined') module.exports = DATOS;

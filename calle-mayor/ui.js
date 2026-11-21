@@ -170,16 +170,26 @@
         const bloq = T.rango > S.rango, repetido = t === 'estudio' && M.estudio(S), falta = T.costo - S.dinero;
         const fijo = (T.clase === 'puesto' ? T.permiso : propio ? 0 : L.renta) + T.sueldo;
         const pie = bloq ? `<span class="candado">${ic('candado')} ${D.rangos[T.rango].nombre}</span>` : repetido ? '<span class="candado">Ya tienes uno</span>' : falta > 0 ? `<span class="falta">Faltan ${din(falta)}</span>` : '';
-        return bt(`${sello(t)}<b>${T.nombre}</b><p>${T.desc}</p><span class="datos"><span><em>Abrir</em> ${din(T.costo)}</span><span><em>Fijo</em> ${din(fijo)}/día</span>${T.precioRef ? `<span><em>Ticket</em> ${din(T.precioRef, T.precioRef < 10)}</span>` : ''}${pie}</span>`,
+        const vec = M.factorVecindad(S, L.id, t) - 1;
+        return bt(`${sello(t)}<b>${T.nombre}</b><p>${T.desc}</p><span class="datos">${Math.abs(vec) > 0.001 ? `<span class="${vec > 0 ? 'pos' : 'falta'}">${pct(vec)} por vecinos</span>` : ''}<span><em>Abrir</em> ${din(T.costo)}</span><span><em>Fijo</em> ${din(fijo)}/día</span>${T.precioRef ? `<span><em>Ticket</em> ${din(T.precioRef, T.precioRef < 10)}</span>` : ''}${pie}</span>`,
           'construir', { lote: L.id, tipo: t }, 'opcion', bloq || repetido ? 'disabled' : '');
       }).join('')}</div></div>`;
   }
 
-  function extras(N, T) { // cadena propia y competencia de Ferrán en el mismo giro
+  const pct = x => (x >= 0 ? '+' : '−') + Math.round(Math.abs(x) * 100) + '%';
+  function extras(N, T) { // cadena propia, competencia de Ferrán y vecindad
     const n = M.mismoGiro(S, N), suyos = S.rival.negocios.filter(r => r.tipo === N.tipo), out = [];
+    for (const e of M.efectosVecindad(S, N.lote, N.tipo)) out.push(`<span class="insignia ${e.efecto > 0 ? 'pos' : 'neg'}" title="${esc(e.texto)}">${ic(e.efecto > 0 ? 'sube' : 'baja')} ${pct(e.efecto)} · ${esc(e.vecino)} al lado</span>`);
     if (n >= 2) out.push(`<span class="insignia">${ic('edificio')} Cadena ×${n} · insumos −${Math.round(M.descuentoCadena(S, N) * 100)}% · más fama</span>`);
     if (suyos.length) out.push(`<span class="insignia rival">${ic('rayo')} Ferrán vende lo mismo a ${din(Math.min(...suyos.map(r => r.precio)), true)}</span>`);
     return out.length ? `<div class="fila">${out.join('')}</div>` : '';
+  }
+  function vAnaquel(N) {
+    const ops = M.anaquelesPara(S, N), a = N.ayer;
+    if (!ops.length) return '';
+    return `<div class="control"><div class="fila"><span class="eti crece">Anaquel de tu marca</span><span class="tenue">${a.anaquel ? `ayer ${a.anaquel} piezas · +${din(a.anaquelMonto || 0)}` : 'tus productos en tu mostrador'}</span></div>
+      <div class="fila">${bt('Nada', 'anaquel', { id: N.id, prod: null }, 'btn chico' + (!N.anaquel ? ' on' : ''))}${ops.map(p => bt(`«${esc(p.nombre)}»`, 'anaquel', { id: N.id, prod: p.id }, 'btn chico' + (N.anaquel === p.id ? ' on' : ''))).join('')}</div>
+      <p class="tenue">Parte de tus clientes se lo lleva a precio de mostrador, y lo que vendes aquí lo da a conocer en las tiendas de fuera.</p></div>`;
   }
   function barrasUtilidad(hist) {
     if (!hist.length) return '<p class="tenue">Las barras aparecen al cerrar el primer día.</p>';
@@ -210,6 +220,7 @@
       <div class="control"><div class="fila"><span class="eti">Personal</span><span class="tenue">${din(T.sueldo)}/día cada quien</span></div>
         <div class="fila"><div class="paso">${bt(ic('menos'), 'empleados', { id: N.id, cambio: -1 }, '', `aria-label="Quitar a alguien" ${N.emp <= 1 ? 'disabled' : ''}`)}<output>${N.emp} / ${T.empMax}</output>${bt(ic('mas'), 'empleados', { id: N.id, cambio: 1 }, '', `aria-label="Contratar" ${N.emp >= T.empMax ? 'disabled' : ''}`)}</div>
         <p class="tenue crece">Atienden hasta <b>${Math.round(cap)}</b> clientes por hora.${a.perdidos ? ` Ayer se fueron ${a.perdidos} sin comprar.` : ''}</p></div></div>
+      ${vAnaquel(N)}
       <div class="control"><span class="eti">Publicidad</span><div class="seg">${D.marketing.map((m, i) => bt(`${m.nombre}<small>${m.costo ? din(m.costo) + '/día' : 'gratis'}</small>`, 'marketing', { id: N.id, nivel: i }, N.mkt === i ? 'on' : '', `aria-pressed="${N.mkt === i}"`)).join('')}</div></div>
       <div class="control"><span class="eti">Utilidad de los últimos ${N.hist.length || 14} días</span>${barrasUtilidad(N.hist)}</div>
       ${mejora}
@@ -352,7 +363,7 @@
     }
     const productos = S.productos.length ? `<div class="hoja"><h3>${ic('caja')} Tus productos</h3><div class="lista">${S.productos.map(p => {
       const res = p.ganado - p.costo;
-      return `<div class="renglon"><span class="nota ch ${notaCls(p.nota)}">${p.nota.toFixed(1)}</span><span class="crece"><b class="nom">«${esc(p.nombre)}»</b><span class="tenue">${D.categorias[p.cat].nombre} · ${p.activo ? `en tiendas, día ${p.dia}` : 'retirado'} · ${p.unidades.toLocaleString('es-MX')} vendidos${p.propias ? ` · ${Math.round(p.propias / p.unidades * 100)}% de tu planta` : ''}</span>${spark(p.hist, p.activo ? 'var(--verde)' : 'var(--tenue)')}</span>
+      return `<div class="renglon"><span class="nota ch ${notaCls(p.nota)}">${p.nota.toFixed(1)}</span><span class="crece"><b class="nom">«${esc(p.nombre)}»</b><span class="tenue">${D.categorias[p.cat].nombre} · ${p.activo ? `en tiendas, día ${p.dia}` : 'retirado'} · ${p.unidades.toLocaleString('es-MX')} vendidos${p.tienda ? ` · ${p.tienda.toLocaleString('es-MX')} en tus tiendas` : ''}${p.propias ? ` · ${Math.round(p.propias / p.unidades * 100)}% de tu planta` : ''}</span>${spark(p.hist, p.activo ? 'var(--verde)' : 'var(--tenue)')}</span>
         <span class="cifra ${res >= 0 ? 'pos' : 'neg'}">${res >= 0 ? '+' : ''}${corto(res)}<br><span class="tenue">costó ${corto(p.costo)}</span></span></div>`;
     }).join('')}</div></div>` : '';
     return cuerpo + productos;

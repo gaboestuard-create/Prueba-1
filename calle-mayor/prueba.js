@@ -177,4 +177,28 @@ assert(q2.decision, 'llega una decisión');
 q2.dinero = 5000;
 assert(M.hacer(q2, 'decidir', { i: 1 }).ok && !q2.decision && !M.hacer(q2, 'decidir', { i: 0 }).ok, 'se decide una sola vez');
 
+// Vecindad: el café gana con la panadería al lado y el puesto pierde junto a una planta.
+const vz = M.nueva({ semilla: 14, modo: 'sandbox', dinero: 50000, rival: false });
+vz.rango = 2;
+M.hacer(vz, 'construir', { lote: 'l2', tipo: 'cafeteria' });
+M.hacer(vz, 'construir', { lote: 'l3', tipo: 'panaderia' });
+M.hacer(vz, 'construir', { lote: 'l6', tipo: 'planta' });
+assert(M.factorVecindad(vz, 'l2', 'cafeteria') > 1 && M.factorVecindad(vz, 'l3', 'panaderia') > 1, 'café y pan se ayudan');
+assert(M.factorVecindad(vz, 'l5', 'limonada') < 1 && M.factorVecindad(vz, 'l9', 'limonada') === 1, 'la planta espanta a su vecino');
+// Anaquel: tu bebida en tu puesto deja dinero extra y le da fama al producto.
+const an = M.nueva({ semilla: 15, modo: 'sandbox', dinero: 50000, rival: false });
+an.rango = 2;
+M.hacer(an, 'construir', { lote: 'l4', tipo: 'limonada' });
+M.hacer(an, 'construir', { lote: 'l1', tipo: 'estudio' });
+M.hacer(an, 'proyecto', { cat: 'bebida', nombre: 'Volt', presupuesto: 8000, mezcla: D.categorias.bebida.ideal });
+while (an.proyecto) M.tick(an);
+const Pa = an.productos[0], Na = an.negocios.find(n => n.tipo === 'limonada');
+assert(!M.hacer(an, 'anaquel', { id: an.negocios.find(n => n.tipo === 'estudio').id, prod: Pa.id }).ok, 'el estudio no tiene mostrador');
+assert(M.hacer(an, 'anaquel', { id: Na.id, prod: Pa.id }).ok);
+for (let i = 0; i < 24 * 3; i++) M.tick(an);
+console.log(`Anaquel: ${Pa.tienda} unidades vendidas en tu puesto en 3 días`);
+assert(Pa.tienda > 0 && Pa.tiendaAyer > 0, 'se vende en tu mostrador');
+Pa.dia = 999; M.tick(an); for (let i = 0; i < 24; i++) M.tick(an);
+assert(!Pa.activo && Na.anaquel === null, 'un producto retirado sale del anaquel');
+
 console.log('OK: economía estable, determinista y sin trucos de dinero infinito.');

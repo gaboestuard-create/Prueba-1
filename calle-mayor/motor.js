@@ -27,6 +27,29 @@ const Motor = (function () {
   const negocioEn = (S, id) => S.negocios.find(n => n.lote === id);
   const rivalEn = (S, id) => S.rival.negocios.find(n => n.lote === id);
   const ocupado = (S, id) => negocioEn(S, id) || rivalEn(S, id);
+  // Vecindad: los negocios (tuyos o de Ferrán) de los lotes de al lado.
+  function vecinosDe(S, loteId) {
+    const i = D.lotes.findIndex(l => l.id === loteId);
+    return [D.lotes[i - 1], D.lotes[i + 1]].filter(Boolean).map(l => ocupado(S, l.id)).filter(Boolean);
+  }
+  const coincide = (regla, T, t) => regla === 'tienda' ? ['puesto', 'local'].includes(T.clase) : regla.startsWith('clase:') ? T.clase === regla.slice(6) : regla === T.cat;
+  function efectosVecindad(S, loteId, t) { // lista de {efecto, texto, vecino} para un giro t en un lote
+    const T = D.negocios[t], out = [];
+    if (!['puesto', 'local'].includes(T.clase)) return out;
+    for (const V of vecinosDe(S, loteId)) {
+      const TV = tipo(V);
+      for (const R of D.vecindad) {
+        const ok = R.a === 'mismo' ? V.tipo === t : coincide(R.a, T, t) && coincide(R.b, TV, V.tipo);
+        if (ok) out.push({ efecto: R.efecto, texto: R.texto, vecino: (V.rival ? D.rival.nombre + ': ' : '') + TV.corto });
+      }
+    }
+    return out;
+  }
+  const factorVecindad = (S, loteId, t) => clamp(1 + efectosVecindad(S, loteId, t).reduce((s, e) => s + e.efecto, 0), 0.6, 1.5);
+
+  // Anaquel: qué productos tuyos caben en un negocio.
+  const anaquelesPara = (S, N) => S.productos.filter(p => p.activo && (D.anaquel.giros[p.cat] || []).includes(tipo(N).cat));
+
   const mismoGiro = (S, N) => S.negocios.filter(n => n.tipo === N.tipo).length;
   const descuentoCadena = (S, N) => Math.min(D.cadena.maxDescuento, D.cadena.descuentoInsumos * (mismoGiro(S, N) - 1));
   const precioCompra = N => Math.round(tipo(N).costo * (1 + 0.6 * (N.nivel - 1)) * D.rival.sobreprecioCompra);
@@ -97,7 +120,7 @@ const Motor = (function () {
     const r = N.precio / T.precioRef;
     const cu = T.costoUnidad * mult(S, 'insumos') * (N.rival ? 1 : 1 - descuentoCadena(S, N));
     const fPrecio = r <= 1 ? 1 + (1 - r) * 0.8 : Math.max(0, 1 - (r - 1) * 1.4); // barato vende más; caro espanta
-    const miran = pasan * T.interes * D.curvas[T.curva][h] * mult(S, 'cat:' + T.cat) * (0.5 + N.rep / 100) * (1 + D.marketing[N.mkt].efecto) / rivales * (0.85 + 0.3 * azar(S));
+    const miran = pasan * T.interes * D.curvas[T.curva][h] * mult(S, 'cat:' + T.cat) * factorVecindad(S, N.lote, N.tipo) * (0.5 + N.rep / 100) * (1 + D.marketing[N.mkt].efecto) / rivales * (0.85 + 0.3 * azar(S));
     const dem = entero(S, miran * fPrecio);
     const v = Math.min(dem, entero(S, capacidad(N)));
     const monto = r2(v * N.precio);
@@ -108,6 +131,13 @@ const Motor = (function () {
     if (N.rival) S.rival.dinero = r2(S.rival.dinero + monto - v * cu);
     else { ingreso(S, 'ventas', monto); gasto(S, 'insumos', v * cu); }
     if (v) S.ventas.push({ lote: N.lote, n: v, monto, rival: !!N.rival });
+    const P = !N.rival && N.anaquel && S.productos.find(p => p.id === N.anaquel && p.activo);
+    if (P && v) { // tu producto en tu mostrador: algunos clientes se lo llevan también
+      const C = D.categorias[P.cat], q = entero(S, v * D.anaquel.tasa * P.nota / 10);
+      // shortcut: si una planta lo fabrica se cobra el costo propio aunque sus líneas estén llenas; separar inventario cuando exista el almacén
+      const cuP = capacidadPropia(S, P.id).length ? C.propio : C.costo, margen = r2(q * (C.precio * D.anaquel.sobreprecio - cuP));
+      if (q) { ingreso(S, 'productos', margen); P.tiendaHoy = (P.tiendaHoy || 0) + q; P.tienda = (P.tienda || 0) + q; P.ganado = r2(P.ganado + margen); N.hoy.anaquel = (N.hoy.anaquel || 0) + q; N.hoy.anaquelMonto = r2((N.hoy.anaquelMonto || 0) + margen); }
+    }
     if (miran >= 0.5) { // la reputación se acerca poco a poco a lo que vivió quien se asomó esta hora
       const precio = clamp(100 - Math.max(0, r - 0.9) * 150);
       const fama = N.rival ? 0 : Math.min(3, mios.length - 1) * D.cadena.rep; // la cadena comparte fama
@@ -139,7 +169,10 @@ const Motor = (function () {
     }
     for (const P of S.productos.filter(p => p.activo)) {
       const C = D.categorias[P.cat], propios = S.productos.filter(p => p.activo && p.cat === P.cat).length;
-      const u = entero(S, C.mercado * S.tendencias[P.cat] * (P.nota / 10) ** 2 * P.hype * ciclo(P.dia) / Math.sqrt(propios) * (0.9 + 0.2 * azar(S)));
+      const fama = 1 + D.anaquel.fama * Math.min(1, (P.tiendaAyer || 0) / D.anaquel.porCada); // verlo en tus tiendas lo da a conocer
+      P.tiendaAyer = P.tiendaHoy || 0;
+      P.tiendaHoy = 0;
+      const u = entero(S, C.mercado * S.tendencias[P.cat] * (P.nota / 10) ** 2 * P.hype * ciclo(P.dia) * fama / Math.sqrt(propios) * (0.9 + 0.2 * azar(S)));
       // Lo que cabe en tus plantas sale con el costo propio; el resto se manda a maquilar.
       const lineas = capacidadPropia(S, P.id), cap = lineas.reduce((s, l) => s + l.u, 0), hechas = Math.min(u, cap);
       for (const l of lineas) { const q = hechas * l.u / cap; l.N.hoy.producidas += q; l.N.hoy.ingresos = r2(l.N.hoy.ingresos + q * (C.costo - C.propio)); }
@@ -154,6 +187,7 @@ const Motor = (function () {
       if (ciclo(P.dia) < 0.05) {
         P.activo = false;
         noticia(S, `«${P.nombre}» sale de los anaqueles tras vender ${P.unidades.toLocaleString('es-MX')} unidades.`, 'empresa');
+        for (const N of S.negocios) if (N.anaquel === P.id) N.anaquel = null;
         for (const N of S.negocios) if (N.lineas && N.lineas.includes(P.id)) {
           N.lineas = N.lineas.map(id => (id === P.id ? null : id));
           S.avisos.push({ tipo: 'evento', texto: `Una línea de ${tipo(N).nombre.toLowerCase()} quedó libre.` });
@@ -265,7 +299,8 @@ const Motor = (function () {
     const giros = Object.keys(D.negocios).filter(t => ['puesto', 'local'].includes(D.negocios[t].clase) && D.negocios[t].rango <= S.rango && D.negocios[t].costo <= R.dinero * 0.8);
     if (libres.length < X.lotesLibresMin || !giros.length) return;
     const atacar = giros.filter(t => tuyos.includes(t)); // la mitad de las veces abre justo lo que tú vendes
-    const t = (atacar.length && azar(S) < 0.5 ? atacar : giros)[Math.floor(azar(S) * (atacar.length && azar(S) < 0.5 ? atacar : giros).length)];
+    const lista = atacar.length && azar(S) < 0.5 ? atacar : giros; // se elige la lista una sola vez
+    const t = lista[Math.floor(azar(S) * lista.length)];
     const L = libres[Math.floor(azar(S) * Math.min(3, libres.length))], T = D.negocios[t];
     R.dinero = r2(R.dinero - T.costo);
     R.negocios.push({ id: 'r' + S.sig++, rival: true, tipo: t, lote: L.id, nivel: 1, emp: Math.max(1, Math.ceil(T.empMax / 2)), precio: r2(T.precioRef * X.descuento), mkt: 1, rep: 50, rojos: 0, hoy: vacio(), ayer: vacio() });
@@ -475,6 +510,11 @@ const Motor = (function () {
       }
       N.lineas[i] = prod || null;
     },
+    anaquel(S, { id, prod }) { // qué producto tuyo se vende en el mostrador de este negocio; prod null lo vacía
+      const N = negocio(S, id);
+      if (prod && !anaquelesPara(S, N).some(p => p.id === prod)) return 'Ese producto no cabe en este negocio.';
+      N.anaquel = prod || null;
+    },
     precio(S, { id, valor }) { if (!(valor >= 0.1)) return 'Precio no válido.'; negocio(S, id).precio = r2(valor); },
     marketing(S, { id, nivel }) { if (!D.marketing[nivel]) return 'No válido.'; negocio(S, id).mkt = nivel; },
     vender(S, { id }) {
@@ -606,6 +646,7 @@ const Motor = (function () {
     const malaRep = S.negocios.find(n => util(n) && n.rep < 40);
     let consejo;
     const planta = S.negocios.find(n => n.lineas && n.lineas.includes(null));
+    const sinAnaquel = S.negocios.find(n => !n.anaquel && anaquelesPara(S, n).length);
     const sinLinea = planta && S.productos.find(p => p.activo && tipo(planta).sirve.includes(p.cat) && !S.negocios.some(n => n.lineas && n.lineas.includes(p.id)));
     if (!S.negocios.length) consejo = 'Toca un lote vacío de la calle y abre tu primer puesto de limonada.';
     else if (S.dinero < 0) consejo = `Estás en números rojos. Recorta personal o acepta alguna oferta: en ${plazoQuiebra(S) - S.diasRojos} días el banco cierra tu cuenta.`;
@@ -613,6 +654,7 @@ const Motor = (function () {
     else if (malaRep) consejo = `La reputación de ${nombreDe(malaRep)} va en picada. Revisa el precio.`;
     else if (S.rango >= 2 && !estudio(S)) consejo = 'Abre un estudio de producto: ahí diseñas y lanzas tus propias marcas.';
     else if (estudio(S) && !S.proyecto) consejo = 'Tu estudio está libre. Diseña un producto en la pestaña Estudio.';
+    else if (sinAnaquel) consejo = `${nombreDe(sinAnaquel)} podría vender tus productos en su mostrador. Ponlos en su anaquel.`;
     else if (planta && sinLinea) consejo = `«${sinLinea.nombre}» se manda a maquilar y tu ${tipo(planta).nombre.toLowerCase()} tiene una línea libre. Asígnasela.`;
     else if (!planta && S.rango >= 2 && S.productos.some(p => p.activo && D.negocios.planta.sirve.includes(p.cat))) consejo = 'Tus bebidas y snacks se maquilan fuera. Con una planta de alimentos cada unidad deja el doble.';
     else if (S.negocios.length < 3) consejo = 'Diversifica: dos puestos iguales en la misma calle se roban clientes.';
@@ -621,7 +663,7 @@ const Motor = (function () {
   }
 
   return {
-    VERSION, lineasActivas, migrar, plazoQuiebra, terminal, vendibles, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
+    VERSION, efectosVecindad, factorVecindad, anaquelesPara, lineasActivas, migrar, plazoQuiebra, terminal, vendibles, rivalEn, ocupado, precioCompra, descuentoCadena, mismoGiro, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
     velocidadEstudio, negocioEn, estudio, nombreDe, ciclo, dia, hh, mult, lote,
   };
 })();

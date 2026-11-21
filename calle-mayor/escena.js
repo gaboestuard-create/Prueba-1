@@ -148,6 +148,7 @@ const Escena = (function () {
         cx.fill();
       }
       rect(c - rx, cy - 1, rx * 2, 3, mezcla(sombrilla, '#000000', 0.3));
+      if (N.anaquel) { rect(c - 50, BASE - 52, 3, 32, '#4A4A55'); rect(c - 64, BASE - 52, 14, 11, marca); texto('★', c - 57, BASE - 46.5, 7, tinte('#F6F1E7')); }
       if (N.nivel >= 3) { rect(c + 46, BASE - 46, 4, 26, '#4A4A55'); rect(c + 38, BASE - 62, 22, 18, '#1B1A2E'); texto('$' + N.precio.toFixed(2), c + 49, BASE - 53, 6, tinte('#F2C230')); }
     } else if (oscuro > 0.2) { // foquitos en el borde de la sombrilla
       const rx = 58 + N.nivel * 3;
@@ -198,6 +199,11 @@ const Escena = (function () {
         rect(x0 + 20, top - 34, 3, 26, '#3B3A4D'); rect(x0 + w - 23, top - 34, 3, 26, '#3B3A4D');
         rect(x0 + 8, top - 50, w - 16, 22, '#1B1A2E');
         texto((S.empresa || '').toUpperCase().slice(0, 18), x0 + w / 2, top - 39, 9, tinte('#F2C230'));
+      }
+      if (N.anaquel) { // cartel de tu producto pegado en el aparador
+        rect(x0 + 14, BASE - 47, 22, 16, marca);
+        rect(x0 + 16, BASE - 45, 18, 3, '#F6F1E7');
+        texto('NUEVO', x0 + 25, BASE - 36, 5.5, tinte('#F6F1E7'));
       }
       if (N.tipo === 'restaurante') for (let i = 0; i < 2; i++) { rect(x0 + 14 + i * 40, BASE + 6, 22, 3, '#5B4636'); rect(x0 + 24 + i * 40, BASE + 9, 2, 10, '#5B4636'); }
     } else if (oscuro > 0.15) {

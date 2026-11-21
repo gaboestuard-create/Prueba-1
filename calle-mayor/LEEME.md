@@ -22,6 +22,10 @@ Números rojos: el banco da un plazo (más largo con más negocios). Mientras ta
 tus negocios, cada día más barato; se acepta, se regatea una vez o se rechaza. Si se acaba el plazo con un solo negocio,
 Ferrán se lo queda; con varios, quiebra. Ambos son fin de partida.
 
+Vecindad (`vecindad` en `datos.js`): lo que hay en los lotes de al lado sube o baja la gente que entra (café con pan,
+flores con restaurante, mismo giro pared con pared, planta junto a una tienda). Anaquel (`anaquel`): tus productos se
+venden en el mostrador de tus negocios compatibles y eso los da a conocer en las tiendas de fuera.
+
 | Archivo | Capa | Qué contiene |
 | --- | --- | --- |
 | `datos.js` | Datos | Negocios, lotes, rangos, categorías de producto, acciones, eventos y **todo el balance**. |
