@@ -52,6 +52,10 @@ const DATOS = {
     taller: { nombre: 'Taller de bicis', corto: 'Bicis', clase: 'local', rango: 1, costo: 9000, sueldo: 40, empMax: 3, capBase: 3, costoUnidad: 5, precioRef: 24, interes: 0.025, cat: 'servicio', curva: 'dia', horario: [9, 19], calidad: 55, color: '#4C7A34', desc: 'Pocos clientes y buen margen. Cada mecánico atiende tres por hora.' },
     boutique: { nombre: 'Boutique de ropa', corto: 'Boutique', clase: 'local', rango: 1, costo: 14000, sueldo: 45, empMax: 3, capBase: 4, costoUnidad: 16, precioRef: 42, interes: 0.022, cat: 'ropa', curva: 'dia', horario: [10, 21], calidad: 60, color: '#3B5B8C', desc: 'Ticket alto. Le encanta la quincena.' },
     estudio: { nombre: 'Estudio de producto', corto: 'Estudio', clase: 'estudio', rango: 2, costo: 15000, sueldo: 80, empMax: 4, capBase: 0, costoUnidad: 0, precioRef: 0, interes: 0, cat: 'estudio', curva: 'dia', horario: [9, 18], calidad: 60, color: '#2E6F8E', desc: 'Diseña y lanza tus propios productos al mercado. Más diseñadores, desarrollo más rápido.' },
+    // Fábricas: no atienden clientes. Cada línea produce capLinea unidades al día de un producto tuyo
+    // de las categorías que sirve, y necesita porLinea obreros. energia: costo diario por línea encendida.
+    planta: { nombre: 'Planta de alimentos', corto: 'Planta', clase: 'fabrica', rango: 2, costo: 25000, sueldo: 40, empMax: 8, capBase: 0, costoUnidad: 0, precioRef: 0, interes: 0, cat: 'fabrica', curva: 'dia', horario: [6, 22], calidad: 55, color: '#A2533F', sirve: ['bebida', 'snack'], capLinea: 500, porLinea: 2, energia: 30, desc: 'Fabrica tus bebidas y snacks. Cada unidad propia te cuesta una tercera parte de lo que cobra la maquila.' },
+    ensamble: { nombre: 'Planta de ensamble', corto: 'Ensamble', clase: 'fabrica', rango: 3, costo: 120000, sueldo: 60, empMax: 8, capBase: 0, costoUnidad: 0, precioRef: 0, interes: 0, cat: 'fabrica', curva: 'dia', horario: [6, 22], calidad: 55, color: '#56707E', sirve: ['audifonos', 'tenis', 'telefono'], capLinea: 90, porLinea: 2, energia: 120, desc: 'Arma tus audífonos, tenis y teléfonos. Donde el margen es grande, producir tú cambia el juego.' },
     restaurante: { nombre: 'Restaurante', corto: 'Restaurante', clase: 'local', rango: 3, costo: 45000, sueldo: 45, empMax: 6, capBase: 8, costoUnidad: 6, precioRef: 18, interes: 0.12, cat: 'restaurante', curva: 'comida', horario: [12, 24], calidad: 60, color: '#8A2E3B', desc: 'La joya de la calle. Comida y cena llenas si tienes con quién atender.' },
   },
 
@@ -65,22 +69,23 @@ const DATOS = {
   rangos: [
     { nombre: 'Emprendedor', min: 0, desbloquea: 'Puestos callejeros' },
     { nombre: 'Comerciante', min: 2000, desbloquea: 'Locales comerciales y compra de terrenos' },
-    { nombre: 'Empresario', min: 15000, desbloquea: 'Estudio de producto y bolsa de valores' },
-    { nombre: 'Magnate', min: 100000, desbloquea: 'Restaurante, mejoras de nivel 4 y productos de alta gama' },
+    { nombre: 'Empresario', min: 15000, desbloquea: 'Estudio de producto, planta de alimentos y bolsa de valores' },
+    { nombre: 'Magnate', min: 100000, desbloquea: 'Restaurante, planta de ensamble, mejoras de nivel 4 y productos de alta gama' },
     { nombre: 'Tycoon', min: 1000000, desbloquea: 'Tu nombre en la historia de la ciudad' },
   ],
 
   // Productos que diseñas en el estudio. ideal: reparto perfecto de calidad, diseño y marketing.
-  // mercado: unidades al día que vendería un 10 en su mejor momento. margen: ganancia por unidad.
+  // mercado: unidades al día que vendería un 10 en su mejor momento. precio: lo que paga la tienda por unidad.
+  // costo: lo que cobra la maquila por fabricarla. propio: lo que cuesta en tu planta (solo si alguna planta la sirve).
   // presupuestoRef: con ese presupuesto y la mezcla ideal, un estudio sin experiencia saca 7.5.
   categorias: {
-    bebida: { nombre: 'Bebida energética', rango: 2, mercado: 900, margen: 1.2, dias: 6, ideal: [0.5, 0.2, 0.3], presupuestoRef: 8000 },
-    snack: { nombre: 'Snack saludable', rango: 2, mercado: 1300, margen: 0.7, dias: 5, ideal: [0.55, 0.25, 0.2], presupuestoRef: 6000 },
-    app: { nombre: 'App móvil', rango: 2, mercado: 3000, margen: 1, dias: 10, ideal: [0.3, 0.5, 0.2], presupuestoRef: 20000 },
-    audifonos: { nombre: 'Audífonos', rango: 3, mercado: 200, margen: 25, dias: 12, ideal: [0.45, 0.35, 0.2], presupuestoRef: 40000 },
-    tenis: { nombre: 'Tenis', rango: 3, mercado: 180, margen: 30, dias: 10, ideal: [0.3, 0.3, 0.4], presupuestoRef: 45000 },
-    videojuego: { nombre: 'Videojuego', rango: 3, mercado: 500, margen: 18, dias: 16, ideal: [0.35, 0.45, 0.2], presupuestoRef: 80000 },
-    telefono: { nombre: 'Teléfono', rango: 3, mercado: 320, margen: 160, dias: 24, ideal: [0.45, 0.4, 0.15], presupuestoRef: 400000 },
+    bebida: { nombre: 'Bebida energética', rango: 2, mercado: 900, precio: 3, costo: 1.8, propio: 0.6, dias: 6, ideal: [0.5, 0.2, 0.3], presupuestoRef: 8000 },
+    snack: { nombre: 'Snack saludable', rango: 2, mercado: 1300, precio: 2, costo: 1.3, propio: 0.5, dias: 5, ideal: [0.55, 0.25, 0.2], presupuestoRef: 6000 },
+    app: { nombre: 'App móvil', rango: 2, mercado: 3000, precio: 1, costo: 0, dias: 10, ideal: [0.3, 0.5, 0.2], presupuestoRef: 20000 },
+    audifonos: { nombre: 'Audífonos', rango: 3, mercado: 200, precio: 60, costo: 35, propio: 18, dias: 12, ideal: [0.45, 0.35, 0.2], presupuestoRef: 40000 },
+    tenis: { nombre: 'Tenis', rango: 3, mercado: 180, precio: 75, costo: 45, propio: 25, dias: 10, ideal: [0.3, 0.3, 0.4], presupuestoRef: 45000 },
+    videojuego: { nombre: 'Videojuego', rango: 3, mercado: 500, precio: 18, costo: 0, dias: 16, ideal: [0.35, 0.45, 0.2], presupuestoRef: 80000 },
+    telefono: { nombre: 'Teléfono', rango: 3, mercado: 320, precio: 450, costo: 290, propio: 150, dias: 24, ideal: [0.45, 0.4, 0.15], presupuestoRef: 400000 },
   },
 
   // Empresas ficticias. deriva y vol son diarias; beta: cuánto les pegan las noticias del mercado.

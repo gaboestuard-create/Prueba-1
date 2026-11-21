@@ -43,8 +43,10 @@
     bici: '<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h6l2 7M10 9l3 7H6M14.5 6.5h3"/>',
     gancho: '<path d="M10 5.5a2 2 0 1 1 2 2v2L3 15.5V18h18v-2.5L12 9.5"/>',
     cubiertos: '<path d="M7 3v7a2 2 0 0 0 2 2v9M5 3v6M9 3v6M17 21V3c-2 0-3.5 2.5-3.5 6s1.5 4 3.5 4"/>',
+    fabrica: '<path d="M3 21V11l5 3v-3l5 3v-3l5 3V3h3v18zM3 21h18M7 17.5h2M12 17.5h2"/>',
+    tuerca: '<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><circle cx="12" cy="12" r="3"/>',
   };
-  const ICONO_TIPO = { limonada: 'vaso', hotdogs: 'carrito', flores: 'flor', cafeteria: 'taza', panaderia: 'pan', taller: 'bici', boutique: 'gancho', restaurante: 'cubiertos', estudio: 'foco' };
+  const ICONO_TIPO = { limonada: 'vaso', hotdogs: 'carrito', flores: 'flor', cafeteria: 'taza', panaderia: 'pan', taller: 'bici', boutique: 'gancho', restaurante: 'cubiertos', estudio: 'foco', planta: 'fabrica', ensamble: 'tuerca' };
   const NOMBRES = {
     bebida: [['Volt', 'Chispa', 'Rayo', 'Zumba', 'Brío', 'Turbo'], ['Cola', 'Fresh', 'Max', 'Pulse', 'Cítrica', 'Go']],
     snack: [['Nuti', 'Crují', 'Avena', 'Semilla', 'Bocado', 'Granola'], ['Bits', 'Mix', 'Lista', 'Bar', 'Pop', 'Natural']],
@@ -121,7 +123,7 @@
     if (!ui.lote) return vElegirLote();
     const L = M.lote(ui.lote), N = M.negocioEn(S, ui.lote);
     if (!N) return vVacio(L);
-    return N.tipo === 'estudio' ? vEstudioLote(N, L) : vNegocio(N, L);
+    return N.tipo === 'estudio' ? vEstudioLote(N, L) : D.negocios[N.tipo].clase === 'fabrica' ? vFabrica(N, L) : vNegocio(N, L);
   }
   const cerrarLote = bt(ic('cerrar'), 'ui:lote', { id: null }, 'btn', 'aria-label="Cerrar"');
 
@@ -197,6 +199,35 @@
       <div class="fila">${vender}</div></div>`;
   }
 
+  function vFabrica(N, L) {
+    const T = D.negocios[N.tipo], activas = M.lineasActivas(N), asignadas = N.lineas.filter(Boolean).length, a = N.ayer;
+    const elegibles = S.productos.filter(p => p.activo && T.sirve.includes(p.cat));
+    const cats = T.sirve.map(k => D.categorias[k].nombre.toLowerCase()).join(', ');
+    const vender = ui.confirma === 'vender' ? bt(`Sí, vender por ${din(N.invertido * B.valorNegocio)}`, 'vender', { id: N.id }, 'btn peligro armado') : bt(`${ic('salir')} Vender planta`, 'ui:confirma', { k: 'vender' }, 'btn peligro');
+    const terreno = S.rango >= 1 && !S.lotes[L.id].propio ? bt(`${ic('bandera')} Comprar terreno <small>${din(M.precioLote(L))}</small>`, 'comprarLote', { lote: L.id }) : '';
+    let k = activas;
+    const lineas = N.lineas.map((id, i) => {
+      const opera = id && k-- > 0, P = id && S.productos.find(p => p.id === id);
+      const estado = !id ? 'Apagada' : opera ? `Fabricando «${esc(P.nombre)}»` : 'Sin obreros: parada';
+      return `<div class="linea ${opera ? 'on' : ''}"><div class="fila"><span class="eti crece">Línea ${i + 1}</span><span class="tenue">${estado}</span></div>
+        <div class="fila">${bt('Apagar', 'linea', { id: N.id, i, prod: null }, 'btn chico' + (!id ? ' on' : ''))}${elegibles.map(p => bt(`«${esc(p.nombre)}»`, 'linea', { id: N.id, i, prod: p.id }, 'btn chico' + (id === p.id ? ' on' : ''))).join('')}</div></div>`;
+    }).join('');
+    const puedeSubir = N.nivel < M.nivelMax(S);
+    return `<div class="hoja">
+      <div class="cab">${sello(N.tipo)}<div><h2>${T.nombre}</h2><p>${esc(L.nombre)} · ${nivelPips(N.nivel)}</p></div>${cerrarLote}</div>
+      <p class="tenue">Fabrica ${cats}. Cada línea produce hasta <b>${T.capLinea.toLocaleString('es-MX')}</b> unidades al día; lo que no alcanza se manda a maquilar.</p>
+      <div class="kpis">${kpi('Líneas activas', `${activas} / ${N.lineas.length}`)}${kpi('Producido ayer', (a.producidas || 0).toLocaleString('es-MX'))}${kpi('Ahorro ayer', din(a.ingresos), a.ingresos > 0 ? 'pos' : '')}${kpi('Utilidad ayer', a.utilidad == null ? '—' : din(a.utilidad), a.utilidad < 0 ? 'neg' : a.utilidad > 0 ? 'pos' : '')}</div>
+      <hr class="sep">
+      <div class="control"><span class="eti">Líneas de producción</span>
+        ${elegibles.length ? lineas : `<div class="consejo">${ic('foco')}<span>Todavía no tienes ${cats} a la venta. Lanza uno desde el Estudio y ponlo a fabricar aquí.</span></div>`}</div>
+      <div class="control"><div class="fila"><span class="eti">Obreros</span><span class="tenue">${din(T.sueldo)}/día · ${T.porLinea} por línea · energía ${din(T.energia)}/línea</span></div>
+        <div class="fila"><div class="paso">${bt(ic('menos'), 'empleados', { id: N.id, cambio: -1 }, '', `aria-label="Quitar obrero" ${N.emp <= 1 ? 'disabled' : ''}`)}<output>${N.emp} / ${T.empMax}</output>${bt(ic('mas'), 'empleados', { id: N.id, cambio: 1 }, '', `aria-label="Contratar obrero" ${N.emp >= T.empMax ? 'disabled' : ''}`)}</div>
+        <p class="tenue crece">${asignadas > activas ? `<b class="neg">Faltan ${(asignadas - activas) * T.porLinea - (N.emp % T.porLinea)} obreros</b> para encender todas las líneas.` : 'Alcanzan para las líneas encendidas.'}</p></div></div>
+      <div class="control"><span class="eti">Utilidad de los últimos ${N.hist.length || 14} días</span>${barrasUtilidad(N.hist)}</div>
+      ${puedeSubir ? `${bt(`${ic('flecha')} Agregar la línea ${N.nivel + 1} <small>${din(M.costoMejora(N))}</small>`, 'mejorar', { id: N.id }, 'btn pri ancho')}<p class="tenue">La nave crece y suma una línea más.</p>` : N.nivel >= 4 ? '<p class="tenue">Planta al máximo.</p>' : `<p class="candado">${ic('candado')} Línea 4 al llegar a Magnate</p>`}
+      <div class="fila">${terreno}${vender}</div></div>`;
+  }
+
   // ---------- Pestañas de la derecha ----------
   function vImperio() {
     const obj = M.objetivo(S), pat = M.patrimonio(S), R = obj.siguiente, ayer = S.resumen;
@@ -210,10 +241,10 @@
     }
     const lista = S.negocios.map(N => {
       const T = D.negocios[N.tipo], u = N.ayer.utilidad;
-      return bt(`${sello(N.tipo, 'ch')}<span class="crece"><b class="nom">${T.corto}</b><span class="tenue">${M.lote(N.lote).corto} · nivel ${N.nivel}${T.clase !== 'estudio' ? ' · reputación ' + Math.round(N.rep) : ''}</span></span><span class="cifra ${u < 0 ? 'neg' : u > 0 ? 'pos' : ''}">${u == null ? '—' : din(u)}<br><span class="tenue">${T.clase === 'estudio' ? 'estudio' : N.ayer.clientes + ' clientes'}</span></span>`, 'ui:lote', { id: N.lote, enfocar: true }, 'renglon');
+      return bt(`${sello(N.tipo, 'ch')}<span class="crece"><b class="nom">${T.corto}</b><span class="tenue">${M.lote(N.lote).corto} · nivel ${N.nivel}${T.clase === 'estudio' ? '' : T.clase === 'fabrica' ? ' · ' + M.lineasActivas(N) + ' líneas activas' : ' · reputación ' + Math.round(N.rep)}</span></span><span class="cifra ${u < 0 ? 'neg' : u > 0 ? 'pos' : ''}">${u == null ? '—' : din(u)}<br><span class="tenue">${T.clase === 'estudio' ? 'estudio' : T.clase === 'fabrica' ? (N.ayer.producidas || 0).toLocaleString('es-MX') + ' hechas' : N.ayer.clientes + ' clientes'}</span></span>`, 'ui:lote', { id: N.lote, enfocar: true }, 'renglon');
     }).join('');
     const fila = (k, v, cls = '') => `<div class="renglon"><span class="crece">${k}</span><span class="cifra ${cls}">${v}</span></div>`;
-    const NOMBRE = { ventas: 'Ventas en la calle', productos: 'Productos propios', ventaActivos: 'Venta de activos', insumos: 'Insumos', sueldos: 'Sueldos', renta: 'Rentas', permisos: 'Permisos de puestos', marketing: 'Publicidad', inversion: 'Inversiones (no cuentan como gasto)' };
+    const NOMBRE = { ventas: 'Ventas en la calle', productos: 'Productos propios', ventaActivos: 'Venta de activos', insumos: 'Insumos', sueldos: 'Sueldos', renta: 'Rentas', permisos: 'Permisos de puestos', marketing: 'Publicidad', energia: 'Energía de plantas', inversion: 'Inversiones (no cuentan como gasto)' };
     return `<div class="hoja">
         <div class="cab"><span class="sello" style="background:var(--mostaza)">${ic('trofeo')}</span><div><h2>${R ? 'Rumbo a ' + R.nombre : 'Eres leyenda de Calle Mayor'}</h2><p>${R ? `Patrimonio máximo ${corto(S.maxPat)} de ${corto(R.min)}. Desbloquea: ${R.desbloquea.toLowerCase()}.` : 'Ya no hay rango más alto. Sigue construyendo.'}</p></div></div>
         <div class="progreso"><i style="width:${obj.avance}%"></i></div>
@@ -269,11 +300,12 @@
         <div class="control"><span class="eti">4 · ¿En qué se va el dinero?</span><div class="mezcla">${['Calidad', 'Diseño', 'Marketing'].map((n, i) => `<label>${n}<input type="range" min="0" max="100" value="${F.mezcla[i]}" data-mezcla="${i}"><output data-pct="${i}">${Math.round(F.mezcla[i] / tot * 100)}%</output></label>`).join('')}</div>
           <p class="tenue">${pista} El marketing además dispara las ventas del lanzamiento.</p></div>
         ${bt(`${ic('caja')} Empezar desarrollo <small>${din(F.presupuesto)} · ${C.dias} días base</small>`, 'ui:lanzar', {}, 'btn pri ancho', S.dinero < F.presupuesto ? 'disabled' : '')}
-        ${S.dinero < F.presupuesto ? `<p class="tenue neg">Te faltan ${din(F.presupuesto - S.dinero)}.</p>` : ''}</div>`;
+        ${S.dinero < F.presupuesto ? `<p class="tenue neg">Te faltan ${din(F.presupuesto - S.dinero)}.</p>` : ''}
+        <p class="tenue">${C.propio != null ? `Maquilado deja ${din(C.precio - C.costo, true)} por unidad; fabricado en tu planta, ${din(C.precio - C.propio, true)}.` : 'Producto digital: no necesita fábrica.'}</p></div>`;
     }
     const productos = S.productos.length ? `<div class="hoja"><h3>${ic('caja')} Tus productos</h3><div class="lista">${S.productos.map(p => {
       const res = p.ganado - p.costo;
-      return `<div class="renglon"><span class="nota ch ${notaCls(p.nota)}">${p.nota.toFixed(1)}</span><span class="crece"><b class="nom">«${esc(p.nombre)}»</b><span class="tenue">${D.categorias[p.cat].nombre} · ${p.activo ? `en tiendas, día ${p.dia}` : 'retirado'} · ${p.unidades.toLocaleString('es-MX')} vendidos</span>${spark(p.hist, p.activo ? 'var(--verde)' : 'var(--tenue)')}</span>
+      return `<div class="renglon"><span class="nota ch ${notaCls(p.nota)}">${p.nota.toFixed(1)}</span><span class="crece"><b class="nom">«${esc(p.nombre)}»</b><span class="tenue">${D.categorias[p.cat].nombre} · ${p.activo ? `en tiendas, día ${p.dia}` : 'retirado'} · ${p.unidades.toLocaleString('es-MX')} vendidos${p.propias ? ` · ${Math.round(p.propias / p.unidades * 100)}% de tu planta` : ''}</span>${spark(p.hist, p.activo ? 'var(--verde)' : 'var(--tenue)')}</span>
         <span class="cifra ${res >= 0 ? 'pos' : 'neg'}">${res >= 0 ? '+' : ''}${corto(res)}<br><span class="tenue">costó ${corto(p.costo)}</span></span></div>`;
     }).join('')}</div></div>` : '';
     return cuerpo + productos;

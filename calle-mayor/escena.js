@@ -17,7 +17,7 @@ const Escena = (function () {
   let D, S = null, cv, cx, dpr = 1, escala = 1, vistaW = 0;
   let camX = 0, velCam = 0, camMeta = null, arr = null, hover = null, sel = null, alSel = () => {};
   let hora = 8, msHora = 1500, t = 0, prev = 0, oscuro = 0, siguienteAuto = 2;
-  const peatones = [], monedas = [], autos = [], alturas = [];
+  const peatones = [], monedas = [], autos = [], alturas = [], humo = [], chimeneas = [];
   const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const r = (a, b) => a + Math.random() * (b - a);
   const elige = l => l[Math.floor(Math.random() * l.length)];
@@ -245,6 +245,49 @@ const Escena = (function () {
     return top - 34;
   }
 
+  // Fábrica: nave de ladrillo con techo de dientes de sierra, cortina metálica y chimenea.
+  const trabajando = (N, T) => Motor.lineasActivas(N) > 0 && hora % 24 >= T.horario[0] && hora % 24 < T.horario[1];
+  function fabrica(x, N, T, luz) {
+    const w = LW - 20, x0 = x + 10, alto = 88 + N.nivel * 16, top = BASE - alto, dientes = 3, dw = (w - 30) / dientes;
+    const ladrillo = T.color, junta = mezcla(T.color, '#1B1A2E', 0.3), chx = x0 + w - 24, chTop = top - 46 - N.nivel * 10;
+    const activa = trabajando(N, T);
+    if (!luz) {
+      rect(chx, chTop, 16, BASE - chTop, mezcla(ladrillo, '#1B1A2E', 0.15));
+      rect(chx - 2, chTop - 4, 20, 6, '#2D2F45');
+      rect(chx, chTop + 14, 16, 4, '#E9E4DA'); rect(chx, chTop + 26, 16, 4, '#E9E4DA');
+      rect(x0, top, w - 30, alto, ladrillo);
+      for (let y = top + 8; y < BASE - 50; y += 7) for (let bx = x0 + ((y / 7) % 2) * 6; bx < x0 + w - 32; bx += 12) rect(bx, y, 1.2, 7, junta);
+      for (let i = 0; i < dientes; i++) { // dientes de sierra con vidrio
+        const dx = x0 + i * dw;
+        cx.fillStyle = tinte(mezcla(ladrillo, '#1B1A2E', 0.35));
+        cx.beginPath(); cx.moveTo(dx, top); cx.lineTo(dx + dw, top); cx.lineTo(dx + dw, top - 20); cx.closePath(); cx.fill();
+        rect(dx + dw - 6, top - 18, 5, 18, '#9CC3DA');
+      }
+      for (let i = 0; i < 4; i++) rect(x0 + 8 + i * ((w - 46) / 4), top + 14, (w - 46) / 4 - 6, 16, '#2B3150');
+      rect(x0 + 6, BASE - 70, w - 42, 14, '#1B1A2E');
+      texto((T.corto === 'Planta' ? 'ALIMENTOS' : 'ENSAMBLE'), x0 + (w - 30) / 2, BASE - 63, 8, tinte('#F2C230'));
+      // cortina metálica medio abierta mientras trabaja
+      const cw = 54, cxp = x0 + 10, abierta = activa ? 18 : 0;
+      rect(cxp - 2, BASE - 50, cw + 4, 50, '#2D2F45');
+      rect(cxp, BASE - 48, cw, 48, '#3C3A52');
+      rect(cxp, BASE - 48, cw, 48 - abierta, '#8E95A3');
+      for (let y = BASE - 46; y < BASE - abierta; y += 4) rect(cxp, y, cw, 1, '#6E7584');
+      rect(cxp + cw + 8, BASE - 40, 18, 40, '#40516E');
+      if (activa) for (let k = 0; k < 2 + N.nivel; k++) { // tarimas con cajas en la banqueta
+        const bx = x0 + w - 30 - k * 13;
+        rect(bx, BASE + 14, 12, 3, '#8A6F55');
+        rect(bx + 1, BASE + 5, 10, 9, '#C9A46A');
+        rect(bx + 1, BASE + 8, 10, 1.5, '#A38251');
+      }
+    } else if (oscuro > 0.15) {
+      for (let i = 0; i < 4; i++) { if (!activa && i % 2) continue; cx.fillStyle = `rgba(255, 205, 120, ${(activa ? 0.85 : 0.35) * oscuro})`; cx.fillRect(x0 + 8 + i * ((w - 46) / 4), top + 14, (w - 46) / 4 - 6, 16); }
+      if (activa) { cx.fillStyle = `rgba(255, 190, 110, ${0.8 * oscuro})`; cx.fillRect(x0 + 10, BASE - 18, 54, 18); brillo(x0 + 37, BASE - 10, 55, '#FFB860', oscuro * 0.4); }
+      brillo(chx + 8, chTop - 2, 7, '#FF5A5A', 0.5 + 0.5 * Math.sin(t * 2.5));
+    }
+    if (!luz && activa) chimeneas.push([chx + 8, chTop - 4]);
+    return Math.min(chTop, top - 22) - 6;
+  }
+
   // ---- Gente y autos ----
   function nuevaPersona(x, dir, extra = {}) {
     return { x, y: r(229, 247), dir, vel: r(24, 40), fase: r(0, 6), ropa: elige(ROPA), pantalon: elige(PANTALON), piel: elige(PIEL), pelo: elige(PELO), alto: r(0.88, 1.05), a: 1, ...extra };
@@ -317,10 +360,13 @@ const Escena = (function () {
         const L = D.lotes[i], x = MARGEN + i * LW, N = S && S.negocios.find(n => n.lote === L.id);
         if (!N) { if (!luz) loteVacio(x, L, S ? S.lotes[L.id].propio : false); alturas[i] = BASE - 110; continue; }
         const T = D.negocios[N.tipo];
-        alturas[i] = T.clase === 'puesto' ? puesto(x, N, T, luz) : T.clase === 'estudio' ? estudio(x, N, T, luz) : local(x, N, T, luz);
+        alturas[i] = T.clase === 'puesto' ? puesto(x, N, T, luz) : T.clase === 'estudio' ? estudio(x, N, T, luz) : T.clase === 'fabrica' ? fabrica(x, N, T, luz) : local(x, N, T, luz);
       }
     };
+    chimeneas.length = 0;
     dibujarLotes(false);
+    for (const h of humo) { cx.fillStyle = tinte('#D9DCE3'); cx.globalAlpha = h.a; cx.beginPath(); cx.arc(h.x, h.y, h.r, 0, Math.PI * 2); cx.fill(); }
+    cx.globalAlpha = 1;
     // gente de atrás hacia adelante
     peatones.sort((a, b) => a.y - b.y);
     for (const p of peatones) if (p.x > camX - 20 && p.x < camX + w + 20) persona(p);
@@ -405,6 +451,8 @@ const Escena = (function () {
       if (p.x < -40 || p.x > anchoMundo() + 40) peatones.splice(i, 1);
     }
     for (let i = monedas.length - 1; i >= 0; i--) { monedas[i].t += dt; if (monedas[i].t > 1.3) monedas.splice(i, 1); }
+    for (const [hx, hy] of chimeneas) if (Math.random() < dt * (reducido ? 1 : 3) && humo.length < 80) humo.push({ x: hx + r(-2, 2), y: hy, r: r(3, 5), a: 0.75, vx: r(4, 12), vy: r(-16, -10) });
+    for (let i = humo.length - 1; i >= 0; i--) { const h = humo[i]; h.x += h.vx * dt; h.y += h.vy * dt; h.r += dt * 5; h.a -= dt * 0.22; if (h.a <= 0 || h.y < 0) humo.splice(i, 1); }
     siguienteAuto -= dt;
     if (siguienteAuto <= 0) {
       const carril = Math.random() < 0.5 ? 0 : 1, dir = carril ? -1 : 1;

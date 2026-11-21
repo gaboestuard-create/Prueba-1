@@ -6,7 +6,7 @@ const M = require('./motor.js');
 const ver = process.argv.includes('--ver');
 
 // Orden en que el bot razonable abre negocios cuando le alcanza.
-const PLAN = ['limonada', 'hotdogs', 'flores', 'cafeteria', 'panaderia', 'estudio', 'taller', 'boutique', 'restaurante', 'limonada'];
+const PLAN = ['limonada', 'hotdogs', 'flores', 'cafeteria', 'panaderia', 'estudio', 'planta', 'taller', 'boutique', 'restaurante', 'ensamble'];
 
 function razonable(dias, semilla = 7) {
   const S = M.nueva({ semilla, empresa: 'Bot' });
@@ -17,7 +17,7 @@ function razonable(dias, semilla = 7) {
   while (M.dia(S) <= dias && !S.fin) {
     if (M.hh(S) === 8) {
       for (const N of S.negocios) {
-        if (N.ayer.perdidos > N.ayer.clientes * 0.1 && N.emp < D.negocios[N.tipo].empMax && D.negocios[N.tipo].clase !== 'estudio') h('empleados', { id: N.id, cambio: 1 });
+        if (N.ayer.perdidos > N.ayer.clientes * 0.1 && N.emp < D.negocios[N.tipo].empMax && !['estudio', 'fabrica'].includes(D.negocios[N.tipo].clase)) h('empleados', { id: N.id, cambio: 1 });
         if (N.nivel < M.nivelMax(S) && S.dinero > M.costoMejora(N) * 3) h('mejorar', { id: N.id });
       }
       const t = PLAN[paso], libre = lotes.find(id => !M.negocioEn(S, id));
@@ -28,6 +28,14 @@ function razonable(dias, semilla = 7) {
         if (C) h('proyecto', { cat, nombre: 'Bot ' + cat, presupuesto: C.presupuestoRef, mezcla: C.ideal });
       }
       if (E && E.emp < 3 && S.dinero > 20000) h('empleados', { id: E.id, cambio: 1 });
+      for (const F of S.negocios.filter(n => n.lineas)) { // cada línea libre fabrica el producto más nuevo que le toque
+        F.lineas.forEach((id, i) => {
+          if (id) return;
+          const P = S.productos.find(p => p.activo && D.negocios[F.tipo].sirve.includes(p.cat) && !S.negocios.some(n => n.lineas && n.lineas.includes(p.id)));
+          if (P) h('linea', { id: F.id, i, prod: P.id });
+        });
+        if (F.emp < F.lineas.filter(Boolean).length * D.negocios[F.tipo].porLinea) h('empleados', { id: F.id, cambio: 1 });
+      }
     }
     M.tick(S);
     if (M.hh(S) === 0) {
@@ -81,5 +89,31 @@ M.hacer(q, 'empleados', { id: q.negocios[0].id, cambio: 3 });
 M.hacer(q, 'precio', { id: q.negocios[0].id, valor: 20 });
 for (let i = 0; i < 24 * 40 && !q.fin; i++) M.tick(q);
 assert(q.fin === 'quiebra', 'quiebra tras días en rojo');
+
+// Planta: el mismo producto deja más con planta propia que maquilado, aun pagando obreros y energía.
+function conPlanta(usar) {
+  const S = M.nueva({ semilla: 11 });
+  S.rango = 2; S.dinero = 60000; S.maxPat = 60000;
+  M.hacer(S, 'construir', { lote: 'l1', tipo: 'estudio' });
+  M.hacer(S, 'proyecto', { cat: 'bebida', nombre: 'Prueba', presupuesto: 8000, mezcla: D.categorias.bebida.ideal });
+  while (S.proyecto) M.tick(S);
+  const P = S.productos[0];
+  if (usar) {
+    const r = M.hacer(S, 'construir', { lote: 'l2', tipo: 'planta' });
+    assert(r.ok, r.msg);
+    const F = S.negocios.find(n => n.tipo === 'planta');
+    assert(!M.hacer(S, 'linea', { id: F.id, i: 0, prod: 'zzz' }).ok);
+    assert(M.hacer(S, 'linea', { id: F.id, i: 0, prod: P.id }).ok);
+    S.dinero += D.negocios.planta.costo; // compara solo la operación, no la compra
+  }
+  const antes = S.dinero;
+  for (let i = 0; i < 24 * 30; i++) M.tick(S);
+  return { neto: S.dinero - antes, propias: P.propias || 0, S };
+}
+const sin = conPlanta(false), con = conPlanta(true);
+console.log(`Planta: 30 días sin planta ${sin.neto.toFixed(0)}, con planta ${con.neto.toFixed(0)} (${con.propias} unidades propias)`);
+assert(con.propias > 0 && con.neto > sin.neto, 'la planta paga');
+const Fq = con.S.negocios.find(n => n.tipo === 'planta');
+assert(Fq.lineas.every(x => x === null || con.S.productos.some(p => p.id === x && p.activo)), 'un producto retirado libera su línea');
 
 console.log('OK: economía estable, determinista y sin trucos de dinero infinito.');

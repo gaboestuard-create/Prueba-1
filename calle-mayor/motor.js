@@ -33,13 +33,24 @@ const Motor = (function () {
   const costoMejora = N => Math.round(tipo(N).costo * B.mejoras[N.nivel]);
   const velocidadEstudio = E => (0.6 + 0.4 * E.emp) * (1 + 0.25 * (E.nivel - 1));
   const ciclo = d => (d < 4 ? (d + 1) / 4 : Math.pow(0.5, (d - 4) / 12)); // vida de un producto en el mercado
-  const vacio = () => ({ clientes: 0, perdidos: 0, ingresos: 0, costo: 0 });
+  const vacio = () => ({ clientes: 0, perdidos: 0, ingresos: 0, costo: 0, producidas: 0 });
   const nombreDe = N => `${tipo(N).corto} · ${lote(N.lote).corto}`;
 
+  // Líneas de una planta que de verdad trabajan: las primeras asignadas que alcanzan a cubrir los obreros.
+  const lineasActivas = N => (tipo(N).clase !== 'fabrica' ? 0 : Math.min(N.lineas.filter(Boolean).length, Math.floor(N.emp / tipo(N).porLinea)));
+  function capacidadPropia(S, prodId) { // unidades al día que tus plantas pueden fabricar de un producto
+    const cap = [];
+    for (const N of S.negocios) {
+      if (tipo(N).clase !== 'fabrica') continue;
+      let k = lineasActivas(N);
+      for (const id of N.lineas) if (id && k-- > 0 && id === prodId) cap.push({ N, u: tipo(N).capLinea });
+    }
+    return cap;
+  }
   function fijos(S, N) { // gasto diario fijo de un negocio
     const T = tipo(N);
     const lugar = T.clase === 'puesto' ? T.permiso : S.lotes[N.lote].propio ? 0 : lote(N.lote).renta;
-    return lugar + T.sueldo * N.emp + D.marketing[N.mkt].costo;
+    return lugar + T.sueldo * N.emp + D.marketing[N.mkt].costo + (T.energia || 0) * lineasActivas(N);
   }
   const mult = (S, k) => S.eventos.reduce((m, e) => m * (e.efectos[k] ?? 1), 1);
 
@@ -71,7 +82,7 @@ const Motor = (function () {
   // ---- Una hora en un negocio ----
   function simHora(S, N, h) {
     const T = tipo(N), L = lote(N.lote);
-    if (T.clase === 'estudio' || h < T.horario[0] || h >= T.horario[1]) return;
+    if (T.clase === 'estudio' || T.clase === 'fabrica' || h < T.horario[0] || h >= T.horario[1]) return;
     const pasan = D.trafico[h] * L.trafico * mult(S, 'trafico');
     const rivales = Math.pow(S.negocios.filter(n => n.tipo === N.tipo).length, 0.6);
     const r = N.precio / T.precioRef;
@@ -110,18 +121,6 @@ const Motor = (function () {
 
   function cierreDia(S) {
     const c = dia(S) - 1;
-    for (const N of S.negocios) {
-      const T = tipo(N);
-      if (T.clase === 'puesto') gasto(S, 'permisos', T.permiso);
-      else if (!S.lotes[N.lote].propio) gasto(S, 'renta', lote(N.lote).renta);
-      gasto(S, 'sueldos', T.sueldo * N.emp);
-      if (N.mkt) gasto(S, 'marketing', D.marketing[N.mkt].costo);
-      N.hoy.utilidad = r2(N.hoy.ingresos - N.hoy.costo - fijos(S, N));
-      N.hist.push(N.hoy.utilidad);
-      if (N.hist.length > 14) N.hist.shift();
-      N.ayer = N.hoy;
-      N.hoy = vacio();
-    }
     const E = estudio(S);
     if (S.proyecto && E) {
       S.proyecto.avance = r2(S.proyecto.avance + velocidadEstudio(E));
@@ -130,8 +129,12 @@ const Motor = (function () {
     for (const P of S.productos.filter(p => p.activo)) {
       const C = D.categorias[P.cat], propios = S.productos.filter(p => p.activo && p.cat === P.cat).length;
       const u = entero(S, C.mercado * S.tendencias[P.cat] * (P.nota / 10) ** 2 * P.hype * ciclo(P.dia) / Math.sqrt(propios) * (0.9 + 0.2 * azar(S)));
-      const m = r2(u * C.margen);
+      // Lo que cabe en tus plantas sale con el costo propio; el resto se manda a maquilar.
+      const lineas = capacidadPropia(S, P.id), cap = lineas.reduce((s, l) => s + l.u, 0), hechas = Math.min(u, cap);
+      for (const l of lineas) { const q = hechas * l.u / cap; l.N.hoy.producidas += q; l.N.hoy.ingresos = r2(l.N.hoy.ingresos + q * (C.costo - C.propio)); }
+      const m = r2((hechas ? hechas * (C.precio - C.propio) : 0) + (u - hechas) * (C.precio - C.costo)); // las categorías digitales no tienen costo propio
       ingreso(S, 'productos', m);
+      P.propias = (P.propias || 0) + hechas;
       P.unidades += u;
       P.ganado = r2(P.ganado + m);
       P.hist.push(m);
@@ -140,7 +143,25 @@ const Motor = (function () {
       if (ciclo(P.dia) < 0.05) {
         P.activo = false;
         noticia(S, `«${P.nombre}» sale de los anaqueles tras vender ${P.unidades.toLocaleString('es-MX')} unidades.`, 'empresa');
+        for (const N of S.negocios) if (N.lineas && N.lineas.includes(P.id)) {
+          N.lineas = N.lineas.map(id => (id === P.id ? null : id));
+          S.avisos.push({ tipo: 'evento', texto: `Una línea de ${tipo(N).nombre.toLowerCase()} quedó libre.` });
+        }
       }
+    }
+    for (const N of S.negocios) {
+      const T = tipo(N);
+      if (T.clase === 'puesto') gasto(S, 'permisos', T.permiso);
+      else if (!S.lotes[N.lote].propio) gasto(S, 'renta', lote(N.lote).renta);
+      gasto(S, 'sueldos', T.sueldo * N.emp);
+      if (N.mkt) gasto(S, 'marketing', D.marketing[N.mkt].costo);
+      if (T.energia) gasto(S, 'energia', T.energia * lineasActivas(N));
+      N.hoy.producidas = Math.round(N.hoy.producidas);
+      N.hoy.utilidad = r2(N.hoy.ingresos - N.hoy.costo - fijos(S, N));
+      N.hist.push(N.hoy.utilidad);
+      if (N.hist.length > 14) N.hist.shift();
+      N.ayer = N.hoy;
+      N.hoy = vacio();
     }
     for (const k in S.tendencias) S.tendencias[k] = r2(clamp(S.tendencias[k] * Math.exp(0.06 * gauss(S)) + (1 - S.tendencias[k]) * 0.04, 0.5, 1.8));
     const choque = S.eventos.reduce((s, e) => s + (e.efectos.bolsa || 0), 0);
@@ -212,7 +233,8 @@ const Motor = (function () {
       if (t === 'estudio' && estudio(S)) return 'Ya tienes un estudio.';
       const e = pagar(S, 'inversion', T.costo);
       if (e) return e;
-      const N = { id: 'n' + S.sig++, tipo: t, lote: id, nivel: 1, emp: 1, precio: T.precioRef, mkt: 0, rep: 50, invertido: T.costo, hoy: vacio(), ayer: vacio(), hist: [] };
+      const N = { id: 'n' + S.sig++, tipo: t, lote: id, nivel: 1, emp: T.porLinea || 1, precio: T.precioRef, mkt: 0, rep: 50, invertido: T.costo, hoy: vacio(), ayer: vacio(), hist: [] };
+      if (T.clase === 'fabrica') N.lineas = [null];
       S.negocios.push(N);
       noticia(S, `Abre ${T.nombre.toLowerCase()} en ${L.nombre}.`, 'calle');
       return { msg: `Abriste ${T.nombre.toLowerCase()}.`, id: N.id };
@@ -224,6 +246,7 @@ const Motor = (function () {
       if (e) return e;
       N.nivel++;
       N.invertido += costo;
+      if (N.lineas) N.lineas.push(null); // en una planta, cada nivel es una línea más
       return { msg: `${nombreDe(N)} sube a nivel ${N.nivel}.` };
     },
     empleados(S, { id, cambio }) {
@@ -231,6 +254,16 @@ const Motor = (function () {
       if (n < 1) return 'Siempre hace falta alguien atendiendo.';
       if (n > tipo(N).empMax) return 'No cabe más gente en este negocio.';
       N.emp = n;
+    },
+    linea(S, { id, i, prod }) { // qué fabrica cada línea de una planta; prod null la apaga
+      const N = negocio(S, id), T = tipo(N);
+      if (!N.lineas || !(i >= 0 && i < N.lineas.length)) return 'Esa línea no existe.';
+      if (prod) {
+        const P = por(S.productos, prod);
+        if (!P || !P.activo) return 'Ese producto ya no está a la venta.';
+        if (!T.sirve.includes(P.cat)) return `Esta planta no fabrica ${D.categorias[P.cat].nombre.toLowerCase()}.`;
+      }
+      N.lineas[i] = prod || null;
     },
     precio(S, { id, valor }) { if (!(valor >= 0.1)) return 'Precio no válido.'; negocio(S, id).precio = r2(valor); },
     marketing(S, { id, nivel }) { if (!D.marketing[nivel]) return 'No válido.'; negocio(S, id).mkt = nivel; },
@@ -295,23 +328,27 @@ const Motor = (function () {
   // Qué conviene hacer ahora: meta de rango y un consejo concreto.
   function objetivo(S) {
     const sig = D.rangos[S.rango + 1], base = D.rangos[S.rango].min;
-    const util = n => tipo(n).clase !== 'estudio';
+    const util = n => tipo(n).clase !== 'estudio' && tipo(n).clase !== 'fabrica';
     const perdiendo = S.negocios.find(n => util(n) && n.ayer.perdidos > 8 && n.ayer.perdidos > n.ayer.clientes * 0.2);
     const malaRep = S.negocios.find(n => util(n) && n.rep < 40);
     let consejo;
+    const planta = S.negocios.find(n => n.lineas && n.lineas.includes(null));
+    const sinLinea = planta && S.productos.find(p => p.activo && tipo(planta).sirve.includes(p.cat) && !S.negocios.some(n => n.lineas && n.lineas.includes(p.id)));
     if (!S.negocios.length) consejo = 'Toca un lote vacío de la calle y abre tu primer puesto de limonada.';
     else if (S.dinero < 0) consejo = `Estás en números rojos. Vende algo o recorta personal: en ${B.diasQuiebra - S.diasRojos} días el banco te cierra.`;
     else if (perdiendo) consejo = `${nombreDe(perdiendo)} dejó ir a ${perdiendo.ayer.perdidos} clientes ayer. Contrata o sube de nivel.`;
     else if (malaRep) consejo = `La reputación de ${nombreDe(malaRep)} va en picada. Revisa el precio.`;
     else if (S.rango >= 2 && !estudio(S)) consejo = 'Abre un estudio de producto: ahí diseñas y lanzas tus propias marcas.';
     else if (estudio(S) && !S.proyecto) consejo = 'Tu estudio está libre. Diseña un producto en la pestaña Estudio.';
+    else if (planta && sinLinea) consejo = `«${sinLinea.nombre}» se manda a maquilar y tu ${tipo(planta).nombre.toLowerCase()} tiene una línea libre. Asígnasela.`;
+    else if (!planta && S.rango >= 2 && S.productos.some(p => p.activo && D.negocios.planta.sirve.includes(p.cat))) consejo = 'Tus bebidas y snacks se maquilan fuera. Con una planta de alimentos cada unidad deja el doble.';
     else if (S.negocios.length < 3) consejo = 'Diversifica: dos puestos iguales en la misma calle se roban clientes.';
     else consejo = 'Sube de nivel lo que más vende y prueba precios: el Insight de cada negocio te dice si vas caro.';
     return { siguiente: sig || null, avance: sig ? clamp((S.maxPat - base) / (sig.min - base) * 100) : 100, consejo };
   }
 
   return {
-    VERSION, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
+    VERSION, lineasActivas, nueva, tick, hacer, objetivo, patrimonio, capacidad, calidad, fijos, costoMejora, nivelMax, precioLote,
     velocidadEstudio, negocioEn, estudio, nombreDe, ciclo, dia, hh, mult, lote,
   };
 })();
