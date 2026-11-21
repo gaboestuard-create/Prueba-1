@@ -96,10 +96,10 @@
     cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
     goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 70] },
     ways: {
-      elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: -4, pragma: 4 } },
-      firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 4, pragma: 2 } },
-      oferta: { n: 'Poner dinero sobre la mesa', fx: { halcon: 8, paloma: 6, rencor: 10, pragma: 14 }, gift: 1 },
-      valores: { n: 'Apelar a la historia y los valores comunes', fx: { halcon: -2, paloma: 12, rencor: 2, pragma: 4 }, ideo: 1 },
+      elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: 0, pragma: 4 } },
+      firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 8, pragma: 2 } },
+      oferta: { n: 'Poner dinero sobre la mesa', fx: { halcon: 8, paloma: 6, rencor: 16, pragma: 14 }, gift: 1 },
+      valores: { n: 'Apelar a la historia y los valores comunes', fx: { halcon: -2, paloma: 12, rencor: 6, pragma: 4 }, ideo: 1 },
       amenaza: { n: 'Insinuar consecuencias', fx: { halcon: 10, paloma: -25, rencor: -15, pragma: -6 }, power: 1 }
     },
     open: {
