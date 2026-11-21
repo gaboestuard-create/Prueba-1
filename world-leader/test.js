@@ -168,8 +168,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   const wk = P5.weekly(Date.UTC(2026, 10, 16)); assert.deepStrictEqual(wk, P5.weekly(Date.UTC(2026, 10, 22, 20)), 'el reto es el mismo de lunes a domingo'); assert.notDeepStrictEqual(wk, P5.weekly(Date.UTC(2026, 10, 23)), 'cambia cada lunes'); G.newGame({ iso: wk.iso, name: 'W', seed: wk.seed, setup: wk.setup }); turns(2); assert(!(G.S.errs || []).length); }
 // conversaciones entre líderes, asamblea de la ONU y prensa
 { G.newGame({ iso: 'MX', name: 'T', seed: 12 }); const S = G.S, q = G.q; S.pend = []; S.pol.nextElec = 999;
-
-  WL.Game.S.talkQ.push(['war', 'IN', 'PK']); G.act('endTurn'); S.pend = []; const c = S.talk.find(x => x.k === 'war'); assert(c && c.rep === 'duel' && c.lines.length >= 2 && c.lines.every(l => !/\{/.test(l[1])), 'diálogo de guerra completo');
+  S.talkQ.push(['war', 'IN', 'PK']); G.act('endTurn'); S.pend = []; const c = S.talk.find(x => x.k === 'war'); assert(c && c.rep === 'duel' && c.lines.length >= 2 && c.lines.every(l => !/\{/.test(l[1])), 'diálogo de guerra completo');
   const r0 = q.rel('MX', 'IN'); assert(G.act('talkReply', { id: c.id, i: 0 }).ok && q.rel('MX', 'IN') > r0, 'apoyar mejora la relación'); assert(!G.act('talkReply', { id: c.id, i: 0 }).ok, 'una sola intervención');
   S.un.queue = null; let un = 0, press = 0; for (let i = 0; i < 40 && !(un && press); i++) { let k = 0; while (S.pend.length && k++ < 20) { if (S.pend[0].id === 'prensa') press++; G.act('decide', { i: 0 }); } G.act('endTurn'); un = S.talk.filter(x => x.k === 'un').length; }
   assert(un && press, 'la ONU deja discursos y hay ruedas de prensa'); assert(S.talk.length <= 40); noNaN(S, 'S'); }

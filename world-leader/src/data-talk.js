@@ -1,8 +1,8 @@
 /* =====================================================================
    WORLD LEADER · DATOS · CONVERSACIONES ENTRE LÍDERES, ASAMBLEA Y PRENSA
    Conversación: lista de líneas [quién, texto]. Quién: 'A' o 'B' (los dos
-   líderes), 'X' (un tercero). Huecos: {A} {B} {X} países, {LA} {LB} {LX}
-   líderes, {P} tu país, {PL} tú.
+   líderes), 'X' (un tercero). Huecos: {A} {B} {X} países, {LA} {LB} líderes,
+   {P} tu país, {PL} tú.
    Contextos: guerra, sanciones, tratado, golpe, anexión, paz, crisis,
    sobre ti (bien o mal) y charla de cumbre. Todo editable (verificado: false).
    ===================================================================== */
@@ -65,11 +65,13 @@
   };
   /* la asamblea de la ONU: discursos según el voto */
   D.UN_LINES = {
-    si: ['{L} ({C}): «Votamos a favor. El mundo no puede mirar hacia otro lado.»', '{L} ({C}): «Esta resolución es lo mínimo que debemos a las víctimas.»', '{L} ({C}): «{C} apoya la propuesta sin reservas.»'],
-    no: ['{L} ({C}): «Votamos en contra. Esto es injerencia disfrazada de justicia.»', '{L} ({C}): «Una resolución redactada por y para los poderosos.»', '{L} ({C}): «{C} no apoyará este doble rasero.»'],
-    abs: ['{L} ({C}): «Nos abstenemos. Ni con unos ni con otros.»'],
+    si: ['«Votamos a favor. El mundo no puede mirar hacia otro lado.»', '«Esta resolución es lo mínimo que debemos a las víctimas.»', '«{C} apoya la propuesta sin reservas.»'],
+    no: ['«Votamos en contra. Esto es injerencia disfrazada de justicia.»', '«Una resolución redactada por y para los poderosos.»', '«{C} no apoyará este doble rasero.»'],
+    yo: { si: '«Votamos a favor.»', no: '«Votamos en contra.»', abs: '«Nos abstenemos.»' },
     fin: { si: 'La presidenta de la Asamblea: «La resolución queda aprobada.» Aplausos en media sala.', no: 'La presidenta de la Asamblea: «La resolución queda rechazada.» Murmullos en el hemiciclo.' }
   };
+  /* ajustes: frecuencia y alcance de las conversaciones */
+  D.TALK_CFG = { keep: 40, perTurn: 2, replyTurns: 2, gossip: .3, chat: .1, pressChance: .35, pressCool: 5, notableGdp: 300, chatGdp: 600, unSpeakers: 2 };
   /* rueda de prensa: preguntas de periodistas según cómo te va */
   D.MEDIA = ['The Global Times', 'Le Monde Diplomatique', 'Agencia Andina', 'Al Jazira', 'Der Spiegel', 'El Correo del Sur', 'Nikkei Asia', 'Radio Continente'];
   const Q = [

@@ -2034,8 +2034,8 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 /* =====================================================================
    WORLD LEADER · DATOS · CONVERSACIONES ENTRE LÍDERES, ASAMBLEA Y PRENSA
    Conversación: lista de líneas [quién, texto]. Quién: 'A' o 'B' (los dos
-   líderes), 'X' (un tercero). Huecos: {A} {B} {X} países, {LA} {LB} {LX}
-   líderes, {P} tu país, {PL} tú.
+   líderes), 'X' (un tercero). Huecos: {A} {B} {X} países, {LA} {LB} líderes,
+   {P} tu país, {PL} tú.
    Contextos: guerra, sanciones, tratado, golpe, anexión, paz, crisis,
    sobre ti (bien o mal) y charla de cumbre. Todo editable (verificado: false).
    ===================================================================== */
@@ -2098,11 +2098,13 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
   };
   /* la asamblea de la ONU: discursos según el voto */
   D.UN_LINES = {
-    si: ['{L} ({C}): «Votamos a favor. El mundo no puede mirar hacia otro lado.»', '{L} ({C}): «Esta resolución es lo mínimo que debemos a las víctimas.»', '{L} ({C}): «{C} apoya la propuesta sin reservas.»'],
-    no: ['{L} ({C}): «Votamos en contra. Esto es injerencia disfrazada de justicia.»', '{L} ({C}): «Una resolución redactada por y para los poderosos.»', '{L} ({C}): «{C} no apoyará este doble rasero.»'],
-    abs: ['{L} ({C}): «Nos abstenemos. Ni con unos ni con otros.»'],
+    si: ['«Votamos a favor. El mundo no puede mirar hacia otro lado.»', '«Esta resolución es lo mínimo que debemos a las víctimas.»', '«{C} apoya la propuesta sin reservas.»'],
+    no: ['«Votamos en contra. Esto es injerencia disfrazada de justicia.»', '«Una resolución redactada por y para los poderosos.»', '«{C} no apoyará este doble rasero.»'],
+    yo: { si: '«Votamos a favor.»', no: '«Votamos en contra.»', abs: '«Nos abstenemos.»' },
     fin: { si: 'La presidenta de la Asamblea: «La resolución queda aprobada.» Aplausos en media sala.', no: 'La presidenta de la Asamblea: «La resolución queda rechazada.» Murmullos en el hemiciclo.' }
   };
+  /* ajustes: frecuencia y alcance de las conversaciones */
+  D.TALK_CFG = { keep: 40, perTurn: 2, replyTurns: 2, gossip: .3, chat: .1, pressChance: .35, pressCool: 5, notableGdp: 300, chatGdp: 600, unSpeakers: 2 };
   /* rueda de prensa: preguntas de periodistas según cómo te va */
   D.MEDIA = ['The Global Times', 'Le Monde Diplomatique', 'Agencia Andina', 'Al Jazira', 'Der Spiegel', 'El Correo del Sur', 'Nikkei Asia', 'Radio Continente'];
   const Q = [
@@ -5755,63 +5757,67 @@ hook('world', () => {
    golpes, anexiones, paces, crisis). Al final se convierten en diálogos
    que el jugador puede leer y, si quiere, en los que puede intervenir.
    También: debate en la Asamblea de la ONU y ruedas de prensa.
-   Textos en src/data-talk.js.
+   Textos y ajustes en src/data-talk.js (D.TALK, D.TALK_CFG…).
    ===================================================================== */
-hook('new', () => { S.talk = []; S.talkQ = []; S.tkId = 0; }); hook('load', () => { S.talk = S.talk || []; S.talkQ = S.talkQ || []; S.tkId = S.tkId || 0; });
-const notable = z => !!S.c[z] && S.c[z].alive && !isP(z) && (S.c[z].gdp > 300 || nb(S.player).includes(z) || alliesOf(S.player).includes(z));
-const topic = (k, a, b) => { if (S.talkQ && S.c[a] && S.c[b] && a !== b && !isP(a) && !isP(b) && (notable(a) || notable(b))) S.talkQ.push([k, a, b]); };
+hook('new', () => { S.talk = []; S.talkQ = []; S.tkId = 0; S.pressT = 0; });
+hook('load', () => { S.talk = S.talk || []; S.talkQ = S.talkQ || []; S.tkId = S.tkId || 0; S.pressT = S.pressT || 0; });
+const TC = D.TALK_CFG;
+const fill = (s, m) => s.replace(/\{(\w+)\}/g, (all, k) => m[k] != null ? m[k] : all);
+const byGdp = (...not) => alive().filter(z => !isP(z) && !not.includes(z)).sort((a, b) => S.c[b].gdp - S.c[a].gdp);
+const bigOther = (...not) => pick(byGdp(...not).slice(0, 12));
+const notable = z => !!S.c[z] && S.c[z].alive && !isP(z) && (S.c[z].gdp > TC.notableGdp || nb(S.player).includes(z) || alliesOf(S.player).includes(z));
+const topic = (k, a, b) => { if (S.c[a] && S.c[b] && a !== b && !isP(a) && !isP(b) && (notable(a) || notable(b))) S.talkQ.push([k, a, b]); };
+const talkOpen = c => !!c.rep && !c.done && c.t >= S.turn - TC.replyTurns;
+function addTalk(c) { c.id = ++S.tkId; c.t = S.turn; S.talk.push(c); if (S.talk.length > TC.keep) S.talk.splice(0, S.talk.length - TC.keep); return c; }
+/* los temas se anotan donde ocurren */
 { const w0 = startWar; startWar = (a, d) => { const w = w0(a, d); if (w) topic('war', a, d); return w; }; }
 { const s0 = addSanction; addSanction = (by, on) => { const r = s0(by, on); if (r) topic('sanc', by, on); return r; }; }
 { const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); }; }
-{ const e0 = endWar; endWar = (w, kind) => { const a = w.att[0], d = w.def[0]; e0(w, kind); if (kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); }; }
+{ const e0 = endWar; endWar = (w, kind) => { const live = S.wars.includes(w), a = w.att[0], d = w.def[0]; e0(w, kind); if (live && kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); }; }
 { const c0 = coup; coup = iso => { c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); }; }
-{ const a0 = annex; annex = (v, t) => { const r = a0(v, t); topic('annex', v, t); return r; }; }
+{ const a0 = annex; annex = (v, t) => { const was = S.c[v].alive, r = a0(v, t); if (was && !S.c[v].alive) topic('annex', v, t); return r; }; }
 { const i0 = infect; infect = (iso, src) => { const r = i0(iso, src); if (r) topic('crisis', iso, src || bigOther(iso)); return r; }; }
-const bigOther = (...not) => pick(alive().filter(z => !isP(z) && !not.includes(z)).sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 12));
 
 /* arma un diálogo con una plantilla de D.TALK */
 function converse(k, a, b) {
-  const T = D.TALK[k]; if (!T || !S.c[a] || !S.c[b]) return null; const x = bigOther(a, b), me = S.player;
-  const sub = s => s.split('{A}').join(nm(a)).split('{B}').join(nm(b)).split('{X}').join(x ? nm(x) : 'la comunidad internacional').split('{LA}').join(S.c[a].lider.n).split('{LB}').join(S.c[b].lider.n)
-    .split('{LX}').join(x ? S.c[x].lider.n : '').split('{P}').join(P().n).split('{PL}').join(S.leader.n);
-  const lines = pick(T).filter(l => l[0] !== 'X' || x).map(l => [l[0] === 'A' ? a : l[0] === 'B' ? b : x, sub(l[1])]);
-  const rep = /^gossip/.test(k) ? k : ['war', 'sanc', 'coup', 'annex'].includes(k) ? 'duel' : null;
-  const c = { id: ++S.tkId, t: S.turn, k, a, b, lines, rep, done: 0 }; S.talk.push(c); if (S.talk.length > 40) S.talk.splice(0, S.talk.length - 40); return c;
+  const T = D.TALK[k]; if (!T || !S.c[a] || !S.c[b]) return null; const x = bigOther(a, b);
+  const m = { A: nm(a), B: nm(b), X: x ? nm(x) : 'la comunidad internacional', LA: S.c[a].lider.n, LB: S.c[b].lider.n, P: P().n, PL: S.leader.n };
+  const lines = pick(T).filter(l => l[0] !== 'X' || x).map(l => [l[0] === 'A' ? a : l[0] === 'B' ? b : x, fill(l[1], m)]);
+  return addTalk({ k, a, b, lines, rep: /^gossip/.test(k) ? k : ['war', 'sanc', 'coup', 'annex'].includes(k) ? 'duel' : null, done: 0 });
 }
 hook('late', () => {
-  const Qd = S.talkQ.splice(0), seen = new Set(), done = [];
-  for (const [k, a, b] of shuffle(Qd)) { const key = [a, b].sort().join(); if (seen.has(key) || done.length >= 2) continue; seen.add(key); done.push(converse(k, a, b)); }
-  const me = S.player, L = alive().filter(z => z !== me && S.c[z].gdp > 150);
-  if (chance(.3) && L.length > 3) { const byRel = L.slice().sort((x, y) => rel(me, y) - rel(me, x)), good = chance(.5), pool = good ? byRel.slice(0, 6) : byRel.slice(-6), [a, b] = shuffle(pool);
-    if (a && b && (good ? rel(me, a) > 20 : rel(me, a) < -10)) converse(good ? 'gossipGood' : 'gossipBad', a, b); }
-  if (chance(.1)) { const [a, b] = shuffle(L.filter(z => S.c[z].gdp > 600)); if (a && b) converse('chat', a, b); }
+  const seen = new Set(); let n = 0;
+  for (const [k, a, b] of shuffle(S.talkQ.splice(0))) { const key = [a, b].sort().join(); if (seen.has(key) || n >= TC.perTurn) continue; seen.add(key); if (converse(k, a, b)) n++; }
+  const me = S.player, L = alive().filter(z => z !== me && S.c[z].gdp > TC.notableGdp / 2);
+  if (chance(TC.gossip)) { const good = chance(.5), pool = shuffle(L.filter(z => good ? rel(me, z) > 20 : rel(me, z) < -10)); if (pool.length >= 2) converse(good ? 'gossipGood' : 'gossipBad', pool[0], pool[1]); }
+  if (chance(TC.chat)) { const [a, b] = shuffle(L.filter(z => S.c[z].gdp > TC.chatGdp)); if (a && b) converse('chat', a, b); }
 });
 /* intervenir en una conversación pública */
 ACT.talkReply = a => {
-  const c = S.talk.find(x => x.id === +a.id); if (!c || !c.rep || c.done) return fail('Esa conversación ya no admite respuesta'); if (c.t < S.turn - 2) return fail('Ese debate ya se enfrió');
+  const c = S.talk.find(x => x.id === +a.id); if (!c || !talkOpen(c)) return fail('Esa conversación ya no admite respuesta');
   const o = (D.TALK_REPLY[c.rep] || [])[+a.i]; if (!o) return fail('Respuesta inválida');
-  const s = o[1].replace(/rel\.([AB])(?=[+-])/g, (m, w) => 'rel.' + (w === 'A' ? c.a : c.b));
-  applyFx(D.fx(s), {}); c.done = 1; c.lines.push([S.player, o[0].split('{A}').join(nm(c.a)).split('{B}').join(nm(c.b))]); return { msg: 'Tu respuesta da la vuelta al mundo' };
+  applyFx(D.fx(o[1].replace(/rel\.([AB])(?=[+-])/g, (all, w) => 'rel.' + (w === 'A' ? c.a : c.b))), {});
+  c.done = 1; c.lines.push([S.player, fill(o[0], { A: nm(c.a), B: nm(c.b) })]); return { msg: 'Tu respuesta da la vuelta al mundo' };
 };
 FREE.talkReply = 1;
 
-/* Asamblea de la ONU: cada voto importante deja discursos */
+/* Asamblea de la ONU: cada voto deja discursos */
 { const v0 = OPS.unVote; OPS.unVote = a => { const r = S.un.cur; v0(a); const last = S.un.last; if (!r || !last || last.r !== r) return;
-  const big = alive().filter(z => !isP(z)).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 14), U = D.UN_LINES, me = S.player, lines = [];
-  const pool = { si: shuffle(U.si.slice()), no: shuffle(U.no.slice()) }, say = (z, side) => lines.push([z, (pool[side].pop() || pick(U[side])).split('{L}').join(S.c[z].lider.n).split('{C}').join(S.c[z].n)]);
-  const yes = shuffle(big.filter(z => unScore(z, r) > .12)).slice(0, 2), no = shuffle(big.filter(z => unScore(z, r) < -.12)).slice(0, 2);
-  yes.forEach(z => say(z, 'si')); no.forEach(z => say(z, 'no')); lines.push([me, `${S.leader.n} (${P().n}): «${a.v > 0 ? 'Votamos a favor.' : a.v < 0 ? 'Votamos en contra.' : 'Nos abstenemos.'}»`]);
+  const big = byGdp().slice(0, 14), U = D.UN_LINES, me = S.player, lines = [], pool = { si: shuffle(U.si.slice()), no: shuffle(U.no.slice()) };
+  const yes = shuffle(big.filter(z => unScore(z, r) > .12)).slice(0, TC.unSpeakers), no = shuffle(big.filter(z => unScore(z, r) < -.12)).slice(0, TC.unSpeakers);
+  for (const [L, side] of [[yes, 'si'], [no, 'no']]) for (const z of L) lines.push([z, fill(pool[side].pop() || pick(U[side]), { C: S.c[z].n })]);
+  lines.push([me, U.yo[a.v > 0 ? 'si' : a.v < 0 ? 'no' : 'abs']]);
   lines.push(['', `${last.pass ? U.fin.si : U.fin.no} (${last.yes} a favor, ${last.no} en contra, ${last.abs} abstenciones)`]);
-  S.talk.push({ id: ++S.tkId, t: S.turn, k: 'un', a: yes[0] || me, b: no[0] || me, lines, rep: null, done: 1, title: 'Asamblea de la ONU · ' + UNT[r.type] }); }; }
+  addTalk({ k: 'un', a: yes[0] || me, b: no[0] || me, lines, rep: null, done: 1, title: 'Asamblea de la ONU · ' + UNT[r.type] }); }; }
 
 /* rueda de prensa: cada pocos turnos, una pregunta según cómo te va */
 hook('late', () => {
-  if (S.over || S.turn < 3 || S.pend.length > 1 || (S.pressT || 0) > S.turn || !chance(.35)) return;
+  if (S.over || S.turn < 3 || S.pend.length > 1 || S.pressT > S.turn || !chance(TC.pressChance)) return;
   const ap = approval(), ok = { war: inWar(S.player), crisis: !!S.eco.cri, low: ap < 40, high: ap > 62, sanc: S.sanc.filter(s => s.on === S.player).length >= 3, any: true };
   const Lq = D.PRESS.filter(q => ok[q.if]), hot = Lq.filter(q => q.if !== 'any'), q = pick(hot.length && chance(.7) ? hot : Lq); if (!q) return;
-  const T = pick(alive().filter(z => z !== S.player && (S.c[z].gdp > 400 || nb(S.player).includes(z)))) || null, m = pick(D.MEDIA);
-  S.pressT = S.turn + 5;
-  fireEvent({ id: 'prensa', tgt: null, t: 'Rueda de prensa', x: `${m}: «${q.q.split('{X}').join(T ? nm(T) : 'sus vecinos')}»`, opts: q.opts }, T || S.player);
+  const T = pick(alive().filter(z => z !== S.player && (S.c[z].gdp > TC.notableGdp || nb(S.player).includes(z)))) || null;
+  S.pressT = S.turn + TC.pressCool;
+  fireEvent({ id: 'prensa', tgt: null, t: 'Rueda de prensa', x: `${pick(D.MEDIA)}: «${fill(q.q, { X: T ? nm(T) : 'sus vecinos' })}»`, opts: q.opts }, T || S.player);
 });
 
 
@@ -5903,7 +5909,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo,
+    justInfo, talkOpen,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -8378,8 +8384,8 @@ const scoreHTML = sc => `<div class="score5">${sc.parts.map(p => `<div class="ar
 const codeBoxHTML = () => `<h4>${gi('acuerdo')} Compartir esta partida</h4><p class="mut fine">El código guarda la semilla y la configuración inicial: quien lo pegue empezará con el mismo mundo.</p><input class="code5" readonly value="${esc(P5.gameCode())}" onclick="this.select()">`;
 { const d0 = dockHTML; dockHTML = () => { let h = d0(); const s = S(), ci = s && P5.campInfo(); if (s && P5.opt('solo') && s.setup.mode !== 'sandbox') h = h.replace(/<button data-a="open" data-p="edit"[\s\S]*?<\/button>/, '');
   if (ci && ci.K.end == null) h += `<button class="camp-pill glass" data-a="objOpen" title="Objetivos de la campaña">${gi('bandera')} ${esc(ci.st.n)} · ${ci.goals.filter(g => g.ok).length}/${ci.goals.length}${ci.left != null ? ` · ${Math.max(0, ci.left)}t` : ''}</button>`;
-  else if (s && s.setup.mode === 'rapido') h += `<button class="camp-pill glass" data-a="objOpen">${gi('ofensiva')} Turno ${s.turn + 1}/${D.QUICK_TURNS} · ${P5.score().total} pts${bestRec() != null ? ' · récord ' + bestRec() : ''}</button>`;
-  else if (s && s.setup.mode === 'semana' && !s.over) h += `<button class="camp-pill glass" data-a="objOpen">${gi('trofeo')} Reto semanal · ${P5.score().total} pts${bestRec() != null ? ' · récord ' + bestRec() : ''}</button>`; return h; }; }
+  else if (s && !s.over && (s.setup.mode === 'rapido' || s.setup.mode === 'semana')) { const sc = P5.score().total, br = bestRec(), rec = br != null ? ' · récord ' + br : '';
+    h += `<button class="camp-pill glass" data-a="objOpen">${s.setup.mode === 'rapido' ? `${gi('ofensiva')} Turno ${s.turn + 1}/${D.QUICK_TURNS}` : `${gi('trofeo')} Reto semanal`} · ${sc} pts${rec}</button>`; } return h; }; }
 const GOAL_GO = { tr: ['dip'], rel: ['dip'], relBig: ['dip'], noSanc: ['dip'], bloc: ['dip'], rep: ['dip'], med: ['world'], laws: ['pol'], reg: ['pol'], appr: ['pol'], stab: ['pol'], gdpX: ['eco'], gdpRank: ['eco'], debtLt: ['eco'], tech: ['tec'], firsts: ['tec'], annex: ['mil'], occ: ['mil'], warsWon: ['mil'], powRank: ['mil'], peace: ['mil'] };
 H.goGoal = d => { const g = GOAL_GO[d.k]; if (!g) return; closeModal(); UI.panel = g[0]; UI.render(); refreshMap(); if (d.k === 'med') toast('Toca en el globo a uno de los bandos de una guerra y pulsa «Mediar»'); };
 H.objOpen = () => { UI.panel = 'sys'; UI.tab.sys = 'obj'; UI.render(); };
@@ -8602,18 +8608,18 @@ PTABS.world.splice(1, 0, ['con', 'Conversaciones']);
 const TK_N = { war: 'Guerra', sanc: 'Sanciones', treaty: 'Tratado', coup: 'Golpe de Estado', annex: 'Anexión', peace: 'Paz', crisis: 'Crisis', gossipGood: 'Hablan de ti', gossipBad: 'Hablan de ti', chat: 'En los pasillos de la cumbre', un: 'Asamblea de la ONU' };
 const face = z => { if (!z || !CC(z)) return `<span class="tk-face sys">${gi('cultural')}</span>`; const L = z === me() ? S().leader : CC(z).lider; return `<span class="tk-face">${portraitSVG(L.n, hash(L.n) % 97)}${L.img ? `<img src="${esc(L.img)}" alt="" onerror="this.remove()">` : ''}</span>`; };
 function talkCard(c) {
-  const s = S(), open = c.rep && !c.done && c.t >= s.turn - 2, side = z => 'tk-' + (z === me() ? 'me' : z === c.a ? 'l' : z === c.b ? 'r' : 'x');
+  const open = Q.talkOpen(c), side = z => 'tk-' + (z === me() ? 'me' : z === c.a ? 'l' : z === c.b ? 'r' : 'x');
   return `<div class="card talk5"><p class="eyebrow">${esc(c.title || TK_N[c.k] || 'Conversación')} · ${esc(turnDate(c.t))}</p>
     ${c.lines.map(([z, t]) => `<div class="tk-line ${side(z)}">${z ? face(z) : ''}<div class="tk-b">${z && CC(z) ? `<small>${fl(z)} ${esc(z === me() ? S().leader.n : CC(z).lider.n)}</small>` : ''}<p>${esc(t)}</p></div></div>`).join('')}
-    ${open ? `<div class="row wrap tk-rep"><small class="mut">Intervenir:</small>${D.TALK_REPLY[c.rep].map((o, i) => `<button class="btn sm" data-a="talkReply" data-id="${c.id}" data-i="${i}">${esc(o[0].split('{A}').join(CC(c.a).n).split('{B}').join(CC(c.b).n))}</button>`).join('')}</div>` : ''}</div>`;
+    ${open ? `<div class="row wrap tk-rep"><small class="mut">Intervenir:</small>${D.TALK_REPLY[c.rep].map((o, i) => `<button class="btn sm" data-a="talkReply" data-id="${c.id}" data-i="${i}">${esc(o[0].replace('{A}', CC(c.a).n).replace('{B}', CC(c.b).n))}</button>`).join('')}</div>` : ''}</div>`;
 }
 const talkHTML = () => { const L = (S().talk || []).slice().reverse(); return L.length ? `<p class="mut fine">Lo que los líderes se dicen en cumbres, pasillos y asambleas. En los debates abiertos puedes intervenir: tomar partido tiene consecuencias.</p>${L.map(talkCard).join('')}` : '<p class="mut pad">Aún no ha hablado nadie. Termina el turno y escucha.</p>'; };
 H.talkReply = d => { act('talkReply', { id: +d.id, i: +d.i }); UI.render(); };
 H.talkOpen = () => { $('#tkpop')?.remove(); UI.panel = 'world'; UI.tab.world = 'con'; UI.render(); };
 /* tras el turno: el diálogo más jugoso asoma sobre el globo */
-Bus.on('turn', () => { const s = S(); if (!s || !s.talk) return; const fresh = s.talk.filter(c => c.t === s.turn); if (!fresh.length) return;
-  const c = fresh.find(x => x.rep) || fresh[0]; let tries = 0; clearInterval(UI.tkT);
-  UI.tkT = setInterval(() => { if (++tries > 120 || !S() || S().turn !== s.turn) return clearInterval(UI.tkT); if (!$('#modal').hidden || !$('#cine').hidden) return; clearInterval(UI.tkT);
+Bus.on('turn', () => { clearInterval(UI.tkT); const s = S(); if (!s || !s.talk) return; const t0 = s.turn, fresh = s.talk.filter(c => c.t === t0); if (!fresh.length) return;
+  const c = fresh.find(x => x.rep) || fresh[0]; let tries = 0;
+  UI.tkT = setInterval(() => { if (++tries > 120 || !S() || S().turn !== t0) return clearInterval(UI.tkT); if (!$('#modal').hidden || !$('#cine').hidden) return; clearInterval(UI.tkT);
     if (!CFG.rm) fresh.slice(0, 3).forEach((x, i) => x.a !== x.b && setTimeout(() => Globe.trip({ a: x.a, b: x.b, color: 0x4fd8ff }), i * 600));
     $('#tkpop')?.remove(); const d = document.createElement('button'); d.id = 'tkpop'; d.className = 'tkpop glass'; d.dataset.a = 'talkOpen';
     d.innerHTML = `<small class="eyebrow">${esc(TK_N[c.k] || 'Conversación')} · ${fresh.length > 1 ? fresh.length + ' conversaciones' : 'escucha'}</small>${c.lines.slice(0, 2).map(([z, t]) => `<p>${z && CC(z) ? fl(z) + ' <b>' + esc(CC(z).lider.n) + ':</b> ' : ''}${esc(t)}</p>`).join('')}<small class="gold">Ver conversación ›</small>`;
