@@ -33,7 +33,7 @@ function victCheck() {
   const me = S.player, c = P(), m = metrics(), all = alive().reduce((a, z) => a + power(z), 0) || 1, second = alive().filter(z => z !== me).reduce((a, z) => Math.max(a, S.c[z].gdp), 0);
   return {
     dom: power(me) / all >= .25 && m.annex >= 3, eco: c.gdp >= second * 1.6 && m.gdpX >= 1.5, dip: m.ali >= 12 && m.com >= 30 && m.conf >= 50,
-    tec: m.firsts >= 7 && m.tech >= 12, sup: m.turn >= 120, leg: m.turn >= 60 && legacy().score >= 85
+    tec: m.firsts >= 7 && m.tech >= 12, sup: m.turn >= 120, leg: m.turn >= 80 && legacy().score >= 88
   };
 }
 hook('late', () => {

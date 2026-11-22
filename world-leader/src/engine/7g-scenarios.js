@@ -158,7 +158,7 @@ const goalText = g => (GOALN[g[0]] || (() => g[0]))(g);
 /* ---- campaña: eventos por etapa, objetivos, plazos y finales ---- */
 hook('late', () => {
   const K = S.camp; if (!K || K.end != null || S.over) return; const k = CA(K.id); if (!k) return; const st = k.stages[K.st];
-  for (const e of k.events) if (e.st === K.st && !K.fired[e.id] && S.turn - K.s0 >= e.at && !S.pend.length) { K.fired[e.id] = 1; fireEvent(Object.assign({ tgt: null }, e), null); }
+  for (const e of k.events) if (e.st === K.st && !K.fired[e.id] && S.turn - K.s0 >= e.at && S.pend.length < 2) { K.fired[e.id] = 1; fireEvent(Object.assign({ tgt: null }, e), null); }
   if ((k.lose || []).some(goalOk)) { S.p5.tl.push({ t: S.turn, x: 'La campaña fracasa' }); return over('camp_lose'); }
   if (st.goal.every(goalOk)) {
     K.done.push(S.turn); S.p5.tl.push({ t: S.turn, x: `Etapa cumplida: ${st.n}` }); news(`Campaña · etapa cumplida: ${st.n}`, 'pol', S.player, 3); Bus.emit('campStage', { i: K.st, n: st.n });

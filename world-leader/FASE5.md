@@ -29,7 +29,7 @@ Código: `src/engine/7g-scenarios.js` (escenarios, modos, dificultad, campañas,
 | Científica | Primero del mundo en 7 descubrimientos y 12 tecnologías | EE. UU. lleva 6 primeros puestos en el turno 42: alcanzable, pero hay que pelearla. |
 | Dominación | 25% del poder militar mundial y 3 anexiones | La más difícil. Desde la mejora posterior las IAs pagan el 60% de su mantenimiento (`7i-balance.js`) y ya no se rearman sin límite. |
 | Supervivencia | 120 trimestres en el poder | Larga a propósito. |
-| Legado | Turno ≥ 60 y juicio de la historia ≥ 85 | Exige un mandato largo y bueno a la vez. |
+| Legado | Turno ≥ 80 y juicio de la historia ≥ 88 | Exige un mandato largo y bueno a la vez. Con juego equilibrado el legado se queda en 75–83: hacen falta méritos extra (paz, descubrimientos, reformas). |
 
 **Puntuación** (0–100, pública en Objetivos): economía 20, bienestar 15, diplomacia 15, paz y prestigio 12, ciencia 12, poder 12, permanencia 8 y objetivos 6. Cada bloque tiene tope, así que la guerra o el dinero por sí solos no pasan de 12 o 20 puntos. Los crímenes de guerra restan en «paz y prestigio».
 
@@ -64,3 +64,10 @@ Las partidas de fases anteriores cargan como «partida libre, escenario actual»
 - `src/engine/7i-balance.js`: la IA paga el 60% del mantenimiento de su ejército (130% en guerra). Si su caja baja del −1% del PIB, desmoviliza un 4% por turno. En el escenario actual, India pasa de multiplicar su poder ×16 en 40 turnos a ×3,5. Es el valor `AI_UPKEEP`.
 - Alerta de campaña: cuando a una etapa le quedan 4 turnos o menos, aparece en «Requiere tu atención» con lo que falta, y te lleva a Objetivos.
 - Ajustes: Mongolia pide relación 10 con ambos vecinos; el mediador, reputación de paz 20.
+
+## Repaso de equilibrio (todo encendido)
+
+- El juicio de la historia sumaba crecimiento sin tope y llegaba a 100 hacia el turno 50: un bot sencillo ganaba por Legado en 16 de 16 partidas en el turno 60. Ahora cada componente tiene tope (7d-story.js) y la victoria pide turno 80 y 88 puntos.
+- La IA ya no se rearma sin control: además de pagar mantenimiento, no supera 2 veces su ejército inicial en paz ni 3,5 en guerra (ajustado por el crecimiento de su economía), y una compra grande se recorta. Antes India multiplicaba su ejército por 9 en 60 turnos; ahora por 2 (3,5 en el escenario de tensión). Valores en `7i-balance.js`.
+- Los eventos de campaña llegaban solo con cero decisiones pendientes y podían retrasarse indefinidamente; ahora admiten una decisión en espera.
+- Media de decisiones por turno con todo activo: unas 2 (máximo 5–6).

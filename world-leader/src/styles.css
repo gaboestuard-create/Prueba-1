@@ -417,3 +417,7 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
 .rlhot { margin: 6px 0; align-items: center; }
 .pyways { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
+.todo5 .arow { gap: 10px; align-items: center; } .todo5 .num { color: var(--gold); min-width: 14px; }
+.tippop { position: fixed; right: var(--sr); top: calc(130px + var(--st)); z-index: 8; width: min(340px, calc(100vw - 32px)); padding: 12px 14px; border-left: 3px solid var(--gold); animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.tippop p { margin: 6px 0 8px; } .tippop .eyebrow .gi { width: 13px; height: 13px; fill: var(--gold); vertical-align: -2px; }
+@media (max-width: 700px) { .tippop { top: auto; bottom: calc(150px + var(--sb)); } }

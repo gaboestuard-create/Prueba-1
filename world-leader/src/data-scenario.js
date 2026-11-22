@@ -74,7 +74,7 @@
     { id: 'dip', n: 'Victoria diplomática', x: '12 alianzas o pactos de defensa, 30 tratados comerciales y confianza internacional de 50.', ic: 'acuerdo' },
     { id: 'tec', n: 'Victoria científica y cultural', x: 'Tu país fue el primero del mundo en 7 grandes descubrimientos y tu prestigio cultural es alto.', ic: 'tec' },
     { id: 'sup', n: 'Supervivencia', x: 'Sigues en el poder tras 120 trimestres (30 años).', ic: 'seg' },
-    { id: 'leg', n: 'Legado', x: 'Tras al menos 60 trimestres, el juicio de la historia te da 85 o más.', ic: 'trofeo' }
+    { id: 'leg', n: 'Legado', x: 'Tras al menos 80 trimestres, el juicio de la historia te da 88 o más.', ic: 'trofeo' }
   ];
 
   /* ---------- modos y reto semanal ---------- */

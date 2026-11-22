@@ -143,7 +143,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   // campaña: eventos, etapas, plazos y finales
   G.newGame({ name: '', seed: 9, setup: { mode: 'camp', camp: 'reformista' } }); const S = G.S; assert(S.player === 'CU' && S.leader.n === 'Elena Varona' && S.camp && S.camp.st === 0);
   S.stats.laws = 5; S.c.CU.stab = 70; S.pend = []; G.act('endTurn'); assert.strictEqual(S.camp.st, 1, 'la etapa avanza al cumplir los objetivos');
-  for (let i = 0; i < 3 && !S.flags.re_dummy; i++) { let k = 0; while (S.pend.length && k++ < 9) G.act('decide', { i: 0 }); G.act('endTurn'); } assert(S.camp.fired.re_deshielo, 'los eventos de campaña llegan');
+  for (let i = 0; i < 6 && !S.camp.fired.re_deshielo; i++) { let k = 0; while (S.pend.length && k++ < 9) G.act('decide', { i: 0 }); G.act('endTurn'); } assert(S.camp.fired.re_deshielo, 'los eventos de campaña llegan');
   assert(G.act('campSkip').ok && S.camp.st === 2); S.flags.re_mercado = 1; assert(G.act('campSkip').ok && S.over.r === 'camp_win'); const ci = P5.campInfo(); assert(ci.end && ci.K.end >= 0 && ci.K.end <= 2, 'hay un final');
   for (const k of D.CAMP) { assert(k.stages.length === 3 && k.endings.length === 3 && !k.endings[2].if, 'campaña completa: ' + k.id); for (const s2 of k.stages) for (const g of s2.goal) assert(P5.goalText(g) !== g[0], 'objetivo con texto: ' + g[0]);
     for (const e of k.events) assert(e.opts.length >= 2 && e.opts.every(x => Array.isArray(x.fx)), 'evento de campaña: ' + e.id); }

@@ -429,6 +429,10 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
 .rlhot { margin: 6px 0; align-items: center; }
 .pyways { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
+.todo5 .arow { gap: 10px; align-items: center; } .todo5 .num { color: var(--gold); min-width: 14px; }
+.tippop { position: fixed; right: var(--sr); top: calc(130px + var(--st)); z-index: 8; width: min(340px, calc(100vw - 32px)); padding: 12px 14px; border-left: 3px solid var(--gold); animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.tippop p { margin: 6px 0 8px; } .tippop .eyebrow .gi { width: 13px; height: 13px; fill: var(--gold); vertical-align: -2px; }
+@media (max-width: 700px) { .tippop { top: auto; bottom: calc(150px + var(--sb)); } }
 
 </style>
 
@@ -1807,7 +1811,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     { id: 'dip', n: 'Victoria diplomática', x: '12 alianzas o pactos de defensa, 30 tratados comerciales y confianza internacional de 50.', ic: 'acuerdo' },
     { id: 'tec', n: 'Victoria científica y cultural', x: 'Tu país fue el primero del mundo en 7 grandes descubrimientos y tu prestigio cultural es alto.', ic: 'tec' },
     { id: 'sup', n: 'Supervivencia', x: 'Sigues en el poder tras 120 trimestres (30 años).', ic: 'seg' },
-    { id: 'leg', n: 'Legado', x: 'Tras al menos 60 trimestres, el juicio de la historia te da 85 o más.', ic: 'trofeo' }
+    { id: 'leg', n: 'Legado', x: 'Tras al menos 80 trimestres, el juicio de la historia te da 88 o más.', ic: 'trofeo' }
   ];
 
   /* ---------- modos y reto semanal ---------- */
@@ -5440,7 +5444,7 @@ function legacy() {
     [s.stats.annexed >= 2 || (s.stats.wars >= 3 && R.paz < -20), 'el conquistador', `Libró ${s.stats.wars} guerras y redibujó el mapa.`], [firsts >= 3, 'el visionario', `Su país fue el primero del mundo en ${firsts} grandes descubrimientos.`],
     [s.stats.laws >= 20, 'el reformador', `Aprobó ${s.stats.laws} leyes que cambiaron la vida diaria.`], [ap > 62, 'el querido', 'El pueblo lo quiso como a pocos.'], [crimes >= 3 || R.dem < -40, 'el tirano', 'Su nombre quedó ligado a la represión y a los crímenes de guerra.'],
     [g < -15, 'el de la ruina', `La economía se hundió un ${Math.round(-g)}%.`], [yrs < 2, 'el breve', 'Su paso por el poder fue tan corto que pocos lo recuerdan.']];
-  const hit = facts.filter(f => f[0]), title = hit.length ? hit[0][1] : 'el gestor', score = clamp(Math.round(50 + g / 3 + (ap - 50) / 2 + R.paz / 6 + R.gen / 8 + firsts * 3 - crimes * 6 - s.stats.annexed * 4), 0, 100);
+  const hit = facts.filter(f => f[0]), title = hit.length ? hit[0][1] : 'el gestor', score = clamp(Math.round(50 + clamp(g / 5, -20, 14) + clamp((ap - 50) / 2, -15, 10) + clamp(R.paz / 6, -10, 8) + clamp(R.gen / 8, -6, 5) + Math.min(firsts * 3, 9) + (s.stats.laws >= 20 ? 3 : 0) - crimes * 6 - s.stats.annexed * 4), 0, 100); /* cada mérito tiene tope: crecer sin parar no basta para la gloria */
   const text = (hit.slice(0, 3).map(f => f[2]).join(' ') || 'Gobernó sin grandes aciertos ni grandes desastres.') + ` Estuvo ${yrs >= 1 ? Math.round(yrs * 10) / 10 + ' años' : s.turn + ' trimestres'} en el poder.`;
   const key = s.diary.filter(d => ['war', 'peace', 'elec', 'tec', 'coup', 'dec'].includes(d.k)).slice(-8);
   return { name: `${s.leader.n}, ${title}`, title, score, text, key, stats: { yrs, g, ap, firsts, crimes, laws: s.stats.laws, wars: s.stats.wars, annexed: s.stats.annexed } };
@@ -5720,7 +5724,7 @@ const goalText = g => (GOALN[g[0]] || (() => g[0]))(g);
 /* ---- campaña: eventos por etapa, objetivos, plazos y finales ---- */
 hook('late', () => {
   const K = S.camp; if (!K || K.end != null || S.over) return; const k = CA(K.id); if (!k) return; const st = k.stages[K.st];
-  for (const e of k.events) if (e.st === K.st && !K.fired[e.id] && S.turn - K.s0 >= e.at && !S.pend.length) { K.fired[e.id] = 1; fireEvent(Object.assign({ tgt: null }, e), null); }
+  for (const e of k.events) if (e.st === K.st && !K.fired[e.id] && S.turn - K.s0 >= e.at && S.pend.length < 2) { K.fired[e.id] = 1; fireEvent(Object.assign({ tgt: null }, e), null); }
   if ((k.lose || []).some(goalOk)) { S.p5.tl.push({ t: S.turn, x: 'La campaña fracasa' }); return over('camp_lose'); }
   if (st.goal.every(goalOk)) {
     K.done.push(S.turn); S.p5.tl.push({ t: S.turn, x: `Etapa cumplida: ${st.n}` }); news(`Campaña · etapa cumplida: ${st.n}`, 'pol', S.player, 3); Bus.emit('campStage', { i: K.st, n: st.n });
@@ -5789,7 +5793,7 @@ function victCheck() {
   const me = S.player, c = P(), m = metrics(), all = alive().reduce((a, z) => a + power(z), 0) || 1, second = alive().filter(z => z !== me).reduce((a, z) => Math.max(a, S.c[z].gdp), 0);
   return {
     dom: power(me) / all >= .25 && m.annex >= 3, eco: c.gdp >= second * 1.6 && m.gdpX >= 1.5, dip: m.ali >= 12 && m.com >= 30 && m.conf >= 50,
-    tec: m.firsts >= 7 && m.tech >= 12, sup: m.turn >= 120, leg: m.turn >= 60 && legacy().score >= 85
+    tec: m.firsts >= 7 && m.tech >= 12, sup: m.turn >= 120, leg: m.turn >= 80 && legacy().score >= 88
   };
 }
 hook('late', () => {
@@ -5854,6 +5858,14 @@ hook('world', () => {
     c.tr -= upkeep(iso) * AI_UPKEEP * (inWar(iso) ? 1.3 : 1);
     if (c.tr < -c.gdp * .01) { for (const k in c.u) c.u[k] = Math.floor(c.u[k] * .96); c.tr = -c.gdp * .01; } }
 });
+/* techo de rearme: la IA no compra si su ejército ya supera N veces el inicial (ajustado a cuánto ha crecido su economía) */
+const AI_ARMS_X = 2, AI_ARMS_X_WAR = 3.5;
+const armsBase = c => { let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow; return v; };
+hook('new', () => { for (const iso of ISOS) { const c = S.c[iso]; c.p0 = armsBase(c); c.g0 = c.gdp; } });
+hook('load', () => { for (const iso of ISOS) { const c = S.c[iso]; if (c.p0 == null) { c.p0 = armsBase(c); c.g0 = c.gdp; } } });
+{ const b0 = aiBuy; aiBuy = iso => { const c = S.c[iso], cap = Math.max(c.p0, 20) * (inWar(iso) ? AI_ARMS_X_WAR : AI_ARMS_X) * Math.sqrt(Math.max(1, c.gdp / c.g0)), p0 = armsBase(c); if (p0 >= cap) return false;
+  const u0 = Object.assign({}, c.u), tr0 = c.tr, r = b0(iso), p1 = armsBase(c); if (p1 <= cap) return r;
+  const f = (cap - p0) / (p1 - p0); for (const k in c.u) c.u[k] = (u0[k] || 0) + Math.floor((c.u[k] - (u0[k] || 0)) * f); c.tr = tr0 - (tr0 - c.tr) * f; return r; }; } /* una compra no puede saltarse el techo: se recorta y se devuelve el dinero sobrante */
 /* campaña: alerta cuando a la etapa le quedan 4 turnos o menos */
 { const a0 = alerts; alerts = () => { const out = a0(), ci = campInfo();
   if (ci && ci.K.end == null && ci.left != null && ci.left <= 4) { const miss = ci.goals.filter(g => !g.ok).map(g => g.t);
@@ -8914,6 +8926,59 @@ function pyModal(res) { const p = Q.parley(); if (!p && !res) return closeModal(
 H.pyStart = d => { const r = act('parleyStart', { iso: d.iso, g: d.g }); if (r.ok) pyModal(); };
 H.pySay = d => { const p = Q.parley(), lines = p.lines, iso = p.iso, r = act('parleySay', { w: d.w }); if (!Q.parley()) { UI.render(); refreshMap(); pyModal({ lines: S().talk[S().talk.length - 1].lines, iso, msg: r.msg }); } else pyModal(); };
 H.pyQuit = () => { const iso = Q.parley().iso, r = act('parleyQuit'); UI.render(); pyModal({ lines: S().talk[S().talk.length - 1].lines, iso, msg: r.msg }); };
+
+
+/* ---------- ui/5k-guide.js ---------- */
+/* =====================================================================
+   INTERFAZ · GUÍA: «Qué hacer ahora» y consejos para descubrir el juego
+   - En el panel de asesores, arriba: las 3 cosas más urgentes con botón «Ir».
+   - Los primeros turnos de cada jugador, un consejo por turno sobre una
+     función que quizá no conoce (se recuerda en este navegador: wl_tips).
+   ===================================================================== */
+function todo() {
+  const s = S(), m = me(), c = CC(m), out = [], add = (p, t, go) => out.push({ p, t, go });
+  if (s.pend.length) add(9, `Tienes ${s.pend.length} decisión${s.pend.length > 1 ? 'es' : ''} pendiente${s.pend.length > 1 ? 's' : ''}`, { a: 'showPend' });
+  if (c.stab < 40) add(8, `Estabilidad baja (${Math.round(c.stab)}): calma a los sectores descontentos`, { p: 'pol', t: 'sec' });
+  for (const w of Q.warsOf(m)) if ((w.att.includes(m) ? w.score : -w.score) < -20) { add(8, 'Vas perdiendo una guerra: revisa el frente o pide la paz', { p: 'mil', t: 'gue' }); break; }
+  if (c.tr < 0) add(7, 'Caja en números rojos: revisa el presupuesto', { p: 'eco', t: 'pre' });
+  const hot = Q.rlList().find(([i]) => { const r = Q.rlInfo(i); return r.m >= D.RL.protestAt || (r.sep != null && r.sep >= D.RL.crisisAt - 8); });
+  if (hot) add(7, `${c.terr[hot[0]].n} está a punto de estallar`, { iso: m, i: hot[0] });
+  const ci = P5.campInfo(); if (ci && ci.K.end == null && ci.left != null && ci.left <= 6) add(7, `Campaña: ${ci.left} turnos para «${ci.st.n}»`, { p: 'sys', t: 'obj' });
+  const sx = s.sanc.filter(x => x.on === m); if (sx.length >= 2) add(5, `${sx.length} países te sancionan: pide que las levanten`, { iso: sx[0].by, dip: 1 });
+  const op = (s.talk || []).filter(Q.talkOpen); if (op.length) add(4, `${op.length} debate${op.length > 1 ? 's' : ''} en el que puedes intervenir`, { p: 'world', t: 'con' });
+  if (s.pol.cp >= 8) add(4, `Te sobra capital político (${s.pol.cp}): propone una ley`, { p: 'pol', t: 'ley' });
+  if (!s.tech.cur) add(4, 'Tus científicos están sin proyecto', { p: 'tec' });
+  const fr = Object.keys(s.c).filter(z => z !== m && CC(z).alive && !Q.atWar(m, z) && Q.rel(m, z) > 35 && !Q.hasT('com', m, z) && !((CC(z).ask.parley || 0) > s.turn)).sort((a, b) => CC(b).gdp - CC(a).gdp)[0];
+  if (fr) add(3, `${CC(fr).n} te aprecia y no tenéis tratado comercial: negocia en persona`, { iso: fr, dip: 1 });
+  return out.sort((a, b) => b.p - a.p).slice(0, 3);
+}
+const todoHTML = () => { const L = todo(); return `<div class="card todo5"><p class="eyebrow">Qué hacer ahora</p>${L.length ? L.map((x, i) => `<div class="arow"><b class="num">${i + 1}</b><span class="grow">${esc(x.t)}</span><button class="btn sm gold" data-a="goTo" data-k="${i}">Ir</button></div>`).join('') : '<p class="mut">Todo en orden. Buen momento para planear a largo plazo.</p>'}</div>`; };
+function goTo(g) { if (!g) return; closeModal(); if (g.a) return H[g.a](); if (g.dip) { UI.shTab = 'acu'; return H.dipOpen({ iso: g.iso }); }
+  if (g.iso) { UI.panel = null; UI.terrOpen = true; if (g.i != null) UI.terrSel = g.i; return selectCountry(g.iso, true); }
+  UI.panel = g.p; if (g.t) UI.tab[g.p] = g.t; UI.render(); refreshMap(); }
+H.goTo = d => goTo((todo()[+d.k] || {}).go);
+{ const a0 = PANELS.adv; PANELS.adv = t => todoHTML() + a0(t); }
+
+/* consejos de descubrimiento: uno por turno, cada uno una sola vez por navegador */
+const TIPS = [
+  ['adv', 'El botón de asesores (arriba) te dice qué hacer ahora y por qué.', { p: 'adv' }],
+  ['reg', 'Toca tu país y abre sus regiones: cada una tiene su malestar. El modo de mapa «Regiones» las pinta por separado.', { iso: '@me' }],
+  ['parley', 'En la ficha diplomática de cualquier país puedes negociar en persona: cada líder reacciona según su carácter.', { dip: '@ally' }],
+  ['con', 'Los líderes hablan entre ellos. En Mundo → Conversaciones puedes leerlos e intervenir.', { p: 'world', t: 'con' }],
+  ['obj', 'En Partida → Objetivos ves tu puntuación desglosada y cómo ganar.', { p: 'sys', t: 'obj' }],
+  ['zoom', 'Acerca la cámara: verás los nombres de estados y provincias. En Ajustes puedes cambiar la cámara y el fondo.', { p: 'sys', t: 'aju' }],
+  ['war', 'En Ejército → Guerras está la sala de guerra: frentes, logística y espionaje.', { p: 'mil', t: 'gue' }]
+];
+const tipsSeen = () => { try { return JSON.parse(localStorage.getItem('wl_tips') || '[]'); } catch (e) { return []; } };
+function showTip() { const s = S(); if (!s || s.over || s.turn > 14 || $('#tippop')) return; const seen = tipsSeen(), t = TIPS.find(x => !seen.includes(x[0])); if (!t) return;
+  try { localStorage.setItem('wl_tips', JSON.stringify(seen.concat(t[0]))); } catch (e) { }
+  const d = document.createElement('div'); d.id = 'tippop'; d.className = 'tippop glass'; d.innerHTML = `<small class="eyebrow">${gi('idea' in GI ? 'idea' : 'pin')} Consejo</small><p>${esc(t[1])}</p><div class="row end"><button class="btn sm ghost" data-a="tipClose">Entendido</button><button class="btn sm gold" data-a="tipGo" data-k="${t[0]}">Mostrar</button></div>`;
+  document.body.appendChild(d); }
+H.tipClose = () => $('#tippop')?.remove();
+H.tipGo = d => { $('#tippop')?.remove(); const t = TIPS.find(x => x[0] === d.k); if (!t) return; const g = Object.assign({}, t[2]);
+  if (g.iso === '@me') g.iso = me(); if (g.dip === '@ally') { const z = Object.keys(S().c).filter(x => x !== me() && CC(x).alive && !Q.atWar(me(), x)).sort((a, b) => Q.rel(me(), b) - Q.rel(me(), a))[0]; g.iso = z; g.dip = 1; }
+  if (g.p === 'adv') { UI.panel = 'adv'; UI.render(); return; } goTo(g); };
+Bus.on('turn', () => { let n = 0; clearInterval(UI.tipT); UI.tipT = setInterval(() => { if (++n > 90) return clearInterval(UI.tipT); if (!$('#modal').hidden || !$('#cine').hidden) return; clearInterval(UI.tipT); setTimeout(showTip, 1200); }, 500); });
 
 
 /* ---------- ui/90-boot.js ---------- */
