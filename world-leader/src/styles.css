@@ -421,3 +421,5 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .tippop { position: fixed; right: var(--sr); top: calc(130px + var(--st)); z-index: 8; width: min(340px, calc(100vw - 32px)); padding: 12px 14px; border-left: 3px solid var(--gold); animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
 .tippop p { margin: 6px 0 8px; } .tippop .eyebrow .gi { width: 13px; height: 13px; fill: var(--gold); vertical-align: -2px; }
 @media (max-width: 700px) { .tippop { top: auto; bottom: calc(150px + var(--sb)); } }
+.chart5 { margin: 10px 0 16px; } .chart5 svg { width: 100%; height: auto; display: block; background: rgba(0, 0, 0, .2); border: 1px solid var(--line); border-radius: 3px; margin: 6px 0; }
+.chart5 .ax { stroke: var(--line); } .chart5 text { fill: var(--mut); font: 11px var(--fb); }

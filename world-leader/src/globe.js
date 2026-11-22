@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring', 'setUnits', 'setCities'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -114,6 +114,16 @@
   const MK_F = `precision highp float; void main(){ float d=length(gl_PointCoord-.5); float ring=smoothstep(.5,.42,d)*smoothstep(.26,.34,d)+smoothstep(.14,.08,d);
       gl_FragColor=vec4(vec3(.55,.9,1.),ring*.9); }`;
 
+  /* fichas de tropas: forma según tipo (0 ejército = cuadrado, 1 aire = triángulo, 2 mar = rombo), con borde y leve balanceo */
+  const UN_V = `attribute float aS, aT, aPh; attribute vec3 aCol; uniform float uTime, uScale; varying vec3 vC; varying float vT;
+    void main(){ vC=aCol; vT=aT; vec4 mv=modelViewMatrix*vec4(position*(1.+.004*sin(uTime*2.+aPh)),1.); gl_PointSize=min(uScale*aS/-mv.z,44.); gl_Position=projectionMatrix*mv; }`;
+  const UN_F = `precision highp float; varying vec3 vC; varying float vT; void main(){ vec2 q=gl_PointCoord-.5; float d;
+      if(vT<.5) d=max(abs(q.x),abs(q.y)); else if(vT<1.5) d=max(abs(q.x)*1.7+q.y*.9, -q.y*1.1); else d=abs(q.x)+abs(q.y);
+      float body=smoothstep(.42,.38,d), edge=body-smoothstep(.34,.3,d); if(body<.01) discard; gl_FragColor=vec4(mix(vC,vec3(1.),edge*.8),body*.95); }`;
+  /* luces de ciudad: solo en el lado nocturno, más grandes cuanto más rica la región */
+  const CT_V = `attribute float aS; uniform float uScale; uniform vec3 uSun; varying float vN;
+    void main(){ vN=smoothstep(.1,-.25,dot(normalize(position),uSun)); vec4 mv=modelViewMatrix*vec4(position,1.); gl_PointSize=min(uScale*aS/-mv.z,18.); gl_Position=projectionMatrix*mv; }`;
+  const CT_F = `precision highp float; varying float vN; void main(){ float d=length(gl_PointCoord-.5); float a=(smoothstep(.5,0.,d)*.55+smoothstep(.12,0.,d)*.6)*vN; if(a<.01) discard; gl_FragColor=vec4(vec3(1.,.82,.5)*a,a); }`;
   const ll2v = (lat, lon, r) => { const a = lat * Math.PI / 180, o = lon * Math.PI / 180, c = Math.cos(a) * (r || 1); return new THREE.Vector3(c * Math.cos(o), Math.sin(a) * (r || 1), -c * Math.sin(o)); };
 
   G.init = function (host, labelHost) {
@@ -298,7 +308,7 @@
           else { cam.position.copy(ll2v(cur.lat, cur.lon, cur.dist)); cam.lookAt(0, 0, 0); }
           const sa = U.uTime.value * .02 + 1.2; sun.set(Math.cos(sa), .28, Math.sin(sa)).normalize();
           cloudU.uFade.value = Math.max(.12, Math.min(1, (cur.dist - 1.5) / 1.3));
-          mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
+          mkU.uScale.value = Math.max(7, 26 / cur.dist) * renderer.getPixelRatio(); unU.uScale.value = renderer.getPixelRatio() * (vh / 700) * 1.5; ctU.uScale.value = renderer.getPixelRatio() * (vh / 700) * .9; fxU.uScale.value = 15 * renderer.getPixelRatio() * (vh / 700);
           for (let i = bursts.length - 1; i >= 0; i--) { const b = bursts[i], t = (now - b.t0) / b.life; if (t >= 1) { scene.remove(b.m); b.m.geometry.dispose(); b.m.material.dispose(); bursts.splice(i, 1); continue; }
             b.u.uT.value = t; const P = b.m.geometry.attributes.position; for (let j = 0; j < b.vel.length; j++) { const v = b.vel[j]; if (b.kind === 'tormenta') v.applyAxisAngle(b.up, dt * 1.6); P.array[j * 3] += v.x * dt; P.array[j * 3 + 1] += v.y * dt; P.array[j * 3 + 2] += v.z * dt; v.multiplyScalar(1 - dt * .6); } P.needsUpdate = true; }
           for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i], t = (now - r.t0) / r.life; if (t >= 1) { scene.remove(r.m); r.m.material.dispose(); rings.splice(i, 1); continue; } const e = 1 - Math.pow(1 - t, 3); r.m.scale.setScalar(r.size * e + .001); r.m.material.opacity = (1 - t) * (1 - t); }
@@ -312,6 +322,15 @@
         G.ring = (lat, lon, color, size, life) => { if (lat == null || rings.length > 18) return;
           const mat = new THREE.MeshBasicMaterial({ color: color || 0xffd36a, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }), m = new THREE.Mesh(ringGeo, mat), p = ll2v(lat, lon, 1.006);
           m.position.copy(p); m.lookAt(p.clone().multiplyScalar(2)); m.scale.setScalar(.001); scene.add(m); rings.push({ m, t0: performance.now(), size: size || .09, life: life || 1600 }); };
+        let unitsM = null, citiesM = null; const unU = { uTime: U.uTime, uScale: { value: 1 } }, ctU = { uSun: U.uSun, uScale: { value: 1 } };
+        const ptsMesh = (list, r, attrs, V, F, uni, blend) => { const g = new THREE.BufferGeometry(), p = new Float32Array(list.length * 3);
+          list.forEach((x, i) => { const v = ll2v(x.la, x.lo, r); p[i * 3] = v.x; p[i * 3 + 1] = v.y; p[i * 3 + 2] = v.z; }); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+          for (const [n, k, f] of attrs) { const a = new Float32Array(list.length * k); list.forEach((x, i) => { const v = f(x, i); if (k === 1) a[i] = v; else for (let j = 0; j < k; j++) a[i * k + j] = v[j]; }); g.setAttribute(n, new THREE.BufferAttribute(a, k)); }
+          const m = new THREE.Points(g, new THREE.ShaderMaterial({ uniforms: uni, vertexShader: V, fragmentShader: F, transparent: true, depthWrite: false, blending: blend || THREE.NormalBlending })); scene.add(m); return m; };
+        const drop = m => { if (m) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); } return null; };
+        G.setUnits = list => { unitsM = drop(unitsM); if (!list || !list.length) return; const c = new THREE.Color();
+          unitsM = ptsMesh(list, 1.012, [['aS', 1, x => x.s], ['aT', 1, x => x.t], ['aPh', 1, (x, i) => i * 1.7], ['aCol', 3, x => { c.set(x.c); return [c.r, c.g, c.b]; }]], UN_V, UN_F, unU); };
+        G.setCities = list => { citiesM = drop(citiesM); if (!list || !list.length) return; citiesM = ptsMesh(list, 1.004, [['aS', 1, x => x.s]], CT_V, CT_F, ctU, THREE.AdditiveBlending); };
         G.setBg = k => { const sp = !k || k === 'espacio'; renderer.setClearColor(0x02040a, sp ? 1 : 0); if (starsM) starsM.visible = sp; };
         G.setCam = m => { camMode = m === 'tactica' ? 'tactica' : 'orbital'; moved = true; };
         G.setReg = on => { U.uReg.value = on ? 1 : 0; };

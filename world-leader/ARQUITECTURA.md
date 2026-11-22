@@ -29,6 +29,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Regiones con vida**: `7k-regions` (malestar, independentismo, acciones regionales, desastres locales), `data-regions2.js`, `ui/5i-regions.js`.
 - **Negociación en persona**: `7l-parley` (3 rondas según la personalidad del líder), `D.PARLEY` en `data-talk.js`, `ui/5j-parley.js`. Capitales regionales aproximadas en `data-regions3.js`.
 - **Guía**: `ui/5k-guide.js` («Qué hacer ahora» en el panel de asesores y consejos de descubrimiento los primeros turnos, recordados en `wl_tips`).
+- **Globo vivo e historia**: `ui/5l-living.js` (fichas de tropas, luces de ciudad, gráficas en Partida → Historia), `7m-history` (S.h5, un punto cada 2 turnos) y en `globe.js` `setUnits`, `setCities`.
 - **Aspecto**: `ui/5f-look.js` (modo de mapa «Regiones», nombres de estados al acercarte, cámara orbital o táctica, fondos) y en `globe.js` `setBg`, `setCam`, `setReg`, `setProvLabels`. La paleta de países está en `ATLAS` (`ui/30-hud.js`) y el estilo de botones al final de `styles.css`.
 
 ## Cómo extender sin romper
