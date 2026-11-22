@@ -80,8 +80,8 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   S.pend = []; G.act('agency', { v: 3 }); for (let i = 0; i < 4; i++) { S.pend = []; G.act('endTurn'); } assert(S.spy.lvl > 1, 'la agencia sube de nivel');
   S.pend = []; assert(G.act('setAlert', { v: 2 }).ok); noNaN(S, 'S'); }
 // la IA libra sus propias guerras región a región y el mapa cambia sin el jugador
-{ G.newGame({ iso: 'MX', name: 'W2', traits: [], seed: 22 }); const S = G.S; S.pend = []; G.act('edWar', { op: 'war', a: 'IN', b: 'PK' }); const w = S.wars.find(x => x.att[0] === 'IN' && x.def[0] === 'PK');
-  for (let i = 0; i < 8 && S.wars.includes(w); i++) { S.pend = []; G.act('endTurn'); } assert(S.blog.some(b => b.w === w.id && b.took), 'la IA conquista regiones'); noNaN(S, 'S'); }
+{ G.newGame({ iso: 'MX', name: 'W2', traits: [], seed: 22 }); const S = G.S; S.pend = []; G.act('edWar', { op: 'war', a: 'RU', b: 'GE' }); const w = S.wars.find(x => x.att[0] === 'RU' && x.def[0] === 'GE');
+  for (let i = 0; i < 16 && S.wars.includes(w) && !S.blog.some(b => b.w === w.id && b.took); i++) { S.pend = []; G.act('endTurn'); } assert(S.blog.some(b => b.w === w.id && b.took), 'la IA conquista regiones'); noNaN(S, 'S'); }
 // reciprocidad: la IA levanta sus sanciones cuando mejoran las cosas
 { G.newGame({ iso: 'MX', name: 'R', traits: [], seed: 41 }); const S = G.S; S.pend = []; S.pol.nextElec = 999; G.act('edit', { iso: 'MX', k: 'cp', v: 12 });
   const z = 'AR'; G.act('sanction', { iso: z }); S.sanc = S.sanc.filter(x => !(x.by === z && x.on === 'MX')); S.sanc.push({ by: z, on: 'MX', s: S.turn }); S.c[z].scd = {}; S.c[z].esc = {}; S.c[z].plan = null;
@@ -189,6 +189,14 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   for (const w of ['elogio', 'valores', 'oferta']) G.act('parleySay', { w }); assert(!q.parley() && S.talk.slice(-1)[0].k === 'parley' && S.talk.slice(-1)[0].lines.length >= 8, 'la reunión queda registrada');
   assert(!G.act('parleyStart', { iso: 'AR', g: 'com' }).ok, 'enfriamiento tras reunirse'); assert(G.act('parleyStart', { iso: 'CL', g: 'pna' }).ok); G.act('endTurn'); assert(!q.parley(), 'el turno cierra la reunión');
   const D = WL.DATA; for (const iso in D.RCAP) for (const k in D.RCAP[iso]) assert(D.C[iso].terr.some(t => t.n === k), 'capital de una región inexistente: ' + k); noNaN(S, 'S'); }
+// gabinete y sucesión
+{ G.newGame({ iso: 'MX', name: 'Sucesor', seed: 6 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 12; const C = q.cabInfo();
+  assert(Object.keys(C.m).length === 4 && S.leader.age >= 48 && S.leader.health === 100); const inc0 = q.mod('income'); C.m.eco.comp = 5; assert(q.mod('income') > inc0, 'el ministro competente suma');
+  assert(G.act('minRefresh').ok && C.cand.eco.length === 3); const nn = C.cand.eco[0].n; assert(G.act('minHire', { k: 'eco', i: 0 }).ok && C.m.eco.n === nn); assert(!G.act('minHire', { k: 'eco', i: 9 }).ok);
+  assert(G.act('minHeir', { k: 'ext' }).ok && C.heir === 'ext'); const heir = C.m.ext.n; S.leader.health = 0; S.leader.age = 80; G.act('endTurn');
+  assert(S.leader.n === heir && S.c.MX.lider.n === heir && S.leader.health === 100 && !S.over, 'el heredero toma el relevo'); assert(C.heir === null);
+  S.leader.health = 0; S.pend = []; G.act('endTurn'); assert(S.leader.n !== heir && !S.over, 'sin heredero también hay sucesión');
+  const old = JSON.parse(G.save()); delete old.cab; assert(G.load(JSON.stringify(old)).ok && G.S.cab && G.S.cab.m.def); noNaN(G.S, 'S'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

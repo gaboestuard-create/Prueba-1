@@ -145,7 +145,8 @@ function repTitle() {
 }
 
 /* ---- construcción del estado inicial ---- */
-function genLeader(iso, mil) { const p = D.NAMES[D.C[iso].region] || D.NAMES.EUR; return (mil ? 'Gral. ' : '') + pick(p[0]) + ' ' + pick(p[1]); }
+const NAME_POOL = { MX: 'AMC', ES: 'AMS' }; /* países hispanohablantes fuera de su región de nombres */
+function genLeader(iso, mil) { const p = D.NAMES[NAME_POOL[iso] || D.C[iso].region] || D.NAMES.EUR; return (mil ? 'Gral. ' : '') + pick(p[0]) + ' ' + pick(p[1]); }
 function initUnits(d) {
   const cl = clamp(d.gdp / d.pop / 20, .08, 2), q = .5 + .5 * Math.min(1, cl), m = d.mil, u = {};
   u.inf = Math.round(m / 5); u.tan = Math.round(m / 25 * q); u.art = Math.round(m / 30 * q);

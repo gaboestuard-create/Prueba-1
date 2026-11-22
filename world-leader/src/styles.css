@@ -423,3 +423,6 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @media (max-width: 700px) { .tippop { top: auto; bottom: calc(150px + var(--sb)); } }
 .chart5 { margin: 10px 0 16px; } .chart5 svg { width: 100%; height: auto; display: block; background: rgba(0, 0, 0, .2); border: 1px solid var(--line); border-radius: 3px; margin: 6px 0; }
 .chart5 .ax { stroke: var(--line); } .chart5 text { fill: var(--mut); font: 11px var(--fb); }
+.cabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; } .cab .arow, .cab-lead .arow { gap: 10px; } .cab .bar, .cab-lead .bar { width: 110px; flex: none; }
+.cab .portrait, .cand5 .portrait { width: 40px; height: 40px; } .cand5 { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); } .cand5 .arow { gap: 8px; }
+.cab small.eyebrow { display: block; } .cab b + .chip { margin-left: 6px; } .cab-lead small.mut { display: block; }
