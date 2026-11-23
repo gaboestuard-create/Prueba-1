@@ -11,7 +11,7 @@
   const WL = globalThis.WL, GEO = WL.GEO, C = WL.DATA.C;
   const G = WL.Globe = { ready: false, spin: true };
   const noop = () => { };
-  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring', 'setUnits', 'setCities'].forEach(k => G[k] = noop);
+  ['paint', 'select', 'hover', 'hoverProv', 'focus', 'home', 'setRoutes', 'trip', 'setWars', 'setTheatre', 'setQuality', 'fx', 'onPick', 'onHover', 'resize', 'setBg', 'setCam', 'setReg', 'setProvLabels', 'ring', 'setUnits', 'setCities', 'setStraits'].forEach(k => G[k] = noop);
 
   const NOISE = `
     float hash(vec3 p){ p=fract(p*.3183099+.1); p*=17.; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
@@ -330,6 +330,8 @@
         const drop = m => { if (m) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); } return null; };
         G.setUnits = list => { unitsM = drop(unitsM); if (!list || !list.length) return; const c = new THREE.Color();
           unitsM = ptsMesh(list, 1.012, [['aS', 1, x => x.s], ['aT', 1, x => x.t], ['aPh', 1, (x, i) => i * 1.7], ['aCol', 3, x => { c.set(x.c); return [c.r, c.g, c.b]; }]], UN_V, UN_F, unU); };
+        let straitsM = null; G.setStraits = list => { straitsM = drop(straitsM); if (!list || !list.length) return; const c = new THREE.Color();
+          straitsM = ptsMesh(list, 1.012, [['aS', 1, x => x.s], ['aT', 1, () => 2], ['aPh', 1, (x, i) => i], ['aCol', 3, x => { c.set(x.c); return [c.r, c.g, c.b]; }]], UN_V, UN_F, unU); };
         G.setCities = list => { citiesM = drop(citiesM); if (!list || !list.length) return; citiesM = ptsMesh(list, 1.004, [['aS', 1, x => x.s]], CT_V, CT_F, ctU, THREE.AdditiveBlending); };
         G.setBg = k => { const sp = !k || k === 'espacio'; renderer.setClearColor(0x02040a, sp ? 1 : 0); if (starsM) starsM.visible = sp; };
         G.setCam = m => { camMode = m === 'tactica' ? 'tactica' : 'orbital'; moved = true; };

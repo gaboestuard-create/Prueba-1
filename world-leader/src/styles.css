@@ -426,3 +426,4 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .cabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; } .cab .arow, .cab-lead .arow { gap: 10px; } .cab .bar, .cab-lead .bar { width: 110px; flex: none; }
 .cab .portrait, .cand5 .portrait { width: 40px; height: 40px; } .cand5 { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); } .cand5 .arow { gap: 8px; }
 .cab small.eyebrow { display: block; } .cab b + .chip { margin-left: 6px; } .cab-lead small.mut { display: block; }
+.str5.closed { border-color: rgba(255, 90, 77, .45); } .str5 .arow { gap: 10px; } .str5 .bar { width: 110px; flex: none; }

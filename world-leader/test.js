@@ -197,6 +197,13 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   assert(S.leader.n === heir && S.c.MX.lider.n === heir && S.leader.health === 100 && !S.over, 'el heredero toma el relevo'); assert(C.heir === null);
   S.leader.health = 0; S.pend = []; G.act('endTurn'); assert(S.leader.n !== heir && !S.over, 'sin heredero también hay sucesión');
   const old = JSON.parse(G.save()); delete old.cab; assert(G.load(JSON.stringify(old)).ok && G.S.cab && G.S.cab.m.def); noNaN(G.S, 'S'); }
+// rutas marítimas: cerrar, escoltar, presionar y efecto en el comercio
+{ G.newGame({ iso: 'IR', name: 'S', seed: 3 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 12;
+  assert(!G.act('strait', { id: 'suez', k: 'close' }).ok, 'solo cierra quien controla'); assert(G.act('strait', { id: 'ormuz', k: 'close' }).ok && !q.strInfo().find(x => x.s.id === 'ormuz').open);
+  assert(G.act('strait', { id: 'ormuz', k: 'open' }).ok && q.strInfo().find(x => x.s.id === 'ormuz').open);
+  G.newGame({ iso: 'JP', name: 'S', seed: 3 }); G.S.pend = []; const a = q.tradeIncome().v; G.S.str.malaca = { by: 'MY', t: G.S.turn + 5 }; assert(q.tradeIncome().v < a, 'el cierre recorta el comercio');
+  assert(G.act('strait', { id: 'malaca', k: 'escort' }).ok && q.tradeIncome().v === a, 'escoltar recupera el comercio'); for (let i = 0; i < 8; i++) { G.S.pend = []; G.act('endTurn'); }
+  assert(!G.S.str.malaca, 'el cierre termina'); const old = JSON.parse(G.save()); delete old.str; delete old.strCd; assert(G.load(JSON.stringify(old)).ok && G.S.str); noNaN(G.S, 'S'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);
