@@ -95,7 +95,7 @@ label.check, label.inl { flex-direction: row; align-items: center; gap: 8px; col
 .lnk { color: var(--cyan); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; align-self: flex-start; }
 .searchbox { display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .18); border-radius: 9px; padding: 0 10px; color: var(--mut); } .searchbox input { border: 0; background: none; box-shadow: none; flex: 1; min-width: 0; padding-left: 0; color: var(--ink); }
 .list { display: flex; flex-direction: column; } .li { display: flex; align-items: center; gap: 9px; padding: 8px 8px; border-radius: 8px; width: 100%; border-bottom: 1px solid rgba(255, 255, 255, .05); transition: background .12s; } .li:hover { background: rgba(255, 255, 255, .08); } .li.on { background: rgba(232, 195, 106, .14); box-shadow: inset 3px 0 0 var(--gold); } .li .relbar { max-width: 110px; } .pad { padding: 12px; }
-.tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; flex: none; } .tabs button { padding: 10px 12px; font: 600 13px var(--fc); letter-spacing: .08em; text-transform: uppercase; color: var(--mut); border-bottom: 2px solid transparent; white-space: nowrap; transition: color .14s; } .tabs button:hover { color: var(--ink); } .tabs button.on { color: var(--gold); border-color: var(--gold); }
+.tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; flex: none; } .tabs button { padding: 10px 12px; font: 600 13px var(--fc); letter-spacing: .08em; text-transform: uppercase; color: var(--mut); border-bottom: 2px solid transparent; white-space: nowrap; transition: color .14s; } .tabs button:hover { color: var(--ink); } .tabs button.on { color: var(--gold); border-color: var(--gold); }
 
 /* --- inicio y creación --- */
 .start { position: fixed; inset: 0; display: flex; align-items: center; pointer-events: none; padding: 24px var(--sr) 24px var(--sl); background: linear-gradient(90deg, rgba(2, 4, 10, .88), rgba(2, 4, 10, .25) 55%, transparent); }
@@ -2360,7 +2360,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
   const D = globalThis.WL.DATA;
   D.PARLEY = {
     cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
-    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 70] },
+    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 62] },
     ways: {
       elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: 0, pragma: 4 } },
       firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 8, pragma: 2 } },
@@ -3003,7 +3003,7 @@ function runVote(l, extra, title) {
 function enactLaw(l) {
   for (const id in S.pol.laws) if (l.grp && LAW[id].grp === l.grp) { const age = S.turn - S.pol.laws[id], flip = age < 8; delete S.pol.laws[id]; delete (S.pol.lx || {})[id]; news(`Queda derogada: ${LAW[id].n}`, 'pol'); if (flip) { repAdd('conf', -4); why('Volantazo legislativo', () => secAdd('all', -2)); news(`${S.leader.n} da un volantazo: tumba "${LAW[id].n}", que apenas tenía ${age} trimestres`, 'pol', S.player, 2); } }
   if (l.grp) S.pol.grpLock = Object.assign(S.pol.grpLock || {}, { [l.grp]: S.turn + D.GOV.flipLock });
-  S.pol.laws[l.id] = S.turn; S.stats.laws++; S.pol.last = S.turn;
+  S.pol.laws[l.id] = S.turn; (S.pol.lx = S.pol.lx || {})[l.id] = S.pol.lx[l.id] || {}; S.stats.laws++; S.pol.last = S.turn;
   why('Ley: ' + l.n, () => { for (const k in l.sec || {}) secAdd(k, l.sec[k]); });
   for (const k in l.rep || {}) repAdd(k, l.rep[k]);
   if (l.once) applyFx(l.once, {});
@@ -6181,7 +6181,7 @@ hook('new', () => { S.parley = null; }); hook('load', () => { S.parley = S.parle
 const PY = D.PARLEY;
 const pyLine = (L, z) => pick(L).replace(/^\{L\}: /, '').split('{L}').join(S.c[z].lider.n); /* si la línea empieza por «{L}:», el nombre ya lo pone la burbuja */
 function pyGoalOk(g, z) { const me = S.player;
-  if (g === 'lift') return sanctioned(z, me); if (g === 'aid') return S.c[z].gdp > P().gdp * .5 && S.c[z].tr > 0;
+  if (g === 'lift') return sanctioned(z, me); if (g === 'aid') return S.c[z].gdp > P().gdp * .5 && S.c[z].tr > 0 && !(S.aidT > S.turn); /* una ayuda cada 8 turnos en total, no por país */
   return !!TNEED[g] && !hasT(g, me, z); }
 ACT.parleyStart = a => {
   const z = a.iso, c = S.c[z], me = S.player; if (!c || !c.alive || z === me) return fail('País inválido'); if (atWar(me, z)) return fail('Estáis en guerra');
@@ -6207,7 +6207,7 @@ function parleyEnd() {
   p.lines.push([z, pyLine([PY.end[ok ? 'ok' : 'no']], z)]);
   if (ok) { addMod(me, z, 'Negociación en persona', gain(6), .4);
     if (p.g === 'lift') { const s = S.sanc.find(x => x.by === z && x.on === me); if (s) s.emb = 0; liftSanction(z, me); msg = `${c.n} levanta sus sanciones`; }
-    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * .3, P().gdp * .01)); c.tr -= amt; P().tr += amt; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
+    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * .3, P().gdp * .01)); c.tr -= amt; P().tr += amt; S.aidT = S.turn + 8; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
     else { addTreaty(p.g, me, z); msg = `${P().n} y ${c.n} firman: ${TNAME[p.g]}`; }
     news(msg + ' tras una reunión de alto nivel', 'dip', z, 3); }
   else { addMod(me, z, 'Negociación fallida', PY.fail, .5); msg = `Sin acuerdo con ${c.n}`; }
@@ -7007,6 +7007,18 @@ const cfgSave = () => { try { localStorage.setItem('wl_cfg', JSON.stringify(CFG)
 const quality = () => CFG.q !== 'auto' ? CFG.q : innerWidth < 760 || (navigator.hardwareConcurrency || 4) <= 4 ? 'med' : 'high';
 function applyCfg() { const b = document.body; if (!b) return; b.classList.toggle('rm', !!CFG.rm); b.dataset.q = quality(); try { Globe.setQuality(quality(), CFG.rm); } catch (e) { } if (typeof Sfx !== 'undefined') Sfx.mix(); }
 
+/* ---- guardado comprimido (LZW, ~5x): las partidas en localStorage llevan el prefijo WLZ1; exportar sigue siendo JSON plano ---- */
+const LZ_MAX = 55000;
+function lzPack(str) { const b = new TextEncoder().encode(str), o = []; let d = new Map(), n = 256, w = '';
+  for (const x of b) { const c = String.fromCharCode(x); if (!w) { w = c; continue; } const wc = w + c; if (d.has(wc)) { w = wc; continue; }
+    o.push(String.fromCharCode((w.length === 1 ? w.charCodeAt(0) : d.get(w)) + 32)); if (n < LZ_MAX) d.set(wc, n++); else { d = new Map(); n = 256; } w = c; }
+  if (w) o.push(String.fromCharCode((w.length === 1 ? w.charCodeAt(0) : d.get(w)) + 32)); return o.join(''); }
+function lzUnpack(s) { let d = [], n = 256, prev = null; const out = [];
+  for (let i = 0; i < s.length; i++) { const k = s.charCodeAt(i) - 32; const e = k < 256 ? String.fromCharCode(k) : k < n ? d[k - 256] : prev + prev[0]; out.push(e);
+    if (prev !== null) { if (n < LZ_MAX) d[(n++) - 256] = prev + e[0]; else { d = []; n = 256; } } prev = e; }
+  const t = out.join(''), b = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) b[i] = t.charCodeAt(i); return new TextDecoder().decode(b); }
+const zip = s => 'WLZ1' + lzPack(s), unz = s => typeof s === 'string' && s.startsWith('WLZ1') ? lzUnpack(s.slice(4)) : s;
+
 
 /* ---------- ui/15-sound.js ---------- */
 /* =====================================================================
@@ -7191,8 +7203,8 @@ function enterGame(fresh) {
   let seen = false; try { seen = !!localStorage.getItem('wl_tut'); } catch (e) { }
   if (fresh && !seen) tutorial(0); else if (S().over) showOver(); else showPending();
 }
-H.continue = () => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } const r = s ? G.load(s) : { ok: false, msg: 'No hay partida guardada' }; toast(r.msg, r.ok); if (r.ok) enterGame(false); };
-function autosave() { try { localStorage.setItem('wl_save', G.save()); } catch (e) { /* almacenamiento bloqueado: queda exportar a mano */ } }
+H.continue = () => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } const r = s ? G.load(unz(s)) : { ok: false, msg: 'No hay partida guardada' }; toast(r.msg, r.ok); if (r.ok) enterGame(false); };
+function autosave() { try { localStorage.setItem('wl_save', zip(G.save())); } catch (e) { /* almacenamiento bloqueado: queda exportar a mano */ } }
 
 /* ---- tutorial de primera vez ---- */
 const TUT = [
@@ -7656,13 +7668,13 @@ PANELS.sys = () => {
     <div class="row wrap"><button class="btn gold" data-a="saveNow">Guardar ahora</button><button class="btn" data-a="exportOpen">Exportar JSON</button><button class="btn" data-a="importOpen">Importar JSON</button><button class="btn ghost" data-a="tut" data-i="0">Ver tutorial</button><button class="btn red" data-a="quit" data-confirm>Salir al menú</button></div>
     <h4>Sobre los datos</h4><p class="mut fine">PIB, población y ejércitos son aproximaciones redondeadas. Los líderes y partidos reflejan el conocimiento del modelo que escribió este juego y pueden estar desactualizados: todos nacen como “sin verificar” y se corrigen en el Editor. Las cotizaciones de empresas son simuladas.</p>`;
 };
-H.saveNow = () => { try { localStorage.setItem('wl_save', G.save()); toast('Partida guardada en este navegador'); } catch (e) { toast('Este navegador bloquea el guardado local: usa Exportar JSON', false); } };
+H.saveNow = () => { try { localStorage.setItem('wl_save', zip(G.save())); toast('Partida guardada en este navegador'); } catch (e) { toast('Este navegador bloquea el guardado local: usa Exportar JSON', false); } };
 H.exportOpen = () => { openModal(`<h2>Exportar partida</h2><p class="mut">Copia este texto y guárdalo en un archivo .json. Dentro del visor de Claude las descargas están bloqueadas; el botón Descargar funciona al abrir el HTML en tu navegador.</p><textarea id="expTxt" readonly rows="8">${esc(G.save())}</textarea><div class="row end"><button class="btn" data-a="expDl">Descargar .json</button><button class="btn gold" data-a="expCopy">Copiar</button></div>`, true); };
 H.expCopy = () => { const t = $('#expTxt'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(() => toast('Partida copiada al portapapeles'), () => toast('No se pudo copiar solo: el texto queda seleccionado, cópialo a mano', false)); };
 H.expDl = () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([G.save()], { type: 'application/json' })); a.download = `world-leader-turno-${S().turn + 1}.json`; document.body.appendChild(a); a.click(); a.remove(); } catch (e) { toast('La descarga está bloqueada aquí: usa Copiar', false); } };
 H.importOpen = () => { openModal(`<h2>Importar partida</h2><p class="mut">Pega el JSON exportado o elige el archivo.</p><textarea id="impTxt" rows="8" placeholder='{"v":1, …}'></textarea><div class="row end"><input type="file" id="impFile" accept=".json,application/json" data-c="impFile"><button class="btn gold" data-a="impGo">Cargar</button></div>`, true); };
 H.impFile = (d, el) => { const f = el.files && el.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { $('#impTxt').value = r.result; }; r.readAsText(f); };
-H.impGo = () => { const r = G.load($('#impTxt').value.trim()); toast(r.msg, r.ok); if (r.ok) enterGame(false); };
+H.impGo = () => { const r = G.load(unz($('#impTxt').value.trim())); toast(r.msg, r.ok); if (r.ok) enterGame(false); };
 H.quit = () => { autosave(); UI.screen = 'start'; UI.panel = null; UI.sel = null; Globe.spin = true; Globe.select([]); Globe.setRoutes([]); Globe.setWars([]); UI.routeKey = UI.frontKey = ''; Globe.home(); UI.render(); };
 
 
@@ -8693,13 +8705,13 @@ PTABS.sys = [['gen', 'Partida'], ['aju', 'Ajustes'], ['dia', 'Diario y legado'],
 const slotMeta = i => { try { const x = JSON.parse(localStorage.getItem('wl_slot' + i) || 'null'); return x && x.meta; } catch (e) { return null; } };
 const slotsHTML = () => `<h4>${gi('acuerdo')} Ranuras de guardado</h4>${[1, 2, 3, 4, 5, 6].map(i => { const m = slotMeta(i); return `<div class="arow"><div class="grow"><b>Ranura ${i}</b><small>${m ? `${esc(m.n)} · ${esc(m.c)} · ${esc(m.d)} · turno ${m.t + 1}` : 'Vacía'}</small></div><button class="btn sm gold" data-a="slotSave" data-i="${i}" ${m ? 'data-confirm' : ''}>Guardar aquí</button>${m ? `<button class="btn sm" data-a="slotLoad" data-i="${i}" data-confirm>Cargar</button><button class="btn sm ghost" data-a="slotDel" data-i="${i}" data-confirm>Borrar</button>` : ''}</div>`; }).join('')}
   <p class="mut fine">El autoguardado se hace solo; además se conserva una copia del turno anterior por si la principal se daña.</p>`;
-H.slotSave = d => { try { localStorage.setItem('wl_slot' + d.i, JSON.stringify({ meta: { n: S().leader.n, c: CC(me()).n, d: Q.dateStr(), t: S().turn }, data: G.save() })); toast(`Guardado en la ranura ${d.i}`); UI.render(); } catch (e) { toast('No queda espacio en este navegador: borra una ranura o exporta a JSON', false); } };
-H.slotLoad = d => { try { const x = JSON.parse(localStorage.getItem('wl_slot' + d.i)); const r = G.load(x.data); toast(r.msg, r.ok); if (r.ok) enterGame(false); } catch (e) { toast('Esa ranura está dañada y no se puede cargar', false); } };
+H.slotSave = d => { try { localStorage.setItem('wl_slot' + d.i, JSON.stringify({ meta: { n: S().leader.n, c: CC(me()).n, d: Q.dateStr(), t: S().turn }, data: zip(G.save()) })); toast(`Guardado en la ranura ${d.i}`); UI.render(); } catch (e) { toast('No queda espacio en este navegador: borra una ranura o exporta a JSON', false); } };
+H.slotLoad = d => { try { const x = JSON.parse(localStorage.getItem('wl_slot' + d.i)); const r = G.load(unz(x.data)); toast(r.msg, r.ok); if (r.ok) enterGame(false); } catch (e) { toast('Esa ranura está dañada y no se puede cargar', false); } };
 H.slotDel = d => { try { localStorage.removeItem('wl_slot' + d.i); } catch (e) { } UI.render(); };
 { const a0 = autosave; autosave = () => { try { if (S() && UI.bakTurn !== S().turn) { const prev = localStorage.getItem('wl_save'); if (prev) localStorage.setItem('wl_save_bak', prev); UI.bakTurn = S().turn; } } catch (e) { } a0(); }; }
-{ const c0 = H.continue; H.continue = d => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } let ok = false; try { ok = !!(s && JSON.parse(s)); } catch (e) { }
+{ const c0 = H.continue; H.continue = d => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } let ok = false; try { s = unz(s); ok = !!(s && JSON.parse(s)); } catch (e) { }
   if (ok) { const r = G.load(s); if (r.ok) { toast(r.msg); return enterGame(false); } }
-  let b = null; try { b = localStorage.getItem('wl_save_bak'); } catch (e) { } if (b) { const r = G.load(b); if (r.ok) { toast('La partida principal estaba dañada: se recuperó la copia del turno anterior', false); return enterGame(false); } }
+  let b = null; try { b = localStorage.getItem('wl_save_bak'); } catch (e) { } if (b) { const r = G.load(unz(b)); if (r.ok) { toast('La partida principal estaba dañada: se recuperó la copia del turno anterior', false); return enterGame(false); } }
   return c0(d); }; }
 function cfgHTML() { const v = CFG.vol, sl = (k, n) => `<label class="vol"><span>${n}</span><input type="range" min="0" max="100" value="${Math.round(v[k] * 100)}" data-c="cfgVol" data-k="${k}"><b>${Math.round(v[k] * 100)}</b></label>`;
   return `<h4>${gi('estrella')} Calidad gráfica <small class="mut">ahora: ${({ low: 'Baja', med: 'Media', high: 'Alta' })[quality()]}</small></h4><div class="chips">${[['auto', 'Automática'], ['low', 'Baja · teléfonos modestos'], ['med', 'Media'], ['high', 'Alta']].map(q => `<button class="chip ${CFG.q === q[0] ? 'gold' : ''}" data-a="cfgQ" data-v="${q[0]}">${q[1]}</button>`).join('')}</div>

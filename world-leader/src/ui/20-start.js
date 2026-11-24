@@ -76,8 +76,8 @@ function enterGame(fresh) {
   let seen = false; try { seen = !!localStorage.getItem('wl_tut'); } catch (e) { }
   if (fresh && !seen) tutorial(0); else if (S().over) showOver(); else showPending();
 }
-H.continue = () => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } const r = s ? G.load(s) : { ok: false, msg: 'No hay partida guardada' }; toast(r.msg, r.ok); if (r.ok) enterGame(false); };
-function autosave() { try { localStorage.setItem('wl_save', G.save()); } catch (e) { /* almacenamiento bloqueado: queda exportar a mano */ } }
+H.continue = () => { let s = null; try { s = localStorage.getItem('wl_save'); } catch (e) { } const r = s ? G.load(unz(s)) : { ok: false, msg: 'No hay partida guardada' }; toast(r.msg, r.ok); if (r.ok) enterGame(false); };
+function autosave() { try { localStorage.setItem('wl_save', zip(G.save())); } catch (e) { /* almacenamiento bloqueado: queda exportar a mano */ } }
 
 /* ---- tutorial de primera vez ---- */
 const TUT = [

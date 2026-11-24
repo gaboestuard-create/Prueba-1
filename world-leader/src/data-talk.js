@@ -94,7 +94,7 @@
   const D = globalThis.WL.DATA;
   D.PARLEY = {
     cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
-    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 70] },
+    goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 62] },
     ways: {
       elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: 0, pragma: 4 } },
       firmeza: { n: 'Hablar con firmeza', fx: { halcon: 12, paloma: -6, rencor: 8, pragma: 2 } },
