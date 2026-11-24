@@ -436,3 +436,7 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @keyframes ring5 { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 195, 106, .5); } 50% { box-shadow: 0 0 0 14px rgba(232, 195, 106, 0); } }
 .poll5 .arow { gap: 10px; } .poll5 .bar { width: 130px; flex: none; } .clip5 { padding: 8px 0; border-bottom: 1px dashed var(--line); } .clip5 b { display: block; font: 600 15px var(--fd); }
 @media (max-width: 700px) { .brief-g { grid-template-columns: 1fr; } }
+.crisis5 { border-color: var(--red) !important; box-shadow: 0 0 0 1px var(--red), 0 0 40px rgba(255, 90, 77, .35) !important; } .crisis5 .eyebrow, .crisis5 h2 { color: #ff8a7a; }
+.ppl-head { gap: 10px; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); } .ppl-head .portrait { width: 48px; height: 48px; } .ppl-head b { display: block; font: 600 16px var(--fd); }
+.sum5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .sum5 .li { display: flex; gap: 8px; align-items: center; text-align: left; } .sum5 .li.on { border-color: var(--gold); background: rgba(232, 195, 106, .1); }
+.cab .grow > small.mut { display: block; }

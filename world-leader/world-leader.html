@@ -448,6 +448,10 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @keyframes ring5 { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 195, 106, .5); } 50% { box-shadow: 0 0 0 14px rgba(232, 195, 106, 0); } }
 .poll5 .arow { gap: 10px; } .poll5 .bar { width: 130px; flex: none; } .clip5 { padding: 8px 0; border-bottom: 1px dashed var(--line); } .clip5 b { display: block; font: 600 15px var(--fd); }
 @media (max-width: 700px) { .brief-g { grid-template-columns: 1fr; } }
+.crisis5 { border-color: var(--red) !important; box-shadow: 0 0 0 1px var(--red), 0 0 40px rgba(255, 90, 77, .35) !important; } .crisis5 .eyebrow, .crisis5 h2 { color: #ff8a7a; }
+.ppl-head { gap: 10px; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); } .ppl-head .portrait { width: 48px; height: 48px; } .ppl-head b { display: block; font: 600 16px var(--fd); }
+.sum5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .sum5 .li { display: flex; gap: 8px; align-items: center; text-align: left; } .sum5 .li.on { border-color: var(--gold); background: rgba(232, 195, 106, .1); }
+.cab .grow > small.mut { display: block; }
 
 </style>
 
@@ -1409,6 +1413,64 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     }
   };
   D.BRIEF_MEDIA = ['El Diario Nacional', 'Canal 24', 'La Voz del Pueblo', 'Radio Capital', 'El Observador'];
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · PERSONAJES, CUMBRES Y SALA DE CRISIS
+   Personajes recurrentes: actitud (-100..100) hacia ti. Sus escenas usan
+   {N} (su nombre), {P} tu país, {PL} tú, {O} partido de la oposición.
+   Cada opción: [texto, efectos (mini-lenguaje), cambio de actitud].
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx, O = o => o.map(x => ({ t: x[0], fx: fx(x[1]), att: x[2] }));
+  D.PEOPLE = {
+    opo: { n: 'Líder de la oposición', role: 'Jefe de {O}', ic: 'jov', scenes: [
+      { if: 'lowAppr', t: '{N} pide tu dimisión', x: '{N}, jefe de {O}, aprovecha tus malas encuestas: «Este gobierno está agotado».', opts: O([['Responder en el congreso', 'cp-1;sec.all+1', -5], ['Invitarlo a un pacto de Estado', 'cp-1;party.opp+3;stab+2', 15], ['Ignorarlo', 'sec.all-1', -3]]) },
+      { if: 'any', t: '{N} propone una ley conjunta', x: '{N} te ofrece apoyar una reforma educativa si cedes en otra cosa.', opts: O([['Aceptar el pacto', 'sec.jov+3;cp-1;party.opp+2', 12], ['Rechazarlo', 'sec.all-1', -8]]) },
+      { if: 'elecNear', t: 'Debate televisado con {N}', x: 'A pocas semanas de las elecciones, {N} te reta a un debate en directo.', opts: O([['Aceptar y atacar', 'camp+3;sec.all+1', -10], ['Aceptar y proponer', 'camp+2;rep.dem+2', 2], ['No ir al debate', 'camp-2', -4]]) } ] },
+    per: { n: 'Periodista', role: 'Columnista de investigación', ic: 'pre', scenes: [
+      { if: 'any', t: 'Entrevista con {N}', x: '{N}, cuya columna es la más leída del país, quiere entrevistarte a fondo.', opts: O([['Entrevista sin condiciones', 'rep.dem+3;chance.5{sec.all+2}{sec.all-2}', 12], ['Solo con preguntas pactadas', 'sec.all+1', -6], ['Negarse', 'rep.dem-2', -10]]) },
+      { if: 'hostile', t: '{N} investiga a tu gobierno', x: '{N} prepara un reportaje sobre contratos de tu gobierno. Tu jefe de gabinete propone «hablar con su editor».', opts: O([['Dejar trabajar a la prensa', 'chance.5{rep.dem+4}{stab-3;sec.all-3}', 8], ['Presionar a su editor', 'rep.dem-8;sec.pre-6', -25], ['Filtrar una exclusiva a cambio', 'cp-1;sec.pre+3', 5]]) } ] },
+    gen: { n: 'Jefe del Estado Mayor', role: 'General de las Fuerzas Armadas', ic: 'mil', scenes: [
+      { if: 'war', t: '{N} pide más recursos', x: 'El general {N} exige más presupuesto para la guerra: «Sin munición no hay victoria».', opts: O([['Concederlo', '$g-.3;sec.mil+6;units.tierra+5', 12], ['Pedirle que haga más con menos', 'sec.mil-4', -10]]) },
+      { if: 'milLow', t: '{N} expresa su malestar', x: 'En una cena privada, el general {N} te advierte de que la tropa está descontenta.', opts: O([['Subir el sueldo militar', '$g-.2;sec.mil+5', 15], ['Recordarle quién manda', 'sec.mil-3;stab-1', -15], ['Pedirle paciencia', '', -3]]) },
+      { if: 'any', t: '{N} propone unas maniobras', x: 'El general {N} quiere unas grandes maniobras para mostrar fuerza ante los vecinos.', opts: O([['Aprobarlas', '$g-.1;sec.mil+3;relAll.big-1:Maniobras de exhibición', 8], ['Algo discreto', 'sec.mil+1', 2]]) } ] },
+    mag: { n: 'Magnate', role: 'Empresario más rico del país', ic: 'emp', scenes: [
+      { if: 'any', t: '{N} te ofrece invertir', x: '{N}, el hombre más rico del país, promete una gran inversión si rebajas un impuesto que le afecta.', opts: O([['Trato hecho', '$g+.4;sec.emp+5;sec.obr-4;rep.dem-2', 15], ['Invertir sin favores', 'sec.emp-2', -8], ['Subirle los impuestos', '$g+.2;sec.obr+4;sec.emp-6', -20]]) },
+      { if: 'friendly', t: '{N} financia tu fundación', x: '{N} quiere donar a una fundación cercana a tu partido. Nadie tiene por qué saberlo.', opts: O([['Aceptar la donación', 'camp+3;chance.3{rep.dem-6;sec.all-3}{}', 10], ['Rechazarla', 'rep.dem+2', -5]]) } ] }
+  };
+  D.PEOPLE_CFG = { p: .3, cool: 2, hostile: -30, friendly: 30, perPress: .04, genCoup: -50, opoElect: 2 };
+
+  /* cumbre anual: los grandes se reúnen; eliges con quién reunirte y el tema central */
+  D.SUMMIT = { every: 4, at: 2, invites: 14, meet: 2, rank: 25, rel: 7, treatyP: .35, topics: {
+    clima: { n: 'Cambio climático', fx: fx('rep.gen+3;sec.jov+3;sec.emp-2') }, comercio: { n: 'Comercio global', fx: fx('sec.emp+3;grow+.05/4') },
+    seguridad: { n: 'Seguridad internacional', fx: fx('rep.paz+3;sec.mil+2') }, salud: { n: 'Salud mundial', fx: fx('rep.gen+4;sec.jub+2') } } };
+
+  /* sala de crisis: tres fases, una por turno; cada opción suma puntos (v). El total decide el final */
+  const C = (id, n, steps, end) => ({ id, n, steps: steps.map(s => ({ x: s[0], opts: s[1].map(o => ({ t: o[0], v: o[1], fx: fx(o[2] || '') })) })), end: { ok: fx(end[0]), mid: fx(end[1]), bad: fx(end[2]) } });
+  D.CRISES = [
+    C('rehenes', 'Rehenes en la embajada', [
+      ['Un grupo armado toma tu embajada en el extranjero con 40 diplomáticos dentro. Exigen la liberación de presos.', [['Abrir un canal de negociación', 2], ['Preparar a las fuerzas especiales', 1, 'sec.mil+2'], ['Declarar que no se negocia con terroristas', 0, 'sec.all+2']]],
+      ['Los secuestradores liberan a 5 rehenes como gesto, pero amenazan con ejecutar a uno al día.', [['Pagar un rescate discreto', 2, '$g-.3'], ['Ganar tiempo con mediadores', 1], ['Ultimátum público', 0, 'rep.paz-2']]],
+      ['Tus fuerzas especiales están en posición. El país contiene la respiración.', [['Asalto relámpago', 1, 'chance.5{}{stab-3}'], ['Último intento de diálogo', 2], ['Ceder a sus exigencias', 1, 'rep.conf-5']]]],
+      ['sec.all+5;rep.conf+5;stab+3', 'sec.all+1', 'sec.all-6;stab-5;rep.conf-4']),
+    C('ciber', 'Ciberataque a la red eléctrica', [
+      ['Media capital se queda sin luz: un ciberataque ha tomado el control de la red eléctrica.', [['Activar el protocolo de emergencia', 2, '$g-.1'], ['Culpar públicamente a un país rival', 0, 'sec.all+1'], ['Esperar a los técnicos', 1]]],
+      ['Los hospitales funcionan con generadores. Los atacantes piden un rescate en criptomonedas.', [['Pagar en secreto', 1, '$g-.3;rep.dem-2'], ['Pedir ayuda a tus aliados', 2], ['Apagar toda la red para limpiarla', 1, 'sec.emp-3']]],
+      ['Los técnicos localizan el origen del ataque.', [['Contraataque informático', 1, 'chance.5{sec.mil+3}{rep.conf-3}'], ['Reforzar las defensas y callar', 2], ['Denunciarlo en la ONU', 1, 'rep.conf+2']]]],
+      ['sec.all+3;stab+2;sec.tec+4', 'sec.emp-1', 'stab-6;sec.all-4;grow-.2/3']),
+    C('nuclear', 'Accidente en una central nuclear', [
+      ['Una fuga en una central nuclear obliga a evacuar 20 kilómetros a la redonda.', [['Evacuación inmediata y transparencia', 2, '$g-.2'], ['Minimizar para evitar el pánico', 0, 'chance.5{}{rep.dem-6}'], ['Evacuación parcial', 1]]],
+      ['La nube radiactiva se mueve hacia una ciudad grande. Los vecinos exigen información.', [['Pedir ayuda internacional', 2, 'rep.conf+2'], ['Rueda de prensa diaria', 2, 'sec.all+1'], ['Censurar las redes sociales', 0, 'rep.dem-6']]],
+      ['La fuga está contenida. Hay que decidir el futuro de la energía nuclear.', [['Cerrar todas las centrales', 1, 'sec.jov+4;sec.emp-5'], ['Revisarlas y mantenerlas', 2, 'sec.emp+2'], ['Seguir como si nada', 0]]]],
+      ['sec.all+4;rep.gen+4', 'sec.all-1', 'stab-8;sec.all-6;rep.gen-4']),
+    C('pandemia', 'Brote epidémico', [
+      ['Un virus nuevo se propaga en tu capital. Los hospitales se llenan.', [['Confinamiento inmediato', 2, 'grow-.2/2;sec.emp-3'], ['Recomendaciones voluntarias', 1], ['Negar la gravedad', 0, 'sec.emp+2']]],
+      ['El virus llega a otras regiones. Falta material sanitario.', [['Comprar material a cualquier precio', 2, '$g-.4'], ['Pedírselo a tus aliados', 1, 'rep.conf+1'], ['Racionar', 1, 'sec.all-2']]],
+      ['Llegan las primeras vacunas.', [['Vacunar primero a mayores y sanitarios', 2, 'sec.jub+4'], ['Vacunar primero a trabajadores esenciales', 2, 'sec.obr+3'], ['Que decida el mercado', 0, 'sec.emp+2;rep.gen-4']]]],
+      ['sec.all+4;rep.gen+3;stab+2', 'sec.all-1', 'stab-6;sec.all-5;grow-.3/4'])
+  ];
+  D.CRISIS_CFG = { p: .05, from: 6, cool: 16, ok: 5, mid: 3 };
 })();
 
 /* =====================================================================
@@ -6294,6 +6356,66 @@ ACT.speech = a => {
 };
 
 
+/* ---------- engine/7q-people.js ---------- */
+/* =====================================================================
+   SISTEMA · PERSONAJES RECURRENTES, CUMBRE ANUAL Y SALA DE CRISIS
+   - Cuatro personajes con nombre (oposición, periodista, general, magnate)
+     cuya actitud hacia ti cambia con tus decisiones y tiene consecuencias.
+   - Cumbre anual de las grandes economías: eliges con quién reunirte y el tema.
+   - Crisis en tres fases, una por turno; el resultado depende de la suma.
+   Datos en src/data-people.js.
+   ===================================================================== */
+const PPC = D.PEOPLE_CFG, SUM = D.SUMMIT, CRC = D.CRISIS_CFG;
+function pplInit() { S.ppl = {}; for (const k in D.PEOPLE) S.ppl[k] = { n: genLeader(S.player), att: ri(-10, 10), cd: 0, log: [], pseed: ri(0, 96) }; }
+hook('new', () => { pplInit(); S.crisis = null; S.crisisCd = 0; }); hook('load', () => { if (!S.ppl) pplInit(); if (S.crisis === undefined) S.crisis = null; S.crisisCd = S.crisisCd || 0; });
+const oppName = () => (S.pol.seats.filter(p => !p.g).sort((a, b) => b.s - a.s)[0] || { n: 'la oposición' }).n;
+const pplFill = (s, k) => s.split('{N}').join(S.ppl[k].n).split('{O}').join(oppName()).split('{P}').join(P().n).split('{PL}').join(S.leader.n);
+function pplCond(c, k) { const a = S.ppl[k].att, el = S.pol.nextElec - S.turn;
+  return c === 'any' || (c === 'lowAppr' && approval() < 42) || (c === 'elecNear' && el >= 1 && el <= 3) || (c === 'hostile' && a < PPC.hostile) || (c === 'friendly' && a > PPC.friendly) || (c === 'war' && inWar(S.player)) || (c === 'milLow' && S.pol.sec.mil.a < 40); }
+OPS.pplAtt = a => { const p = S.ppl[a.k]; if (!p) return; p.att = clamp(p.att + a.v, -100, 100); p.log.push({ t: S.turn, x: a.x, v: a.v }); if (p.log.length > 12) p.log.shift(); };
+hook('late', () => {
+  if (S.over || S.pend.length > 1 || !chance(PPC.p)) return;
+  const L = shuffle(Object.keys(D.PEOPLE).filter(k => S.ppl[k].cd <= S.turn)); for (const k of L) {
+    const sc = D.PEOPLE[k].scenes.filter(x => pplCond(x.if, k)), pickS = pick(sc.filter(x => x.if !== 'any').length && chance(.7) ? sc.filter(x => x.if !== 'any') : sc); if (!pickS) continue;
+    S.ppl[k].cd = S.turn + PPC.cool;
+    pushPend({ k: 'event', id: 'ppl', who: k, t: pplFill(pickS.t, k), x: pplFill(pickS.x, k), iso: S.player, opts: pickS.opts.map(o => ({ t: o.t, fx: o.fx.concat([['do', 'pplAtt', { k, v: o.att, x: pplFill(pickS.t, k) + ': ' + o.t }]]) })) });
+    return; }
+});
+/* consecuencias pasivas de cada relación */
+hook('player', () => { const P2 = S.ppl;
+  if (P2.per.att < PPC.hostile && chance(PPC.perPress)) { secAdd('all', -2); news(`${P2.per.n} publica una exclusiva demoledora contra ${S.leader.n}`, 'pol', S.player, 3); }
+  if (P2.gen.att < PPC.genCoup && S.pol.sec.mil.a < 35) { P().stab = clamp(P().stab - .5, 0, 100); if (chance(.1)) news(`Rumores de malestar en los cuarteles: el general ${P2.gen.n} no oculta su desprecio`, 'pol', S.player, 2); }
+  if (P2.mag.att > PPC.friendly) P().tr += P().gdp * .0004; });
+{ const m0 = mod; mod = k => { const v = m0(k); if (k !== 'elect' || !S || !S.ppl) return v; const a = S.ppl.opo.att; return v + (a < PPC.hostile ? -PPC.opoElect : a > PPC.friendly ? PPC.opoElect / 2 : 0); }; }
+
+/* ---- cumbre anual ---- */
+hook('late', () => { if (S.over || S.turn % SUM.every !== SUM.at || rankOf(z => S.c[z].gdp, S.player) > SUM.rank) return;
+  const inv = alive().filter(z => !isP(z)).sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, SUM.invites);
+  pushPend({ k: 'summit', t: `Cumbre de las grandes economías · ${dateStr()}`, x: 'Los líderes de las mayores economías del mundo se reúnen. Puedes tener dos reuniones bilaterales y proponer el tema central.', iso: S.player, inv,
+    opts: [{ t: 'Asistir sin reuniones', fx: [] }, { t: 'No asistir', fx: [['rep', 'conf', -3]] }] }); });
+ACT.summit = a => { const p = S.pend[0]; if (!p || p.k !== 'summit') return fail('No hay cumbre en curso'); const T = SUM.topics[a.topic]; if (!T) return fail('Elige un tema');
+  const meet = (a.meet || []).filter(z => p.inv.includes(z)).slice(0, SUM.meet), me = S.player, got = [], lines = [];
+  for (const z of meet) { addMod(me, z, 'Reunión en la cumbre', gain(SUM.rel), .4); lines.push([z, `${S.c[z].lider.n} se reúne contigo en un aparte de la cumbre.`]);
+    const t = ['com', 'pna'].find(x => !hasT(x, me, z)); if (t && !sanctioned(z, me) && chance(SUM.treatyP)) { addTreaty(t, me, z); got.push(`${TNAME[t]} con ${nm(z)}`); lines.push([me, `Firmáis: ${TNAME[t]}.`]); } }
+  applyFx(T.fx, {}); S.pend.shift(); news(`Cumbre de las grandes economías: ${S.leader.n} impulsa «${T.n}»${got.length ? '; firma ' + got.join(' y ') : ''}`, 'dip', me, 3);
+  addTalk({ k: 'summit', a: meet[0] || me, b: meet[1] || me, lines: lines.concat([['', `Foto de familia. Tema central: ${T.n}.`]]), rep: null, done: 1, title: 'Cumbre de las grandes economías' });
+  return { msg: `Cumbre: ${T.n}${got.length ? ' · ' + got.join(', ') : ''}` }; };
+FREE.summit = 1;
+
+/* ---- sala de crisis ---- */
+function crisisPend() { const K = S.crisis, C = D.CRISES.find(x => x.id === K.id), st = C.steps[K.st];
+  pushPend({ k: 'event', id: 'crisis', t: `Sala de crisis · ${C.n} (fase ${K.st + 1} de ${C.steps.length})`, x: st.x, iso: S.player, opts: st.opts.map(o => ({ t: o.t, fx: o.fx.concat([['do', 'crisisStep', { v: o.v }]]) })) }); }
+OPS.crisisStep = a => { const K = S.crisis; if (!K) return; K.sc += a.v; K.st++; const C = D.CRISES.find(x => x.id === K.id);
+  if (K.st < C.steps.length) { K.due = S.turn + 1; return; }
+  const r = K.sc >= CRC.ok ? 'ok' : K.sc >= CRC.mid ? 'mid' : 'bad'; applyFx(C.end[r], {});
+  news(`${C.n}: ${r === 'ok' ? 'la crisis se resuelve con éxito' : r === 'mid' ? 'la crisis se cierra con un sabor agridulce' : 'la gestión de la crisis acaba en desastre'}`, 'pol', S.player, 3);
+  if (S.p5) S.p5.tl.push({ t: S.turn, x: `${C.n}: ${r === 'ok' ? 'éxito' : r === 'mid' ? 'resultado a medias' : 'desastre'}` }); S.crisis = null; S.crisisCd = S.turn + CRC.cool; Bus.emit('crisisEnd', { r, n: C.n }); };
+hook('late', () => { if (S.over) return; const K = S.crisis;
+  if (K) { if (K.due <= S.turn && !S.pend.some(p => p.id === 'crisis')) crisisPend(); return; }
+  if (S.turn >= CRC.from && S.crisisCd <= S.turn && S.pend.length < 2 && chance(CRC.p)) { S.crisis = { id: pick(D.CRISES).id, st: 0, sc: 0, due: S.turn }; crisisPend(); } });
+const pplInfo = () => S.ppl, crisisInfo = () => S.crisis;
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -6382,7 +6504,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo,
+    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -9378,6 +9500,39 @@ function pollsHTML() { const s = S(), m = me(), ap = (s.h5 || []).map(x => x.ap)
     <div class="poll5">${secs.map(([k, x]) => `<div class="arow"><span class="grow">${esc(BRIEF_N[k] || k)} <small class="mut">${Math.round(x.w * 100)}% del país</small></span>${bar(x.a, 100, x.a >= 60 ? 'green' : x.a < 40 ? 'red' : '')}<b class="num">${Math.round(x.a)}</b></div>`).join('')}</div>
     ${regs.length > 2 ? `<h4>${gi('pin')} Por región</h4><div class="chips">${regs.slice(-3).reverse().map(([i, mm]) => `<span class="chip good">${esc(CC(m).terr[i].n)} · contenta</span>`).join('')}${regs.slice(0, 3).map(([i, mm]) => `<span class="chip ${mm >= D.RL.protestAt ? 'bad' : ''}">${esc(CC(m).terr[i].n)} · malestar ${Math.round(mm)}</span>`).join('')}</div>` : ''}
     <h4>${gi('pre')} Recortes de prensa</h4>${clip.length ? clip.map((n, i) => `<div class="clip5"><small class="eyebrow">${esc(D.BRIEF_MEDIA[(n.id || i) % D.BRIEF_MEDIA.length])} · ${esc(turnDate(n.t))}</small><b>${esc(n.x)}</b></div>`).join('') : '<p class="mut">Aún no hay titulares sobre ti.</p>'}`; }
+
+
+/* ---------- ui/5p-people.js ---------- */
+/* =====================================================================
+   INTERFAZ · PERSONAJES, CUMBRE Y SALA DE CRISIS
+   ===================================================================== */
+PTABS.pol.push(['per', 'Personajes']);
+{ const p0 = PANELS.pol; PANELS.pol = t => t === 'per' ? peopleHTML() : p0(t); }
+const attLbl = a => a >= D.PEOPLE_CFG.friendly ? ['Aliado', 'good'] : a <= D.PEOPLE_CFG.hostile ? ['Enemigo', 'bad'] : ['Neutral', ''];
+const PPL_FX = { opo: ['Si te odia: −2 en elecciones', 'Si te aprecia: +1 en elecciones'], per: ['Si te odia: exclusivas contra ti', 'Si te aprecia: mejor prensa'], gen: ['Si te odia y la tropa está descontenta: inestabilidad', 'Si te aprecia: lealtad de los cuarteles'], mag: ['Si te odia: frena inversiones', 'Si te aprecia: aporta dinero cada turno'] };
+function peopleHTML() { const P2 = Q.pplInfo();
+  return `<p class="mut fine">Personas con nombre que recuerdan lo que haces. Su actitud cambia con cada decisión y tiene consecuencias.</p><div class="cabs">${Object.entries(D.PEOPLE).map(([k, d]) => { const p = P2[k], L = attLbl(p.att);
+    return `<div class="card cab"><div class="row"><span class="portrait">${portraitSVG(p.n, p.pseed)}</span><div class="grow"><small class="eyebrow">${gi(d.ic)} ${esc(d.n)}</small><b>${esc(p.n)}</b> <span class="chip ${L[1]}">${L[0]}</span><small class="mut">${esc(d.role.replace('{O}', (S().pol.seats.filter(x => !x.g).sort((a, b) => b.s - a.s)[0] || { n: 'la oposición' }).n))}</small></div></div>
+      <div class="arow"><span class="grow">Actitud hacia ti</span>${bar(p.att + 100, 200, p.att > 30 ? 'green' : p.att < -30 ? 'red' : '')}<b class="num">${sgn(p.att)}</b></div>
+      <small class="mut">${esc(PPL_FX[k][0])} · ${esc(PPL_FX[k][1])}</small>
+      ${p.log.length ? `<ol class="tl5">${p.log.slice(-4).reverse().map(x => `<li><small>${esc(turnDate(x.t))}</small> ${esc(x.x)} <b class="${x.v >= 0 ? 'green' : 'red'}">${sgn(x.v)}</b></li>`).join('')}</ol>` : '<p class="mut">Aún no habéis coincidido.</p>'}</div>`; }).join('')}</div>`; }
+
+/* la decisión de un personaje lleva su cara; la sala de crisis, su aire de urgencia */
+{ const p0 = showPending; showPending = () => { const s = S(); if (s && s.pend[0] && s.pend[0].k === 'summit' && !s.over && !sqRun && !SQ.length && ($('#modal').hidden || UI.modalClosable) && UI.screen === 'game') return summitModal(s.pend[0]);
+  p0(); const p = s && s.pend[0], box = $('#modal .mbox'); if (!p || !box || $('#modal').hidden) return;
+  if (p.id === 'crisis') { box.classList.add('crisis5'); if (!CFG.mute) Sfx.play('alert'); }
+  if (p.id === 'ppl' && p.who && !box.querySelector('.ppl-head')) { const pp = Q.pplInfo()[p.who]; box.insertAdjacentHTML('afterbegin', `<div class="ppl-head row"><span class="portrait">${portraitSVG(pp.n, pp.pseed)}</span><div><small class="eyebrow">${esc(D.PEOPLE[p.who].n)}</small><b>${esc(pp.n)}</b> <span class="chip ${attLbl(pp.att)[1]}">${attLbl(pp.att)[0]}</span></div></div>`); } }; }
+UI.sum = { meet: [], topic: 'comercio' };
+function summitModal(p) { const F = UI.sum;
+  openModal(`<p class="eyebrow">${esc(p.t)}</p><h2>La cumbre</h2><p>${esc(p.x)}</p><h4>Reuniones bilaterales <small class="mut">elige hasta ${D.SUMMIT.meet}</small></h4>
+    <div class="sum5">${p.inv.map(z => `<button class="li ${F.meet.includes(z) ? 'on' : ''}" data-a="sumMeet" data-iso="${z}">${face(z)}<span class="grow"><b>${esc(CC(z).lider.n)}</b><small class="mut">${fl(z)} ${cname(z)} · relación ${sgn(Q.rel(me(), z))}</small></span></button>`).join('')}</div>
+    <h4>Tema que propones</h4><div class="chips">${Object.entries(D.SUMMIT.topics).map(([k, t]) => `<button class="chip ${F.topic === k ? 'gold' : ''}" data-a="sumTopic" data-k="${k}">${esc(t.n)}</button>`).join('')}</div>
+    <div class="row end"><button class="btn ghost" data-a="sumSkip">No asistir</button><button class="btn gold" data-a="sumGo">Ir a la cumbre</button></div>`, false, 'event wide'); }
+H.sumMeet = d => { const M = UI.sum.meet, i = M.indexOf(d.iso); if (i >= 0) M.splice(i, 1); else { if (M.length >= D.SUMMIT.meet) M.shift(); M.push(d.iso); } document.querySelectorAll('#modal [data-a=sumMeet]').forEach(b => b.classList.toggle('on', M.includes(b.dataset.iso))); };
+H.sumTopic = d => { UI.sum.topic = d.k; document.querySelectorAll('#modal [data-a=sumTopic]').forEach(b => b.classList.toggle('gold', b.dataset.k === d.k)); };
+H.sumGo = () => { const r = act('summit', { meet: UI.sum.meet, topic: UI.sum.topic }); if (r.ok) { UI.sum.meet = []; closeModal(); if (!CFG.rm) Globe.ring(...(LL(me()) || [0, 0]), 0xffd36a, .12, 2000); showPending(); } };
+H.sumSkip = () => { closeModal(); act('decide', { i: 1 }); showPending(); };
+Bus.on('crisisEnd', e => scene(cineScene(banner(e.r === 'bad' ? 'war' : 'peace', e.r === 'bad' ? 'bad' : 'cp', 'Sala de crisis', esc(e.n), e.r === 'ok' ? 'Crisis resuelta con éxito' : e.r === 'mid' ? 'Un final agridulce' : 'La gestión fue un desastre'), 3000)));
 
 
 /* ---------- ui/90-boot.js ---------- */

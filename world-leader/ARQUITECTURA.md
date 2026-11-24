@@ -33,6 +33,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Gabinete y sucesión**: `7n-cabinet` (4 ministros con competencia, lealtad y rasgo que suman a `mod()`; escándalos, conspiraciones; edad, salud y relevo por heredero), `data-cabinet.js`, `ui/5m-cabinet.js` (Política → Gabinete).
 - **Rutas marítimas**: `7o-straits` (8 estrechos que se cierran por guerra, sanciones o piratería; precios, comercio y PIB), `data-straits.js`, `ui/5n-straits.js` (Economía → Rutas) y `setStraits` en el globo.
 - **El despacho**: `7p-office` (discursos a la nación), `data-office.js`, `ui/5o-office.js` (informe matinal tras cada turno, llamadas entrantes para las propuestas de otros países, Política → Discurso y Encuestas).
+- **Personajes, cumbres y crisis**: `7q-people` (4 personajes con actitud y memoria, cumbre anual de grandes economías, sala de crisis en 3 fases), `data-people.js`, `ui/5p-people.js` (Política → Personajes).
 - **Aspecto**: `ui/5f-look.js` (modo de mapa «Regiones», nombres de estados al acercarte, cámara orbital o táctica, fondos) y en `globe.js` `setBg`, `setCam`, `setReg`, `setProvLabels`. La paleta de países está en `ATLAS` (`ui/30-hud.js`) y el estilo de botones al final de `styles.css`.
 
 ## Cómo extender sin romper
