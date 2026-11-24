@@ -12,7 +12,8 @@ hook('world', () => {
 /* techo de rearme: la IA no compra si su ejército ya supera N veces el inicial (ajustado a cuánto ha crecido su economía) */
 const AI_ARMS_X = 2, AI_ARMS_X_WAR = 3.5;
 const armsBase = c => { let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow; return v; };
-hook('new', () => { for (const iso of ISOS) { const c = S.c[iso]; c.p0 = armsBase(c); c.g0 = c.gdp; } });
+const armsBaseline = () => { for (const iso of ISOS) { const c = S.c[iso]; c.p0 = armsBase(c); c.g0 = c.gdp; } };
+{ const n1 = newGame; newGame = o => { const r = n1(o); armsBaseline(); return r; }; } /* de nuevo tras los ajustes de escenario, que cambian el PIB */
 hook('load', () => { for (const iso of ISOS) { const c = S.c[iso]; if (c.p0 == null) { c.p0 = armsBase(c); c.g0 = c.gdp; } } });
 { const b0 = aiBuy; aiBuy = iso => { const c = S.c[iso], cap = Math.max(c.p0, 20) * (inWar(iso) ? AI_ARMS_X_WAR : AI_ARMS_X) * Math.sqrt(Math.max(1, c.gdp / c.g0)), p0 = armsBase(c); if (p0 >= cap) return false;
   const u0 = Object.assign({}, c.u), tr0 = c.tr, r = b0(iso), p1 = armsBase(c); if (p1 <= cap) return r;

@@ -2,6 +2,7 @@
    SISTEMA · FASE 5 · VICTORIAS, PUNTUACIÓN, EPÍLOGO Y EVENTOS PROCEDURALES
    Umbrales y pesos en src/data-scenario.js (D.VICT) y src/data-progress.js (D.SCORE).
    ===================================================================== */
+const topGdp = n => alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, n); /* las n mayores economías */
 const myTr = t => S.tr.filter(x => (x.a === S.player || x.b === S.player) && (!t || t.includes(x.t))).length;
 function metrics() {
   const me = S.player, c = P(), p = S.p5 || P5DEF(), o = S.over, K = S.camp;
@@ -60,13 +61,13 @@ function procEvent() {
 
 /* ---- epílogo: el mundo sigue 10–20 turnos sin ti; luego todo vuelve a su sitio ---- */
 function epilogue(n) {
-  n = clamp(Math.round(n || 12), 1, 20); const snap = save(), me = S.player, c0 = P(), g0 = c0.gdp, top0 = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5), heads = [];
+  n = clamp(Math.round(n || 12), 1, 20); const snap = save(), me = S.player, c0 = P(), g0 = c0.gdp, top0 = topGdp(5), heads = [];
   let last = S.nid, played = 0;
   try {
     for (; played < n; played++) { S.over = null; S.pend = []; if (!P().alive) break; ACT.endTurn(); S.pend = [];
       for (const x of S.news) if (x.id > last && x.p >= 3) heads.push({ t: x.t, x: x.x, k: x.k }); last = S.nid; }
   } catch (e) { heads.push({ t: S.turn, x: 'La crónica se interrumpe aquí.', k: 'pol' }); }
-  const c = P(), top = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5);
+  const c = P(), top = topGdp(5);
   const res = { n: played, date: dateStr(), alive: c.alive, gdpCh: c.alive ? (c.gdp / g0 - 1) * 100 : -100, stab: Math.round(c.stab), leader: c.lider && c.lider.n !== S.leader.n ? c.lider.n : null,
     wars: S.wars.length, top, top0, heads: heads.filter(h => !/ asume el poder| tus /.test(h.x)).slice(-14), rise: top.filter(z => !top0.includes(z)), fall: top0.filter(z => !top.includes(z)) };
   load(snap); return res;
@@ -83,4 +84,5 @@ ACT.campSkip = () => { const K = S.camp; if (!K || K.end != null) return fail('N
   if (K.st + 1 < k.stages.length) { K.st++; K.s0 = S.turn; Bus.emit('campStage', { i: K.st - 1, n: k.stages[K.st - 1].n }); return { msg: 'Etapa cumplida desde el editor' }; }
   K.end = k.endings.findIndex(x => !x.if || x.if.every(goalOk)); over('camp_win'); return { msg: 'Campaña completada desde el editor' }; };
 ACT.testVic = a => { const v = D.VICT.find(x => x.id === a.k); if (!v) return fail('Victoria desconocida'); S.p5.vicDone[v.id] = S.turn; S.p5.vic = v.id; over('vic_' + v.id); return { msg: 'Victoria de prueba: ' + v.n }; };
-Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1 });
+ACT.markEdited = () => { S.p5.edited = 1; return { msg: 'Partida marcada como editada' }; };
+Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1, markEdited: 1 });

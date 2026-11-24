@@ -22,7 +22,7 @@ ACT.minRefresh = () => { if (S.turn - S.cab.candT < 2 && S.cab.cand.eco.length) 
 OPS.minGo = a => { const C = S.cab, m = C.m[a.k]; if (!m) return; if (!C.cand[a.k].length) refreshCand(); const nx = C.cand[a.k].shift(); C.m[a.k] = Object.assign(nx, { since: S.turn }); if (C.heir === a.k) C.heir = null; news(`${m.n} deja el Ministerio de ${D.MIN[a.k].n}`, 'pol', S.player, 2); };
 hook('player', () => {
   const C = S.cab, ap = approval(); if (S.turn - C.candT >= CB.refresh) refreshCand();
-  for (const k of MK) { const m = C.m[k], T = D.MTRAIT[m.tr]; m.loy = clamp(m.loy + (ap - 50) * .04 + (T.tr === 'leal' ? 1 : 0) + rr(-1.5, 1.5) + (m.tr === 'leal' ? .5 : 0), 0, 100);
+  for (const k of MK) { const m = C.m[k], T = D.MTRAIT[m.tr]; m.loy = clamp(m.loy + (ap - 50) * .04 + rr(-1.5, 1.5) + (m.tr === 'leal' ? .5 : 0), 0, 100);
     if (T.scandal && (m.scd || 0) <= S.turn && chance(T.scandal) && S.pend.length < 2) { m.scd = S.turn + CB.scandalCd;
       pushPend({ k: 'event', id: 'cabinet', t: `Escándalo: ${m.n}`, x: `La prensa publica que ${m.n}, ministro de ${D.MIN[k].n}, cobró comisiones por contratos públicos.`, iso: S.player,
         opts: [{ t: 'Destituirlo', fx: [['do', 'minGo', { k }], ['rep', 'dem', 3]] }, { t: 'Defenderlo', fx: [['stab', -2], ['rep', 'dem', -4], ['sec', 'all', -2]] }] }); }

@@ -69,7 +69,7 @@ H.ngView = d => { NG.view = d.v || null; UI.render(); };
 H.ngMode = d => {
   resetSetup(d.m);
   if (d.m === 'camp') { NG.view = 'camp'; return UI.render(); }
-  if (d.m === 'semana') { const w = P5.weekly(); NG.week = w; NG.iso = w.iso; NG.seed = String(w.seed); NG.scen = w.scen; NG.custom = false; NG.diff = '1'; }
+  if (d.m === 'semana') { const w = P5.weekly(Date.now()); NG.week = w; NG.iso = w.iso; NG.seed = String(w.seed); NG.scen = w.scen; NG.custom = false; NG.diff = '1'; }
   NG.view = null; H.ngStart({ keep: 1 });
 };
 function campPickHTML() {
@@ -305,4 +305,4 @@ H.autoSim = () => {
     <div class="row end"><button class="btn" data-a="simUndo">Deshacer la simulación</button><button class="btn gold" data-a="simKeep">Quedarme con el resultado</button></div></div>`;
   UI.render(); refreshMap(); const o = $('#simOut'); if (o) o.innerHTML = out; };
 H.simUndo = () => { if (!UI.simSnap) return; const h = Bus.h; Bus.h = {}; try { G.load(UI.simSnap); } finally { Bus.h = h; } UI.simSnap = null; UI.render(); refreshMap(); toast('Simulación deshecha'); };
-H.simKeep = () => { UI.simSnap = null; S().p5.edited = 1; autosave(); UI.render(); if (S().over) showOver(); toast('Resultado conservado (la partida queda marcada como editada: no cuenta para logros)'); };
+H.simKeep = () => { UI.simSnap = null; act('markEdited'); autosave(); UI.render(); if (S().over) showOver(); toast('Resultado conservado (la partida queda marcada como editada: no cuenta para logros)'); };

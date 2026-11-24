@@ -35,7 +35,7 @@ function parleyEnd() {
   p.lines.push([z, pyLine([PY.end[ok ? 'ok' : 'no']], z)]);
   if (ok) { addMod(me, z, 'Negociación en persona', gain(6), .4);
     if (p.g === 'lift') { const s = S.sanc.find(x => x.by === z && x.on === me); if (s) s.emb = 0; liftSanction(z, me); msg = `${c.n} levanta sus sanciones`; }
-    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * .3, P().gdp * .01)); c.tr -= amt; P().tr += amt; S.aidT = S.turn + 8; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
+    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * PY.aidTr, P().gdp * PY.aidGdp)); c.tr -= amt; P().tr += amt; S.aidT = S.turn + PY.aidCd; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
     else { addTreaty(p.g, me, z); msg = `${P().n} y ${c.n} firman: ${TNAME[p.g]}`; }
     news(msg + ' tras una reunión de alto nivel', 'dip', z, 3); }
   else { addMod(me, z, 'Negociación fallida', PY.fail, .5); msg = `Sin acuerdo con ${c.n}`; }

@@ -22,7 +22,7 @@
       { if: 'any', t: '{N} te ofrece invertir', x: '{N}, el hombre más rico del país, promete una gran inversión si rebajas un impuesto que le afecta.', opts: O([['Trato hecho', '$g+.4;sec.emp+5;sec.obr-4;rep.dem-2', 15], ['Invertir sin favores', 'sec.emp-2', -8], ['Subirle los impuestos', '$g+.2;sec.obr+4;sec.emp-6', -20]]) },
       { if: 'friendly', t: '{N} financia tu fundación', x: '{N} quiere donar a una fundación cercana a tu partido. Nadie tiene por qué saberlo.', opts: O([['Aceptar la donación', 'camp+3;chance.3{rep.dem-6;sec.all-3}{}', 10], ['Rechazarla', 'rep.dem+2', -5]]) } ] }
   };
-  D.PEOPLE_CFG = { p: .3, cool: 2, hostile: -30, friendly: 30, perPress: .04, genCoup: -50, opoElect: 2 };
+  D.PEOPLE_CFG = { p: .3, cool: 2, hostile: -30, friendly: 30, perPress: .04, genCoup: -50, opoElect: 2, magInc: .0004 };
 
   /* cumbre anual: los grandes se reúnen; eliges con quién reunirte y el tema central */
   D.SUMMIT = { every: 4, at: 2, invites: 14, meet: 2, rank: 25, rel: 7, treatyP: .35, topics: {

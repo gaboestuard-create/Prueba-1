@@ -1440,7 +1440,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
       { if: 'any', t: '{N} te ofrece invertir', x: '{N}, el hombre más rico del país, promete una gran inversión si rebajas un impuesto que le afecta.', opts: O([['Trato hecho', '$g+.4;sec.emp+5;sec.obr-4;rep.dem-2', 15], ['Invertir sin favores', 'sec.emp-2', -8], ['Subirle los impuestos', '$g+.2;sec.obr+4;sec.emp-6', -20]]) },
       { if: 'friendly', t: '{N} financia tu fundación', x: '{N} quiere donar a una fundación cercana a tu partido. Nadie tiene por qué saberlo.', opts: O([['Aceptar la donación', 'camp+3;chance.3{rep.dem-6;sec.all-3}{}', 10], ['Rechazarla', 'rep.dem+2', -5]]) } ] }
   };
-  D.PEOPLE_CFG = { p: .3, cool: 2, hostile: -30, friendly: 30, perPress: .04, genCoup: -50, opoElect: 2 };
+  D.PEOPLE_CFG = { p: .3, cool: 2, hostile: -30, friendly: 30, perPress: .04, genCoup: -50, opoElect: 2, magInc: .0004 };
 
   /* cumbre anual: los grandes se reúnen; eliges con quién reunirte y el tema central */
   D.SUMMIT = { every: 4, at: 2, invites: 14, meet: 2, rank: 25, rel: 7, treatyP: .35, topics: {
@@ -2360,7 +2360,7 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 (function () {
   const D = globalThis.WL.DATA;
   D.PARLEY = {
-    cost: 1, cool: 6, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
+    cost: 1, cool: 6, aidTr: .3, aidGdp: .01, aidCd: 8, rounds: 3, repeat: .5, fail: -3, giftGdp: .002,
     goals: { com: ['Un tratado comercial', 40], pna: ['Un pacto de no agresión', 50], lift: ['Que levanten sus sanciones', 55], aid: ['Ayuda económica', 60], ali: ['Una alianza', 62] },
     ways: {
       elogio: { n: 'Halagar su liderazgo', fx: { halcon: 3, paloma: 10, rencor: 0, pragma: 4 } },
@@ -5715,7 +5715,7 @@ ACT.demandApology = a => { const me = S.player, z = a.iso, c = S.c[z]; if (!c ||
 /* ---------- engine/7g-scenarios.js ---------- */
 /* =====================================================================
    SISTEMA · FASE 5 · ESCENARIOS, MODOS, CAMPAÑAS Y DIFICULTAD POR PARTES
-   newGame(o) acepta o.setup = { mode, scen, camp, opts:{perm, solo, escasez, hostil, rapido, alt}, dk:{ai, eco, stab, ev}, week, custom }
+   newGame(o) acepta o.setup = { mode, scen, camp, opts:{perm, solo, escasez, hostil, rapido, alt, caosev, pobre}, dk:{ai, eco, stab, ev}, week, custom }
    y deja en S.setup lo elegido. Los datos están en src/data-scenario.js.
    ===================================================================== */
 const P5DEF = () => ({ treat: 0, warsWon: 0, med: 0, spy: 0, coups: 0, nukes: 0, visits: 0, betray: 0, decl: 0, lowStab: 0, redTurns: 0, edited: 0, vic: null, vicDone: {}, cont: 0, tl: [] });
@@ -5814,15 +5814,15 @@ hook('late', () => { const k = p5k('stab'); if (k !== 1) P().stab = clamp(P().st
 hook('late', () => { if (opt('rapido') && S.turn >= D.QUICK_TURNS && !S.over) over('tiempo'); });
 
 /* ---- contadores de la partida (logros, estadísticas y puntuación) ---- */
-{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && (isP(a) || isP(b)) && S.p5) { S.p5.treat++; if (t === 'ali' || t === 'def') S.p5.tl.push({ t: S.turn, x: `${TNAME[t]} con ${nm(isP(a) ? b : a)}` }); } }; }
+{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b), r = t0(t, a, b); if (!had && (isP(a) || isP(b)) && S.p5) { S.p5.treat++; if (t === 'ali' || t === 'def') S.p5.tl.push({ t: S.turn, x: `${TNAME[t]} con ${nm(isP(a) ? b : a)}` }); } return r; }; }
 { const w0 = startWar; startWar = (a, d) => { const pact = S.p5 && isP(a) && (hasExplicit('pna', a, d) || alliesOf(a).includes(d)); const w = w0(a, d); if (w && S.p5) { if (pact) S.p5.betray++; if (isP(a)) S.p5.decl++; if (isP(a) || isP(d)) S.p5.tl.push({ t: S.turn, x: `Guerra con ${nm(isP(a) ? d : a)}` }); } return w; }; }
 { const e0 = endWar; endWar = (w, kind) => { const me = S.player, mine = S.p5 && (w.att.includes(me) || w.def.includes(me)), sc = mine ? (w.att.includes(me) ? w.score : -w.score) : 0, foe = mine ? (w.att.includes(me) ? w.def[0] : w.att[0]) : null;
-  e0(w, kind); if (mine) { if (sc >= 25 || (foe && !S.c[foe].alive)) S.p5.warsWon++; S.p5.tl.push({ t: S.turn, x: `Paz con ${nm(foe)}${sc >= 25 ? ' (victoria)' : sc <= -25 ? ' (derrota)' : ''}` }); } }; }
-{ const m0 = OPS.mediate; OPS.mediate = a => { const had = !!warById(a.w); m0(a); if (had && !warById(a.w)) { S.p5.med++; S.p5.tl.push({ t: S.turn, x: 'Mediación de paz con éxito' }); } }; }
+  const r = e0(w, kind); if (mine) { if (sc >= 25 || (foe && !S.c[foe].alive)) S.p5.warsWon++; S.p5.tl.push({ t: S.turn, x: `Paz con ${nm(foe)}${sc >= 25 ? ' (victoria)' : sc <= -25 ? ' (derrota)' : ''}` }); } return r; }; }
+{ const m0 = OPS.mediate; OPS.mediate = a => { const had = !!warById(a.w), r = m0(a); if (had && !warById(a.w)) { S.p5.med++; S.p5.tl.push({ t: S.turn, x: 'Mediación de paz con éxito' }); } return r; }; }
 { const s0 = ACT.spy; ACT.spy = a => { const r = s0(a); if (r && r.ok !== false) S.p5.spy++; return r; }; }
 { const v0 = ACT.visit; ACT.visit = a => { const r = v0(a); if (r && r.ok !== false) S.p5.visits++; return r; }; }
 if (ACT.strat) { const n0 = ACT.strat; ACT.strat = a => { const r = n0(a); if (r && r.ok !== false) { S.p5.nukes++; S.p5.tl.push({ t: S.turn, x: 'Ataque estratégico' }); } return r; }; }
-{ const c0 = coup; coup = iso => { c0(iso); if (S.p5) S.p5.coups++; }; }
+{ const c0 = coup; coup = iso => { const r = c0(iso); if (S.p5) S.p5.coups++; return r; }; }
 hook('late', () => { const p = S.p5; p.lowStab = P().stab < 15 ? p.lowStab + 1 : 0; p.redTurns = P().tr < 0 ? p.redTurns + 1 : 0; if (p.tl.length > 60) p.tl.splice(1, p.tl.length - 60); });
 OPS.setReg = a => { if (D.REGIMES[a.v]) { P().reg = a.v; if ((a.v === 'dem' || a.v === 'hib') && !(S.pol.nextElec > S.turn)) S.pol.nextElec = S.turn + 8; dirty(); news(`${P().n} cambia de régimen: ${D.REGIMES[a.v]}`, 'pol', S.player, 3); } };
 
@@ -5850,7 +5850,7 @@ function goalOk(g) {
     case 'annex': return S.stats.annexed >= a; case 'occ': return ISOS.reduce((n, z) => n + (z === me ? 0 : S.c[z].terr.filter(t => t.o === me).length), 0) >= a;
     case 'occFree': return c.terr.every(t => t.o === me); case 'occBy': return c.terr.filter(t => t.o !== me).length >= a;
     case 'rel': return !!S.c[a] && S.c[a].alive && rel(me, a) >= b; case 'relLt': return !!S.c[a] && rel(me, a) < b;
-    case 'relBig': return alive().filter(z => z !== me).sort((x, y) => S.c[y].gdp - S.c[x].gdp).slice(0, 5).every(z => rel(me, z) >= a);
+    case 'relBig': return topGdp(6).filter(z => z !== me).slice(0, 5).every(z => rel(me, z) >= a);
     case 'warsWon': return S.p5.warsWon >= a; case 'declared': return S.p5.decl >= a; case 'med': return S.p5.med >= a;
     case 'tech': return S.tech.done.length >= a; case 'firsts': return firstsOf(me) >= a;
     case 'debtLt': return debtRatio() < a; case 'noSanc': return !S.sanc.some(s => s.on === me);
@@ -5899,7 +5899,7 @@ function readCode(s) {
 const gameCode = () => shareCode({ iso: S.player, seed: S.seed, diff: S.diff, traits: S.leader.traits, name: S.leader.n, setup: Object.assign({}, S.setup, { rel0: undefined }) });
 /* reto semanal: la semana del año fija semilla, país, escenario y dos reglas */
 function weekly(now) {
-  const w = Math.floor(((now || Date.now()) / 864e5 + 3) / 7), R = D.WEEK_RULES, a = R[w % R.length], b = R[(w * 3 + 1) % R.length], opts = {};
+  const w = Math.floor((now / 864e5 + 3) / 7), R = D.WEEK_RULES, a = R[w % R.length], b = R[(w * 3 + 1) % R.length], opts = {};
   for (const r of a === b ? [a] : [a, b]) opts[r.id] = 1; if (opts.alt) opts.alt = 1;
   const ul = D.SCEN.filter(x => !x.lock), sc = ul[w % ul.length];
   return { w, iso: D.WEEK_COUNTRIES[w % D.WEEK_COUNTRIES.length], seed: (w * 7919) % 2147483647 || 1, scen: sc.id, rules: (a === b ? [a] : [a, b]).map(r => r.n), setup: { mode: 'semana', scen: sc.id, opts, week: w, dk: { ai: 1, eco: 1, stab: 1, ev: 1 } } };
@@ -5911,6 +5911,7 @@ function weekly(now) {
    SISTEMA · FASE 5 · VICTORIAS, PUNTUACIÓN, EPÍLOGO Y EVENTOS PROCEDURALES
    Umbrales y pesos en src/data-scenario.js (D.VICT) y src/data-progress.js (D.SCORE).
    ===================================================================== */
+const topGdp = n => alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, n); /* las n mayores economías */
 const myTr = t => S.tr.filter(x => (x.a === S.player || x.b === S.player) && (!t || t.includes(x.t))).length;
 function metrics() {
   const me = S.player, c = P(), p = S.p5 || P5DEF(), o = S.over, K = S.camp;
@@ -5969,13 +5970,13 @@ function procEvent() {
 
 /* ---- epílogo: el mundo sigue 10–20 turnos sin ti; luego todo vuelve a su sitio ---- */
 function epilogue(n) {
-  n = clamp(Math.round(n || 12), 1, 20); const snap = save(), me = S.player, c0 = P(), g0 = c0.gdp, top0 = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5), heads = [];
+  n = clamp(Math.round(n || 12), 1, 20); const snap = save(), me = S.player, c0 = P(), g0 = c0.gdp, top0 = topGdp(5), heads = [];
   let last = S.nid, played = 0;
   try {
     for (; played < n; played++) { S.over = null; S.pend = []; if (!P().alive) break; ACT.endTurn(); S.pend = [];
       for (const x of S.news) if (x.id > last && x.p >= 3) heads.push({ t: x.t, x: x.x, k: x.k }); last = S.nid; }
   } catch (e) { heads.push({ t: S.turn, x: 'La crónica se interrumpe aquí.', k: 'pol' }); }
-  const c = P(), top = alive().sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, 5);
+  const c = P(), top = topGdp(5);
   const res = { n: played, date: dateStr(), alive: c.alive, gdpCh: c.alive ? (c.gdp / g0 - 1) * 100 : -100, stab: Math.round(c.stab), leader: c.lider && c.lider.n !== S.leader.n ? c.lider.n : null,
     wars: S.wars.length, top, top0, heads: heads.filter(h => !/ asume el poder| tus /.test(h.x)).slice(-14), rise: top.filter(z => !top0.includes(z)), fall: top0.filter(z => !top.includes(z)) };
   load(snap); return res;
@@ -5992,7 +5993,8 @@ ACT.campSkip = () => { const K = S.camp; if (!K || K.end != null) return fail('N
   if (K.st + 1 < k.stages.length) { K.st++; K.s0 = S.turn; Bus.emit('campStage', { i: K.st - 1, n: k.stages[K.st - 1].n }); return { msg: 'Etapa cumplida desde el editor' }; }
   K.end = k.endings.findIndex(x => !x.if || x.if.every(goalOk)); over('camp_win'); return { msg: 'Campaña completada desde el editor' }; };
 ACT.testVic = a => { const v = D.VICT.find(x => x.id === a.k); if (!v) return fail('Victoria desconocida'); S.p5.vicDone[v.id] = S.turn; S.p5.vic = v.id; over('vic_' + v.id); return { msg: 'Victoria de prueba: ' + v.n }; };
-Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1 });
+ACT.markEdited = () => { S.p5.edited = 1; return { msg: 'Partida marcada como editada' }; };
+Object.assign(FREE, { fireProc: 1, campSkip: 1, testVic: 1, markEdited: 1 });
 
 
 /* ---------- engine/7i-balance.js ---------- */
@@ -6010,7 +6012,8 @@ hook('world', () => {
 /* techo de rearme: la IA no compra si su ejército ya supera N veces el inicial (ajustado a cuánto ha crecido su economía) */
 const AI_ARMS_X = 2, AI_ARMS_X_WAR = 3.5;
 const armsBase = c => { let v = 0; for (const k in D.UNITS) v += (c.u[k] || 0) * D.UNITS[k].pow; return v; };
-hook('new', () => { for (const iso of ISOS) { const c = S.c[iso]; c.p0 = armsBase(c); c.g0 = c.gdp; } });
+const armsBaseline = () => { for (const iso of ISOS) { const c = S.c[iso]; c.p0 = armsBase(c); c.g0 = c.gdp; } };
+{ const n1 = newGame; newGame = o => { const r = n1(o); armsBaseline(); return r; }; } /* de nuevo tras los ajustes de escenario, que cambian el PIB */
 hook('load', () => { for (const iso of ISOS) { const c = S.c[iso]; if (c.p0 == null) { c.p0 = armsBase(c); c.g0 = c.gdp; } } });
 { const b0 = aiBuy; aiBuy = iso => { const c = S.c[iso], cap = Math.max(c.p0, 20) * (inWar(iso) ? AI_ARMS_X_WAR : AI_ARMS_X) * Math.sqrt(Math.max(1, c.gdp / c.g0)), p0 = armsBase(c); if (p0 >= cap) return false;
   const u0 = Object.assign({}, c.u), tr0 = c.tr, r = b0(iso), p1 = armsBase(c); if (p1 <= cap) return r;
@@ -6044,9 +6047,9 @@ function addTalk(c) { c.id = ++S.tkId; c.t = S.turn; S.talk.push(c); if (S.talk.
 /* los temas se anotan donde ocurren */
 { const w0 = startWar; startWar = (a, d) => { const w = w0(a, d); if (w) topic('war', a, d); return w; }; }
 { const s0 = addSanction; addSanction = (by, on) => { const r = s0(by, on); if (r) topic('sanc', by, on); return r; }; }
-{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); }; }
-{ const e0 = endWar; endWar = (w, kind) => { const live = S.wars.includes(w), a = w.att[0], d = w.def[0]; e0(w, kind); if (live && kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); }; }
-{ const c0 = coup; coup = iso => { c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); }; }
+{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b), r = t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); return r; }; }
+{ const e0 = endWar; endWar = (w, kind) => { const live = S.wars.includes(w), a = w.att[0], d = w.def[0]; const r = e0(w, kind); if (live && kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); return r; }; }
+{ const c0 = coup; coup = iso => { const r = c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); return r; }; }
 { const a0 = annex; annex = (v, t) => { const was = S.c[v].alive, r = a0(v, t); if (was && !S.c[v].alive) topic('annex', v, t); return r; }; }
 { const i0 = infect; infect = (iso, src) => { const r = i0(iso, src); if (r) topic('crisis', iso, src || bigOther(iso)); return r; }; }
 
@@ -6208,7 +6211,7 @@ function parleyEnd() {
   p.lines.push([z, pyLine([PY.end[ok ? 'ok' : 'no']], z)]);
   if (ok) { addMod(me, z, 'Negociación en persona', gain(6), .4);
     if (p.g === 'lift') { const s = S.sanc.find(x => x.by === z && x.on === me); if (s) s.emb = 0; liftSanction(z, me); msg = `${c.n} levanta sus sanciones`; }
-    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * .3, P().gdp * .01)); c.tr -= amt; P().tr += amt; S.aidT = S.turn + 8; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
+    else if (p.g === 'aid') { const amt = Math.max(0, Math.min(c.tr * PY.aidTr, P().gdp * PY.aidGdp)); c.tr -= amt; P().tr += amt; S.aidT = S.turn + PY.aidCd; msg = `${c.n} te concede ${money(amt)} de ayuda`; }
     else { addTreaty(p.g, me, z); msg = `${P().n} y ${c.n} firman: ${TNAME[p.g]}`; }
     news(msg + ' tras una reunión de alto nivel', 'dip', z, 3); }
   else { addMod(me, z, 'Negociación fallida', PY.fail, .5); msg = `Sin acuerdo con ${c.n}`; }
@@ -6258,7 +6261,7 @@ ACT.minRefresh = () => { if (S.turn - S.cab.candT < 2 && S.cab.cand.eco.length) 
 OPS.minGo = a => { const C = S.cab, m = C.m[a.k]; if (!m) return; if (!C.cand[a.k].length) refreshCand(); const nx = C.cand[a.k].shift(); C.m[a.k] = Object.assign(nx, { since: S.turn }); if (C.heir === a.k) C.heir = null; news(`${m.n} deja el Ministerio de ${D.MIN[a.k].n}`, 'pol', S.player, 2); };
 hook('player', () => {
   const C = S.cab, ap = approval(); if (S.turn - C.candT >= CB.refresh) refreshCand();
-  for (const k of MK) { const m = C.m[k], T = D.MTRAIT[m.tr]; m.loy = clamp(m.loy + (ap - 50) * .04 + (T.tr === 'leal' ? 1 : 0) + rr(-1.5, 1.5) + (m.tr === 'leal' ? .5 : 0), 0, 100);
+  for (const k of MK) { const m = C.m[k], T = D.MTRAIT[m.tr]; m.loy = clamp(m.loy + (ap - 50) * .04 + rr(-1.5, 1.5) + (m.tr === 'leal' ? .5 : 0), 0, 100);
     if (T.scandal && (m.scd || 0) <= S.turn && chance(T.scandal) && S.pend.length < 2) { m.scd = S.turn + CB.scandalCd;
       pushPend({ k: 'event', id: 'cabinet', t: `Escándalo: ${m.n}`, x: `La prensa publica que ${m.n}, ministro de ${D.MIN[k].n}, cobró comisiones por contratos públicos.`, iso: S.player,
         opts: [{ t: 'Destituirlo', fx: [['do', 'minGo', { k }], ['rep', 'dem', 3]] }, { t: 'Defenderlo', fx: [['stab', -2], ['rep', 'dem', -4], ['sec', 'all', -2]] }] }); }
@@ -6386,7 +6389,7 @@ hook('late', () => {
 hook('player', () => { const P2 = S.ppl;
   if (P2.per.att < PPC.hostile && chance(PPC.perPress)) { secAdd('all', -2); news(`${P2.per.n} publica una exclusiva demoledora contra ${S.leader.n}`, 'pol', S.player, 3); }
   if (P2.gen.att < PPC.genCoup && S.pol.sec.mil.a < 35) { P().stab = clamp(P().stab - .5, 0, 100); if (chance(.1)) news(`Rumores de malestar en los cuarteles: el general ${P2.gen.n} no oculta su desprecio`, 'pol', S.player, 2); }
-  if (P2.mag.att > PPC.friendly) P().tr += P().gdp * .0004; });
+  if (P2.mag.att > PPC.friendly) P().tr += P().gdp * PPC.magInc; });
 { const m0 = mod; mod = k => { const v = m0(k); if (k !== 'elect' || !S || !S.ppl) return v; const a = S.ppl.opo.att; return v + (a < PPC.hostile ? -PPC.opoElect : a > PPC.friendly ? PPC.opoElect / 2 : 0); }; }
 
 /* ---- cumbre anual ---- */
@@ -8921,7 +8924,7 @@ H.ngView = d => { NG.view = d.v || null; UI.render(); };
 H.ngMode = d => {
   resetSetup(d.m);
   if (d.m === 'camp') { NG.view = 'camp'; return UI.render(); }
-  if (d.m === 'semana') { const w = P5.weekly(); NG.week = w; NG.iso = w.iso; NG.seed = String(w.seed); NG.scen = w.scen; NG.custom = false; NG.diff = '1'; }
+  if (d.m === 'semana') { const w = P5.weekly(Date.now()); NG.week = w; NG.iso = w.iso; NG.seed = String(w.seed); NG.scen = w.scen; NG.custom = false; NG.diff = '1'; }
   NG.view = null; H.ngStart({ keep: 1 });
 };
 function campPickHTML() {
@@ -9157,7 +9160,7 @@ H.autoSim = () => {
     <div class="row end"><button class="btn" data-a="simUndo">Deshacer la simulación</button><button class="btn gold" data-a="simKeep">Quedarme con el resultado</button></div></div>`;
   UI.render(); refreshMap(); const o = $('#simOut'); if (o) o.innerHTML = out; };
 H.simUndo = () => { if (!UI.simSnap) return; const h = Bus.h; Bus.h = {}; try { G.load(UI.simSnap); } finally { Bus.h = h; } UI.simSnap = null; UI.render(); refreshMap(); toast('Simulación deshecha'); };
-H.simKeep = () => { UI.simSnap = null; S().p5.edited = 1; autosave(); UI.render(); if (S().over) showOver(); toast('Resultado conservado (la partida queda marcada como editada: no cuenta para logros)'); };
+H.simKeep = () => { UI.simSnap = null; act('markEdited'); autosave(); UI.render(); if (S().over) showOver(); toast('Resultado conservado (la partida queda marcada como editada: no cuenta para logros)'); };
 
 
 /* ---------- ui/5f-look.js ---------- */
@@ -9522,12 +9525,12 @@ function pollsHTML() { const s = S(), m = me(), ap = (s.h5 || []).map(x => x.ap)
 PTABS.pol.push(['per', 'Personajes']);
 { const p0 = PANELS.pol; PANELS.pol = t => t === 'per' ? peopleHTML() : p0(t); }
 const attLbl = a => a >= D.PEOPLE_CFG.friendly ? ['Aliado', 'good'] : a <= D.PEOPLE_CFG.hostile ? ['Enemigo', 'bad'] : ['Neutral', ''];
-const PPL_FX = { opo: ['Si te odia: −2 en elecciones', 'Si te aprecia: +1 en elecciones'], per: ['Si te odia: exclusivas contra ti', 'Si te aprecia: mejor prensa'], gen: ['Si te odia y la tropa está descontenta: inestabilidad', 'Si te aprecia: lealtad de los cuarteles'], mag: ['Si te odia: frena inversiones', 'Si te aprecia: aporta dinero cada turno'] };
+const PPL_FX = { opo: ['Si te odia: −2 en elecciones', 'Si te aprecia: +1 en elecciones'], per: ['Si te odia: exclusivas contra ti'], gen: ['Si te odia y la tropa está descontenta: inestabilidad'], mag: ['Si te aprecia: aporta dinero cada turno'] };
 function peopleHTML() { const P2 = Q.pplInfo();
   return `<p class="mut fine">Personas con nombre que recuerdan lo que haces. Su actitud cambia con cada decisión y tiene consecuencias.</p><div class="cabs">${Object.entries(D.PEOPLE).map(([k, d]) => { const p = P2[k], L = attLbl(p.att);
     return `<div class="card cab"><div class="row"><span class="portrait">${portraitSVG(p.n, p.pseed)}</span><div class="grow"><small class="eyebrow">${gi(d.ic)} ${esc(d.n)}</small><b>${esc(p.n)}</b> <span class="chip ${L[1]}">${L[0]}</span><small class="mut">${esc(d.role.replace('{O}', (S().pol.seats.filter(x => !x.g).sort((a, b) => b.s - a.s)[0] || { n: 'la oposición' }).n))}</small></div></div>
       <div class="arow"><span class="grow">Actitud hacia ti</span>${bar(p.att + 100, 200, p.att > 30 ? 'green' : p.att < -30 ? 'red' : '')}<b class="num">${sgn(p.att)}</b></div>
-      <small class="mut">${esc(PPL_FX[k][0])} · ${esc(PPL_FX[k][1])}</small>
+      <small class="mut">${esc(PPL_FX[k].join(' · '))}</small>
       ${p.log.length ? `<ol class="tl5">${p.log.slice(-4).reverse().map(x => `<li><small>${esc(turnDate(x.t))}</small> ${esc(x.x)} <b class="${x.v >= 0 ? 'green' : 'red'}">${sgn(x.v)}</b></li>`).join('')}</ol>` : '<p class="mut">Aún no habéis coincidido.</p>'}</div>`; }).join('')}</div>`; }
 
 /* la decisión de un personaje lleva su cara; la sala de crisis, su aire de urgencia */

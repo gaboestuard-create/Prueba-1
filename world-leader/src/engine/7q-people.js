@@ -26,7 +26,7 @@ hook('late', () => {
 hook('player', () => { const P2 = S.ppl;
   if (P2.per.att < PPC.hostile && chance(PPC.perPress)) { secAdd('all', -2); news(`${P2.per.n} publica una exclusiva demoledora contra ${S.leader.n}`, 'pol', S.player, 3); }
   if (P2.gen.att < PPC.genCoup && S.pol.sec.mil.a < 35) { P().stab = clamp(P().stab - .5, 0, 100); if (chance(.1)) news(`Rumores de malestar en los cuarteles: el general ${P2.gen.n} no oculta su desprecio`, 'pol', S.player, 2); }
-  if (P2.mag.att > PPC.friendly) P().tr += P().gdp * .0004; });
+  if (P2.mag.att > PPC.friendly) P().tr += P().gdp * PPC.magInc; });
 { const m0 = mod; mod = k => { const v = m0(k); if (k !== 'elect' || !S || !S.ppl) return v; const a = S.ppl.opo.att; return v + (a < PPC.hostile ? -PPC.opoElect : a > PPC.friendly ? PPC.opoElect / 2 : 0); }; }
 
 /* ---- cumbre anual ---- */

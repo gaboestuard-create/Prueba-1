@@ -4,12 +4,12 @@
 PTABS.pol.push(['per', 'Personajes']);
 { const p0 = PANELS.pol; PANELS.pol = t => t === 'per' ? peopleHTML() : p0(t); }
 const attLbl = a => a >= D.PEOPLE_CFG.friendly ? ['Aliado', 'good'] : a <= D.PEOPLE_CFG.hostile ? ['Enemigo', 'bad'] : ['Neutral', ''];
-const PPL_FX = { opo: ['Si te odia: −2 en elecciones', 'Si te aprecia: +1 en elecciones'], per: ['Si te odia: exclusivas contra ti', 'Si te aprecia: mejor prensa'], gen: ['Si te odia y la tropa está descontenta: inestabilidad', 'Si te aprecia: lealtad de los cuarteles'], mag: ['Si te odia: frena inversiones', 'Si te aprecia: aporta dinero cada turno'] };
+const PPL_FX = { opo: ['Si te odia: −2 en elecciones', 'Si te aprecia: +1 en elecciones'], per: ['Si te odia: exclusivas contra ti'], gen: ['Si te odia y la tropa está descontenta: inestabilidad'], mag: ['Si te aprecia: aporta dinero cada turno'] };
 function peopleHTML() { const P2 = Q.pplInfo();
   return `<p class="mut fine">Personas con nombre que recuerdan lo que haces. Su actitud cambia con cada decisión y tiene consecuencias.</p><div class="cabs">${Object.entries(D.PEOPLE).map(([k, d]) => { const p = P2[k], L = attLbl(p.att);
     return `<div class="card cab"><div class="row"><span class="portrait">${portraitSVG(p.n, p.pseed)}</span><div class="grow"><small class="eyebrow">${gi(d.ic)} ${esc(d.n)}</small><b>${esc(p.n)}</b> <span class="chip ${L[1]}">${L[0]}</span><small class="mut">${esc(d.role.replace('{O}', (S().pol.seats.filter(x => !x.g).sort((a, b) => b.s - a.s)[0] || { n: 'la oposición' }).n))}</small></div></div>
       <div class="arow"><span class="grow">Actitud hacia ti</span>${bar(p.att + 100, 200, p.att > 30 ? 'green' : p.att < -30 ? 'red' : '')}<b class="num">${sgn(p.att)}</b></div>
-      <small class="mut">${esc(PPL_FX[k][0])} · ${esc(PPL_FX[k][1])}</small>
+      <small class="mut">${esc(PPL_FX[k].join(' · '))}</small>
       ${p.log.length ? `<ol class="tl5">${p.log.slice(-4).reverse().map(x => `<li><small>${esc(turnDate(x.t))}</small> ${esc(x.x)} <b class="${x.v >= 0 ? 'green' : 'red'}">${sgn(x.v)}</b></li>`).join('')}</ol>` : '<p class="mut">Aún no habéis coincidido.</p>'}</div>`; }).join('')}</div>`; }
 
 /* la decisión de un personaje lleva su cara; la sala de crisis, su aire de urgencia */

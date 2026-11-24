@@ -19,9 +19,9 @@ function addTalk(c) { c.id = ++S.tkId; c.t = S.turn; S.talk.push(c); if (S.talk.
 /* los temas se anotan donde ocurren */
 { const w0 = startWar; startWar = (a, d) => { const w = w0(a, d); if (w) topic('war', a, d); return w; }; }
 { const s0 = addSanction; addSanction = (by, on) => { const r = s0(by, on); if (r) topic('sanc', by, on); return r; }; }
-{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b); t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); }; }
-{ const e0 = endWar; endWar = (w, kind) => { const live = S.wars.includes(w), a = w.att[0], d = w.def[0]; e0(w, kind); if (live && kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); }; }
-{ const c0 = coup; coup = iso => { c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); }; }
+{ const t0 = addTreaty; addTreaty = (t, a, b) => { const had = hasExplicit(t, a, b), r = t0(t, a, b); if (!had && t !== 'com') topic('treaty', a, b); return r; }; }
+{ const e0 = endWar; endWar = (w, kind) => { const live = S.wars.includes(w), a = w.att[0], d = w.def[0]; const r = e0(w, kind); if (live && kind !== 'fin' && S.c[a].alive && S.c[d].alive) topic('peace', a, d); return r; }; }
+{ const c0 = coup; coup = iso => { const r = c0(iso); const z = pick(nb(iso).filter(notable)) || bigOther(iso); if (z) topic('coup', iso, z); return r; }; }
 { const a0 = annex; annex = (v, t) => { const was = S.c[v].alive, r = a0(v, t); if (was && !S.c[v].alive) topic('annex', v, t); return r; }; }
 { const i0 = infect; infect = (iso, src) => { const r = i0(iso, src); if (r) topic('crisis', iso, src || bigOther(iso)); return r; }; }
 
