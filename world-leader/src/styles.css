@@ -440,3 +440,4 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .ppl-head { gap: 10px; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); } .ppl-head .portrait { width: 48px; height: 48px; } .ppl-head b { display: block; font: 600 16px var(--fd); }
 .sum5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .sum5 .li { display: flex; gap: 8px; align-items: center; text-align: left; } .sum5 .li.on { border-color: var(--gold); background: rgba(232, 195, 106, .1); }
 .cab .grow > small.mut { display: block; }
+@media (max-width: 600px) { .tabs { padding: 0 8px; gap: 0; } .tabs button { padding: 7px 8px; font-size: 12px; letter-spacing: .04em; } }
