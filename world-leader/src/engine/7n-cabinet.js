@@ -9,7 +9,7 @@ const CB = D.CAB, AG = D.AGE, MK = Object.keys(D.MIN), MTK = Object.keys(D.MTRAI
 function mkMinister() { const tr = pick(MTK), T = D.MTRAIT[tr]; return { n: genLeader(S.player), tr, comp: clamp(ri(1, 4) + (T.comp || 0), 1, 5), loy: clamp(ri(45, 75) + (T.loy || 0), 0, 100), pseed: ri(0, 96), since: S.turn }; }
 function cabInit() { S.cab = { m: {}, cand: {}, heir: null, candT: S.turn }; for (const k of MK) { S.cab.m[k] = mkMinister(); S.cab.cand[k] = []; }
   S.leader.age = S.leader.age || ri(AG.start[0], AG.start[1]); S.leader.health = 100; }
-hook('new', cabInit); hook('load', () => { if (!S.cab) cabInit(); });
+hook('new', cabInit); hook('load', () => { if (!S.cab) cabInit(); for (const k of MK) if (!S.cab.m[k]) { S.cab.m[k] = mkMinister(); S.cab.cand[k] = []; } }); /* ministerios añadidos después */
 { const m0 = mod; mod = k => { let v = m0(k); if (!S || !S.cab) return v; for (const key of MK) { const m = S.cab.m[key]; if (!m) continue; v += ((D.MIN[key].per || {})[k] || 0) * m.comp; if (k === 'elect' && D.MTRAIT[m.tr].elect) v += D.MTRAIT[m.tr].elect; } return v; }; }
 const refreshCand = () => { for (const k of MK) S.cab.cand[k] = Array.from({ length: CB.candidates }, mkMinister); S.cab.candT = S.turn; };
 ACT.minHire = a => { const C = S.cab, x = (C.cand[a.k] || [])[+a.i]; if (!x) return fail('Candidato inválido'); if (!useCP(CB.hireCp)) return fail(`Necesitas ${CB.hireCp} de capital político`);

@@ -25,6 +25,6 @@ function summitModal(p) { const F = UI.sum;
     <div class="row end"><button class="btn ghost" data-a="sumSkip">No asistir</button><button class="btn gold" data-a="sumGo">Ir a la cumbre</button></div>`, false, 'event wide'); }
 H.sumMeet = d => { const M = UI.sum.meet, i = M.indexOf(d.iso); if (i >= 0) M.splice(i, 1); else { if (M.length >= D.SUMMIT.meet) M.shift(); M.push(d.iso); } document.querySelectorAll('#modal [data-a=sumMeet]').forEach(b => b.classList.toggle('on', M.includes(b.dataset.iso))); };
 H.sumTopic = d => { UI.sum.topic = d.k; document.querySelectorAll('#modal [data-a=sumTopic]').forEach(b => b.classList.toggle('gold', b.dataset.k === d.k)); };
-H.sumGo = () => { const r = act('summit', { meet: UI.sum.meet, topic: UI.sum.topic }); if (r.ok) { UI.sum.meet = []; closeModal(); if (!CFG.rm) Globe.ring(...(LL(me()) || [0, 0]), 0xffd36a, .12, 2000); showPending(); } };
+H.sumGo = () => { const r = act('summitYear', { meet: UI.sum.meet, topic: UI.sum.topic }); if (r.ok) { UI.sum.meet = []; closeModal(); if (!CFG.rm) Globe.ring(...(LL(me()) || [0, 0]), 0xffd36a, .12, 2000); showPending(); } };
 H.sumSkip = () => { closeModal(); act('decide', { i: 1 }); showPending(); };
 Bus.on('crisisEnd', e => scene(cineScene(banner(e.r === 'bad' ? 'war' : 'peace', e.r === 'bad' ? 'bad' : 'cp', 'Sala de crisis', esc(e.n), e.r === 'ok' ? 'Crisis resuelta con éxito' : e.r === 'mid' ? 'Un final agridulce' : 'La gestión fue un desastre'), 3000)));

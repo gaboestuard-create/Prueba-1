@@ -8,7 +8,7 @@
    ===================================================================== */
 const PPC = D.PEOPLE_CFG, SUM = D.SUMMIT, CRC = D.CRISIS_CFG;
 function pplInit() { S.ppl = {}; for (const k in D.PEOPLE) S.ppl[k] = { n: genLeader(S.player), att: ri(-10, 10), cd: 0, log: [], pseed: ri(0, 96) }; }
-hook('new', () => { pplInit(); S.crisis = null; S.crisisCd = 0; }); hook('load', () => { if (!S.ppl) pplInit(); if (S.crisis === undefined) S.crisis = null; S.crisisCd = S.crisisCd || 0; });
+hook('new', () => { pplInit(); S.crisis = null; S.crisisCd = 0; }); hook('load', () => { if (!S.ppl) pplInit(); for (const k in D.PEOPLE) S.ppl[k] = S.ppl[k] || { n: genLeader(S.player), att: 0, cd: 0, log: [], pseed: 0 }; if (S.crisis === undefined) S.crisis = null; S.crisisCd = S.crisisCd || 0; });
 const oppName = () => (S.pol.seats.filter(p => !p.g).sort((a, b) => b.s - a.s)[0] || { n: 'la oposición' }).n;
 const pplFill = (s, k) => s.split('{N}').join(S.ppl[k].n).split('{O}').join(oppName()).split('{P}').join(P().n).split('{PL}').join(S.leader.n);
 function pplCond(c, k) { const a = S.ppl[k].att, el = S.pol.nextElec - S.turn;
@@ -34,14 +34,14 @@ hook('late', () => { if (S.over || S.turn % SUM.every !== SUM.at || rankOf(z => 
   const inv = alive().filter(z => !isP(z)).sort((a, b) => S.c[b].gdp - S.c[a].gdp).slice(0, SUM.invites);
   pushPend({ k: 'summit', t: `Cumbre de las grandes economías · ${dateStr()}`, x: 'Los líderes de las mayores economías del mundo se reúnen. Puedes tener dos reuniones bilaterales y proponer el tema central.', iso: S.player, inv,
     opts: [{ t: 'Asistir sin reuniones', fx: [] }, { t: 'No asistir', fx: [['rep', 'conf', -3]] }] }); });
-ACT.summit = a => { const p = S.pend[0]; if (!p || p.k !== 'summit') return fail('No hay cumbre en curso'); const T = SUM.topics[a.topic]; if (!T) return fail('Elige un tema');
+ACT.summitYear = a => { const p = S.pend[0]; if (!p || p.k !== 'summit') return fail('No hay cumbre en curso'); const T = SUM.topics[a.topic]; if (!T) return fail('Elige un tema');
   const meet = (a.meet || []).filter(z => p.inv.includes(z)).slice(0, SUM.meet), me = S.player, got = [], lines = [];
   for (const z of meet) { addMod(me, z, 'Reunión en la cumbre', gain(SUM.rel), .4); lines.push([z, `${S.c[z].lider.n} se reúne contigo en un aparte de la cumbre.`]);
     const t = ['com', 'pna'].find(x => !hasT(x, me, z)); if (t && !sanctioned(z, me) && chance(SUM.treatyP)) { addTreaty(t, me, z); got.push(`${TNAME[t]} con ${nm(z)}`); lines.push([me, `Firmáis: ${TNAME[t]}.`]); } }
   applyFx(T.fx, {}); S.pend.shift(); news(`Cumbre de las grandes economías: ${S.leader.n} impulsa «${T.n}»${got.length ? '; firma ' + got.join(' y ') : ''}`, 'dip', me, 3);
   addTalk({ k: 'summit', a: meet[0] || me, b: meet[1] || me, lines: lines.concat([['', `Foto de familia. Tema central: ${T.n}.`]]), rep: null, done: 1, title: 'Cumbre de las grandes economías' });
   return { msg: `Cumbre: ${T.n}${got.length ? ' · ' + got.join(', ') : ''}` }; };
-FREE.summit = 1;
+FREE.summitYear = 1;
 
 /* ---- sala de crisis ---- */
 function crisisPend() { const K = S.crisis, C = D.CRISES.find(x => x.id === K.id), st = C.steps[K.st];

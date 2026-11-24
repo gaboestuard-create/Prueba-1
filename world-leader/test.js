@@ -217,7 +217,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   S.pend.push({ k: 'event', id: 'ppl', who: 'per', t: 't', x: 'x', iso: 'DE', opts: [{ t: 'a', fx: [['do', 'pplAtt', { k: 'per', v: 20, x: 'prueba' }]] }] }); G.act('decide', { i: 0 }); assert(q.pplInfo().per.att === a0 + 20 && q.pplInfo().per.log.length === 1);
   q.pplInfo().opo.att = -80; const e0 = q.mod('elect'); q.pplInfo().opo.att = 0; assert(q.mod('elect') > e0, 'la oposición hostil resta en elecciones');
   S.turn = 5; S.pend = []; G.act('endTurn'); const sm = S.pend.find(p => p.k === 'summit'); assert(sm && sm.inv.length > 5, 'cumbre anual');
-  S.pend = [sm]; assert(!G.act('summit', { meet: [sm.inv[0]], topic: 'xx' }).ok); assert(G.act('summit', { meet: sm.inv.slice(0, 3), topic: 'clima' }).ok && !S.pend.length && S.talk.slice(-1)[0].k === 'summit');
+  S.pend = [sm]; assert(!G.act('summitYear', { meet: [sm.inv[0]], topic: 'xx' }).ok); assert(G.act('summitYear', { meet: sm.inv.slice(0, 3), topic: 'clima' }).ok && !S.pend.length && S.talk.slice(-1)[0].k === 'summit');
   S.crisis = { id: 'ciber', st: 0, sc: 0, due: S.turn }; S.pend = []; for (let i = 0; i < 4 && S.crisis; i++) { G.act('endTurn'); const c = S.pend.find(p => p.id === 'crisis'); if (c) { S.pend = [c]; G.act('decide', { i: 0 }); } S.pend = []; }
   assert(!S.crisis && S.crisisCd > S.turn, 'la crisis se resuelve en sus fases'); const old = JSON.parse(G.save()); delete old.ppl; delete old.crisis; assert(G.load(JSON.stringify(old)).ok && G.S.ppl.gen); noNaN(G.S, 'S'); }
 // tiempo de un turno

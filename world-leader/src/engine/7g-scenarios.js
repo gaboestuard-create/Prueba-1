@@ -34,7 +34,7 @@ function scenOp(op) {
   if (k === 'sanc') { if (S.c[a] && S.c[b]) addSanction(a, b); return; }
   if (k === 'tr') { if (S.c[b] && S.c[v]) addTreaty(a, b, v); return; }
   if (k === 'untr') { endTreaties(a, b); return; }
-  if (k === 'coups') { const L = alive().filter(z => z !== me && S.c[z].reg !== 'mil').sort((x, y) => S.c[x].stab - S.c[y].stab + rr(-25, 25)); for (const z of L.slice(0, a)) coup(z); return; }
+  if (k === 'coups') { const L = alive().filter(z => z !== me && S.c[z].reg !== 'mil').map(z => [z, S.c[z].stab + rr(-25, 25)]).sort((x, y) => x[1] - y[1]).map(x => x[0]); /* una clave por país: el sort no consume azar distinto según el navegador */ for (const z of L.slice(0, a)) coup(z); return; }
   if (k === 'wars') {
     let n = a; const used = new Set([me]);
     for (const x of shuffle(alive().filter(z => z !== me && S.c[z].gdp > 15))) { if (n <= 0) break; if (used.has(x)) continue;
@@ -186,6 +186,6 @@ const gameCode = () => shareCode({ iso: S.player, seed: S.seed, diff: S.diff, tr
 function weekly(now) {
   const w = Math.floor(((now || Date.now()) / 864e5 + 3) / 7), R = D.WEEK_RULES, a = R[w % R.length], b = R[(w * 3 + 1) % R.length], opts = {};
   for (const r of a === b ? [a] : [a, b]) opts[r.id] = 1; if (opts.alt) opts.alt = 1;
-  const sc = D.SCEN.filter(x => !x.lock)[w % 6];
+  const ul = D.SCEN.filter(x => !x.lock), sc = ul[w % ul.length];
   return { w, iso: D.WEEK_COUNTRIES[w % D.WEEK_COUNTRIES.length], seed: (w * 7919) % 2147483647 || 1, scen: sc.id, rules: (a === b ? [a] : [a, b]).map(r => r.n), setup: { mode: 'semana', scen: sc.id, opts, week: w, dk: { ai: 1, eco: 1, stab: 1, ev: 1 } } };
 }
