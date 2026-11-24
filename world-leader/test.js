@@ -204,6 +204,13 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   G.newGame({ iso: 'JP', name: 'S', seed: 3 }); G.S.pend = []; const a = q.tradeIncome().v; G.S.str.malaca = { by: 'MY', t: G.S.turn + 5 }; assert(q.tradeIncome().v < a, 'el cierre recorta el comercio');
   assert(G.act('strait', { id: 'malaca', k: 'escort' }).ok && q.tradeIncome().v === a, 'escoltar recupera el comercio'); for (let i = 0; i < 8; i++) { G.S.pend = []; G.act('endTurn'); }
   assert(!G.S.str.malaca, 'el cierre termina'); const old = JSON.parse(G.save()); delete old.str; delete old.strCd; assert(G.load(JSON.stringify(old)).ok && G.S.str); noNaN(G.S, 'S'); }
+// discurso a la nación
+{ G.newGame({ iso: 'MX', name: 'D', seed: 8 }); const S = G.S; S.pend = []; S.pol.cp = 12;
+  assert(!G.act('speech', { tone: 'xx', topic: 'eco' }).ok && !G.act('speech', { tone: 'culpar', topic: 'eco' }).ok, 'culpar exige un país');
+  const r = G.act('speech', { tone: 'prometer', topic: 'fut' }); assert(r.ok && r.favor >= 5 && r.favor <= 95 && S.speech.sec.jov > 0 && S.later.some(x => /promesas/.test(x.msg)));
+  assert(!G.act('speech', { tone: 'calmar', topic: 'eco' }).ok, 'espera entre discursos'); S.speechT = 0; const rel0 = G.q.rel('MX', 'US');
+  assert(G.act('speech', { tone: 'culpar', topic: 'seg', iso: 'US' }).ok && G.q.rel('MX', 'US') < rel0, 'señalar a un país lo enfada');
+  const old = JSON.parse(G.save()); delete old.speech; delete old.speechT; assert(G.load(JSON.stringify(old)).ok && G.S.speech === null); noNaN(G.S, 'S'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

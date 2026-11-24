@@ -411,9 +411,9 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .tk-b { max-width: 78%; padding: 7px 10px; border-radius: 3px; background: rgba(255, 255, 255, .05); border-left: 2px solid var(--line); } .tk-line.tk-r .tk-b { border-left: 0; border-right: 2px solid rgba(255, 90, 77, .5); } .tk-line.tk-l .tk-b { border-left-color: rgba(79, 216, 255, .5); } .tk-line.tk-me .tk-b { border-right: 2px solid var(--gold); border-left: 0; background: rgba(232, 195, 106, .08); }
 .tk-b small { display: block; color: var(--mut); font: 600 11px var(--fc); letter-spacing: .06em; text-transform: uppercase; } .tk-b p { margin: 2px 0 0; }
 .tk-rep { margin-top: 8px; gap: 6px; align-items: center; }
-.tkpop { position: fixed; left: calc(var(--sl) + 86px); bottom: calc(70px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
+.tkpop { position: fixed; right: var(--sr); bottom: calc(118px + var(--sb)); z-index: 7; max-width: min(420px, calc(100vw - 32px)); padding: 10px 14px; text-align: left; color: var(--ink); cursor: pointer; animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; }
 .tkpop p { margin: 4px 0; font-size: 13px; } .tkpop small.gold { color: var(--gold); }
-@media (max-width: 700px) { .tkpop { left: var(--sl); bottom: calc(150px + var(--sb)); } }
+@media (max-width: 700px) { .tkpop { right: var(--sr); left: var(--sl); bottom: calc(180px + var(--sb)); } }
 .rl5 { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--line); } .rl5 .arow { gap: 10px; } .rl5 .bar { width: 120px; flex: none; } .rl5 .num { min-width: 30px; text-align: right; }
 .rlhot { margin: 6px 0; align-items: center; }
 .pyways { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
@@ -427,3 +427,12 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .cab .portrait, .cand5 .portrait { width: 40px; height: 40px; } .cand5 { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); } .cand5 .arow { gap: 8px; }
 .cab small.eyebrow { display: block; } .cab b + .chip { margin-left: 6px; } .cab-lead small.mut { display: block; }
 .str5.closed { border-color: rgba(255, 90, 77, .45); } .str5 .arow { gap: 10px; } .str5 .bar { width: 110px; flex: none; }
+/* ===================== EL DESPACHO ===================== */
+.brief5 h2 { margin: 4px 0 12px; } .brief-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.brief-c { padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--cyan); border-radius: 3px; background: rgba(255, 255, 255, .03); } .brief-c.bad { border-left-color: var(--red); }
+.brief-c p { margin: 4px 0; font-size: 13px; } .brief-c .eyebrow .gi { width: 13px; height: 13px; fill: var(--gold); vertical-align: -2px; }
+.call5 { text-align: center; padding: 10px 0; } .call5 .callring { display: inline-grid; place-items: center; width: 100px; height: 100px; padding: 6px; border-radius: 50%; border: 2px solid var(--gold); animation: ring5 1s ease-in-out infinite; margin-bottom: 8px; }
+.call5 .callring .tk-face { width: 84px; height: 84px; border-radius: 50%; } .call5 .row.center { justify-content: center; gap: 14px; margin-top: 14px; }
+@keyframes ring5 { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 195, 106, .5); } 50% { box-shadow: 0 0 0 14px rgba(232, 195, 106, 0); } }
+.poll5 .arow { gap: 10px; } .poll5 .bar { width: 130px; flex: none; } .clip5 { padding: 8px 0; border-bottom: 1px dashed var(--line); } .clip5 b { display: block; font: 600 15px var(--fd); }
+@media (max-width: 700px) { .brief-g { grid-template-columns: 1fr; } }

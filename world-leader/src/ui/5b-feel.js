@@ -99,7 +99,7 @@ function afterRender() { if (!S() || UI.screen !== 'game') { prevHud = null; ret
   if (prevHud && b[0] && Math.abs(prevHud.tr - c.tr) > .05 && !CFG.rm) { const from = prevHud.tr, to = c.tr, el = b[0], t0 = performance.now(); const step = now => { const k = Math.min(1, (now - t0) / 700), e = 1 - Math.pow(1 - k, 3); el.textContent = money(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); el.parentNode.parentNode.classList.add(to >= from ? 'pulse-up' : 'pulse-down'); }
   prevHud = { tr: c.tr }; }
 Bus.on('turn', () => { setTimeout(() => { document.querySelectorAll('.tf-deltas b').forEach(el => { const m = el.textContent.match(/^([+−-]?)([^0-9]*)([0-9.,]+)(.*)$/); if (!m) return; const n = parseFloat(m[3].replace(',', '.')), dec = (m[3].split('.')[1] || '').length; countUp(el, n, v => m[1] + m[2] + v.toFixed(dec) + m[4], 900); }); }, 120); });
-Bus.on('turn', () => { if (CFG.paper && S() && !S().over) scene(modalScene(paperHTML() + `<label class="check"><input type="checkbox" data-c="paperT" ${CFG.paper ? 'checked' : ''}> Mostrar la portada al final de cada turno</label>`, 'wide paperbox')); });
+Bus.on('turn', () => { if (CFG.paper && !CFG.brief && S() && !S().over) scene(modalScene(paperHTML() + `<label class="check"><input type="checkbox" data-c="paperT" ${CFG.paper ? 'checked' : ''}> Mostrar la portada al final de cada turno</label>`, 'wide paperbox')); });
 H.paperT = (d, el) => { CFG.paper = el.checked; cfgSave(); };
 
 /* ---------- ayuda táctil: mantener pulsado muestra la explicación ---------- */
