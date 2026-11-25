@@ -2284,9 +2284,9 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
   };
   /* interior resumido de los países de la IA (0-100) */
   D.AINT = { every: 2, k: .15, war: { seg: -12, coh: -6 }, sanc: { coh: -4 }, effGrow: .003, growCap: .3, effStab: .01,
-    weakCoh: 35, weakSeg: 30, warSkip: .6,
-    treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [35, -10, 'Su opinión pública está dividida'], seg: [35, 8, 'Buscan apoyo para su seguridad'] },
-    aidBonus: 6, askCoh: 35 };
+    weakCoh: 44, weakSeg: 40, warSkip: .6,
+    treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [44, -10, 'Su opinión pública está dividida'], seg: [40, 8, 'Buscan apoyo para su seguridad'] },
+    aidBonus: 6, askCoh: 42 };
 })();
 
 /* =====================================================================
@@ -2300,6 +2300,8 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 (function () {
   const D = globalThis.WL.DATA, fx = D.fx;
   D.LAWS.push({ id: 'aborto', cat: 'sal', n: 'Aborto legal', d: 'Interrupción voluntaria del embarazo en la sanidad pública.', eco: 0, auth: -.5, sec: { jov: 6, med: 2, rel: -12, jub: -3 }, rep: { dem: 3 } });
+  /* posturas de los partidos [valores, nacionalismo, estado]: sin esto, hasta un régimen teocrático aprobaría el matrimonio igualitario */
+  Object.assign(D.LAW_AX, { aborto: [-2, 0], matrimonio: [-2, 0], cannabis: [-1, 0, -1], pena_muerte: [2, 1, 1], armas_civiles: [1, 0, -2], desarme: [-1, -1, 1], natalidad: [1, 1, 1], control_medios: [1, 1, 2], transparencia: [-1, 0, -1], anticorrupcion: [-1, 0, 1], policia_comunitaria: [-1, 0, 0], guarderias: [-1, 0, 1], autonomia: [-1, -1, -1], centralizar: [0, 1, 2], muro: [1, 2, 1] });
   D.DEBATES = {
     aborto: { n: 'Aborto', q: 'el aborto legal', prog: 1, pro: ['aborto'], con: [] },
     pena: { n: 'Pena de muerte', q: 'la pena de muerte', prog: -1, pro: ['pena_muerte'], con: [] },
@@ -8368,7 +8370,7 @@ document.addEventListener('keydown', e => {
   if (UI.screen !== 'game' || e.ctrlKey || e.metaKey || e.altKey || /INPUT|SELECT|TEXTAREA/.test((e.target.tagName || ''))) return; const k = e.key;
   if (k === ' ' || k === 'Enter') { if (e.target.closest && e.target.closest('button')) return; e.preventDefault(); if (UI.cineEnd) return UI.cineEnd(); const b = $('[data-a=sceneDone]'); if (b) return b.click(); if ($('#modal').hidden && !S().pend.length && !S().over) H.endTurn(); else if ($('#modal').hidden) showPending(); return; }
   if (!$('#modal').hidden || !$('#cine').hidden) return;
-  if (k >= '1' && k <= '8' && DOCK[+k - 1]) H.open({ p: DOCK[+k - 1][0] });
+  if (k >= '1' && k <= '9' && DOCK[+k - 1]) H.open({ p: DOCK[+k - 1][0] });
   else if (k === 'm' || k === 'M') { const m = Object.keys(MODES); H.mode({ m: m[(m.indexOf(UI.mode) + 1) % m.length] }); }
   else if (k === 'a' || k === 'A') H.alerts(); else if (k === 'n' || k === 'N') H.paper();
   else if (k === '?') openModal(`<h2>Atajos de teclado</h2>${KEYS.map(x => `<div class="line"><span><kbd>${x[0]}</kbd></span><span>${x[1]}</span><b></b></div>`).join('')}`, true);
@@ -10055,6 +10057,26 @@ function reportHTML() { const I = Q.socInfo(), E = I.eco, N = Q.natInfo(), kv = 
   <h4>${gi('pin')} Lo mejor y lo peor del país</h4><div class="card">${kv('Peor: ' + esc(D.NAT_IX[ix[0][0]].n), Math.round(ix[0][1]), 'red')}${kv('Segundo peor: ' + esc(D.NAT_IX[ix[1][0]].n), Math.round(ix[1][1]), 'red')}${kv('Mejor: ' + esc(D.NAT_IX[ix[ix.length - 1][0]].n), Math.round(ix[ix.length - 1][1]), 'green')}
     ${kv('Cárteles activos', N.cart.length, N.cart.length ? 'red' : '')}${kv('Movimiento social más fuerte', (() => { const all = I.deb.concat(I.mov).sort((a, b) => b.mv - a.mv)[0]; return all.mv > 5 ? esc((D.DEBATES[all.k] || D.MOVES[all.k]).n) + ' · ' + Math.round(all.mv) : 'ninguno'; })())}</div>`; }
 H.socLead = d => act('socLead', { k: d.k, dir: +d.dir });
+
+
+/* ---------- ui/5t-integra.js ---------- */
+/* =====================================================================
+   INTERFAZ · LO NUEVO EN LA GUÍA, LOS CONSEJOS Y LAS GRÁFICAS
+   «Qué hacer ahora» avisa de cárteles, protestas, mandos y director;
+   Partida → Historia suma los indicadores de la Nación.
+   ===================================================================== */
+{ const t0 = todo; todo = () => { const out = t0(), s = S(), n = Q.natInfo(), so = Q.socInfo(), sc = Q.secInfo(); if (!n || !so || !sc) return out;
+  const add = (p, t, go) => out.push({ p, t, go }), go = (p, t) => ({ p, t });
+  const hot = n.cart.filter(k => k.str > 70).sort((a, b) => b.str - a.str)[0]; if (hot) add(7, `${hot.n} domina ${hot.reg} (fuerza ${Math.round(hot.str)})`, go('nac', 'nar'));
+  if (n.ix.seg.v < 30) add(7, `La seguridad pública está por los suelos (${Math.round(n.ix.seg.v)})`, go('nac', 'seg'));
+  const mv = so.deb.concat(so.mov).sort((a, b) => b.mv - a.mv)[0]; if (mv.mv > D.SOC.protestAt - 15) add(6, `Un movimiento social se calienta: ${(D.DEBATES[mv.k] || D.MOVES[mv.k]).n.toLowerCase()} (${Math.round(mv.mv)})`, go('nac', 'soc'));
+  const lo = Object.entries(sc.br).sort((a, b) => a[1].loy - b[1].loy)[0]; if (lo[1].loy < D.BR.coupAt + 12) add(6, `La lealtad de ${D.BRANCH[lo[0]].n.toLowerCase()} es baja (${Math.round(lo[1].loy)})`, go('mil', 'man'));
+  if (sc.surv && sc.dir.loy < D.SECINT.dir.blackmailAt + 10) add(5, `Tu director de inteligencia es poco leal (${Math.round(sc.dir.loy)})`, go('nac', 'int'));
+  return out.sort((a, b) => b.p - a.p).slice(0, 3); }; }
+TIPS.push(['nac', 'En Nación ves cómo está tu país por dentro: seguridad, corrupción, educación… y desde ahí reparte el gasto, saca al ejército o combate a los cárteles.', { p: 'nac', t: 'est' }],
+  ['soc', 'En Nación → Sociedad la opinión pública cambia sola: si tus leyes chocan con una mayoría, acabarán marchando contra ti.', { p: 'nac', t: 'soc' }]);
+{ const h0 = historyHTML; historyHTML = () => { const base = h0(), N = Q.natInfo(); if (!N || !N.ix.seg.h || N.ix.seg.h.length < 2) return base; const pick = (ks, cols) => ks.map((k, i) => ({ n: D.NAT_IX[k].n, c: cols[i], me: !i, v: N.ix[k].h }));
+  return base + lineChart(pick(['seg', 'cri', 'cor'], ['#e8c36a', '#ff8a7a', '#b99cff']), 'Seguridad, crimen y corrupción', v => Math.round(v) + '') + lineChart(pick(['edu', 'sal', 'des'], ['#7fe0a8', '#8fd3ff', '#ff8a7a']), 'Educación, salud y desigualdad', v => Math.round(v) + ''); }; }
 
 
 /* ---------- ui/90-boot.js ---------- */

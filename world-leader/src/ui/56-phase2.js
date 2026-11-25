@@ -99,7 +99,7 @@ document.addEventListener('keydown', e => {
   if (UI.screen !== 'game' || e.ctrlKey || e.metaKey || e.altKey || /INPUT|SELECT|TEXTAREA/.test((e.target.tagName || ''))) return; const k = e.key;
   if (k === ' ' || k === 'Enter') { if (e.target.closest && e.target.closest('button')) return; e.preventDefault(); if (UI.cineEnd) return UI.cineEnd(); const b = $('[data-a=sceneDone]'); if (b) return b.click(); if ($('#modal').hidden && !S().pend.length && !S().over) H.endTurn(); else if ($('#modal').hidden) showPending(); return; }
   if (!$('#modal').hidden || !$('#cine').hidden) return;
-  if (k >= '1' && k <= '8' && DOCK[+k - 1]) H.open({ p: DOCK[+k - 1][0] });
+  if (k >= '1' && k <= '9' && DOCK[+k - 1]) H.open({ p: DOCK[+k - 1][0] });
   else if (k === 'm' || k === 'M') { const m = Object.keys(MODES); H.mode({ m: m[(m.indexOf(UI.mode) + 1) % m.length] }); }
   else if (k === 'a' || k === 'A') H.alerts(); else if (k === 'n' || k === 'N') H.paper();
   else if (k === '?') openModal(`<h2>Atajos de teclado</h2>${KEYS.map(x => `<div class="line"><span><kbd>${x[0]}</kbd></span><span>${x[1]}</span><b></b></div>`).join('')}`, true);

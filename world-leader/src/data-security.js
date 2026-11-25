@@ -39,7 +39,7 @@
   };
   /* interior resumido de los países de la IA (0-100) */
   D.AINT = { every: 2, k: .15, war: { seg: -12, coh: -6 }, sanc: { coh: -4 }, effGrow: .003, growCap: .3, effStab: .01,
-    weakCoh: 35, weakSeg: 30, warSkip: .6,
-    treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [35, -10, 'Su opinión pública está dividida'], seg: [35, 8, 'Buscan apoyo para su seguridad'] },
-    aidBonus: 6, askCoh: 35 };
+    weakCoh: 44, weakSeg: 40, warSkip: .6,
+    treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [44, -10, 'Su opinión pública está dividida'], seg: [40, 8, 'Buscan apoyo para su seguridad'] },
+    aidBonus: 6, askCoh: 42 };
 })();

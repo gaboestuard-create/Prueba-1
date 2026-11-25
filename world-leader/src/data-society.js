@@ -9,6 +9,8 @@
 (function () {
   const D = globalThis.WL.DATA, fx = D.fx;
   D.LAWS.push({ id: 'aborto', cat: 'sal', n: 'Aborto legal', d: 'Interrupción voluntaria del embarazo en la sanidad pública.', eco: 0, auth: -.5, sec: { jov: 6, med: 2, rel: -12, jub: -3 }, rep: { dem: 3 } });
+  /* posturas de los partidos [valores, nacionalismo, estado]: sin esto, hasta un régimen teocrático aprobaría el matrimonio igualitario */
+  Object.assign(D.LAW_AX, { aborto: [-2, 0], matrimonio: [-2, 0], cannabis: [-1, 0, -1], pena_muerte: [2, 1, 1], armas_civiles: [1, 0, -2], desarme: [-1, -1, 1], natalidad: [1, 1, 1], control_medios: [1, 1, 2], transparencia: [-1, 0, -1], anticorrupcion: [-1, 0, 1], policia_comunitaria: [-1, 0, 0], guarderias: [-1, 0, 1], autonomia: [-1, -1, -1], centralizar: [0, 1, 2], muro: [1, 2, 1] });
   D.DEBATES = {
     aborto: { n: 'Aborto', q: 'el aborto legal', prog: 1, pro: ['aborto'], con: [] },
     pena: { n: 'Pena de muerte', q: 'la pena de muerte', prog: -1, pro: ['pena_muerte'], con: [] },
