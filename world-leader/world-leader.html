@@ -459,6 +459,17 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 @media (max-width: 600px) { .dock button { font-size: 7.5px; } .dock button .ic { width: 18px; height: 18px; } }
 .soc5 { display: flex; flex-direction: column; gap: 6px; } .opbar { position: relative; height: 8px; border-radius: 2px; background: linear-gradient(90deg, var(--red), var(--line) 50%, var(--green)); opacity: .85; } .opbar i { position: absolute; top: -3px; width: 3px; height: 14px; background: var(--ink); transform: translateX(-50%); }
 
+/* Hojas arrastrables (móvil): asa visible solo en pantallas pequeñas */
+.grip { display: none; }
+@media (max-width: 760px) {
+  .grip { display: block; position: relative; flex: none; width: 100%; height: 22px; margin: -8px 0 -4px; touch-action: none; cursor: grab; } .grip::before { content: ''; position: absolute; left: 50%; top: 8px; width: 44px; height: 4px; margin-left: -22px; border-radius: 2px; background: var(--mut); opacity: .7; }
+  .cp-head, .panel > header { touch-action: none; }
+  .cpanel, .panel { transition: top .25s ease, max-height .25s ease; }
+  body[data-snap-cp=half] .cpanel { max-height: 40%; } body[data-snap-cp=full] .cpanel { max-height: calc(100% - 150px - var(--st)); } body[data-snap-cp=peek] .cpanel { max-height: 112px; overflow: hidden; }
+  body[data-snap-pn=full] .panel { top: calc(108px + var(--st)); } body[data-snap-pn=half] .panel { top: 52%; } body[data-snap-pn=peek] .panel { top: auto; height: 108px; overflow: hidden; }
+}
+@media (max-width: 760px) { body[data-snap-cp=peek] .cp-actions { display: none; } }
+
 </style>
 
 <div id="globe"></div>
@@ -7728,7 +7739,7 @@ function countryHTML(iso) {
   const recs = Object.keys(c.rec).filter(k => c.rec[k] > 0).sort((a, b) => c.rec[b] - c.rec[a]).map(k => `<span class="chip" title="Nivel de producción ${c.rec[k]} de 5">${D.COMMODITIES[k].n} <i class="dots">${'●'.repeat(c.rec[k])}</i></span>`).join('') || '<span class="mut">Sin recursos de exportación</span>';
   const why = UI.why && !mine ? `<div class="why">${Q.relBreakdown(iso).map(x => `<div><span>${esc(x[0])}</span><b class="${x[1] >= 0 ? 'up' : 'down'}">${sgn(x[1])}</b></div>`).join('')}</div>` : '';
   const terr = regionsHTML(iso);
-  return `<aside class="cpanel glass" data-sc="cp"><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
+  return `<aside class="cpanel glass" data-sc="cp"><i class="grip" data-grip></i><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
     <header class="cp-head"><span class="flag xl">${flag(iso)}</span><div><h2>${cname(iso)}</h2><small class="mut">${esc(D.REGIONS[d.region])} · ${esc(D.REGIMES[c.reg])}${c.nuke ? ' · ☢ nuclear' : ''}</small></div></header>
     <div class="leader">${portrait(iso, true)}<div><b>${esc(c.lider.n)}</b><small>${esc(c.partido)} · ${esc(D.IDEO[c.ideo] || '')}</small>
       <span class="chip ${c.lider.verificado ? 'good' : ''}" title="${c.lider.verificado && !c.lider.gen && iso !== p ? 'Contrastado con prensa el ' + D.VERIFIED_ON : 'Los líderes parten de datos sin verificar: corrígelos en el Editor'}">${c.lider.verificado ? '✓ verificado' : c.lider.gen ? 'generado por el juego' : 'sin verificar'}</span></div></div>
@@ -7830,7 +7841,7 @@ const PTABS = {
 };
 function panelHTML() {
   const p = UI.panel, t = PTABS[p] ? curTab(p, PTABS[p][0][0]) : '';
-  return `<section class="panel glass"><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
+  return `<section class="panel glass"><i class="grip" data-grip></i><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
     ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div></section>`;
 }
 const PANELS = {};
@@ -10077,6 +10088,32 @@ TIPS.push(['nac', 'En Nación ves cómo está tu país por dentro: seguridad, co
   ['soc', 'En Nación → Sociedad la opinión pública cambia sola: si tus leyes chocan con una mayoría, acabarán marchando contra ti.', { p: 'nac', t: 'soc' }]);
 { const h0 = historyHTML; historyHTML = () => { const base = h0(), N = Q.natInfo(); if (!N || !N.ix.seg.h || N.ix.seg.h.length < 2) return base; const pick = (ks, cols) => ks.map((k, i) => ({ n: D.NAT_IX[k].n, c: cols[i], me: !i, v: N.ix[k].h }));
   return base + lineChart(pick(['seg', 'cri', 'cor'], ['#e8c36a', '#ff8a7a', '#b99cff']), 'Seguridad, crimen y corrupción', v => Math.round(v) + '') + lineChart(pick(['edu', 'sal', 'des'], ['#7fe0a8', '#8fd3ff', '#ff8a7a']), 'Educación, salud y desigualdad', v => Math.round(v) + ''); }; }
+
+
+/* ---------- ui/5u-sheets.js ---------- */
+/* =====================================================================
+   INTERFAZ · HOJAS ARRASTRABLES EN MÓVIL
+   La ficha del país y los paneles tienen tres alturas: asomada (solo la
+   cabecera), media y completa. Se arrastra con el dedo desde el asa o la
+   cabecera, o se toca el asa para alternar. La altura se guarda en
+   body[data-snap-cp] y body[data-snap-pn] y la aplica el CSS, así que
+   sobrevive a cualquier re-dibujado.
+   ===================================================================== */
+const SNAPS = ['peek', 'half', 'full'], mobileQ = matchMedia('(max-width: 760px)');
+UI.snap = { cp: 'half', pn: 'full' };
+const applySnap = () => { document.body.dataset.snapCp = UI.snap.cp; document.body.dataset.snapPn = UI.snap.pn; };
+const setSnap = (k, v) => { UI.snap[k] = v; applySnap(); };
+applySnap();
+{ const o0 = H.open; H.open = d => { setSnap('pn', 'full'); return o0(d); }; }
+{ const s0 = selectCountry; selectCountry = (iso, fly, prov) => { setSnap('cp', 'half'); return s0(iso, fly, prov); }; }
+let drag = null;
+document.addEventListener('pointerdown', e => { if (!mobileQ.matches) return; const g = e.target.closest('[data-grip], .cp-head, .panel > header'); if (!g || e.target.closest('button, a, input')) return;
+  const el = g.closest('.cpanel, .panel'); if (!el) return; drag = { el, k: el.classList.contains('cpanel') ? 'cp' : 'pn', y0: e.clientY, dy: 0, grip: g.hasAttribute('data-grip') }; g.setPointerCapture && g.setPointerCapture(e.pointerId); el.style.transition = 'none'; });
+document.addEventListener('pointermove', e => { if (!drag) return; drag.dy = e.clientY - drag.y0; drag.el.style.transform = `translateY(${Math.max(-30, drag.dy)}px)`; });
+const endDrag = () => { if (!drag) return; const { el, k, dy, grip } = drag; drag = null; el.style.transition = ''; el.style.transform ='';
+  const i = SNAPS.indexOf(UI.snap[k]); if (Math.abs(dy) < 8) { if (grip) setSnap(k, SNAPS[i === 1 ? 2 : 1]); return; } /* un toque en el asa alterna media ↔ completa */
+  setSnap(k, SNAPS[clampU(i + (dy > 40 ? -1 : dy < -40 ? 1 : 0), 0, 2)]); };
+document.addEventListener('pointerup', endDrag); document.addEventListener('pointercancel', endDrag);
 
 
 /* ---------- ui/90-boot.js ---------- */

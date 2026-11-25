@@ -111,7 +111,7 @@ function countryHTML(iso) {
   const recs = Object.keys(c.rec).filter(k => c.rec[k] > 0).sort((a, b) => c.rec[b] - c.rec[a]).map(k => `<span class="chip" title="Nivel de producción ${c.rec[k]} de 5">${D.COMMODITIES[k].n} <i class="dots">${'●'.repeat(c.rec[k])}</i></span>`).join('') || '<span class="mut">Sin recursos de exportación</span>';
   const why = UI.why && !mine ? `<div class="why">${Q.relBreakdown(iso).map(x => `<div><span>${esc(x[0])}</span><b class="${x[1] >= 0 ? 'up' : 'down'}">${sgn(x[1])}</b></div>`).join('')}</div>` : '';
   const terr = regionsHTML(iso);
-  return `<aside class="cpanel glass" data-sc="cp"><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
+  return `<aside class="cpanel glass" data-sc="cp"><i class="grip" data-grip></i><button class="xbtn" data-a="unsel" aria-label="Cerrar">${ic('x')}</button>
     <header class="cp-head"><span class="flag xl">${flag(iso)}</span><div><h2>${cname(iso)}</h2><small class="mut">${esc(D.REGIONS[d.region])} · ${esc(D.REGIMES[c.reg])}${c.nuke ? ' · ☢ nuclear' : ''}</small></div></header>
     <div class="leader">${portrait(iso, true)}<div><b>${esc(c.lider.n)}</b><small>${esc(c.partido)} · ${esc(D.IDEO[c.ideo] || '')}</small>
       <span class="chip ${c.lider.verificado ? 'good' : ''}" title="${c.lider.verificado && !c.lider.gen && iso !== p ? 'Contrastado con prensa el ' + D.VERIFIED_ON : 'Los líderes parten de datos sin verificar: corrígelos en el Editor'}">${c.lider.verificado ? '✓ verificado' : c.lider.gen ? 'generado por el juego' : 'sin verificar'}</span></div></div>

@@ -12,7 +12,7 @@ const PTABS = {
 };
 function panelHTML() {
   const p = UI.panel, t = PTABS[p] ? curTab(p, PTABS[p][0][0]) : '';
-  return `<section class="panel glass"><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
+  return `<section class="panel glass"><i class="grip" data-grip></i><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
     ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div></section>`;
 }
 const PANELS = {};
