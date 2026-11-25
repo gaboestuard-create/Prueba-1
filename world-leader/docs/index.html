@@ -506,6 +506,23 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .cps { border-top: 1px solid var(--line); } .cps-h { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 9px 2px; text-align: left; } .cps-h b { font: 600 12px var(--fc); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); } .cps-h small { flex: 1; color: var(--mut); font-size: 11px; text-align: right; } .cps-h i { color: var(--mut); font-style: normal; } .cps-h:hover b { color: var(--ink); } .cps-b { padding: 0 2px 10px; }
 @media (max-width: 760px) { .nextact { bottom: calc(112px + var(--sb)); left: 8px; right: 8px; max-width: none; } }
 @media (max-width: 760px) { .nextact { bottom: calc(176px + var(--sb)); } body[data-snap-cp=half] .cpanel { max-height: 50%; } .cp-actions { background: linear-gradient(180deg, transparent, rgba(8, 12, 22, .97) 28%); padding-top: 18px; } }
+/* Teléfono acostado: mapa a la izquierda, menús como cajón a la derecha */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hud { top: calc(4px + var(--st)); padding: 3px 8px; gap: 8px; } .hud-id .portrait { width: 30px; height: 30px; } .hud-id b { font-size: 13px; } .hud-id small { font-size: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  .stat { padding: 3px 8px; gap: 6px; } .stat small { display: none; } .stat b { font-size: 13px; } .hud-date b { font-size: 12px; } .hud-date small { font-size: 10px; }
+  .dock { left: 6px; top: calc(66px + var(--st)); transform: none; flex-direction: column; padding: 4px; gap: 2px; } .dock button { width: 44px; padding: 8px 0; } .dock button span { display: none; } .dock button .ic { width: 22px; height: 22px; } .dock button.on::before { left: -4px; top: 6px; bottom: 6px; }
+  .modes { display: none; } .modebtn { display: flex; align-items: center; gap: 6px; position: fixed; top: calc(66px + var(--st)); left: 66px; z-index: 4; padding: 6px 10px; border-radius: 3px; background: rgba(6, 10, 20, .78); border: 1px solid var(--line); color: var(--ink); font: 600 11px var(--fc); letter-spacing: .1em; text-transform: uppercase; } .modebtn .ic { width: 15px; height: 15px; color: var(--gold); } .modebtn i { color: var(--mut); font-style: normal; }
+  .modepop { display: flex; flex-direction: column; gap: 2px; position: fixed; top: calc(100px + var(--st)); left: 66px; z-index: 5; padding: 6px; min-width: 190px; max-height: calc(100vh - 100px); overflow-y: auto; } .modepop button { text-align: left; padding: 8px 10px; font: 600 12px var(--fc); letter-spacing: .1em; text-transform: uppercase; color: var(--mut); border-radius: 2px; } .modepop button.on { color: var(--gold); background: rgba(232, 195, 106, .1); box-shadow: inset 3px 0 0 var(--gold); } .modepop small { padding: 6px 10px 2px; color: var(--mut); font-size: 11px; line-height: 1.3; border-top: 1px solid var(--line); margin-top: 4px; }
+  .panel { left: auto; right: 6px; top: calc(66px + var(--st)); bottom: 6px; width: min(48vw, 470px); animation-name: slideR; z-index: 5; }
+  .cpanel { right: 6px; top: calc(66px + var(--st)); bottom: 6px; width: min(42vw, 380px); max-height: none; z-index: 5; }
+  .panel header { padding: 6px 10px; } .panel header h2 { font-size: 15px; } .back5 { padding: 4px 8px; font-size: 11px; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 0 8px; } .tabs button { padding: 7px 9px; font-size: 11px; } .rel5 { padding: 4px 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .rel5 .chip { white-space: nowrap; }
+  .endturn { right: auto; left: 66px; bottom: calc(6px + var(--sb)); padding: 8px 14px; font-size: 12px; z-index: 6; } .nextact { right: auto; left: 66px; bottom: calc(54px + var(--sb)); max-width: 36vw; }
+  .resbar { right: auto; left: 66px; bottom: calc(52px + var(--sb)); } body[data-drawer="1"] .resbar, body[data-drawer="1"] .nextact { display: none; }
+  #toasts { top: calc(70px + var(--st)); left: 66px; right: auto; max-width: 34vw; } #achbox { top: calc(70px + var(--st)); left: 66px; transform: none; width: min(300px, 34vw); }
+  .grip { display: none; }
+}
+@media (orientation: landscape) and (max-height: 520px) { .nextact { left: 232px; bottom: calc(8px + var(--sb)); max-width: 40vw; } #toasts { left: auto; right: 6px; top: calc(70px + var(--st)); max-width: 36vw; } #achbox { left: auto; right: 6px; } }
 
 </style>
 
@@ -7740,7 +7757,7 @@ function hudHTML() {
 const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['tec', 'Ciencia'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
 function dockHTML() {
   const n = S().pend.length;
-  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
+  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" title="${d[1]}" aria-label="${d[1]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
     <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Resolver decisión${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
 }
 H.modeMenu = () => { UI.modesOpen = !UI.modesOpen; UI.render(); };
@@ -10394,6 +10411,17 @@ H.goTodo = () => { const t = todo().find(x => x.p >= 6 && x.go); if (t) goTo(t.g
 function cps(k, title, hint, body) { const open = (UI.cpSec || (UI.cpSec = {}))[k];
   return `<section class="cps ${open ? 'open' : ''}"><button class="cps-h" data-a="cpToggle" data-k="${k}" aria-expanded="${!!open}"><b>${title}</b><small>${hint}</small><i>${open ? '▾' : '▸'}</i></button>${open ? `<div class="cps-b">${body}</div>` : ''}</section>`; }
 H.cpToggle = d => { UI.cpSec = UI.cpSec || {}; UI.cpSec[d.k] = !UI.cpSec[d.k]; UI.render(); };
+
+
+/* ---------- ui/5z-landscape.js ---------- */
+/* =====================================================================
+   INTERFAZ · TELÉFONO ACOSTADO
+   En pantallas bajas y anchas (≈ 915×412, un Pixel 7 horizontal) el mapa
+   queda a la izquierda y los menús entran como un cajón a la derecha. El
+   CSS vive en styles.css (orientation: landscape + max-height); aquí solo
+   se marca en <body> si hay un cajón abierto, para esconder los recursos.
+   ===================================================================== */
+{ const r0 = UI.render; UI.render = function () { const v = r0.apply(this, arguments); document.body.dataset.drawer = UI.panel || UI.sel ? '1' : ''; return v; }; }
 
 
 /* ---------- ui/90-boot.js ---------- */
