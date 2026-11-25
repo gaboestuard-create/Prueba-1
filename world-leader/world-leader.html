@@ -453,6 +453,10 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .sum5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .sum5 .li { display: flex; gap: 8px; align-items: center; text-align: left; } .sum5 .li.on { border-color: var(--gold); background: rgba(232, 195, 106, .1); }
 .cab .grow > small.mut { display: block; }
 @media (max-width: 600px) { .tabs { padding: 0 8px; gap: 0; } .tabs button { padding: 7px 8px; font-size: 12px; letter-spacing: .04em; } }
+/* Nación */
+.nat5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; } .nat-c { display: flex; flex-direction: column; gap: 4px; margin: 0; } .nat-c .arow { gap: 8px; } .nat-c .bar { flex: 1; }
+.nat-b input[type=range], .card input[data-c=natPay] { width: 100%; } .nar5 { display: flex; flex-direction: column; gap: 6px; } .nar5 .grow small { display: block; }
+@media (max-width: 600px) { .dock button { font-size: 7.5px; } .dock button .ic { width: 18px; height: 18px; } }
 
 </style>
 
@@ -1388,6 +1392,79 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     cultural: { n: 'Intercambio cultural', d: 'Becas, giras y exposiciones: +2 ahora y +1 por turno durante 6.', cp: 0 },
     denuncia: { n: 'Denuncia pública', d: 'Los señalas ante el mundo: −10 con ellos, +4 con cada uno de sus rivales.', cp: 1 },
     ultimatum: { n: 'Ultimátum', d: 'Exiges tributo bajo amenaza. Solo funciona si los alcanzas y los doblas en fuerza.', cp: 2 }
+  };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · ESTADO DE LA NACIÓN (Fase 1 del interior)
+   Indicadores del país (0-100), gasto interno por partidas, policía,
+   ejército en las calles y cárteles. Motor: src/engine/7r-nation.js.
+   bad: 1 → cuanto más alto, peor (crimen, corrupción, desigualdad).
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx, O = o => o.map(x => ({ t: x[0], fx: fx(x[1]), nat: x[2] || {} }));
+  D.NAT_IX = {
+    seg: { n: 'Seguridad pública', ic: 'seg', d: 'Lo seguras que se sienten las calles.' },
+    cri: { n: 'Crimen organizado', ic: 'ofensiva', bad: 1, d: 'Poder de cárteles y mafias.' },
+    cor: { n: 'Corrupción', ic: 'oro', bad: 1, d: 'Sobornos, desvíos y favores en el Estado.' },
+    edu: { n: 'Educación', ic: 'edu', d: 'Calidad de escuelas y universidades. Tarda años en moverse.' },
+    sal: { n: 'Salud', ic: 'sal', d: 'Hospitales, médicos y esperanza de vida.' },
+    inf: { n: 'Infraestructura', ic: 'obras', d: 'Carreteras, energía, agua y transporte.' },
+    des: { n: 'Desigualdad', ic: 'eco', bad: 1, d: 'Distancia entre ricos y pobres.' },
+    coh: { n: 'Cohesión social', ic: 'paz', d: 'Cuánto confían los ciudadanos unos en otros.' },
+    ins: { n: 'Confianza en las instituciones', ic: 'acuerdo', d: 'Fe en tribunales, congreso y gobierno.' }
+  };
+  D.NAT = {
+    drift: .1, slow: { edu: .035, inf: .05 }, noise: 1.2,
+    /* punto de partida según renta por habitante (pobre → rica) y régimen */
+    start: { seg: [38, 72], cri: [55, 20], cor: [62, 22], edu: [40, 78], sal: [42, 80], inf: [35, 78], des: [62, 35], coh: [48, 62], ins: [38, 60] },
+    /* partidas de gasto: nivel 0–2 (1 = lo normal). Cada punto por encima cuesta gdp × coste por turno y mueve el objetivo de cada indicador */
+    bud: {
+      seg: { n: 'Seguridad y justicia', cost: .004, ix: { seg: 14, cri: -6, ins: 3 } },
+      edu: { n: 'Educación', cost: .006, ix: { edu: 18, des: -4, coh: 2 } },
+      sal: { n: 'Salud', cost: .005, ix: { sal: 18, coh: 3 } },
+      inf: { n: 'Infraestructura', cost: .005, ix: { inf: 18, cor: 3 } },
+      soc: { n: 'Programas sociales', cost: .004, ix: { des: -14, coh: 8, cri: -3 } }
+    },
+    /* leyes que ya existen y empujan los indicadores */
+    law: {
+      mano_dura: { seg: 6, ins: -4, coh: -3 }, policia_comunitaria: { seg: 4, coh: 4, ins: 2 }, vigilancia: { seg: 3, ins: -5 }, armas_civiles: { seg: -6, cri: 3 }, desarme: { seg: 4, cri: -2 },
+      anticorrupcion: { cor: -14, ins: 6 }, pena_muerte: { seg: 2, ins: -3 }, transparencia: { cor: -8, ins: 5 }, prensa_libre: { cor: -4, ins: 3 }, control_medios: { cor: 6, ins: -6 },
+      edu_publica: { edu: 8, des: -4 }, becas_tec: { edu: 5 }, edu_religiosa: { edu: -2, coh: 2 }, edu_laica: { edu: 2 }, salud_universal: { sal: 10, des: -4 }, salud_privada: { sal: 3, des: 6 }, vacunas: { sal: 4 },
+      cannabis: { cri: -4, sal: -1 }, renta_basica: { des: -10, coh: 4 }, salario_min: { des: -5 }, imp_fortunas: { des: -6 }, imp_recorte: { des: 5 }, privatizar: { des: 4, cor: 3 }, vivienda: { des: -4, coh: 3 },
+      agua: { inf: 4, sal: 3 }, puertos: { inf: 4 }, tren_rapido: { inf: 6 }, presa: { inf: 3 }, central_nuclear: { inf: 4 }, banda_ancha: { inf: 4, edu: 2 }, guarderias: { coh: 3, edu: 2 },
+      fronteras_abiertas: { coh: -3 }, matrimonio: { coh: 1 }, centralizar: { cor: 2 }, reeleccion: { ins: -5 }
+    },
+    /* cómo pesan los indicadores (desviación respecto a 50) */
+    eff: { grow: { edu: .004, inf: .005, cor: -.005, cri: -.004, sal: .002 }, growCap: .5, stab: { seg: .012, coh: .012, ins: .008, cri: -.01 }, elect: { ins: .04, seg: .03 },
+      sec: { med: ['seg', .012], jov: ['edu', .01], jub: ['sal', .012], obr: ['des', -.012], emp: ['cor', -.01] } },
+    police: { pay: { cost: .0015, seg: 6, cor: -8 }, eq: { gdp: .004, max: 3, seg: 4 }, purge: { cp: 2, cor: -12, seg: -6, cd: 8 } },
+    army: { cp: 1, cost: .0008, max: 3, seg: 3, cri: -2, cart: -7, rl: -8, mil: .3, dem: -2, abuseP: .05 },
+    cart: {
+      narco: ['MX', 'CO', 'BR', 'VE', 'PE', 'EC', 'HN', 'GT', 'SV', 'BO', 'PY', 'JM', 'NG', 'AF', 'MM', 'PH', 'IT', 'AL', 'ZA', 'NI', 'DO', 'PA', 'CR', 'TH', 'LA'],
+      names: ['Los Halcones del Norte', 'La Hermandad', 'Cártel del Golfo Negro', 'Los Herederos', 'La Familia del Valle', 'Clan de la Sierra', 'Los Ángeles Rojos', 'Cártel de la Costa', 'La Compañía', 'Los Señores del Puerto', 'La Nueva Frontera', 'Los Tres Ríos'],
+      grow: .04, criMid: 55, drift: .6, cap: 110, maxN: 3, spawnP: .03, spawnCri: 64, criW: .22, rlW: .12, dieAt: 4,
+      eventP: .07, exposeP: .05, pactTurns: 12, pactSeg: 8, pactCor: 7,
+      acts: {
+        guerra: { n: 'Ofensiva frontal', cp: 1, gdp: .003, str: -12, seg: -4, backP: .35, d: 'Golpe directo. Baja su fuerza, pero la violencia se dispara a corto plazo.' },
+        fin: { n: 'Golpear sus finanzas', cp: 1, gdp: .001, str: -5, cash: .5, cor: -2, d: 'Congelar cuentas y lavado. Lento pero sin balas.' },
+        pacto: { n: 'Pacto secreto', cp: 2, d: 'Baja la violencia ya. Sube la corrupción y, si se descubre, el escándalo es enorme.' }
+      },
+      legal: { cp: 3, str: -1.5, sec: { jov: 6, rel: -8, jub: -4 }, us: -10, sal: -2, d: 'Legalizar y regular las drogas. Seca el negocio poco a poco; incomoda a los religiosos y a Washington.' }
+    }
+  };
+  /* decisiones: [texto, efectos, cambios en la nación {ix:{..}, str: fuerza del cártel}] */
+  D.NAT_EV = {
+    abuso: { t: 'Abusos del ejército en {R}', x: 'Un video muestra a soldados golpeando a civiles desarmados en un control de {R}. Las organizaciones de derechos humanos exigen la retirada.',
+      opts: O([['Juicio militar a los responsables', 'sec.mil-4;rep.dem+2', { ix: { ins: 3 } }], ['Retirar al ejército de la región', 'sec.mil-2', { out: 1, ix: { ins: 2 } }], ['Respaldar a la tropa', 'sec.mil+4;rep.dem-4;sec.jov-4', { ix: { ins: -6, coh: -3 } }]]) },
+    atentado: { t: '{C} ataca en {R}', x: '{C} ha detonado un coche bomba frente a la comandancia de {R}. Hay muertos y el país entero mira al gobierno.',
+      opts: O([['Desplegar fuerzas especiales', '$g-.2;sec.mil+2', { str: -8, ix: { seg: -2 } }], ['Mensaje de unidad nacional', 'sec.all+1;cp-1', { ix: { coh: 4 } }], ['Negociar una tregua discreta', '', { str: 3, ix: { seg: 4, cor: 5 } }]]) },
+    soborno: { t: 'Sobornos de {C}', x: 'La fiscalía descubre que mandos de la policía de {R} cobraban de {C}. El jefe del cártel se ríe en una grabación filtrada.',
+      opts: O([['Depurar la policía local', 'cp-1', { ix: { cor: -5, seg: -3 } }], ['Taparlo para no alarmar', '', { ix: { cor: 6, ins: -2 } }], ['Destituir al ministro del ramo', 'sec.all+2;party.opp-1', { ix: { ins: 4 } }]]) },
+    expuesto: { t: 'Se descubre tu pacto con {C}', x: 'Un periódico publica audios de tus enviados negociando con {C}. La oposición pide tu cabeza.',
+      opts: O([['Pedir perdón y romper el pacto', 'sec.all-4;rep.dem+1', { ix: { ins: -8 } }], ['Negarlo todo', 'chance.5{sec.all-1}{sec.all-8;rep.conf-4}', { ix: { ins: -12 } }]]) },
+    nuevo: { t: 'Nace un nuevo cártel en {R}', x: 'El crimen se ha disparado: un grupo llamado {C} controla ya las rutas de {R} y recluta a jóvenes sin trabajo.',
+      opts: O([['Prioridad nacional: ir por ellos', '$g-.2', { str: -10 }], ['Vigilar y esperar', '', {}]]) }
   };
 })();
 
@@ -6420,6 +6497,104 @@ hook('late', () => { if (S.over) return; const K = S.crisis;
 const pplInfo = () => S.ppl, crisisInfo = () => S.crisis;
 
 
+/* ---------- engine/7r-nation.js ---------- */
+/* =====================================================================
+   SISTEMA · ESTADO DE LA NACIÓN
+   Nueve indicadores internos (0-100) que persiguen un objetivo: punto de
+   partida del país + gasto por partidas + leyes + policía + ejército en
+   las calles + cárteles. Pesan en crecimiento, estabilidad, sectores y
+   elecciones. Cárteles con nombre en regiones concretas.
+   Datos en src/data-nation.js. Solo el país del jugador.
+   ===================================================================== */
+const NT = D.NAT, NIX = Object.keys(D.NAT_IX), NC = NT.cart;
+function natInit() {
+  const c = P(), gpc = c.gdp / Math.max(.001, c.pop), k = clamp((Math.log10(Math.max(1, gpc)) - .3) / 1.5, 0, 1), dem = c.reg === 'dem' ? 4 : -4, ix = {};
+  for (const x of NIX) { const [a, b] = NT.start[x]; ix[x] = clamp(a + (b - a) * k + rr(-5, 5) + (x === 'ins' || x === 'cor' ? (x === 'cor' ? -dem : dem) : 0), 5, 95); }
+  if (NC.narco.includes(S.player)) ix.cri = clamp(ix.cri + 12, 0, 95);
+  S.nat = { ix, h: Object.fromEntries(NIX.map(x => [x, [Math.round(ix[x])]])), bud: Object.fromEntries(Object.keys(NT.bud).map(b => [b, 1])), pay: 1, eq: 0, purgeT: 0, army: {}, cart: [], legal: 0, cid: 0 }; S.nat.base = Object.assign({}, ix);
+  const n = NC.narco.includes(S.player) ? ri(2, 3) : ix.cri > NC.spawnCri ? 1 : 0; for (let i = 0; i < n; i++) cartNew(ri(30, 65));
+}
+hook('new', natInit); hook('load', () => { if (!S.nat) natInit(); const N = S.nat; N.base = N.base || Object.assign({}, N.ix); for (const x of NIX) if (N.ix[x] == null) { N.ix[x] = 50; N.h[x] = [50]; } for (const b in NT.bud) if (N.bud[b] == null) N.bud[b] = 1; });
+const ownIdx = () => ownRegs();
+function cartNew(str) { const N = S.nat, used = N.cart.map(x => x.n), regs = ownIdx(); if (!regs.length) return null;
+  const n = pick(NC.names.filter(x => !used.includes(x))) || 'El Cártel'; const c = { id: ++N.cid, n, i: pick(regs), str, cash: str * .5, boss: genLeader(S.player), pact: 0 }; N.cart.push(c); return c; }
+const cartIn = i => S.nat ? S.nat.cart.filter(c => c.i === i) : [];
+const lawFx = x => { let v = 0; for (const id in S.pol.laws) v += ((NT.law[id] || {})[x] || 0); return v; };
+/* objetivo de cada indicador con su desglose, para la interfaz */
+function natWhy(x) { const N = S.nat, out = [], add = (v, t) => { if (Math.abs(v) >= .5) out.push([Math.round(v), t]); return v; };
+  let v = N.base ? N.base[x] : 50;
+  for (const b in NT.bud) v += add((N.bud[b] - 1) * (NT.bud[b].ix[x] || 0), 'Gasto en ' + NT.bud[b].n.toLowerCase());
+  v += add(lawFx(x), 'Leyes vigentes');
+  const Pp = NT.police; if (x === 'seg') v += add((N.pay - 1) * Pp.pay.seg + N.eq * Pp.eq.seg, 'Policía'); if (x === 'cor') v += add((N.pay - 1) * Pp.pay.cor, 'Sueldos policiales');
+  const nA = Object.keys(N.army).length; if (x === 'seg') v += add(nA * NT.army.seg, 'Ejército en las calles');
+  const cs = N.cart.reduce((s, c) => s + c.str, 0); if (x === 'cri') v += add(Math.min(30, cs * NC.criW) - 10, 'Cárteles activos'); if (x === 'seg') v += add(-Math.min(20, cs * .08), 'Violencia del narco');
+  const pc = N.cart.filter(c => c.pact > S.turn).length; if (pc && x === 'seg') v += add(pc * NC.pactSeg, 'Pactos con el narco'); if (pc && x === 'cor') v += add(pc * NC.pactCor, 'Pactos con el narco');
+  if (x === 'ins') v += add((50 - N.ix.cor) * .2, 'Corrupción'); if (x === 'coh') v += add((50 - N.ix.des) * .15, 'Desigualdad');
+  if (x === 'des') v += add(((S.eco || {}).unemp || 6) * .6 - 4, 'Desempleo'); if (x === 'seg' && inWar(S.player)) v += add(-4, 'Guerra');
+  if (x === 'cri' && N.legal) v += add(-8, 'Drogas legalizadas');
+  return { target: clamp(v, 0, 100), why: out.sort((a, b) => Math.abs(b[0]) - Math.abs(a[0])) };
+}
+const natMod = d => { const N = S.nat; for (const x in d.ix || {}) N.ix[x] = clamp(N.ix[x] + d.ix[x], 0, 100); if (d.cart) { const c = N.cart.find(z => z.id === d.cart); if (c && d.str) c.str = clamp(c.str + d.str, 0, 100); } if (d.out != null) delete N.army[d.out]; };
+OPS.natMod = a => { if (S.nat) natMod(a); };
+const natPend = (k, sub, d) => { const E = D.NAT_EV[k], f = s => s.split('{R}').join(sub.R || '').split('{C}').join(sub.C || '');
+  pushPend({ k: 'event', id: 'nation', t: f(E.t), x: f(E.x), iso: S.player, opts: E.opts.map(o => ({ t: o.t, fx: o.fx.concat([['do', 'natMod', Object.assign({}, o.nat, { cart: d.cart, out: o.nat.out ? d.i : undefined })]]) })) }); };
+/* turno: los indicadores persiguen su objetivo y los cárteles viven */
+hook('player', () => { const N = S.nat, c = P(); if (!N) return;
+  for (const x of NIX) { const w = natWhy(x); N.ix[x] = clamp(N.ix[x] + (w.target - N.ix[x]) * (NT.slow[x] || NT.drift) + rr(-NT.noise, NT.noise), 0, 100); const h = N.h[x]; h.push(Math.round(N.ix[x])); if (h.length > 24) h.shift(); }
+  const E = NT.eff, I = N.ix; let st = 0; for (const x in E.stab) st += (I[x] - 50) * E.stab[x]; c.stab = clamp(c.stab + st * .1, 0, 100);
+  for (const s in E.sec) { const [x, w] = E.sec[s]; if (S.pol.sec[s]) secAdd(s, (I[x] - 50) * w * .3); }
+  /* ejército en las calles */
+  for (const i in N.army) { if (!c.terr[i] || c.terr[i].o !== S.player) { delete N.army[i]; continue; } secAdd('mil', NT.army.mil);
+    for (const k of cartIn(+i)) k.str = clamp(k.str + NT.army.cart, 0, 100);
+    if (S.pend.length < 2 && chance(NT.army.abuseP)) natPend('abuso', { R: c.terr[i].n }, { i }); }
+  /* cárteles */
+  for (const k of N.cart.slice()) { if (!c.terr[k.i] || c.terr[k.i].o !== S.player) { const r = ownIdx(); if (!r.length) continue; k.i = pick(r); }
+    const gr = k.pact > S.turn ? .2 : ((I.cri - NC.criMid) * NC.grow + NC.drift) * (1 - k.str / NC.cap) - (I.seg - 50) * .04; /* crecen cada vez más despacio cerca del techo */
+    k.str = clamp(k.str + gr + (N.legal ? NC.legal.str : 0) + rr(-1.5, 1.5), 0, 100); k.cash = clamp(k.cash + k.str * .05 - (N.legal ? 2 : 0), 0, 200);
+    if (k.str <= NC.dieAt) { N.cart.splice(N.cart.indexOf(k), 1); secAdd('all', 3); news(`Cae ${k.n}: su jefe, ${k.boss}, es detenido`, 'pol', S.player, 3); Bus.emit('regfx', { iso: S.player, i: k.i, k: 'ayuda' }); continue; }
+    if (k.pact > S.turn && chance(NC.exposeP)) { k.pact = 0; if (S.pend.length < 2) natPend('expuesto', { C: k.n, R: c.terr[k.i].n }, { cart: k.id }); continue; }
+    if (S.pend.length < 2 && !(k.pact > S.turn) && chance(NC.eventP * k.str / 50)) { const ev = k.str > 45 && chance(.5) ? 'atentado' : 'soborno'; if (ev === 'atentado') { c.stab = clamp(c.stab - 2, 0, 100); Bus.emit('regfx', { iso: S.player, i: k.i, k: 'rev' }); } natPend(ev, { C: k.n, R: c.terr[k.i].n }, { cart: k.id }); } }
+  if (N.cart.length < NC.maxN && I.cri > NC.spawnCri && chance(NC.spawnP)) { const k = cartNew(ri(20, 35)); if (k && S.pend.length < 2) natPend('nuevo', { C: k.n, R: c.terr[k.i].n }, { cart: k.id }); }
+});
+/* el gasto interno pasa por el presupuesto normal */
+hook('finance', f => { const N = S.nat; if (!N) return; const g = P().gdp; let v = 0; for (const b in NT.bud) v += (N.bud[b] - 1) * NT.bud[b].cost * g; v += (N.pay - 1) * NT.police.pay.cost * g + Object.keys(N.army).length * NT.army.cost * g;
+  if (v > 0) f.exp.nat = v; else if (v < 0) f.inc.natcut = -v; });
+/* el país pesa: crecimiento y elecciones */
+{ const m0 = mod; mod = k => { let v = m0(k); if (!S || !S.nat || (k !== 'growth' && k !== 'elect')) return v; const I = S.nat.ix, E = NT.eff;
+  if (k === 'growth') { let g = 0; for (const x in E.grow) g += (I[x] - 50) * E.grow[x]; return v + clamp(g, -E.growCap, E.growCap); }
+  let e = 0; for (const x in E.elect) e += (I[x] - 50) * E.elect[x]; return v + e; }; }
+/* las regiones con ejército se calman; las de un cártel, se agitan */
+{ const w0 = rlWhy; rlWhy = i => { const w = w0(i); if (!S.nat || S.player == null) return w; let d = 0;
+  if (S.nat.army[i]) { d += NT.army.rl; w.why.push([NT.army.rl, 'Ejército desplegado']); } const cs = cartIn(i).reduce((s, c) => s + c.str, 0) * NC.rlW; if (cs >= 1) { d += cs; w.why.push([Math.round(cs), 'Presencia del narco']); }
+  w.target = clamp(w.target + d, 0, 100); return w; }; }
+/* ---- acciones ---- */
+ACT.natBud = a => { const N = S.nat, b = NT.bud[a.k]; if (!b) return fail('Partida desconocida'); N.bud[a.k] = clamp(Math.round(+a.v * 4) / 4, 0, 2); return { msg: `${b.n}: ${Math.round(N.bud[a.k] * 100)}% de lo normal` }; };
+ACT.natPay = a => { S.nat.pay = clamp(Math.round(+a.v * 4) / 4, .5, 2); return { msg: `Sueldos policiales al ${Math.round(S.nat.pay * 100)}%` }; };
+ACT.natEquip = () => { const N = S.nat, E = NT.police.eq, g = P().gdp * E.gdp; if (N.eq >= E.max) return fail('La policía ya tiene el mejor equipo posible'); if (!canPay(g)) return fail(`Necesitas ${money(g)}`);
+  P().tr -= g; N.eq++; return { msg: `Policía reequipada (nivel ${N.eq} de ${E.max})` }; };
+ACT.natPurge = () => { const N = S.nat, U = NT.police.purge; if (N.purgeT > S.turn) return fail(`La última depuración fue hace poco: espera ${N.purgeT - S.turn} turnos`); if (!useCP(U.cp)) return fail(`Necesitas ${U.cp} de capital político`);
+  natMod({ ix: { cor: U.cor, seg: U.seg } }); N.purgeT = S.turn + U.cd; news(`${S.leader.n} purga la policía: cientos de agentes destituidos por corrupción`, 'pol', S.player, 2); return { msg: 'Depuración en marcha: menos corrupción, menos agentes en la calle un tiempo' }; };
+ACT.natArmy = a => { const N = S.nat, A = NT.army, i = +a.i, c = P(); if (!c.terr[i] || c.terr[i].o !== S.player) return fail('Esa región no está bajo tu control');
+  if (N.army[i]) { delete N.army[i]; Bus.emit('regfx', { iso: S.player, i, k: 'ayuda' }); return { msg: `El ejército vuelve a los cuarteles: ${c.terr[i].n}` }; }
+  if (Object.keys(N.army).length >= A.max) return fail(`Ya tienes tropas en ${A.max} regiones`); if (!useCP(A.cp)) return fail(`Necesitas ${A.cp} de capital político`);
+  N.army[i] = S.turn; repAdd('dem', A.dem); natMod({ ix: { seg: 2 } }); Bus.emit('regfx', { iso: S.player, i, k: 'humo' }); news(`El ejército patrulla las calles de ${c.terr[i].n}`, 'pol', S.player, 2); return { msg: `Ejército desplegado en ${c.terr[i].n}` }; };
+ACT.cartel = a => { const N = S.nat, k = N.cart.find(x => x.id === +a.id), A = NC.acts[a.how], c = P(); if (!k) return fail('Ese cártel ya no existe'); if (!A) return fail('Acción desconocida');
+  if ((k.cd || 0) > S.turn) return fail(`Ya actuaste contra ${k.n}: espera ${k.cd - S.turn} turnos`); const g = (A.gdp || 0) * c.gdp; if (g && !canPay(g)) return fail(`Necesitas ${money(g)}`); if (!useCP(A.cp)) return fail(`Necesitas ${A.cp} de capital político`);
+  c.tr -= g; k.cd = S.turn + 2; const R = c.terr[k.i].n;
+  if (a.how === 'pacto') { k.pact = S.turn + NC.pactTurns; return { msg: `Tus enviados cierran un pacto discreto con ${k.n}` }; }
+  k.pact = 0; k.str = clamp(k.str + A.str - (a.how === 'guerra' && N.army[k.i] ? 6 : 0) - (a.how === 'guerra' ? (N.ix.seg - 50) * .1 : 0), 0, 100); if (A.cash) k.cash *= A.cash; natMod({ ix: { seg: A.seg || 0, cor: A.cor || 0 } });
+  Bus.emit('regfx', { iso: S.player, i: k.i, k: a.how === 'guerra' ? 'humo' : 'ayuda' }); news(`${A.n} contra ${k.n} en ${R}`, 'pol', S.player, 2);
+  if (a.how === 'guerra' && chance(A.backP) && S.pend.length < 3) natPend('atentado', { C: k.n, R }, { cart: k.id }); return { msg: `${A.n}: ${k.n} queda con fuerza ${Math.round(k.str)}` }; };
+ACT.natLegal = () => { const N = S.nat, L = NC.legal; if (N.legal) return fail('Las drogas ya están legalizadas'); if (!useCP(L.cp)) return fail(`Necesitas ${L.cp} de capital político`);
+  N.legal = S.turn + 1; /* turno + 1: el turno 0 no debe contar como «no legalizado» */ for (const s in L.sec) secAdd(s, L.sec[s]); natMod({ ix: { sal: L.sal } }); if (S.c.US && S.c.US.alive && S.player !== 'US') addMod(S.player, 'US', 'Legalizaste las drogas', L.us, .3);
+  news(`${P().n} legaliza y regula las drogas: el mundo mira el experimento`, 'pol', S.player, 3); return { msg: 'Drogas legalizadas: el negocio del narco irá secándose' }; };
+Object.assign(FREE, { natBud: 1, natPay: 1 });
+function natInfo() { const N = S.nat; if (!N) return null; const g = P().gdp;
+  return { ix: Object.fromEntries(NIX.map(x => { const w = natWhy(x); return [x, { v: N.ix[x], t: w.target, why: w.why.slice(0, 3), h: N.h[x] }]; })), bud: Object.assign({}, N.bud), pay: N.pay, eq: N.eq, purge: Math.max(0, N.purgeT - S.turn),
+    army: Object.keys(N.army).map(Number), legal: N.legal, cost: Object.fromEntries(Object.keys(NT.bud).map(b => [b, (N.bud[b] - 1) * NT.bud[b].cost * g])),
+    cart: N.cart.map(k => ({ id: k.id, n: k.n, boss: k.boss, i: k.i, reg: P().terr[k.i] ? P().terr[k.i].n : '', str: k.str, cash: k.cash, pact: Math.max(0, k.pact - S.turn), cd: Math.max(0, (k.cd || 0) - S.turn) })) }; }
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -6508,7 +6683,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo,
+    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo, natInfo,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -9549,6 +9724,58 @@ H.sumTopic = d => { UI.sum.topic = d.k; document.querySelectorAll('#modal [data-
 H.sumGo = () => { const r = act('summitYear', { meet: UI.sum.meet, topic: UI.sum.topic }); if (r.ok) { UI.sum.meet = []; closeModal(); if (!CFG.rm) Globe.ring(...(LL(me()) || [0, 0]), 0xffd36a, .12, 2000); showPending(); } };
 H.sumSkip = () => { closeModal(); act('decide', { i: 1 }); showPending(); };
 Bus.on('crisisEnd', e => scene(cineScene(banner(e.r === 'bad' ? 'war' : 'peace', e.r === 'bad' ? 'bad' : 'cp', 'Sala de crisis', esc(e.n), e.r === 'ok' ? 'Crisis resuelta con éxito' : e.r === 'mid' ? 'Un final agridulce' : 'La gestión fue un desastre'), 3000)));
+
+
+/* ---------- ui/5q-nation.js ---------- */
+/* =====================================================================
+   INTERFAZ · ESTADO DE LA NACIÓN (botón «Nación» del dock)
+   Estado: los nueve indicadores · Gasto: partidas internas ·
+   Seguridad: policía y ejército en las calles · Narcotráfico: cárteles.
+   ===================================================================== */
+IC.nac = 'M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6';
+DOCK.splice(4, 0, ['nac', 'Nación']); PT.nac = 'Estado de la nación';
+PTABS.nac = [['est', 'Estado'], ['gas', 'Gasto'], ['seg', 'Seguridad'], ['nar', 'Narcotráfico']];
+Object.assign(EXN, { nat: 'Gasto interno extra (Nación)' }); Object.assign(INN, { natcut: 'Recortes de gasto interno' });
+PANELS.nac = t => { const N = Q.natInfo(); if (!N) return '<p class="mut">Sin datos de la nación.</p>'; return t === 'gas' ? natBudHTML(N) : t === 'seg' ? natSegHTML(N) : t === 'nar' ? natNarHTML(N) : natStateHTML(N); };
+const natTone = (k, v) => { const good = D.NAT_IX[k].bad ? 100 - v : v; return good >= 60 ? 'green' : good < 35 ? 'red' : ''; };
+function natStateHTML(N) {
+  return `<p class="mut fine">Cómo está tu país por dentro. Cada indicador persigue su objetivo (la marca ▸): lo mueven el gasto, las leyes, la policía y el crimen. Pesan en el crecimiento, la estabilidad, los sectores y las elecciones.</p>
+  <div class="nat5">${Object.entries(D.NAT_IX).map(([k, d]) => { const x = N.ix[k], v = Math.round(x.v), t = Math.round(x.t), arrow = t > v + 1 ? '▲' : t < v - 1 ? '▼' : '■', bad = d.bad ? t > v + 1 : t < v - 1;
+    return `<div class="card nat-c"><div class="row"><span>${gi(d.ic)}</span><b class="grow">${esc(d.n)}</b><b class="num ${natTone(k, v)}">${v}</b></div>
+      <div class="arow">${bar(v, 100, natTone(k, v))}<small class="${t === v ? 'mut' : bad ? 'red' : 'green'}">${arrow} ${t}</small>${spark(x.h, 70, 22)}</div>
+      <small class="mut">${esc(d.d)}</small>${x.why.length ? `<small>${x.why.map(w => `<span class="${(w[0] > 0) !== !!d.bad ? 'green' : 'red'}">${sgn(w[0])}</span> ${esc(w[1])}`).join(' · ')}</small>` : ''}</div>`; }).join('')}</div>`; }
+function natBudHTML(N) { const tot = Object.values(N.cost).reduce((a, b) => a + b, 0);
+  return `<p class="mut fine">Reparte el dinero entre las partidas. 100% es lo normal: más cuesta cada turno y mejora el indicador poco a poco (la educación tarda años); recortar ahorra ya y lo pagas después.</p>
+  ${Object.entries(D.NAT.bud).map(([k, b]) => `<div class="card nat-b"><div class="row"><b class="grow">${esc(b.n)}</b><b class="num" id="natv-${k}">${Math.round(N.bud[k] * 100)}%</b></div>
+    <input type="range" min="0" max="200" step="25" value="${Math.round(N.bud[k] * 100)}" data-c="natBud" data-k="${k}" aria-label="${esc(b.n)}">
+    <small class="mut">${Object.entries(b.ix).map(([x, v]) => `${esc(D.NAT_IX[x].n)} ${sgn(v)}`).join(' · ')} por cada 100% extra · ${N.cost[k] > 0 ? 'cuesta ' + money(N.cost[k]) : N.cost[k] < 0 ? 'ahorra ' + money(-N.cost[k]) : 'sin coste extra'} por turno</small></div>`).join('')}
+  <p class="${tot > 0 ? 'red' : tot < 0 ? 'green' : 'mut'}">Balance de partidas: ${tot > 0 ? money(tot) + ' más de gasto' : tot < 0 ? money(-tot) + ' de ahorro' : 'neutro'} por turno</p>`; }
+function natSegHTML(N) { const A = D.NAT.army, Pp = D.NAT.police, regs = Q.rlList ? Q.rlList() : [], c = CC(me());
+  const cartReg = {}; for (const k of N.cart) cartReg[k.i] = (cartReg[k.i] || 0) + k.str;
+  const rows = regs.map(([i, m]) => [i, m, cartReg[i] || 0]).sort((a, b) => (N.army.includes(b[0]) - N.army.includes(a[0])) || (b[2] - a[2]) || (b[1] - a[1])).slice(0, 12);
+  return `<h4>${gi('seg')} Policía</h4><div class="card"><div class="row"><b class="grow">Sueldos</b><b class="num" id="natv-pay">${Math.round(N.pay * 100)}%</b></div>
+    <input type="range" min="50" max="200" step="25" value="${Math.round(N.pay * 100)}" data-c="natPay" aria-label="Sueldos policiales">
+    <small class="mut">Mejor pagados: más seguridad y menos sobornos. Cada 100% extra cuesta ${money(c.gdp * Pp.pay.cost)} por turno.</small>
+    <div class="row wrap"><button class="btn sm" data-a="natEquip" ${N.eq >= Pp.eq.max ? 'disabled' : ''}>Reequipar · ${money(c.gdp * Pp.eq.gdp)} · nivel ${N.eq}/${Pp.eq.max}</button>
+    <button class="btn sm ghost" data-a="natPurge" data-confirm ${N.purge ? 'disabled' : ''}>Depurar la policía · ${Pp.purge.cp} CP${N.purge ? ` · en ${N.purge} t` : ''}</button></div>
+    <small class="mut">Depurar baja mucho la corrupción, pero durante un tiempo hay menos agentes en la calle.</small></div>
+  <h4>${gi('tan')} Ejército en las calles <small class="mut">${N.army.length}/${A.max}</small></h4>
+  <p class="mut fine">Sacar al ejército calma una región y golpea a los cárteles que operan allí, pero cuesta ${money(c.gdp * A.cost)} por turno, resta reputación democrática y puede haber abusos.</p>
+  ${rows.map(([i, m, cs]) => { const on = N.army.includes(i); return `<div class="arow"><div class="grow"><b>${esc(c.terr[i].n)}</b><small class="mut">Malestar ${Math.round(m)}${cs ? ` · narco ${Math.round(cs)}` : ''}</small></div>
+    <button class="btn sm ${on ? 'ghost' : 'gold'}" data-a="natArmy" data-i="${i}" ${!on && N.army.length >= A.max ? 'disabled' : ''}>${on ? 'Retirar' : `Desplegar · ${A.cp} CP`}</button></div>`; }).join('') || '<p class="mut">No controlas ninguna región.</p>'}`; }
+function natNarHTML(N) { const K = D.NAT.cart, c = CC(me());
+  return `<p class="mut fine">Crimen organizado ${Math.round(N.ix.cri.v)}/100. Los cárteles crecen con el crimen y la pobreza, sobornan a tu policía y atentan si se sienten fuertes. Si su fuerza llega a ${K.dieAt}, caen.</p>
+  ${N.cart.map(k => `<div class="card nar5"><div class="row"><span>${gi('ofensiva')}</span><div class="grow"><b>${esc(k.n)}</b><small class="mut">Feudo: ${esc(k.reg)} · jefe: ${esc(k.boss)} · caja ${Math.round(k.cash)}${k.pact ? ` · <span class="gold">pacto secreto (${k.pact} t)</span>` : ''}</small></div><b class="num ${k.str > 60 ? 'red' : ''}">${Math.round(k.str)}</b></div>
+    ${bar(k.str, 100, k.str > 60 ? 'red' : '')}
+    <div class="row wrap">${Object.entries(K.acts).map(([h, A]) => `<button class="btn sm ${h === 'pacto' ? 'ghost' : ''}" data-a="cartel" data-id="${k.id}" data-how="${h}" title="${esc(A.d)}" ${k.cd ? 'disabled' : ''} ${h === 'pacto' ? 'data-confirm' : ''}>${esc(A.n)} · ${A.cp} CP${A.gdp ? ' · ' + money(c.gdp * A.gdp) : ''}</button>`).join('')}</div>
+    ${k.cd ? `<small class="mut">Podrás volver a actuar en ${k.cd} turnos.</small>` : ''}</div>`).join('') || '<p class="mut">No hay cárteles organizados en tu país. Si el crimen sube mucho, aparecerán.</p>'}
+  <h4>Política de drogas</h4>${N.legal ? `<p class="good">Drogas legalizadas desde ${esc(turnDate(N.legal - 1))}. El negocio del narco se seca poco a poco.</p>` : `<div class="card"><p class="mut">${esc(K.legal.d)}</p><button class="btn sm" data-a="natLegal" data-confirm>Legalizar y regular · ${K.legal.cp} CP</button></div>`}`; }
+H.natBud = (d, el) => { const r = act('natBud', { k: el.dataset.k, v: el.value / 100 }); const b = $('#natv-' + el.dataset.k); if (b) b.textContent = el.value + '%'; if (r.ok) UI.render(); };
+H.natPay = (d, el) => { const r = act('natPay', { v: el.value / 100 }); if (r.ok) UI.render(); };
+H.natEquip = () => act('natEquip'); H.natPurge = () => act('natPurge'); H.natArmy = d => act('natArmy', { i: +d.i }); H.natLegal = () => act('natLegal');
+H.cartel = d => act('cartel', { id: +d.id, how: d.how });
+/* cada turno, el globo recuerda dónde están las tropas y los cárteles */
+Bus.on('turn', () => { const N = S() && Q.natInfo(); if (!N || CFG.rm) return; for (const i of N.army) Bus.emit('regfx', { iso: me(), i, k: 'humo' }); });
 
 
 /* ---------- ui/90-boot.js ---------- */

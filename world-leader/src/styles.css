@@ -441,3 +441,7 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .sum5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; } .sum5 .li { display: flex; gap: 8px; align-items: center; text-align: left; } .sum5 .li.on { border-color: var(--gold); background: rgba(232, 195, 106, .1); }
 .cab .grow > small.mut { display: block; }
 @media (max-width: 600px) { .tabs { padding: 0 8px; gap: 0; } .tabs button { padding: 7px 8px; font-size: 12px; letter-spacing: .04em; } }
+/* Nación */
+.nat5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; } .nat-c { display: flex; flex-direction: column; gap: 4px; margin: 0; } .nat-c .arow { gap: 8px; } .nat-c .bar { flex: 1; }
+.nat-b input[type=range], .card input[data-c=natPay] { width: 100%; } .nar5 { display: flex; flex-direction: column; gap: 6px; } .nar5 .grow small { display: block; }
+@media (max-width: 600px) { .dock button { font-size: 7.5px; } .dock button .ic { width: 18px; height: 18px; } }

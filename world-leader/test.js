@@ -220,6 +220,16 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   S.pend = [sm]; assert(!G.act('summitYear', { meet: [sm.inv[0]], topic: 'xx' }).ok); assert(G.act('summitYear', { meet: sm.inv.slice(0, 3), topic: 'clima' }).ok && !S.pend.length && S.talk.slice(-1)[0].k === 'summit');
   S.crisis = { id: 'ciber', st: 0, sc: 0, due: S.turn }; S.pend = []; for (let i = 0; i < 4 && S.crisis; i++) { G.act('endTurn'); const c = S.pend.find(p => p.id === 'crisis'); if (c) { S.pend = [c]; G.act('decide', { i: 0 }); } S.pend = []; }
   assert(!S.crisis && S.crisisCd > S.turn, 'la crisis se resuelve en sus fases'); const old = JSON.parse(G.save()); delete old.ppl; delete old.crisis; assert(G.load(JSON.stringify(old)).ok && G.S.ppl.gen); noNaN(G.S, 'S'); }
+// estado de la nación: indicadores, gasto, policía, ejército, cárteles
+{ G.newGame({ iso: 'MX', name: 'N', seed: 7 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 20; S.pol.nextElec = 999; const N = q.natInfo();
+  assert(N && Object.keys(N.ix).length === 9 && N.cart.length >= 2, 'México empieza con cárteles');
+  assert(G.act('natBud', { k: 'edu', v: 2 }).ok && G.S.nat.bud.edu === 2 && !G.act('natBud', { k: 'xx', v: 1 }).ok); assert(q.natInfo().ix.edu.t > N.ix.edu.t, 'más gasto, objetivo más alto');
+  const k = N.cart[0], s0 = k.str; assert(G.act('natArmy', { i: k.i }).ok && q.natInfo().army.includes(k.i)); assert(G.act('cartel', { id: k.id, how: 'guerra' }).ok && q.natInfo().cart.find(x => x.id === k.id).str < s0);
+  S.pend = []; assert(!G.act('cartel', { id: k.id, how: 'guerra' }).ok, 'espera entre acciones'); assert(G.act('natLegal').ok && !G.act('natLegal').ok);
+  S.pend = []; G.act('endTurn'); assert(G.S.fin.exp.nat > 0, 'el gasto interno entra en el presupuesto');
+  for (let i = 0; i < 12; i++) { let j = 0; while (G.S.pend.length && j++ < 20) if (!G.act('decide', { i: 0 }).ok) G.S.pend.shift(); G.act('endTurn'); }
+  assert(Object.values(q.natInfo().ix).every(x => x.v >= 0 && x.v <= 100), 'indicadores en rango'); const sv = G.save(); assert(G.load(sv).ok && G.save() === sv, 'la nación se guarda igual');
+  const old = JSON.parse(sv); delete old.nat; assert(G.load(JSON.stringify(old)).ok && G.q.natInfo().ix.seg.v > 0, 'partida sin nación migra'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);
