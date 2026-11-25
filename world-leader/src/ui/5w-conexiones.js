@@ -32,6 +32,21 @@ function cxModel() { const N = Q.natInfo(), So = Q.socInfo(), Sc = Q.secInfo(), 
   edge('i:cor', 'i:ins', -2, 'la corrupción mina la confianza'); edge('i:des', 'i:coh', -1.5, 'la desigualdad divide');
   for (const x in E.grow) edge('i:' + x, 'r:grow', E.grow[x] * 1000, 'pesa en el crecimiento'); for (const x in E.stab) edge('i:' + x, 'r:stab', E.stab[x] * 500, 'pesa en la estabilidad'); for (const x in E.elect) edge('i:' + x, 'r:elect', E.elect[x] * 200, 'pesa en las urnas');
   for (const sc in E.sec) edge('i:' + E.sec[sc][0], 'r:sec', E.sec[sc][1] * 800, D.SECTORS[sc].n); edge('i:edu', 'r:rp', 2, 'la educación acumulada hace ciencia');
+  /* situación exterior y fuerzas armadas: lo que ya pesa en el crecimiento, la seguridad y el poder */
+  const wars = Q.warsOf(me()).length, sanc = s.sanc.filter(x => x.on === me()).length, tr = So.eco.trade, br = Object.values(Sc.br), avg = k => br.reduce((a, b) => a + b[k], 0) / br.length, BRD = D.BR;
+  node('war', 'ext', 'Guerra', 'ofensiva', ['mil', 'gue'], wars ? `${wars} en curso` : 'En paz', wars ? 'bad' : 'good');
+  node('trade', 'ext', 'Comercio exterior', 'com', ['eco', 'com'], `${tr.n} tratado${tr.n === 1 ? '' : 's'} · ${money(tr.v)}/t`);
+  node('sanc', 'ext', 'Sanciones contra ti', 'presion', ['dip', 'rel'], sanc ? String(sanc) : 'ninguna', sanc ? 'bad' : 'good');
+  node('strait', 'ext', 'Estrechos cerrados', 'naval', ['eco', 'rut'], So.eco.strClosed ? String(So.eco.strClosed) : 'ninguno', So.eco.strClosed ? 'bad' : 'good');
+  node('debt', 'ext', 'Deuda', 'imp', ['eco', 'pol'], Math.round(So.eco.debt * 100) + '% del PIB', So.eco.debt > 1 ? 'bad' : '');
+  node('m:mor', 'mil', 'Moral militar', 'tan', ['mil', 'man'], String(Math.round(avg('mor'))), avg('mor') < 40 ? 'bad' : '');
+  node('m:loy', 'mil', 'Lealtad de los mandos', 'cuartel', ['mil', 'man'], String(Math.round(avg('loy'))), avg('loy') < 40 ? 'bad' : '');
+  node('m:mod', 'mil', 'Modernización', 'tec', ['mil', 'man'], `nivel ${avg('mod').toFixed(1)} de ${BRD.modMax}`);
+  node('m:pow', 'mil', 'Poder militar', 'mil', ['mil', 'fue'], String(Math.round(Q.power(me()))));
+  edge('trade', 'r:grow', 3, 'cada socio suma crecimiento'); edge('sanc', 'r:grow', -8, 'las sanciones frenan la economía'); edge('strait', 'r:grow', -3, 'sube el precio del comercio'); edge('debt', 'r:grow', -2, 'una caja en rojo frena'); edge('war', 'r:grow', -6, 'la guerra frena la economía');
+  edge('r:stab', 'r:grow', 4, 'con estabilidad baja no se invierte'); edge('war', 'i:seg', -4, 'la guerra erosiona la seguridad'); edge('war', 'm:mor', -3, 'la guerra cansa a la tropa');
+  edge('army', 'm:mor', BRD.streets, 'patrullar las calles desgasta'); { let w = 0; for (const id in s.pol.laws) w += BRD.law[id] || 0; edge('laws', 'm:mor', w, 'sueldo militar, defensa, servicio…'); }
+  edge('m:mor', 'm:pow', BRD.k * 40, 'moral alta, mejor combate'); edge('m:mod', 'm:pow', BRD.mod * 100, 'mejor equipo'); edge('m:loy', 'r:stab', 4, 'con mandos desleales, ruido de sables');
   const mx = {}; for (const e of edges) { const k = nodes[e.b].kind; mx[k] = Math.max(mx[k] || 0, Math.abs(e.w)); } for (const e of edges) e.s = Math.abs(e.w) / mx[nodes[e.b].kind] >= .6 ? 3 : Math.abs(e.w) / mx[nodes[e.b].kind] >= .25 ? 2 : 1;
   for (const e of edges) { const T = nodes[e.b], bad = T.id.startsWith('i:') && D.NAT_IX[T.id.slice(2)].bad; e.good = (e.w > 0) !== !!bad; }
   return { nodes, edges, N }; }
@@ -42,9 +57,9 @@ function cxHTML() { const M = cxModel(), id = M.nodes[UI.cx] ? UI.cx : 'i:seg', 
   const X = id.startsWith('i:') ? id.slice(2) : null, why = X ? M.N.ix[X].why : [];
   const laws = X ? Object.entries(NTD.law).filter(([, v]) => v[X]).sort((a, b) => Math.abs(b[1][X]) - Math.abs(a[1][X])).slice(0, 8).map(([lid, v]) => { const l = D.LAWS.find(q => q.id === lid); if (!l) return ''; const on = S().pol.laws[lid] != null, g = (v[X] > 0) !== !!D.NAT_IX[X].bad;
     return `<button class="chip ${on ? 'gold' : g ? 'good' : 'bad'}" data-a="cxLaw" data-id="${lid}" title="${on ? 'Vigente' : 'Disponible'}">${on ? '✓ ' : ''}${esc(l.n)} ${sgn(v[X])}</button>`; }).join('') : '';
-  return `<p class="mut fine">Toca cualquier tarjeta para seguir la cadena: de lo que decides, a lo que cambia en el país, a lo que acaba pasando contigo.</p>
-    <details class="cx-det" ${innerWidth > 760 ? 'open' : ''}><summary>Elegir otra tarjeta · ahora: <b>${esc(n.n)}</b></summary>${grp('lev', 'Palancas')}${grp('ind', 'Indicadores')}${grp('res', 'Resultados')}</details>
-    <div class="cx-grid"><div class="cx-col"><h4>${inc.length ? 'Lo mueve' : 'Tú lo decides'}</h4>${inc.map(e => cxCard(M.nodes[e.a], e)).join('') || '<p class="mut fine">Es una palanca: se cambia desde su menú.</p>'}</div>
+  return `<p class="mut fine">Toca cualquier tarjeta para seguir la cadena: de lo que decides y lo que pasa fuera, a lo que cambia en el país, a lo que acaba pasando contigo.</p>
+    <details class="cx-det"><summary>Elegir otra tarjeta · ahora: <b>${esc(n.n)}</b></summary>${grp('lev', 'Palancas')}${grp('ext', 'Exterior')}${grp('mil', 'Defensa')}${grp('ind', 'Indicadores')}${grp('res', 'Resultados')}</details>
+    <div class="cx-grid"><div class="cx-col"><h4>${inc.length ? 'Lo mueve' : n.kind === 'ext' ? 'Viene de fuera' : 'Tú lo decides'}</h4>${inc.map(e => cxCard(M.nodes[e.a], e)).join('') || (n.kind === 'ext' ? '<p class="mut fine">Depende del mundo y de tus decisiones pasadas, no de un mando directo.</p>' : '<p class="mut fine">Es una palanca: se cambia desde su menú.</p>')}</div>
       <div class="cx-mid"><div class="card cx-now ${n.tone}"><span class="hico big">${gi(n.icon)}</span><b>${esc(n.n)}</b><em>${esc(n.val)}</em>${X ? `<small class="mut">${esc(D.NAT_IX[X].d)}</small>` : ''}
         ${why.length ? `<div class="chips">${why.map(w => `<span class="chip ${(w[0] > 0) !== !!(X && D.NAT_IX[X].bad) ? 'good' : 'bad'}">${sgn(w[0])} ${esc(w[1])}</span>`).join('')}</div>` : ''}
         <button class="btn sm gold" data-a="goTab" data-p="${n.go[0]}" data-t="${n.go[1]}">Abrir en su menú</button></div>

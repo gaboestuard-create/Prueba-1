@@ -39,7 +39,20 @@ const CARD = {
   'eco:pre': ['oro', 'Ingresos, gastos y deuda', () => { const f = S().fin; return f ? [(f.net >= 0 ? '+' : '−') + money(Math.abs(f.net)).replace('−', '') + '/t', f.net >= 0 ? 'good' : 'bad'] : ['', '']; }],
   'mil:man': ['aerea', 'Jefes, lealtad y moral de cada rama', () => { const s = Q.secInfo(), a = Object.values(s.br).reduce((x, b) => x + b.loy, 0) / 3; return [`Lealtad ${Math.round(a)}`, a < 40 ? 'bad' : '']; }],
   'mil:gue': ['war', 'Frentes y paz de tus guerras', () => { const n = Q.warsOf(me()).length; return n ? [`${n} en curso`, 'bad'] : ['En paz', 'good']; }],
-  'dip:rel': ['paz', 'Cómo te ve cada país', () => ['', '']],
+  'eco:ind': ['eco', 'Inflación, paro y precios', () => { const e = S().eco || {}; return [`Inflación ${(e.inf || 0).toFixed(1)}% · paro ${(e.unemp || 0).toFixed(1)}%`, e.inf > 8 || e.unemp > 10 ? 'bad' : '']; }],
+  'eco:pol': ['imp', 'Deuda, tipos y política fiscal', () => { const d = Q.debtRatio(); return [`Deuda ${Math.round(d * 100)}% del PIB`, d > 1 ? 'bad' : d < .6 ? 'good' : '']; }],
+  'eco:com': ['com', 'Tratados y contratos de exportación', () => { const n = S().tr.filter(x => (x.a === me() || x.b === me()) && x.t === 'com').length; return [`${n} tratado${n === 1 ? '' : 's'}`, '']; }],
+  'eco:rut': ['naval', 'Estrechos y rutas marítimas', () => { const c = Q.socInfo().eco.strClosed; return c ? [`${c} cerrado${c > 1 ? 's' : ''}`, 'bad'] : ['Abiertas', 'good']; }],
+  'tec:lab': ['tec', 'Qué investigan tus científicos', () => S().tech.cur ? ['En marcha', 'good'] : ['Sin proyecto', 'bad']],
+  'dip:rel': ['paz', 'Cómo te ve cada país', () => { const n = Q.alliesOf(me()).length; return [`${n} aliado${n === 1 ? '' : 's'}`, '']; }],
+  'dip:tra': ['acuerdo', 'Alianzas, pactos y comercio', () => { const n = S().tr.filter(x => x.a === me() || x.b === me()).length; return [`${n} vigentes`, '']; }],
+  'dip:rep': ['ojo', 'Tu fama ante el mundo', () => [`Confianza ${Math.round(S().rep.conf)}`, S().rep.conf < -20 ? 'bad' : S().rep.conf > 20 ? 'good' : '']],
+  'dip:int': ['ojo', 'Espionaje y operaciones fuera', () => [`Red nivel ${(S().spy.lvl || 0).toFixed(1)}`, '']],
+  'dip:blo': ['fra', 'Bloques y organizaciones', () => { const n = CC(me()).blocs.length; return [`${n} bloque${n === 1 ? '' : 's'}`, '']; }],
+  'mil:fue': ['tan', 'Tus unidades por rama', () => [`${num(Q.troops(me()))} efectivos`, '']],
+  'mil:bas': ['cuartel', 'Bases propias y extranjeras', () => { const n = S().bases.filter(b => b.by === me()).length; return [`${n} base${n === 1 ? '' : 's'}`, '']; }],
+  'world:ran': ['trofeo', 'Quién manda en el mundo', () => { const r = Object.keys(S().c).filter(z => CC(z).alive).sort((a, b) => CC(b).gdp - CC(a).gdp).indexOf(me()) + 1; return [`Puesto ${r} en PIB`, r <= 5 ? 'good' : '']; }],
+  'sys:obj': ['trofeo', 'Tu puntuación y cómo ganar', () => [`${P5.score().total} puntos`, '']],
   'world:con': ['caz', 'Lo que hablan los líderes entre sí', () => { const n = (S().talk || []).filter(Q.talkOpen).length; return n ? [`${n} para intervenir`, 'gold'] : ['', '']; }]
 };
 const CARD_IC = { eco: 'oro', pla: 'pla', com: 'com', bol: 'imp', ind: 'eco', fab: 'tec', pol: 'imp', rut: 'naval', rec: 'pet', pre: 'oro', lab: 'tec', car: 'tec', pot: 'tec', rel: 'paz', tra: 'acuerdo', onu: 'frontera', rep: 'ojo', int: 'ojo', blo: 'fra', ocu: 'bandera', tea: 'ofensiva', fue: 'tan', mis: 'frontera', bas: 'cuartel', gue: 'ofensiva', log: 'car', est: 'seg', man: 'aerea', act: 'ojo', ran: 'trofeo', not: 'cultural', per: 'cultural', gen: 'check', obj: 'trofeo', aju: 'obras', dia: 'cultural', glo: 'ojo', his: 'eco' };
