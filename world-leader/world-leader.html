@@ -469,6 +469,23 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
   body[data-snap-pn=full] .panel { top: calc(108px + var(--st)); } body[data-snap-pn=half] .panel { top: 52%; } body[data-snap-pn=peek] .panel { top: auto; height: 108px; overflow: hidden; }
 }
 @media (max-width: 760px) { body[data-snap-cp=peek] .cp-actions { display: none; } }
+/* Secciones, menú de tarjetas y «Relacionado» */
+.hubgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 8px; } .hcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px; margin: 0; min-height: 104px; cursor: pointer; transition: transform .14s, border-color .14s; position: relative; } .hcard:hover { transform: translateY(-2px); border-color: var(--gold); } .hcard b { font-size: 14px; } .hcard small { color: var(--mut); line-height: 1.3; }
+.hcard .hico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 4px; background: rgba(232, 195, 106, .12); color: var(--gold); margin-bottom: 2px; } .hcard .hico .gi { width: 20px; height: 20px; } .hcard.feat { grid-column: span 2; background: linear-gradient(135deg, rgba(232, 195, 106, .14), transparent); border-color: rgba(232, 195, 106, .5); }
+.hst { margin-top: auto; font-style: normal; font: 600 11px var(--fc); letter-spacing: .06em; text-transform: uppercase; color: var(--mut); } .hst.good { color: var(--green); } .hst.bad { color: var(--red); } .hst.gold { color: var(--gold); } .hub-urg { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.back5 { padding: 6px 10px; margin-right: 8px; font: 600 12px var(--fc); letter-spacing: .08em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(232, 195, 106, .4); border-radius: 3px; white-space: nowrap; } .back5:hover { background: rgba(232, 195, 106, .12); }
+.rel5 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 14px; border-top: 1px solid var(--line); flex: none; } .rel5 small { color: var(--mut); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; margin-right: 4px; } .rel5 .chip { cursor: pointer; } .rel5 .chip:hover { border-color: var(--gold); color: var(--gold); }
+@media (max-width: 760px) { .dock button { font-size: 9.5px; letter-spacing: .02em; } .dock button .ic { width: 22px; height: 22px; } .hubgrid { grid-template-columns: 1fr 1fr; } .hcard { min-height: 96px; } .hcard.feat { grid-column: span 2; } .rel5 { padding: 6px 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .rel5 .chip { white-space: nowrap; } }
+/* Conexiones */
+.cx-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; } .cx-pick small { width: 78px; color: var(--mut); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; } .cx-pick .chip { cursor: pointer; }
+.cx-grid { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 12px; margin-top: 8px; align-items: start; } .cx-col { display: flex; flex-direction: column; gap: 6px; } .cx-col h4, .cx-mid h4 { margin: 0 0 2px; }
+.cx-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; text-align: left; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; transition: border-color .14s, transform .14s; width: 100%; } .cx-card:hover { border-color: var(--gold); transform: translateX(2px); } .cx-card.bad { border-left: 3px solid var(--red); } .cx-card.good { border-left: 3px solid var(--green); }
+.cx-card b { display: block; font-size: 13px; } .cx-card small { color: var(--mut); font-size: 11px; line-height: 1.25; } .cx-card .hico { width: 28px; height: 28px; flex: none; display: grid; place-items: center; background: rgba(232, 195, 106, .1); color: var(--gold); border-radius: 3px; } .cx-card .hico .gi { width: 16px; height: 16px; }
+.cx-ar { font-size: 11px; letter-spacing: -2px; white-space: nowrap; } .cx-ar.good { color: var(--green); } .cx-ar.bad { color: var(--red); }
+.cx-now { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; margin: 0; padding: 14px; border-color: var(--gold); } .cx-now.bad { border-color: var(--red); } .cx-now.good { border-color: var(--green); } .cx-now em { font-style: normal; font: 700 24px var(--fc); color: var(--ink); } .cx-now .hico.big { width: 44px; height: 44px; display: grid; place-items: center; background: rgba(232, 195, 106, .14); color: var(--gold); border-radius: 4px; } .cx-now .hico.big .gi { width: 26px; height: 26px; }
+.lfx { margin: 10px 0; } .lfx h4 { margin: 0 0 4px; display: flex; align-items: center; gap: 6px; } .lfx h4 .gi { width: 16px; height: 16px; color: var(--gold); }
+@media (max-width: 760px) { .cx-grid { grid-template-columns: 1fr; } .cx-mid { order: -1; } .cx-pick small { width: 100%; } }
+.cx-det { margin-bottom: 8px; } .cx-det summary { cursor: pointer; color: var(--gold); font: 600 12px var(--fc); letter-spacing: .06em; text-transform: uppercase; padding: 6px 0; } .cx-det summary b { color: var(--ink); }
 
 </style>
 
@@ -7612,7 +7629,7 @@ function autosave() { try { localStorage.setItem('wl_save', zip(G.save())); } ca
 const TUT = [
   ['#globe', 'El mundo es tuyo', 'Arrastra para girar el globo, usa la rueda o pellizca para acercarte y toca cualquier país para ver a su líder, su ejército y lo que piensa de ti.'],
   ['.hud', 'Tus cuatro números', 'Caja, capital político, aprobación y estabilidad. Casi todo lo que hagas cuesta capital político: se regenera cada turno, así que elige bien en qué gastarlo.'],
-  ['.dock', 'Tu gabinete', 'Economía, Política, Diplomacia y Ejército. Aquí propones leyes al congreso, inviertes en bolsa, firmas tratados y construyes bases.'],
+  ['.dock', 'Tus secciones', 'Mi país, Gobierno, Economía, Mundo y Defensa. Cada una abre un menú de tarjetas: leyes, tratados, presupuesto, seguridad, ejército… Dentro de cada pantalla, «Relacionado» te lleva a lo que se ve afectado.'],
   ['.modes', 'Lee el mapa', 'Cambia el modo de mapa para ver quién te quiere, quién está armado y quién es rico. Las franjas rojas son guerras en curso.'],
   ['.endturn', 'Un turno = un trimestre', 'Al terminar el turno juegan los otros 196 países: se rearman, pactan, traicionan y te piden cosas. Después llegan los eventos, y tus decisiones tienen consecuencias que no siempre se ven al momento.']
 ];
@@ -7696,7 +7713,7 @@ function hudHTML() {
 const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['tec', 'Ciencia'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
 function dockHTML() {
   const n = S().pend.length;
-  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${UI.panel === d[0] ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
+  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
     <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Decisión pendiente${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
 }
 H.mode = d => { UI.mode = d.m; UI.render(); refreshMap(); };
@@ -7841,8 +7858,8 @@ const PTABS = {
 };
 function panelHTML() {
   const p = UI.panel, t = PTABS[p] ? curTab(p, PTABS[p][0][0]) : '';
-  return `<section class="panel glass"><i class="grip" data-grip></i><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
-    ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div></section>`;
+  return `<section class="panel glass"><i class="grip" data-grip></i><header>${p !== 'hub' && hubOfTab(p, t) ? `<button class="back5" data-a="hubBack" aria-label="Volver al menú">‹ ${HUBS[hubOfTab(p, t)].n}</button>` : ''}<h2>${ic(p === 'hub' ? 'h:' + UI.hub : p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
+    ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div>${relatedHTML(p, t)}</section>`;
 }
 const PANELS = {};
 const tbl = (head, rows) => `<div class="tblw"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
@@ -9064,8 +9081,8 @@ const GLOSS = [['Capital político (CP)', 'La moneda del poder: lo gastas en ley
 const glossHTML = () => `<div class="gloss">${GLOSS.map(g => `<div><b>${g[0]}</b><p>${g[1]}</p></div>`).join('')}</div>`;
 H.glossary = () => openModal(`<h2>Glosario</h2>${glossHTML()}`, true, 'wide');
 TUT.push(['.hud-adv', 'Tus asesores', 'Cinco asesores con carácter propio resumen lo que requiere atención y te recomiendan qué hacer. A veces no se ponen de acuerdo: la decisión es tuya.'],
-  ['.dock [data-p=mil]', 'La guerra, si llega', 'En Ejército tienes la Sala de guerra (tecla G): frente, grupos, órdenes y parte de batalla. Tu Estado Mayor puede dirigirla por ti.'],
-  ['.dock [data-p=sys]', 'Ajustes y glosario', 'En Partida ajustas la calidad gráfica, el movimiento y el volumen de cada canal, guardas en ranuras y consultas el glosario. Mantén pulsado cualquier número para saber qué significa.']);
+  ['.dock [data-p="h:def"]', 'La guerra, si llega', 'En Defensa tienes la Sala de guerra (tecla G): frente, grupos, órdenes y parte de batalla. Tu Estado Mayor puede dirigirla por ti.'],
+  ['.dock [data-p="h:mas"]', 'Ajustes y glosario', 'En Más → Partida ajustas la calidad gráfica, el movimiento y el volumen de cada canal, guardas en ranuras y consultas el glosario. Mantén pulsado cualquier número para saber qué significa.']);
 
 /* ---------- consejo de asesores ---------- */
 PT.adv = 'Consejo de asesores'; IC.adv = IC.people;
@@ -9956,7 +9973,7 @@ Bus.on('crisisEnd', e => scene(cineScene(banner(e.r === 'bad' ? 'war' : 'peace',
    Seguridad: policía y ejército en las calles · Narcotráfico: cárteles.
    ===================================================================== */
 IC.nac = 'M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6';
-DOCK.splice(4, 0, ['nac', 'Nación']); PT.nac = 'Estado de la nación';
+PT.nac = 'Estado de la nación';
 PTABS.nac = [['est', 'Estado'], ['gas', 'Gasto'], ['seg', 'Seguridad'], ['nar', 'Narcotráfico']];
 Object.assign(EXN, { nat: 'Gasto interno extra (Nación)' }); Object.assign(INN, { natcut: 'Recortes de gasto interno' });
 PANELS.nac = t => { const N = Q.natInfo(); if (!N) return '<p class="mut">Sin datos de la nación.</p>'; return t === 'gas' ? natBudHTML(N) : t === 'seg' ? natSegHTML(N) : t === 'nar' ? natNarHTML(N) : natStateHTML(N); };
@@ -10114,6 +10131,176 @@ const endDrag = () => { if (!drag) return; const { el, k, dy, grip } = drag; dra
   const i = SNAPS.indexOf(UI.snap[k]); if (Math.abs(dy) < 8) { if (grip) setSnap(k, SNAPS[i === 1 ? 2 : 1]); return; } /* un toque en el asa alterna media ↔ completa */
   setSnap(k, SNAPS[clampU(i + (dy > 40 ? -1 : dy < -40 ? 1 : 0), 0, 2)]); };
 document.addEventListener('pointerup', endDrag); document.addEventListener('pointercancel', endDrag);
+
+
+/* ---------- ui/5v-hubs.js ---------- */
+/* =====================================================================
+   INTERFAZ · NAVEGACIÓN POR SECCIONES
+   El dock pasa de 9 botones sueltos a 5 secciones con sentido (Mi país,
+   Gobierno, Economía, Mundo, Defensa) más «Más». Cada una abre un menú
+   de tarjetas: para qué sirve, su estado en vivo y a dónde lleva. Dentro
+   de cada pestaña, «Relacionado» enlaza con lo que se ve afectado y un
+   botón ‹ vuelve al menú de la sección. Las pestañas nuevas que añada
+   cualquier módulo aparecen solas en su sección.
+   ===================================================================== */
+const HUBS = {
+  pais: { n: 'Mi país', ic: 'nac', d: 'Cómo está tu gente por dentro: seguridad, salud, educación, calles y regiones.', order: ['nac:est', 'nac:con', 'nac:gas', 'nac:seg', 'nac:nar', 'nac:int', 'nac:soc', 'pol:reg', 'nac:inf'] },
+  gob: { n: 'Gobierno', ic: 'pol', d: 'Cómo mandas: leyes, congreso, equipo, elecciones y lo que dice la gente.', order: ['pol:ley', 'pol:con', 'pol:sec', 'pol:enc', 'pol:ele', 'pol:gab', 'pol:dis', 'pol:per'] },
+  eco: { n: 'Economía', ic: 'eco', d: 'El dinero y lo que lo mueve: presupuesto, comercio, industria y ciencia.', order: [] },
+  mun: { n: 'Mundo', ic: 'dip', d: 'Tus relaciones con el resto: tratados, bloques, espionaje y lo que pasa fuera.', order: [] },
+  def: { n: 'Defensa', ic: 'mil', d: 'Tus fuerzas, tus guerras y quién manda en ellas.', order: [] },
+  mas: { n: 'Más', ic: 'sys', d: 'Guardar, ajustes, logros, historia y el editor.', order: [] }
+};
+const HUB_OF = { nac: 'pais', pol: 'gob', eco: 'eco', tec: 'eco', dip: 'mun', world: 'mun', mil: 'def', edit: 'mas', sys: 'mas' };
+const hubOfTab = (p, t) => p === 'pol' && t === 'reg' ? 'pais' : p === 'edit' && S() && P5.opt('solo') && S().setup.mode !== 'sandbox' ? null : HUB_OF[p] || null; /* sin editor: «un solo país» lo oculta */
+/* tarjeta: icono, para qué sirve, estado en vivo [texto, tono] */
+const CARD = {
+  'nac:est': ['seg', 'Los 9 indicadores del país y por qué se mueven', () => { const n = Q.natInfo(), bad = Object.entries(n.ix).filter(([k, x]) => (D.NAT_IX[k].bad ? 100 - x.v : x.v) < 40).length; return bad ? [`${bad} en alerta`, 'bad'] : ['Todo estable', 'good']; }],
+  'nac:con': ['ojo', 'Qué mueve qué: palancas, indicadores y resultados', () => ['Mapa de causas', '']],
+  'nac:gas': ['oro', 'Reparte el dinero entre seguridad, educación, salud…', () => { const n = Q.natInfo(), t = Object.values(n.cost).reduce((a, b) => a + b, 0); return [t > 0 ? `+${money(t)}/t` : t < 0 ? `−${money(-t)}/t` : 'Neutro', t > 0 ? 'bad' : t < 0 ? 'good' : '']; }],
+  'nac:seg': ['tan', 'Policía y ejército en las calles', () => { const n = Q.natInfo(); return [`Seguridad ${Math.round(n.ix.seg.v)}`, n.ix.seg.v < 35 ? 'bad' : '']; }],
+  'nac:nar': ['ofensiva', 'Cárteles: combatirlos, pactar o legalizar', () => { const n = Q.natInfo(); return n.cart.length ? [`${n.cart.length} cártel${n.cart.length > 1 ? 'es' : ''}`, 'bad'] : ['Sin cárteles', 'good']; }],
+  'nac:int': ['ojo', 'Director, vigilancia y operaciones secretas', () => { const s = Q.secInfo(); return [`Agencia nivel ${s.lvl.toFixed(1)}`, '']; }],
+  'nac:soc': ['jov', 'Debates, movimientos y educación a largo plazo', () => { const s = Q.socInfo(), m = s.deb.concat(s.mov).sort((a, b) => b.mv - a.mv)[0]; return m.mv > D.SOC.protestAt - 15 ? ['Calle caliente', 'bad'] : ['Tranquila', 'good']; }],
+  'nac:inf': ['pin', 'Resumen para decidir de un vistazo', () => ['', '']],
+  'pol:reg': ['frontera', 'Malestar y separatismo región por región', () => { const l = Q.rlList(); return l.length && l[0][1] >= D.RL.protestAt ? ['Hay focos', 'bad'] : ['Calmas', 'good']; }],
+  'pol:ley': ['acuerdo', 'Propón o deroga leyes y mira qué provocan', () => [`${Object.keys(S().pol.laws).length} vigentes`, '']],
+  'pol:con': ['emp', 'Tu coalición y cómo votan los partidos', () => { const g = S().pol.seats.filter(p => p.g).reduce((a, p) => a + p.s, 0); return [`${Math.round(g)} de 100`, g > 50 ? 'good' : 'bad']; }],
+  'pol:sec': ['obr', 'Qué grupos te apoyan y cuáles no', () => [`Aprobación ${Math.round(Q.approval())}`, Q.approval() < 40 ? 'bad' : '']],
+  'pol:enc': ['ojo', 'Encuestas detalladas por sector', () => ['', '']],
+  'pol:ele': ['pre', 'Cuándo vuelves a las urnas y cómo vas', () => { const e = S().pol.nextElec - S().turn; return [e > 0 ? `En ${e} t` : 'Ahora', e <= 3 ? 'gold' : '']; }],
+  'pol:gab': ['min', 'Tus ministros y quién te sucede', () => ['', '']],
+  'pol:dis': ['cultural', 'Discursos a la nación', () => ['', '']],
+  'pol:per': ['jov', 'La oposición, la prensa, el general y el magnate', () => ['', '']],
+  'eco:pre': ['oro', 'Ingresos, gastos y deuda', () => { const f = S().fin; return f ? [(f.net >= 0 ? '+' : '−') + money(Math.abs(f.net)).replace('−', '') + '/t', f.net >= 0 ? 'good' : 'bad'] : ['', '']; }],
+  'mil:man': ['aerea', 'Jefes, lealtad y moral de cada rama', () => { const s = Q.secInfo(), a = Object.values(s.br).reduce((x, b) => x + b.loy, 0) / 3; return [`Lealtad ${Math.round(a)}`, a < 40 ? 'bad' : '']; }],
+  'mil:gue': ['war', 'Frentes y paz de tus guerras', () => { const n = Q.warsOf(me()).length; return n ? [`${n} en curso`, 'bad'] : ['En paz', 'good']; }],
+  'dip:rel': ['paz', 'Cómo te ve cada país', () => ['', '']],
+  'world:con': ['caz', 'Lo que hablan los líderes entre sí', () => { const n = (S().talk || []).filter(Q.talkOpen).length; return n ? [`${n} para intervenir`, 'gold'] : ['', '']; }]
+};
+const CARD_IC = { eco: 'oro', pla: 'pla', com: 'com', bol: 'imp', ind: 'eco', fab: 'tec', pol: 'imp', rut: 'naval', rec: 'pet', pre: 'oro', lab: 'tec', car: 'tec', pot: 'tec', rel: 'paz', tra: 'acuerdo', onu: 'frontera', rep: 'ojo', int: 'ojo', blo: 'fra', ocu: 'bandera', tea: 'ofensiva', fue: 'tan', mis: 'frontera', bas: 'cuartel', gue: 'ofensiva', log: 'car', est: 'seg', man: 'aerea', act: 'ojo', ran: 'trofeo', not: 'cultural', per: 'cultural', gen: 'check', obj: 'trofeo', aju: 'obras', dia: 'cultural', glo: 'ojo', his: 'eco' };
+const PANEL_N = { eco: 'Economía', tec: 'Ciencia', dip: 'Diplomacia', world: 'El mundo', mil: 'Fuerzas armadas', edit: 'Editor', sys: 'Partida', pol: 'Política', nac: 'Nación' };
+function hubCards(id) { const H0 = HUBS[id], seen = new Set(), out = [], add = (p, t, label) => { const k = p + ':' + t; if (seen.has(k) || hubOfTab(p, t) !== id) return; seen.add(k); out.push({ p, t, k, label }); };
+  const lab = {}; for (const p in PTABS) for (const [t, l] of PTABS[p]) lab[p + ':' + t] = l;
+  for (const k of H0.order) if (lab[k]) add(...k.split(':'), lab[k]);
+  for (const p in PTABS) for (const [t, l] of PTABS[p]) add(p, t, l); return out; }
+const hubTodo = id => { try { return todo().filter(x => x.go && (x.go.p ? hubOfTab(x.go.p, x.go.t) === id : false)); } catch (e) { return []; } };
+PT.hub = ''; Object.defineProperty(PT, 'hub', { get: () => (HUBS[UI.hub] || HUBS.pais).n });
+IC.hub = IC.nac; Object.assign(IC, { 'h:pais': IC.nac, 'h:gob': IC.pol, 'h:eco': IC.eco, 'h:mun': IC.dip, 'h:def': IC.mil, 'h:mas': 'M5 12h.01M12 12h.01M19 12h.01M5 12a1 1 0 100 .01M12 12a1 1 0 100 .01M19 12a1 1 0 100 .01' });
+PANELS.hub = () => { const id = UI.hub || 'pais', h = HUBS[id], cards = hubCards(id), urgent = hubTodo(id);
+  return `<p class="mut fine">${esc(h.d)}</p>
+    ${urgent.length ? `<div class="hub-urg">${urgent.map(x => `<button class="btn sm gold" data-a="hubGo" data-p="${x.go.p}" data-t="${x.go.t || ''}">${gi('pin')} ${esc(x.t)}</button>`).join('')}</div>` : ''}
+    <div class="hubgrid">${cards.map(c => { const m = CARD[c.k] || [CARD_IC[c.t] || 'pin', '', () => ['', '']]; let st = ['', '']; try { st = m[2](); } catch (e) { }
+      return `<button class="card hcard ${c.k === 'nac:con' ? 'feat' : ''}" data-a="hubGo" data-p="${c.p}" data-t="${c.t}"><span class="hico">${gi(m[0])}</span><b>${esc(c.label)}</b><small>${esc(m[1] || (PANEL_N[c.p] || '') + ' · ' + c.label)}</small>${st[0] ? `<em class="hst ${st[1]}">${esc(st[0])}</em>` : ''}</button>`; }).join('')}</div>`; };
+H.hubGo = d => { UI.panel = d.p; if (d.t) UI.tab[d.p] = d.t; if (innerWidth < 1250) UI.sel = null; UI.render(); refreshMap(); };
+H.hubBack = () => { const p = UI.panel, h = hubOfTab(p, UI.tab[p] || (PTABS[p] || [[]])[0][0]); if (h) { UI.hub = h; UI.panel = 'hub'; UI.render(); } };
+H.goTab = d => H.hubGo({ p: d.p, t: d.t });
+/* el dock: secciones en vez de pantallas */
+DOCK.length = 0; DOCK.push(['h:pais', 'Mi país'], ['h:gob', 'Gobierno'], ['h:eco', 'Economía'], ['h:mun', 'Mundo'], ['h:def', 'Defensa'], ['h:mas', 'Más']);
+function dockOn(id) { const h = id.slice(2); if (UI.panel === 'hub') return UI.hub === h; return !!UI.panel && hubOfTab(UI.panel, UI.tab[UI.panel] || ((PTABS[UI.panel] || [[]])[0] || [])[0]) === h; }
+{ const o0 = H.open; H.open = d => { if (!String(d.p).startsWith('h:')) return o0(d); const h = d.p.slice(2); if (typeof setSnap === 'function') setSnap('pn', 'full');
+  if (dockOn(d.p) && UI.panel === 'hub') { UI.panel = null; UI.render(); return refreshMap(); } UI.hub = h; UI.panel = 'hub'; if (innerWidth < 1250) UI.sel = null; UI.render(); refreshMap(); }; }
+/* «Relacionado»: cada pestaña enlaza con lo que mueve o lo que se ve afectado */
+const REL = {
+  'nac:est': [['nac', 'gas', 'Gasto', 'oro'], ['nac', 'seg', 'Seguridad', 'tan'], ['nac', 'soc', 'Sociedad', 'jov'], ['nac', 'con', 'Conexiones', 'ojo']],
+  'nac:gas': [['nac', 'est', 'Ver efectos', 'seg'], ['eco', 'pre', 'Presupuesto', 'oro'], ['nac', 'con', 'Conexiones', 'ojo']],
+  'nac:seg': [['nac', 'nar', 'Narcotráfico', 'ofensiva'], ['mil', 'man', 'Mandos', 'aerea'], ['pol', 'reg', 'Regiones', 'frontera']],
+  'nac:nar': [['nac', 'seg', 'Seguridad', 'tan'], ['nac', 'int', 'Inteligencia', 'ojo'], ['pol', 'ley', 'Leyes', 'acuerdo']],
+  'nac:int': [['nac', 'nar', 'Narcotráfico', 'ofensiva'], ['dip', 'int', 'Espionaje exterior', 'ojo'], ['mil', 'man', 'Mandos', 'aerea']],
+  'nac:soc': [['pol', 'ley', 'Leyes', 'acuerdo'], ['pol', 'ele', 'Elecciones', 'pre'], ['pol', 'enc', 'Encuestas', 'ojo'], ['nac', 'gas', 'Gasto', 'oro']],
+  'nac:inf': [['sys', 'his', 'Historia', 'eco'], ['nac', 'est', 'Estado', 'seg'], ['eco', 'pre', 'Presupuesto', 'oro']],
+  'nac:con': [['nac', 'gas', 'Gasto', 'oro'], ['pol', 'ley', 'Leyes', 'acuerdo'], ['nac', 'est', 'Estado', 'seg']],
+  'pol:ley': [['nac', 'con', 'Qué mueven', 'ojo'], ['pol', 'con', 'Congreso', 'emp'], ['nac', 'soc', 'Opinión pública', 'jov'], ['pol', 'sec', 'Sectores', 'obr']],
+  'pol:con': [['pol', 'ley', 'Leyes', 'acuerdo'], ['pol', 'ele', 'Elecciones', 'pre']],
+  'pol:sec': [['pol', 'enc', 'Encuestas', 'ojo'], ['nac', 'soc', 'Sociedad', 'jov'], ['pol', 'dis', 'Discurso', 'cultural']],
+  'pol:enc': [['pol', 'sec', 'Sectores', 'obr'], ['pol', 'dis', 'Discurso', 'cultural'], ['pol', 'ele', 'Elecciones', 'pre']],
+  'pol:ele': [['pol', 'enc', 'Encuestas', 'ojo'], ['pol', 'dis', 'Discurso', 'cultural'], ['pol', 'sec', 'Sectores', 'obr']],
+  'pol:reg': [['nac', 'seg', 'Ejército en calles', 'tan'], ['nac', 'gas', 'Gasto', 'oro'], ['nac', 'nar', 'Narcotráfico', 'ofensiva']],
+  'pol:gab': [['pol', 'per', 'Personajes', 'jov'], ['mil', 'man', 'Mandos', 'aerea']],
+  'eco:pre': [['nac', 'gas', 'Gasto del país', 'oro'], ['eco', 'pol', 'Deuda', 'imp'], ['eco', 'com', 'Comercio', 'com']],
+  'mil:man': [['nac', 'seg', 'Seguridad', 'tan'], ['mil', 'fue', 'Fuerzas', 'tan'], ['pol', 'gab', 'Gabinete', 'min']],
+  'mil:fue': [['mil', 'man', 'Mandos', 'aerea'], ['mil', 'log', 'Logística', 'car']],
+  'dip:rel': [['dip', 'tra', 'Tratados', 'acuerdo'], ['dip', 'blo', 'Bloques', 'fra'], ['world', 'con', 'Conversaciones', 'caz']],
+  'dip:int': [['nac', 'int', 'Inteligencia interna', 'ojo'], ['dip', 'rel', 'Relaciones', 'paz']],
+  'world:con': [['dip', 'rel', 'Relaciones', 'paz'], ['dip', 'onu', 'ONU', 'frontera']]
+};
+function relatedHTML(p, t) { const L = REL[p + ':' + t]; if (!L) return ''; return `<nav class="rel5" aria-label="Relacionado"><small>Relacionado</small>${L.map(x => `<button class="chip" data-a="goTab" data-p="${x[0]}" data-t="${x[1]}">${gi(x[3])} ${esc(x[2])}</button>`).join('')}</nav>`; }
+
+
+/* ---------- ui/5w-conexiones.js ---------- */
+/* =====================================================================
+   INTERFAZ · CONEXIONES (mapa de causas) Y «¿QUÉ PROVOCA?» DE CADA LEY
+   Nación → Conexiones: eliges cualquier palanca, indicador o resultado y
+   ves, a izquierda, qué lo mueve y, a derecha, a qué afecta. Tocar una
+   tarjeta navega por la cadena. El grafo se construye con las mismas
+   tablas del motor (D.NAT, D.SECINT, D.SOC), así que nunca se desfasa.
+   ===================================================================== */
+PTABS.nac.splice(1, 0, ['con', 'Conexiones']);
+{ const n0 = PANELS.nac; PANELS.nac = t => t === 'con' ? cxHTML() : n0(t); }
+const NTD = D.NAT, NIXK = Object.keys(D.NAT_IX), BUDN = { seg: 'Seguridad y justicia', edu: 'Educación', sal: 'Salud', inf: 'Infraestructura', soc: 'Programas sociales' };
+function cxModel() { const N = Q.natInfo(), So = Q.socInfo(), Sc = Q.secInfo(), s = S(), E = NTD.eff, nodes = {}, edges = [];
+  const node = (id, kind, n, icon, go, val, tone) => { nodes[id] = { id, kind, n, icon, go, val, tone: tone || '' }; };
+  const edge = (a, b, w, why) => { if (w) edges.push({ a, b, w, why }); };
+  for (const b in NTD.bud) node('b:' + b, 'lev', 'Gasto: ' + BUDN[b], D.NAT_IX[b] ? D.NAT_IX[b].ic : 'oro', ['nac', 'gas'], Math.round(N.bud[b] * 100) + '%');
+  node('pol', 'lev', 'Policía', 'seg', ['nac', 'seg'], `sueldos ${Math.round(N.pay * 100)}% · equipo ${N.eq}/${NTD.police.eq.max}`);
+  node('army', 'lev', 'Ejército en las calles', 'tan', ['nac', 'seg'], `${N.army.length} región${N.army.length === 1 ? '' : 'es'}`);
+  node('surv', 'lev', 'Vigilancia interna', 'ojo', ['nac', 'int'], D.SECINT.surv.n[Sc.surv].replace('Sin vigilancia interna', 'Apagada'));
+  node('laws', 'lev', 'Leyes vigentes', 'acuerdo', ['pol', 'ley'], `${Object.keys(s.pol.laws).length} en vigor`);
+  node('cart', 'lev', 'Cárteles', 'ofensiva', ['nac', 'nar'], `${N.cart.length} activo${N.cart.length === 1 ? '' : 's'}`, N.cart.length ? 'bad' : 'good');
+  node('unemp', 'lev', 'Desempleo', 'obr', ['eco', 'ind'], `${(So.eco.unemp || 0).toFixed(1)}%`, So.eco.unemp > 10 ? 'bad' : '');
+  for (const x of NIXK) { const d = D.NAT_IX[x], v = N.ix[x].v, g = d.bad ? 100 - v : v; node('i:' + x, 'ind', d.n, d.ic, ['nac', 'est'], String(Math.round(v)), g >= 60 ? 'good' : g < 35 ? 'bad' : ''); }
+  node('r:grow', 'res', 'Crecimiento', 'eco', ['nac', 'inf'], sgn(So.eco.grow, 2) + ' pp/t', So.eco.grow >= 0 ? 'good' : 'bad');
+  node('r:stab', 'res', 'Estabilidad', 'seg', ['pol', 'sec'], String(Math.round(CC(me()).stab)), CC(me()).stab < 40 ? 'bad' : '');
+  node('r:elect', 'res', 'Apoyo electoral', 'pre', ['pol', 'ele'], sgn(Math.round(Q.mod('elect') * 10) / 10, 1));
+  node('r:sec', 'res', 'Sectores sociales', 'obr', ['pol', 'sec'], `aprobación ${Math.round(Q.approval())}`, Q.approval() < 40 ? 'bad' : '');
+  node('r:rp', 'res', 'Investigación', 'tec', ['tec', 'lab'], sgn(Math.round(So.rp * 10) / 10, 1) + ' pts/t');
+  for (const b in NTD.bud) for (const x in NTD.bud[b].ix) edge('b:' + b, 'i:' + x, NTD.bud[b].ix[x], 'por cada +100% de gasto');
+  edge('pol', 'i:seg', NTD.police.pay.seg + NTD.police.eq.seg, 'sueldos y equipo'); edge('pol', 'i:cor', NTD.police.pay.cor, 'mejores sueldos, menos sobornos'); edge('army', 'i:seg', NTD.army.seg, 'por región con tropas');
+  for (const x in D.SECINT.surv.ix) edge('surv', 'i:' + x, D.SECINT.surv.ix[x], 'por nivel de vigilancia');
+  for (const x of NIXK) { let w = 0; for (const id in s.pol.laws) w += (NTD.law[id] || {})[x] || 0; edge('laws', 'i:' + x, w, 'suma de tus leyes vigentes'); }
+  edge('cart', 'i:cri', NTD.cart.criW * 100, 'crece con su fuerza'); edge('cart', 'i:seg', -8, 'violencia del narco'); edge('unemp', 'i:des', 6, 'por cada 10 pts de paro');
+  edge('i:cor', 'i:ins', -2, 'la corrupción mina la confianza'); edge('i:des', 'i:coh', -1.5, 'la desigualdad divide');
+  for (const x in E.grow) edge('i:' + x, 'r:grow', E.grow[x] * 1000, 'pesa en el crecimiento'); for (const x in E.stab) edge('i:' + x, 'r:stab', E.stab[x] * 500, 'pesa en la estabilidad'); for (const x in E.elect) edge('i:' + x, 'r:elect', E.elect[x] * 200, 'pesa en las urnas');
+  for (const sc in E.sec) edge('i:' + E.sec[sc][0], 'r:sec', E.sec[sc][1] * 800, D.SECTORS[sc].n); edge('i:edu', 'r:rp', 2, 'la educación acumulada hace ciencia');
+  const mx = {}; for (const e of edges) { const k = nodes[e.b].kind; mx[k] = Math.max(mx[k] || 0, Math.abs(e.w)); } for (const e of edges) e.s = Math.abs(e.w) / mx[nodes[e.b].kind] >= .6 ? 3 : Math.abs(e.w) / mx[nodes[e.b].kind] >= .25 ? 2 : 1;
+  for (const e of edges) { const T = nodes[e.b], bad = T.id.startsWith('i:') && D.NAT_IX[T.id.slice(2)].bad; e.good = (e.w > 0) !== !!bad; }
+  return { nodes, edges, N }; }
+const arrows = e => `<span class="cx-ar ${e.good ? 'good' : 'bad'}" title="${esc(e.why)}">${(e.w > 0 ? '▲' : '▼').repeat(e.s)}</span>`;
+function cxCard(n, e, dir) { return `<button class="cx-card ${n.tone}" data-a="cxGo" data-id="${n.id}"><span class="hico">${gi(n.icon)}</span><span class="grow"><b>${esc(n.n)}</b><small>${esc(n.val)}${e ? ' · ' + esc(e.why) : ''}</small></span>${e ? arrows(e) : ''}</button>`; }
+function cxHTML() { const M = cxModel(), id = M.nodes[UI.cx] ? UI.cx : 'i:seg', n = M.nodes[id], inc = M.edges.filter(e => e.b === id), out = M.edges.filter(e => e.a === id);
+  const grp = (k, t) => `<div class="cx-pick"><small>${t}</small>${Object.values(M.nodes).filter(x => x.kind === k).map(x => `<button class="chip ${x.id === id ? 'gold' : ''}" data-a="cxGo" data-id="${x.id}">${esc(x.n.replace('Gasto: ', ''))}</button>`).join('')}</div>`;
+  const X = id.startsWith('i:') ? id.slice(2) : null, why = X ? M.N.ix[X].why : [];
+  const laws = X ? Object.entries(NTD.law).filter(([, v]) => v[X]).sort((a, b) => Math.abs(b[1][X]) - Math.abs(a[1][X])).slice(0, 8).map(([lid, v]) => { const l = D.LAWS.find(q => q.id === lid); if (!l) return ''; const on = S().pol.laws[lid] != null, g = (v[X] > 0) !== !!D.NAT_IX[X].bad;
+    return `<button class="chip ${on ? 'gold' : g ? 'good' : 'bad'}" data-a="cxLaw" data-id="${lid}" title="${on ? 'Vigente' : 'Disponible'}">${on ? '✓ ' : ''}${esc(l.n)} ${sgn(v[X])}</button>`; }).join('') : '';
+  return `<p class="mut fine">Toca cualquier tarjeta para seguir la cadena: de lo que decides, a lo que cambia en el país, a lo que acaba pasando contigo.</p>
+    <details class="cx-det" ${innerWidth > 760 ? 'open' : ''}><summary>Elegir otra tarjeta · ahora: <b>${esc(n.n)}</b></summary>${grp('lev', 'Palancas')}${grp('ind', 'Indicadores')}${grp('res', 'Resultados')}</details>
+    <div class="cx-grid"><div class="cx-col"><h4>${inc.length ? 'Lo mueve' : 'Tú lo decides'}</h4>${inc.map(e => cxCard(M.nodes[e.a], e)).join('') || '<p class="mut fine">Es una palanca: se cambia desde su menú.</p>'}</div>
+      <div class="cx-mid"><div class="card cx-now ${n.tone}"><span class="hico big">${gi(n.icon)}</span><b>${esc(n.n)}</b><em>${esc(n.val)}</em>${X ? `<small class="mut">${esc(D.NAT_IX[X].d)}</small>` : ''}
+        ${why.length ? `<div class="chips">${why.map(w => `<span class="chip ${(w[0] > 0) !== !!(X && D.NAT_IX[X].bad) ? 'good' : 'bad'}">${sgn(w[0])} ${esc(w[1])}</span>`).join('')}</div>` : ''}
+        <button class="btn sm gold" data-a="goTab" data-p="${n.go[0]}" data-t="${n.go[1]}">Abrir en su menú</button></div>
+        ${laws ? `<h4>Leyes que lo mueven</h4><div class="chips">${laws}</div>` : ''}</div>
+      <div class="cx-col"><h4>${out.length ? 'Afecta a' : 'Es un resultado'}</h4>${out.map(e => cxCard(M.nodes[e.b], e)).join('') || '<p class="mut fine">Aquí acaba la cadena: es lo que notas en la partida.</p>'}</div></div>
+    <p class="mut fine">▲ sube ▼ baja. Verde: bueno para ti. Rojo: malo para ti. Más flechas, más peso.</p>`; }
+H.cxGo = d => { UI.cx = d.id; UI.render(); };
+H.cxLaw = d => { const l = D.LAWS.find(x => x.id === d.id); if (!l) return; UI.form['pl:cat'] = l.cat; H.hubGo({ p: 'pol', t: 'ley' }); };
+/* «¿Qué provoca?» en cada ley: todos los efectos agrupados y con su porqué */
+{ const le0 = lawExtra; lawExtra = (l, on) => { const nl = NTD.law[l.id], dp = Object.entries(D.DEBATES).filter(([, b]) => b.pro.includes(l.id) || b.con.includes(l.id));
+  const chips = nl ? Object.keys(nl).map(x => { const bad = D.NAT_IX[x].bad; return [`${D.NAT_IX[x].n} ${sgn(nl[x])}`, (nl[x] > 0) !== !!bad ? 1 : -1]; }) : [];
+  return `<div class="row wrap">${chips.length ? `<small class="mut">En el país:</small>${fxChips(chips)}` : ''}<button class="btn sm ghost" data-a="lawFx" data-id="${l.id}">${gi('ojo')} ¿Qué provoca?</button></div>` + le0(l, on); }; }
+H.lawFx = d => { const l = D.LAWS.find(x => x.id === d.id); if (!l) return; const s = S(), nl = NTD.law[l.id] || {}, sec = Object.keys(l.sec || {}), per = Object.keys(l.per || {}), rep = Object.keys(l.rep || {});
+  const sect = (t, ic, body) => body ? `<div class="lfx"><h4>${gi(ic)} ${t}</h4>${body}</div>` : '';
+  const debs = Object.entries(D.DEBATES).filter(([, b]) => b.pro.includes(l.id) || b.con.includes(l.id)).map(([k, b]) => { const side = b.pro.includes(l.id) ? 1 : -1, o = s.soc ? s.soc.op[k] : 0, clash = side * o < 0;
+    return `<div class="arow"><span class="grow">Te coloca ${side > 0 ? 'a favor de' : 'en contra de'} <b>${esc(b.q)}</b><small class="mut">Opinión actual: ${Math.round(o)}</small></span><span class="chip ${clash ? 'bad' : 'good'}">${clash ? 'Choca con la mayoría' : 'Va con la mayoría'}</span></div>`; }).join('');
+  const prog = (a, b) => b ? `<span class="chip ${a > 0 ? 'good' : 'bad'}">${esc(b)}</span>` : '';
+  openModal(`<h2>${esc(l.n)}</h2><p class="mut">${esc(l.d)}</p>
+    ${sect('Al aprobarla (sectores)', 'obr', sec.length ? `<div class="chips">${fxChips(sec.map(k => [D.SECTORS[k].n + ' ' + sgn(l.sec[k]), l.sec[k]]))}</div><small class="mut">Cambia la línea base de cada sector: su apoyo tiende hacia ella poco a poco.</small>` : '')}
+    ${sect('Cada turno (economía)', 'eco', per.length ? `<div class="chips">${fxChips(per.map(k => PERN[k](l.per[k])))}</div>` : '')}
+    ${sect('En el país (lento)', 'seg', Object.keys(nl).length ? `<div class="chips">${Object.keys(nl).map(x => `<button class="chip ${(nl[x] > 0) !== !!D.NAT_IX[x].bad ? 'good' : 'bad'}" data-a="cxGoClose" data-id="i:${x}">${esc(D.NAT_IX[x].n)} ${sgn(nl[x])}</button>`).join('')}</div><small class="mut">Toca uno para ver a qué afecta ese indicador.</small>` : '')}
+    ${sect('Reputación', 'ojo', rep.length ? `<div class="chips">${fxChips(rep.map(k => [Q.REPN[k] + ' ' + sgn(l.rep[k]), l.rep[k]]))}</div>` : '')}
+    ${sect('Opinión pública', 'jov', debs)}
+    ${sect('Al momento', 'check', l.once ? `<div class="chips">${fxChips(Q.describeFx(l.once))}</div>` : '')}
+    <div class="row end"><button class="btn" data-a="closeModal">Cerrar</button></div>`, true); };
+H.cxGoClose = d => { closeModal(); UI.cx = d.id; H.hubGo({ p: 'nac', t: 'con' }); };
 
 
 /* ---------- ui/90-boot.js ---------- */

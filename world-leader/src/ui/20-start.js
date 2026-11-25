@@ -83,7 +83,7 @@ function autosave() { try { localStorage.setItem('wl_save', zip(G.save())); } ca
 const TUT = [
   ['#globe', 'El mundo es tuyo', 'Arrastra para girar el globo, usa la rueda o pellizca para acercarte y toca cualquier país para ver a su líder, su ejército y lo que piensa de ti.'],
   ['.hud', 'Tus cuatro números', 'Caja, capital político, aprobación y estabilidad. Casi todo lo que hagas cuesta capital político: se regenera cada turno, así que elige bien en qué gastarlo.'],
-  ['.dock', 'Tu gabinete', 'Economía, Política, Diplomacia y Ejército. Aquí propones leyes al congreso, inviertes en bolsa, firmas tratados y construyes bases.'],
+  ['.dock', 'Tus secciones', 'Mi país, Gobierno, Economía, Mundo y Defensa. Cada una abre un menú de tarjetas: leyes, tratados, presupuesto, seguridad, ejército… Dentro de cada pantalla, «Relacionado» te lleva a lo que se ve afectado.'],
   ['.modes', 'Lee el mapa', 'Cambia el modo de mapa para ver quién te quiere, quién está armado y quién es rico. Las franjas rojas son guerras en curso.'],
   ['.endturn', 'Un turno = un trimestre', 'Al terminar el turno juegan los otros 196 países: se rearman, pactan, traicionan y te piden cosas. Después llegan los eventos, y tus decisiones tienen consecuencias que no siempre se ven al momento.']
 ];

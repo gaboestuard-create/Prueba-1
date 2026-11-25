@@ -120,8 +120,8 @@ const GLOSS = [['Capital político (CP)', 'La moneda del poder: lo gastas en ley
 const glossHTML = () => `<div class="gloss">${GLOSS.map(g => `<div><b>${g[0]}</b><p>${g[1]}</p></div>`).join('')}</div>`;
 H.glossary = () => openModal(`<h2>Glosario</h2>${glossHTML()}`, true, 'wide');
 TUT.push(['.hud-adv', 'Tus asesores', 'Cinco asesores con carácter propio resumen lo que requiere atención y te recomiendan qué hacer. A veces no se ponen de acuerdo: la decisión es tuya.'],
-  ['.dock [data-p=mil]', 'La guerra, si llega', 'En Ejército tienes la Sala de guerra (tecla G): frente, grupos, órdenes y parte de batalla. Tu Estado Mayor puede dirigirla por ti.'],
-  ['.dock [data-p=sys]', 'Ajustes y glosario', 'En Partida ajustas la calidad gráfica, el movimiento y el volumen de cada canal, guardas en ranuras y consultas el glosario. Mantén pulsado cualquier número para saber qué significa.']);
+  ['.dock [data-p="h:def"]', 'La guerra, si llega', 'En Defensa tienes la Sala de guerra (tecla G): frente, grupos, órdenes y parte de batalla. Tu Estado Mayor puede dirigirla por ti.'],
+  ['.dock [data-p="h:mas"]', 'Ajustes y glosario', 'En Más → Partida ajustas la calidad gráfica, el movimiento y el volumen de cada canal, guardas en ranuras y consultas el glosario. Mantén pulsado cualquier número para saber qué significa.']);
 
 /* ---------- consejo de asesores ---------- */
 PT.adv = 'Consejo de asesores'; IC.adv = IC.people;

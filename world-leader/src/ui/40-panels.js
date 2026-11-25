@@ -12,8 +12,8 @@ const PTABS = {
 };
 function panelHTML() {
   const p = UI.panel, t = PTABS[p] ? curTab(p, PTABS[p][0][0]) : '';
-  return `<section class="panel glass"><i class="grip" data-grip></i><header><h2>${ic(p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
-    ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div></section>`;
+  return `<section class="panel glass"><i class="grip" data-grip></i><header>${p !== 'hub' && hubOfTab(p, t) ? `<button class="back5" data-a="hubBack" aria-label="Volver al menú">‹ ${HUBS[hubOfTab(p, t)].n}</button>` : ''}<h2>${ic(p === 'hub' ? 'h:' + UI.hub : p)} ${PT[p]}</h2><button class="xbtn" data-a="closePanel" aria-label="Cerrar">${ic('x')}</button></header>
+    ${PTABS[p] ? tabs(p, PTABS[p]) : ''}<div class="pbody scroll" data-sc="p-${p}-${t}">${PANELS[p](t)}</div>${relatedHTML(p, t)}</section>`;
 }
 const PANELS = {};
 const tbl = (head, rows) => `<div class="tblw"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;

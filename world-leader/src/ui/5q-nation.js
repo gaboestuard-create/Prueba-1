@@ -4,7 +4,7 @@
    Seguridad: policía y ejército en las calles · Narcotráfico: cárteles.
    ===================================================================== */
 IC.nac = 'M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6';
-DOCK.splice(4, 0, ['nac', 'Nación']); PT.nac = 'Estado de la nación';
+PT.nac = 'Estado de la nación';
 PTABS.nac = [['est', 'Estado'], ['gas', 'Gasto'], ['seg', 'Seguridad'], ['nar', 'Narcotráfico']];
 Object.assign(EXN, { nat: 'Gasto interno extra (Nación)' }); Object.assign(INN, { natcut: 'Recortes de gasto interno' });
 PANELS.nac = t => { const N = Q.natInfo(); if (!N) return '<p class="mut">Sin datos de la nación.</p>'; return t === 'gas' ? natBudHTML(N) : t === 'seg' ? natSegHTML(N) : t === 'nar' ? natNarHTML(N) : natStateHTML(N); };

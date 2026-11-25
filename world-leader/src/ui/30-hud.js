@@ -68,7 +68,7 @@ function hudHTML() {
 const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['tec', 'Ciencia'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
 function dockHTML() {
   const n = S().pend.length;
-  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${UI.panel === d[0] ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
+  return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
     <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Decisión pendiente${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
 }
 H.mode = d => { UI.mode = d.m; UI.render(); refreshMap(); };
