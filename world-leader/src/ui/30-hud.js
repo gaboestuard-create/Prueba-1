@@ -70,7 +70,7 @@ const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'],
 function dockHTML() {
   const n = S().pend.length;
   return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
-    <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Decisión pendiente${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
+    <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Resolver decisión${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
 }
 H.modeMenu = () => { UI.modesOpen = !UI.modesOpen; UI.render(); };
 H.mode = d => { UI.mode = d.m; UI.modesOpen = false; UI.render(); refreshMap(); };
@@ -120,11 +120,11 @@ function countryHTML(iso) {
     ${mine ? '' : `<div class="relbox"><div class="row"><small>Amistad contigo</small><b class="${relCls(r)}">${relWord(r)} · ${sgn(r)}</b></div>${relBar(r)}<button class="lnk" data-a="why">${UI.why ? 'Ocultar motivos' : '¿Por qué?'}</button>${why}</div>`}
     <div class="chips">${statusChips(iso)}</div>
     <div class="kvs">${kv('PIB', money(c.gdp))}${kv('Población', c.pop >= 1 ? c.pop.toFixed(0) + ' M' : Math.round(c.pop * 1000) + ' mil')}${kv('Estabilidad', Math.round(c.stab), 'Por debajo de 18 hay riesgo de golpe')}${kv('Tropas', num(Q.troops(iso)), 'Personal aproximado')}</div>
-    <h4>Fuerza militar <small class="mut">${mine ? '' : 'rojo: ellos · dorado: tú'}</small></h4><div class="cmps">${cats}</div>
+    ${cps('mil', 'Fuerza militar', 'poder ' + Math.round(Q.power(iso)), `<small class="mut">${mine ? 'Tierra, aire y mar' : 'rojo: ellos · dorado: tú'}</small><div class="cmps">${cats}</div>`)}
     ${intelHTML(iso)}
-    <h4>Aliados</h4><div class="chips">${blocDef.map(b => `<span class="chip cyan">${D.BLOCS[b].n}</span>`).join('')}${expl.slice(0, 7).map(x => `<button class="chip good" data-a="sel" data-iso="${x}">${flag(x)} ${cname(x)}</button>`).join('')}${expl.length > 7 ? `<span class="chip">+${expl.length - 7}</span>` : ''}${!blocDef.length && !expl.length ? '<span class="mut">Ninguno</span>' : ''}</div>
-    <h4>Enemigos</h4><div class="chips">${foes.map(x => `<button class="chip bad" data-a="sel" data-iso="${x}">${ic('war')} ${cname(x)}</button>`).join('')}${rivals.map(x => `<button class="chip" data-a="sel" data-iso="${x[0]}">${flag(x[0])} ${cname(x[0])} ${sgn(x[1])}</button>`).join('')}${!foes.length && !rivals.length ? '<span class="mut">Ninguno declarado</span>' : ''}</div>
-    <h4>Recursos</h4><div class="chips">${recs}</div>
+    ${cps('rel', 'Aliados y enemigos', `${allies.length} aliado${allies.length === 1 ? '' : 's'} · ${foes.length} enemigo${foes.length === 1 ? '' : 's'}`, `<h4>Aliados</h4><div class="chips">${blocDef.map(b => `<span class="chip cyan">${D.BLOCS[b].n}</span>`).join('')}${expl.slice(0, 7).map(x => `<button class="chip good" data-a="sel" data-iso="${x}">${flag(x)} ${cname(x)}</button>`).join('')}${expl.length > 7 ? `<span class="chip">+${expl.length - 7}</span>` : ''}${!blocDef.length && !expl.length ? '<span class="mut">Ninguno</span>' : ''}</div>
+    <h4>Enemigos</h4><div class="chips">${foes.map(x => `<button class="chip bad" data-a="sel" data-iso="${x}">${ic('war')} ${cname(x)}</button>`).join('')}${rivals.map(x => `<button class="chip" data-a="sel" data-iso="${x[0]}">${flag(x[0])} ${cname(x[0])} ${sgn(x[1])}</button>`).join('')}${!foes.length && !rivals.length ? '<span class="mut">Ninguno declarado</span>' : ''}</div>`)}
+    ${cps('rec', 'Recursos', Object.keys(c.rec).filter(k => c.rec[k] > 0).sort((a, b) => c.rec[b] - c.rec[a]).slice(0, 3).map(k => D.COMMODITIES[k].n).join(', ') || 'ninguno', `<div class="chips">${recs}</div>`)}
     ${terr}
     <footer class="cp-actions">${mine ? `<button class="btn" data-a="open" data-p="pol">Política</button><button class="btn" data-a="open" data-p="mil">Ejército</button>` : `<button class="btn gold" data-a="dipOpen" data-iso="${iso}">Diplomacia y guerra</button>`}<button class="btn ghost" data-a="editOpen" data-iso="${iso}">Editar</button></footer></aside>`;
 }
