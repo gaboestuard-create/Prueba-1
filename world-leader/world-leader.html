@@ -486,6 +486,15 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .lfx { margin: 10px 0; } .lfx h4 { margin: 0 0 4px; display: flex; align-items: center; gap: 6px; } .lfx h4 .gi { width: 16px; height: 16px; color: var(--gold); }
 @media (max-width: 760px) { .cx-grid { grid-template-columns: 1fr; } .cx-mid { order: -1; } .cx-pick small { width: 100%; } }
 .cx-det { margin-bottom: 8px; } .cx-det summary { cursor: pointer; color: var(--gold); font: 600 12px var(--fc); letter-spacing: .06em; text-transform: uppercase; padding: 6px 0; } .cx-det summary b { color: var(--ink); }
+/* Cabecera móvil: botón «Mapa» y avisos contenidos */
+.modebtn, .modepop { display: none; }
+@media (max-width: 760px) {
+  .modes { display: none; }
+  .modebtn { display: flex; align-items: center; gap: 6px; position: fixed; top: calc(112px + var(--st)); left: 8px; z-index: 4; padding: 6px 10px; border-radius: 3px; background: rgba(6, 10, 20, .78); border: 1px solid var(--line); color: var(--ink); font: 600 11px var(--fc); letter-spacing: .1em; text-transform: uppercase; } .modebtn .ic { width: 15px; height: 15px; color: var(--gold); } .modebtn i { color: var(--mut); font-style: normal; }
+  .modepop { display: flex; flex-direction: column; gap: 2px; position: fixed; top: calc(146px + var(--st)); left: 8px; z-index: 5; padding: 6px; min-width: 190px; } .modepop button { text-align: left; padding: 9px 10px; font: 600 12px var(--fc); letter-spacing: .1em; text-transform: uppercase; color: var(--mut); border-radius: 2px; } .modepop button.on { color: var(--gold); background: rgba(232, 195, 106, .1); box-shadow: inset 3px 0 0 var(--gold); } .modepop small { padding: 6px 10px 2px; color: var(--mut); font-size: 11px; line-height: 1.3; border-top: 1px solid var(--line); margin-top: 4px; }
+  #toasts { top: calc(150px + var(--st)); left: 8px; right: 8px; gap: 5px; } #toasts .toast:not(:nth-last-child(-n+2)) { display: none; } .toast { padding: 7px 10px; font-size: 12.5px; }
+  #achbox { top: calc(112px + var(--st)); } #achbox .achpop:not(:last-child) { display: none; } .achpop { padding: 7px 10px; }
+}
 
 </style>
 
@@ -7708,7 +7717,8 @@ function hudHTML() {
     ${alertBtn()}
     <div class="hud-date"><b>${esc(Q.dateStr())}</b><small>Turno ${s.turn + 1}</small></div>
   </header>
-  <nav class="modes" aria-label="Modo de mapa">${Object.keys(MODES).map(m => `<button data-a="mode" data-m="${m}" class="${UI.mode === m ? 'on' : ''}">${MODES[m]}</button>`).join('')}<small class="legend">${LEGEND[UI.mode]}</small></nav>`;
+  <nav class="modes" aria-label="Modo de mapa">${Object.keys(MODES).map(m => `<button data-a="mode" data-m="${m}" class="${UI.mode === m ? 'on' : ''}">${MODES[m]}</button>`).join('')}<small class="legend">${LEGEND[UI.mode]}</small></nav>
+  <button class="modebtn" data-a="modeMenu" aria-expanded="${!!UI.modesOpen}">${ic('map')}<b>${MODES[UI.mode]}</b><i>${UI.modesOpen ? '▴' : '▾'}</i></button>${UI.modesOpen ? `<div class="modepop glass" role="menu">${Object.keys(MODES).map(m => `<button role="menuitem" data-a="mode" data-m="${m}" class="${UI.mode === m ? 'on' : ''}">${MODES[m]}</button>`).join('')}<small>${LEGEND[UI.mode]}</small></div>` : ''}`;
 }
 const DOCK = [['eco', 'Economía'], ['pol', 'Política'], ['dip', 'Diplomacia'], ['mil', 'Ejército'], ['tec', 'Ciencia'], ['world', 'Mundo'], ['edit', 'Editor'], ['sys', 'Partida']];
 function dockHTML() {
@@ -7716,7 +7726,8 @@ function dockHTML() {
   return `<nav class="dock glass" aria-label="Gabinete">${DOCK.map(d => `<button data-a="open" data-p="${d[0]}" class="${dockOn(d[0]) ? 'on' : ''}">${ic(d[0])}<span>${d[1]}</span></button>`).join('')}</nav>
     <button class="endturn ${n ? 'pend' : ''}" data-a="${n ? 'showPend' : 'endTurn'}" ${UI.busy ? 'disabled' : ''}>${n ? `Decisión pendiente${n > 1 ? ' (' + n + ')' : ''}` : 'Terminar turno'} ${ic('next')}</button>`;
 }
-H.mode = d => { UI.mode = d.m; UI.render(); refreshMap(); };
+H.modeMenu = () => { UI.modesOpen = !UI.modesOpen; UI.render(); };
+H.mode = d => { UI.mode = d.m; UI.modesOpen = false; UI.render(); refreshMap(); };
 H.open = d => { UI.panel = UI.panel === d.p ? null : d.p; if (UI.panel && innerWidth < 1250) UI.sel = null; UI.render(); refreshMap(); };
 H.closePanel = () => { UI.panel = null; UI.render(); };
 H.selMe = () => selectCountry(me());
@@ -10301,6 +10312,17 @@ H.lawFx = d => { const l = D.LAWS.find(x => x.id === d.id); if (!l) return; cons
     ${sect('Al momento', 'check', l.once ? `<div class="chips">${fxChips(Q.describeFx(l.once))}</div>` : '')}
     <div class="row end"><button class="btn" data-a="closeModal">Cerrar</button></div>`, true); };
 H.cxGoClose = d => { closeModal(); UI.cx = d.id; H.hubGo({ p: 'nac', t: 'con' }); };
+
+
+/* ---------- ui/5x-mobilehud.js ---------- */
+/* =====================================================================
+   INTERFAZ · CABECERA EN MÓVIL
+   La fila de modos del mapa se pliega en un solo botón «Mapa» (la
+   lista sale al tocarlo y se cierra al tocar fuera). Los avisos
+   (toasts y logros) se limitan a los más recientes para no tapar el mapa.
+   ===================================================================== */
+document.addEventListener('pointerdown', e => { if (UI.modesOpen && !e.target.closest('.modepop, .modebtn')) { UI.modesOpen = false; if (S()) UI.render(); } });
+{ const st = TUT.find(x => x[0] === '.modes'); if (st && mobileQ.matches) st[0] = '.modebtn'; } /* en móvil el tour señala el botón «Mapa» */
 
 
 /* ---------- ui/90-boot.js ---------- */

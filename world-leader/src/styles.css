@@ -474,3 +474,12 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .lfx { margin: 10px 0; } .lfx h4 { margin: 0 0 4px; display: flex; align-items: center; gap: 6px; } .lfx h4 .gi { width: 16px; height: 16px; color: var(--gold); }
 @media (max-width: 760px) { .cx-grid { grid-template-columns: 1fr; } .cx-mid { order: -1; } .cx-pick small { width: 100%; } }
 .cx-det { margin-bottom: 8px; } .cx-det summary { cursor: pointer; color: var(--gold); font: 600 12px var(--fc); letter-spacing: .06em; text-transform: uppercase; padding: 6px 0; } .cx-det summary b { color: var(--ink); }
+/* Cabecera móvil: botón «Mapa» y avisos contenidos */
+.modebtn, .modepop { display: none; }
+@media (max-width: 760px) {
+  .modes { display: none; }
+  .modebtn { display: flex; align-items: center; gap: 6px; position: fixed; top: calc(112px + var(--st)); left: 8px; z-index: 4; padding: 6px 10px; border-radius: 3px; background: rgba(6, 10, 20, .78); border: 1px solid var(--line); color: var(--ink); font: 600 11px var(--fc); letter-spacing: .1em; text-transform: uppercase; } .modebtn .ic { width: 15px; height: 15px; color: var(--gold); } .modebtn i { color: var(--mut); font-style: normal; }
+  .modepop { display: flex; flex-direction: column; gap: 2px; position: fixed; top: calc(146px + var(--st)); left: 8px; z-index: 5; padding: 6px; min-width: 190px; } .modepop button { text-align: left; padding: 9px 10px; font: 600 12px var(--fc); letter-spacing: .1em; text-transform: uppercase; color: var(--mut); border-radius: 2px; } .modepop button.on { color: var(--gold); background: rgba(232, 195, 106, .1); box-shadow: inset 3px 0 0 var(--gold); } .modepop small { padding: 6px 10px 2px; color: var(--mut); font-size: 11px; line-height: 1.3; border-top: 1px solid var(--line); margin-top: 4px; }
+  #toasts { top: calc(150px + var(--st)); left: 8px; right: 8px; gap: 5px; } #toasts .toast:not(:nth-last-child(-n+2)) { display: none; } .toast { padding: 7px 10px; font-size: 12.5px; }
+  #achbox { top: calc(112px + var(--st)); } #achbox .achpop:not(:last-child) { display: none; } .achpop { padding: 7px 10px; }
+}
