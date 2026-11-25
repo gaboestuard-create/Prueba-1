@@ -67,4 +67,4 @@ Se guardan en el navegador (`wl_cfg`), no en la partida. El progreso de la Fase 
 
 ## Versión instalable (Android / iPhone)
 
-`node build.js` también escribe `docs/` (index.html con Three.js incluido, manifest, service worker e iconos). Se publica con GitHub Pages (Settings → Pages → carpeta `/docs`); al abrirlo en el móvil, «Añadir a pantalla de inicio» lo instala y funciona sin conexión. Los iconos (`docs/icon-*.png`) se dibujan una sola vez y se versionan.
+`node build.js` también escribe `docs/` en la raíz del repositorio, fuera de `world-leader/` (GitHub Pages solo publica `/docs` de la raíz) (index.html con Three.js incluido, manifest, service worker e iconos). Se publica con GitHub Pages (Settings → Pages → rama y carpeta `/docs`); al abrirlo en el móvil, «Añadir a pantalla de inicio» lo instala y funciona sin conexión. Los iconos (`docs/icon-*.png`) se dibujan una sola vez y se versionan.
