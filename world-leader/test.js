@@ -55,7 +55,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
 { let n = 0; for (const e of D.EVENTS) for (let i = 0; i < e.opts.length; i++) {
     G.newGame({ iso: 'MX', name: 'E', traits: ['intrigante'], seed: 31 + n }); G.S.pend = []; const r = G.act('fireEvent', { id: e.id });
     if (!r.ok) continue; const p = G.S.pend[G.S.pend.length - 1]; G.S.pend = [p]; assert(G.act('decide', { i }).ok, 'falla ' + e.id + ' opción ' + i); n++;
-    for (let t = 0; t < 6; t++) { while (G.S.pend.length) G.act('decide', { i: 0 }); assert(G.act('endTurn').ok); } noNaN(G.S, 'S'); }
+    for (let t = 0; t < 6 && !G.S.over; t++) { while (G.S.pend.length) G.act('decide', { i: 0 }); assert(G.act('endTurn').ok || G.S.over); } noNaN(G.S, 'S'); } /* un golpe puede acabar la partida: es legítimo */
   console.log('eventos probados:', n); }
 // una nación anexionada por la IA puede recuperar su independencia con su líder original
 { G.newGame({ iso: 'MX', name: 'G', traits: [], seed: 9 }); const S = G.S; S.pend = []; const A = S.c.AF; A.alive = false; A.owner = 'CN'; A.lider = { n: 'Gobernador impuesto' }; A.terr.forEach(t => { t.o = 'CN'; });
@@ -230,6 +230,17 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   for (let i = 0; i < 12; i++) { let j = 0; while (G.S.pend.length && j++ < 20) if (!G.act('decide', { i: 0 }).ok) G.S.pend.shift(); G.act('endTurn'); }
   assert(Object.values(q.natInfo().ix).every(x => x.v >= 0 && x.v <= 100), 'indicadores en rango'); const sv = G.save(); assert(G.load(sv).ok && G.save() === sv, 'la nación se guarda igual');
   const old = JSON.parse(sv); delete old.nat; assert(G.load(JSON.stringify(old)).ok && G.q.natInfo().ix.seg.v > 0, 'partida sin nación migra'); }
+// seguridad nacional: inteligencia interna, ramas militares, interior de la IA
+{ G.newGame({ iso: 'MX', name: 'S', seed: 8 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 20; S.pol.nextElec = 999; const I = q.secInfo();
+  assert(I && I.dir.n && Object.keys(I.br).length === 3 && /^Alm\. /.test(I.br.mar.n), 'director y tres ramas');
+  assert(G.act('secSurv', { v: 2 }).ok && q.natInfo().ix.seg.why.some(w => w[1] === 'Vigilancia interna'));
+  const k = q.natInfo().cart[0]; const r = G.act('secOp', { k: 'inf', id: k.id }); assert(r.msg && !G.act('secOp', { k: 'caza' }).ok, 'la agencia necesita descanso');
+  const p0 = q.power('MX'); S.mb.tierra.mor = S.mb.mar.mor = S.mb.aire.mor = 100; assert(q.power('MX') > p0, 'la moral sube el poder'); S.mb.tierra.mor = S.mb.mar.mor = S.mb.aire.mor = 50;
+  assert(G.act('brMod', { k: 'aire' }).ok && !G.act('brMod', { k: 'aire' }).ok); for (let i = 0; i < 5; i++) { S.pend = []; G.act('endTurn'); } assert(G.S.mb.aire.mod === 1, 'modernización completada');
+  assert(q.aiNi('US') && q.aiNi('US').seg > q.aiNi('SO').seg, 'interior de la IA por renta');
+  G.S.c.NG.ni.coh = 10; assert(!G.act('askAid', { iso: 'NG', kind: 'eco' }).ok, 'un país en crisis no presta');
+  const ev = q.treatyEval('com', 'NG'); G.S.c.NG.ni.cor = 90; assert(q.treatyEval('com', 'NG').score > ev.score, 'la corrupción facilita tratados');
+  const sv = G.save(); assert(G.load(sv).ok && G.save() === sv); const old = JSON.parse(sv); delete old.sint; delete old.mb; for (const z in old.c) delete old.c[z].ni; assert(G.load(JSON.stringify(old)).ok && G.q.secInfo().br.tierra && G.q.aiNi('US'), 'partida vieja migra'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

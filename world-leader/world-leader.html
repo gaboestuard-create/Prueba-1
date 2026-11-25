@@ -2243,6 +2243,52 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
 })();
 
 /* =====================================================================
+   WORLD LEADER · DATOS · SEGURIDAD NACIONAL (Fase 2 del interior)
+   Inteligencia interna (vigilancia, director, operaciones), las tres ramas
+   de las fuerzas armadas con su jefe, moral y modernización, y el interior
+   resumido de los países de la IA. Motor: src/engine/7s-security.js.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx, O = o => o.map(x => ({ t: x[0], fx: fx(x[1]), sx: x[2] || {} }));
+  D.SECINT = {
+    surv: { n: ['Sin vigilancia interna', 'Vigilancia selectiva', 'Vigilancia masiva'], cost: .0012, ix: { seg: 4, cri: -4, ins: -4 }, scandalP: .03 },
+    ops: {
+      inf: { n: 'Infiltrar un cártel', cp: 1, p: .35, pLvl: .12, str: -16, cash: .6, d: 'Agentes encubiertos dentro del cártel. Si sale bien, golpe enorme; si sale mal, pierdes agentes.' },
+      caza: { n: 'Cazar espías extranjeros', cp: 1, p: .45, pLvl: .1, d: 'Desarticular redes extranjeras en tu país: confianza y prestigio.' },
+      corr: { n: 'Investigar corrupción', cp: 1, p: .5, pLvl: .1, cor: -6, d: 'Expedientes contra funcionarios corruptos. Puede salpicar a tu partido.' }
+    },
+    opCd: 3, dir: { loy: [50, 80], comp: [35, 85], replaceCp: 2, blackmailAt: 30, blackmailP: .06 }
+  };
+  D.BRANCH = {
+    tierra: { n: 'Ejército', ic: 'tan', chief: 'Gral.' },
+    mar: { n: 'Armada', ic: 'naval', chief: 'Alm.' },
+    aire: { n: 'Fuerza Aérea', ic: 'caz', chief: 'Gral.' }
+  };
+  D.BR = {
+    drift: .12, start: [50, 70], loy: [55, 80],
+    /* qué mueve la moral de cada rama */
+    law: { sueldo_militar: 10, gasto_defensa: 5, servicio_militar: -3, desarme: -8 },
+    streets: -5, warWin: 8, warLose: -12, atWar: -3,
+    /* moral y modernización → poder: (1 - k) + moral/100 × 2k, cada nivel de modernización suma mod */
+    k: .15, mod: .05, modMax: 3, modGdp: .01, modTurns: 4, chiefCp: 1,
+    coupAt: 30, coupStab: 45, coupP: .08
+  };
+  D.SEC_EV = {
+    espionaje: { t: 'Escándalo: espiabas a la oposición', x: 'Un exagente filtra que la agencia intervino los teléfonos de periodistas y opositores. Las portadas no hablan de otra cosa.',
+      opts: O([['Desmantelar la vigilancia masiva', 'rep.dem+2;sec.jov+2', { surv: 0, ins: 4 }], ['Culpar al director y destituirlo', 'cp-1', { dir: 1, ins: -2 }], ['Defenderla: «es por su seguridad»', 'rep.dem-4;sec.jov-5;sec.mil+2', { ins: -8 }]]) },
+    chantaje: { t: 'El director de inteligencia te chantajea', x: '{N} te recuerda en privado todo lo que sabe. A cambio de su silencio quiere más presupuesto y manos libres.',
+      opts: O([['Destituirlo, cueste lo que cueste', 'cp-2', { dir: 1, ins: -4 }], ['Ceder a sus exigencias', '$g-.2', { surv: 2, cor: 4, loy: 25 }]]) },
+    sables: { t: 'Ruido de sables', x: 'Los jefes militares se reúnen sin avisarte. {N} habla en televisión de «salvar a la patria». Tu ministro de Defensa no contesta el teléfono.',
+      opts: O([['Subir sueldos y presupuesto militar', '$g-.4;sec.mil+6', { loy: 15, mor: 8 }], ['Purgar la cúpula militar', 'cp-2;sec.mil-6;stab-3', { purge: 1 }], ['Ignorarlo: «son solo rumores»', 'chance.5{stab-2}{stab-12;cp-2;sec.all-4}', {}]]) }
+  };
+  /* interior resumido de los países de la IA (0-100) */
+  D.AINT = { every: 2, k: .15, war: { seg: -12, coh: -6 }, sanc: { coh: -4 }, effGrow: .003, growCap: .3, effStab: .01,
+    weakCoh: 35, weakSeg: 30, warSkip: .6,
+    treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [35, -10, 'Su opinión pública está dividida'], seg: [35, 8, 'Buscan apoyo para su seguridad'] },
+    aidBonus: 6, askCoh: 35 };
+})();
+
+/* =====================================================================
    WORLD LEADER · DATOS · FASE 4: PERSONALIDAD Y NARRATIVA
    Rasgos nuevos con sinergias y conflictos, frases de líderes según su
    carácter y 40 eventos con humor, drama y giros. Todo ficción
@@ -6595,6 +6641,86 @@ function natInfo() { const N = S.nat; if (!N) return null; const g = P().gdp;
     cart: N.cart.map(k => ({ id: k.id, n: k.n, boss: k.boss, i: k.i, reg: P().terr[k.i] ? P().terr[k.i].n : '', str: k.str, cash: k.cash, pact: Math.max(0, k.pact - S.turn), cd: Math.max(0, (k.cd || 0) - S.turn) })) }; }
 
 
+/* ---------- engine/7s-security.js ---------- */
+/* =====================================================================
+   SISTEMA · SEGURIDAD NACIONAL
+   1) Inteligencia interna: vigilancia (0-2), director con lealtad,
+      operaciones dentro del país (cárteles, espías, corrupción).
+   2) Ramas militares (Ejército, Armada, Fuerza Aérea): jefe, lealtad,
+      moral y modernización. La moral y la modernización cambian tu poder;
+      la lealtad baja trae ruido de sables.
+   3) Interior resumido de cada país de la IA (seguridad, corrupción,
+      cohesión): pesa en su crecimiento y en sus decisiones de guerra,
+      tratados y ayudas.
+   Datos en src/data-security.js.
+   ===================================================================== */
+const SI = D.SECINT, BRK = Object.keys(D.BRANCH), BR = D.BR, AI5 = D.AINT;
+const mkChief = (k, r) => ({ n: D.BRANCH[k].chief + ' ' + genLeader(S.player), pseed: ri(0, 96), loy: ri(...(r || BR.loy)) });
+const mkDir = () => ({ n: genLeader(S.player), pseed: ri(0, 96), loy: ri(...SI.dir.loy), comp: ri(...SI.dir.comp) });
+function secInit() { S.sint = { surv: 0, dir: mkDir(), cd: 0 }; S.mb = {}; for (const k of BRK) S.mb[k] = Object.assign(mkChief(k), { mor: ri(...BR.start), mod: 0, modT: 0 }); }
+/* interior de la IA: punto de partida por renta y régimen */
+function aiNiNew(z) { const c = S.c[z], gpc = c.gdp / Math.max(.001, c.pop), k = clamp((Math.log10(Math.max(1, gpc)) - .3) / 1.5, 0, 1), dem = c.reg === 'dem' ? 6 : 0;
+  return { seg: Math.round(38 + 34 * k + (D.NAT.cart.narco.includes(z) ? -10 : 0)), cor: Math.round(62 - 40 * k - dem), coh: Math.round(48 + 14 * k) }; }
+const aiNiAll = () => { for (const z of ISOS) if (S.c[z] && !isP(z)) S.c[z].ni = S.c[z].ni || aiNiNew(z); };
+hook('new', () => { secInit(); aiNiAll(); });
+hook('load', () => { if (!S.sint) S.sint = { surv: 0, dir: mkDir(), cd: 0 }; if (!S.mb) { S.mb = {}; } for (const k of BRK) if (!S.mb[k]) S.mb[k] = Object.assign(mkChief(k), { mor: 60, mod: 0, modT: 0 }); aiNiAll(); });
+/* ---- inteligencia interna ---- */
+{ const w0 = natWhy; natWhy = x => { const w = w0(x), v = S.sint ? (SI.surv.ix[x] || 0) * S.sint.surv : 0; if (v) { w.target = clamp(w.target + v, 0, 100); w.why.push([v, 'Vigilancia interna']); } return w; }; }
+hook('finance', f => { if (S.sint && S.sint.surv) f.exp.vig = P().gdp * SI.surv.cost * S.sint.surv; });
+const secPend = (k, sub) => { const E = D.SEC_EV[k], f = s => s.split('{N}').join(sub.N || ''); pushPend({ k: 'event', id: 'security', t: f(E.t), x: f(E.x), iso: S.player, opts: E.opts.map(o => ({ t: o.t, fx: o.fx.concat([['do', 'secMod', Object.assign({ br: sub.br }, o.sx)]]) })) }); };
+OPS.secMod = a => { const I = S.sint; if (a.surv != null) I.surv = a.surv; if (a.dir) I.dir = mkDir(); if (a.loy && !a.br) I.dir.loy = clamp(I.dir.loy + a.loy, 0, 100);
+  if (S.nat) natMod({ ix: { ins: a.ins || 0, cor: a.cor || 0 } });
+  for (const k of BRK) { const b = S.mb[k]; if (a.purge) Object.assign(b, mkChief(k, [60, 85]), { mor: clamp(b.mor - 10, 0, 100) }); else if (a.br) { b.loy = clamp(b.loy + (a.loy || 0), 0, 100); b.mor = clamp(b.mor + (a.mor || 0), 0, 100); } } };
+ACT.secSurv = a => { const v = +a.v; if (![0, 1, 2].includes(v)) return fail('Nivel inválido'); S.sint.surv = v; return { msg: SI.surv.n[v] }; };
+ACT.secDir = () => { if (!useCP(SI.dir.replaceCp)) return fail(`Necesitas ${SI.dir.replaceCp} de capital político`); S.sint.dir = mkDir(); return { msg: `Nuevo director de inteligencia: ${S.sint.dir.n}` }; };
+ACT.secOp = a => { const O = SI.ops[a.k], I = S.sint; if (!O) return fail('Operación desconocida'); if (I.cd > S.turn) return fail(`La agencia está ocupada: espera ${I.cd - S.turn} turnos`);
+  const k = a.k === 'inf' ? S.nat.cart.find(x => x.id === +a.id) : null; if (a.k === 'inf' && !k) return fail('Elige un cártel'); if (!useCP(O.cp)) return fail(`Necesitas ${O.cp} de capital político`);
+  I.cd = S.turn + SI.opCd; const p = O.p + O.pLvl * (S.spy.lvl || 0) + (I.dir.comp - 50) / 250, ok = chance(clamp(p, .05, .9));
+  if (a.k === 'inf') { if (ok) { k.str = clamp(k.str + O.str, 0, 100); k.cash *= O.cash; news(`Golpe de inteligencia: agentes infiltrados desmantelan la cúpula de ${k.n}`, 'pol', S.player, 3); return { msg: `Infiltración con éxito: ${k.n} queda con fuerza ${Math.round(k.str)}` }; }
+    natMod({ ix: { seg: -2 } }); news(`${k.n} descubre y ejecuta a agentes encubiertos`, 'pol', S.player, 2); return { ok: false, msg: 'La infiltración fracasa: perdiste a tus agentes' }; }
+  if (a.k === 'caza') { if (ok) { const z = pick(alive().filter(z => z !== S.player && rel(S.player, z) < 0 && S.c[z].gdp > 80)); repAdd('conf', 2); natMod({ ix: { ins: 3 } }); if (z) addMod(S.player, z, 'Expulsaste a sus espías', -4, .5, 1); news(`La agencia desarticula una red de espionaje${z ? ' de ' + nm(z) : ''}`, 'dip', z || S.player, 2); return { msg: 'Red de espías desarticulada' }; }
+    return { ok: false, msg: 'No encontraron nada esta vez' }; }
+  if (ok) { natMod({ ix: { cor: O.cor, ins: 2 } }); if (chance(.3)) { secAdd('all', -2); news('La investigación anticorrupción salpica a cargos de tu partido', 'pol', S.player, 2); return { msg: 'Corrupción destapada… incluso en tu partido' }; } return { msg: 'Expedientes abiertos: baja la corrupción' }; }
+  return { ok: false, msg: 'La investigación no prospera' }; };
+/* ---- ramas militares ---- */
+const brTarget = k => { const b = S.mb[k]; let v = 50 + (S.pol.sec.mil.a - 50) * .5; for (const id in S.pol.laws) v += BR.law[id] || 0;
+  if (k === 'tierra' && S.nat) v += Object.keys(S.nat.army).length * BR.streets; if (inWar(S.player)) v += BR.atWar; return clamp(v + (b.loy - 50) * .1, 0, 100); };
+ACT.brMod = a => { const b = S.mb[a.k], c = P(); if (!b) return fail('Rama desconocida'); if (b.modT > S.turn) return fail('Ya está en plena modernización'); if (b.mod >= BR.modMax) return fail('Ya está al máximo');
+  const g = c.gdp * BR.modGdp; if (!canPay(g)) return fail(`Necesitas ${money(g)}`); c.tr -= g; b.modT = S.turn + BR.modTurns; return { msg: `${D.BRANCH[a.k].n}: modernización en marcha (${BR.modTurns} turnos)` }; };
+ACT.brChief = a => { const b = S.mb[a.k]; if (!b) return fail('Rama desconocida'); if (!useCP(BR.chiefCp)) return fail(`Necesitas ${BR.chiefCp} de capital político`);
+  Object.assign(b, mkChief(a.k), { mor: clamp(b.mor - 5, 0, 100) }); return { msg: `Nuevo jefe de ${D.BRANCH[a.k].n}: ${b.n}` }; };
+const brFactor = k => { const b = S.mb[k]; return 1 - BR.k + b.mor / 100 * 2 * BR.k + b.mod * BR.mod; };
+{ const p0 = power; power = iso => { const v = p0(iso); if (!S || !S.mb || iso !== S.player) return v; let raw = 0, f = 0; for (const k of BRK) { const x = catPow(iso, k); raw += x; f += x * brFactor(k); } return raw ? v * f / raw : v; }; }
+{ const e0 = endWar; endWar = (w, kind) => { const me = S.player, mine = S.mb && (w.att.includes(me) || w.def.includes(me)), sc = mine ? (w.att.includes(me) ? w.score : -w.score) : 0, r = e0(w, kind);
+  if (mine) for (const k of BRK) S.mb[k].mor = clamp(S.mb[k].mor + (sc >= 25 ? BR.warWin : sc <= -25 ? BR.warLose : 0), 0, 100); return r; }; }
+hook('player', () => { const I = S.sint, c = P(); if (!I || !S.mb) return;
+  for (const k of BRK) { const b = S.mb[k]; b.mor = clamp(b.mor + (brTarget(k) - b.mor) * BR.drift, 0, 100); b.loy = clamp(b.loy + (S.pol.sec.mil.a - b.loy) * .03 + rr(-1, 1), 0, 100);
+    if (b.modT && b.modT <= S.turn) { b.mod++; b.modT = 0; news(`${D.BRANCH[k].n} completa su modernización (nivel ${b.mod})`, 'mil', S.player, 2); } }
+  I.dir.loy = clamp(I.dir.loy + (approval() - 50) * .02 + rr(-1, 1), 0, 100);
+  if (S.pend.length > 1) return;
+  if (I.surv && chance(SI.surv.scandalP * I.surv)) return secPend('espionaje', {});
+  if (I.surv && I.dir.loy < SI.dir.blackmailAt && chance(SI.dir.blackmailP)) return secPend('chantaje', { N: I.dir.n });
+  const low = BRK.map(k => S.mb[k]).sort((a, b) => a.loy - b.loy)[0]; if (low.loy < BR.coupAt && c.stab < BR.coupStab && chance(BR.coupP)) secPend('sables', { N: low.n, br: 1 }); });
+/* ---- interior de la IA ---- */
+hook('world', () => { if (S.turn % AI5.every) return; const sancOn = {}; for (const s of S.sanc) sancOn[s.on] = (sancOn[s.on] || 0) + 1;
+  for (const z of alive()) { if (isP(z)) continue; const c = S.c[z], n = c.ni || (c.ni = aiNiNew(z)), b = aiNiNew(z), war = inWar(z) ? 1 : 0, sn = Math.min(3, sancOn[z] || 0);
+    const t = { seg: b.seg + (c.stab - 50) * .3 + war * AI5.war.seg, cor: b.cor, coh: b.coh + (c.stab - 50) * .4 + war * AI5.war.coh + sn * AI5.sanc.coh };
+    for (const x in t) n[x] = Math.round(clamp(n[x] + (t[x] - n[x]) * AI5.k + rr(-2, 2), 0, 100));
+    c.stab = clamp(c.stab + ((n.coh - 50) + (n.seg - 50)) * AI5.effStab, 0, 100); } });
+{ const g0 = growthOf; growthOf = iso => { const g = g0(iso), n = S.c[iso] && S.c[iso].ni; if (!n || isP(iso)) return g; return g + clamp(((50 - n.cor) + (n.seg - 50)) * AI5.effGrow, -AI5.growCap, AI5.growCap); }; }
+const aiWeak = z => { const n = S.c[z].ni; return !!n && (n.coh < AI5.weakCoh || n.seg < AI5.weakSeg); };
+/* un gobierno con el país roto por dentro casi nunca abre un frente exterior */
+{ const c0 = considerWar; considerWar = iso => { if (aiWeak(iso) && chance(AI5.warSkip)) return; return c0(iso); }; }
+{ const t0 = treatyEval; treatyEval = (type, iso) => { const r = t0(type, iso), n = S.c[iso] && S.c[iso].ni; if (!n) return r; const T = AI5.treaty, add = (v, t) => { r.score += v; r.odds += v; r.reasons.push([t, v]); };
+  if (n.cor > T.cor[0]) add(T.cor[1], T.cor[2]); if ((type === 'ali' || type === 'def') && n.coh < T.coh[0]) add(T.coh[1], T.coh[2]); if ((type === 'ali' || type === 'def') && n.seg < T.seg[0]) add(T.seg[1], T.seg[2]); return r; }; }
+{ const a0 = ACT.giveAid; ACT.giveAid = a => { const r = a0(a); if (r && r.ok !== false && S.c[a.iso] && aiWeak(a.iso)) { addMod(S.player, a.iso, 'Los ayudaste en plena crisis interna', AI5.aidBonus, .5); r.msg += ' (en plena crisis interna: lo agradecen más)'; } return r; }; }
+{ const a0 = ACT.askAid; ACT.askAid = a => { const c = S.c[a.iso]; if (c && c.ni && a.kind !== 'mat' && c.ni.coh < AI5.askCoh) return fail(`${c.n} no puede: su propia crisis interna se lo impide`); return a0(a); }; }
+Object.assign(FREE, { secSurv: 1 });
+const aiNi = z => S.c[z] && S.c[z].ni ? Object.assign({}, S.c[z].ni) : null;
+function secInfo() { const I = S.sint; if (!I) return null; return { surv: I.surv, dir: Object.assign({}, I.dir), cd: Math.max(0, I.cd - S.turn), lvl: S.spy.lvl || 0,
+  br: Object.fromEntries(BRK.map(k => { const b = S.mb[k]; return [k, Object.assign({}, b, { pow: catPow(S.player, k), f: brFactor(k), t: brTarget(k), modIn: b.modT > S.turn ? b.modT - S.turn : 0 })]; })) }; }
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -6683,7 +6809,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo, natInfo,
+    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo, natInfo, secInfo, aiNi,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -9776,6 +9902,47 @@ H.natEquip = () => act('natEquip'); H.natPurge = () => act('natPurge'); H.natArm
 H.cartel = d => act('cartel', { id: +d.id, how: d.how });
 /* cada turno, el globo recuerda dónde están las tropas y los cárteles */
 Bus.on('turn', () => { const N = S() && Q.natInfo(); if (!N || CFG.rm) return; for (const i of N.army) Bus.emit('regfx', { iso: me(), i, k: 'humo' }); });
+
+
+/* ---------- ui/5r-security.js ---------- */
+/* =====================================================================
+   INTERFAZ · SEGURIDAD NACIONAL
+   Nación → Inteligencia (vigilancia, director, operaciones internas) ·
+   Ejército → Mandos (Ejército, Armada, Fuerza Aérea) · ficha de cada
+   país → Situación interna (el interior resumido de la IA).
+   ===================================================================== */
+PTABS.nac.push(['int', 'Inteligencia']); PTABS.mil.push(['man', 'Mandos']);
+{ const n0 = PANELS.nac; PANELS.nac = t => t === 'int' ? secIntHTML() : n0(t); }
+{ const m0 = PANELS.mil; PANELS.mil = t => t === 'man' ? branchHTML() : m0(t); }
+Object.assign(EXN, { vig: 'Vigilancia interna' });
+function secIntHTML() { const I = Q.secInfo(), O = D.SECINT.ops, N = Q.natInfo(), d = I.dir, mor = v => v >= 60 ? 'green' : v < 35 ? 'red' : '';
+  return `<p class="mut fine">La agencia también trabaja dentro del país. Su nivel (${I.lvl.toFixed(1)}) depende del presupuesto que fijas en Diplomacia → Inteligencia y mejora el éxito de cada operación.</p>
+  <div class="card"><div class="row"><span class="portrait">${portraitSVG(d.n, d.pseed)}</span><div class="grow"><small class="eyebrow">Director de inteligencia</small><b>${esc(d.n)}</b><small class="mut">Competencia ${Math.round(d.comp)}</small>
+    <div class="arow"><span class="grow">Lealtad</span>${bar(d.loy, 100, mor(d.loy))}<b class="num">${Math.round(d.loy)}</b></div></div></div>
+    <small class="mut">Con poca lealtad y vigilancia activa, puede chantajearte con lo que sabe.</small><div class="row"><button class="btn sm ghost" data-a="secDir" data-confirm>Nombrar otro director · ${D.SECINT.dir.replaceCp} CP</button></div></div>
+  <h4>${gi('ojo')} Vigilancia interna</h4><div class="row wrap">${D.SECINT.surv.n.map((n, v) => `<button class="btn sm ${I.surv === v ? 'gold' : ''}" data-a="secSurv" data-v="${v}">${esc(n)}</button>`).join('')}</div>
+  <p class="mut fine">Cada nivel: seguridad ${sgn(D.SECINT.surv.ix.seg)}, crimen ${sgn(D.SECINT.surv.ix.cri)}, confianza en las instituciones ${sgn(D.SECINT.surv.ix.ins)} y ${money(CC(me()).gdp * D.SECINT.surv.cost)} por turno. Si se filtra, escándalo.</p>
+  <h4>${gi('ofensiva')} Operaciones${I.cd ? ` <small class="mut">agencia ocupada ${I.cd} t</small>` : ''}</h4>
+  ${Object.entries(O).map(([k, o]) => `<div class="card"><div class="row"><b class="grow">${esc(o.n)}</b><small class="mut">${o.cp} CP</small></div><small class="mut">${esc(o.d)}</small>
+    <div class="row wrap">${k === 'inf' ? (N.cart.map(c => `<button class="btn sm" data-a="secOp" data-k="inf" data-id="${c.id}" ${I.cd ? 'disabled' : ''}>${esc(c.n)} · ${Math.round(c.str)}</button>`).join('') || '<small class="mut">No hay cárteles que infiltrar.</small>')
+      : `<button class="btn sm" data-a="secOp" data-k="${k}" ${I.cd ? 'disabled' : ''}>Ordenar</button>`}</div></div>`).join('')}`; }
+function branchHTML() { const I = Q.secInfo(), B = D.BR, avg = Object.values(I.br).reduce((s, b) => s + b.loy, 0) / 3, col = v => v >= 60 ? 'green' : v < 35 ? 'red' : '';
+  return `<p class="mut fine">Cada rama tiene jefe, lealtad, moral y modernización. La moral y la modernización multiplican su poder en combate; la lealtad baja, con un país inestable, trae ruido de sables.</p>
+  <div class="card"><div class="arow"><span class="grow"><b>Relación cívico-militar</b></span>${bar(avg, 100, col(avg))}<b class="num">${Math.round(avg)}</b></div><small class="mut">Media de lealtad de los tres jefes. Por debajo de ${B.coupAt}, si la estabilidad cae de ${B.coupStab}, hay riesgo.</small></div>
+  <div class="cabs">${Object.entries(I.br).map(([k, b]) => { const R = D.BRANCH[k];
+    return `<div class="card cab"><div class="row"><span class="portrait">${portraitSVG(b.n, b.pseed)}</span><div class="grow"><small class="eyebrow">${gi(R.ic)} ${esc(R.n)}</small><b>${esc(b.n)}</b><small class="mut">Poder ${Math.round(b.pow * b.f)} (${b.f >= 1 ? '+' : '−'}${Math.abs(Math.round((b.f - 1) * 100))}% por moral y equipo)</small></div></div>
+      <div class="arow"><span class="grow">Lealtad</span>${bar(b.loy, 100, col(b.loy))}<b class="num">${Math.round(b.loy)}</b></div>
+      <div class="arow"><span class="grow">Moral <small class="mut">▸ ${Math.round(b.t)}</small></span>${bar(b.mor, 100, col(b.mor))}<b class="num">${Math.round(b.mor)}</b></div>
+      <div class="arow"><span class="grow">Modernización</span><b>${'★'.repeat(b.mod)}${'☆'.repeat(B.modMax - b.mod)}</b></div>
+      <div class="row wrap"><button class="btn sm" data-a="brMod" data-k="${k}" ${b.mod >= B.modMax || b.modIn ? 'disabled' : ''}>${b.modIn ? `Modernizando · ${b.modIn} t` : `Modernizar · ${money(CC(me()).gdp * B.modGdp)}`}</button><button class="btn sm ghost" data-a="brChief" data-k="${k}" data-confirm>Relevar al jefe · ${B.chiefCp} CP</button></div></div>`; }).join('')}</div>
+  <p class="mut fine">Suben la moral: el apoyo de los militares, leyes como sueldo militar o más gasto en defensa y ganar guerras. La bajan: perder guerras, la guerra larga y, para el Ejército, patrullar las calles.</p>`; }
+H.secSurv = d => act('secSurv', { v: +d.v }); H.secDir = () => act('secDir'); H.secOp = d => act('secOp', { k: d.k, id: +d.id });
+H.brMod = d => act('brMod', { k: d.k }); H.brChief = d => act('brChief', { k: d.k });
+/* ficha de un país: su situación interna, que pesa en lo que acepta */
+SHT[0][3].unshift('Situación interna');
+{ const x0 = sheetExtra; sheetExtra = iso => { const n = Q.aiNi(iso); if (!n) return x0(iso); const w = (v, bad) => { const g = bad ? 100 - v : v; return `<b class="${g >= 60 ? 'green' : g < 35 ? 'red' : ''}">${v}</b>`; }, A = D.AINT;
+  const notes = [n.coh < A.weakCoh || n.seg < A.weakSeg ? 'Su crisis interna le quita ganas de guerras' : '', n.coh < A.askCoh ? 'No puede prestarte ayuda' : '', n.cor > A.treaty.cor[0] ? 'Gobierno corrupto: más fácil de convencer' : '', n.seg < A.treaty.seg[0] ? 'Busca socios para su seguridad' : ''].filter(Boolean);
+  return `<h4>Situación interna</h4><p>Seguridad ${w(n.seg)} · Corrupción ${w(n.cor, 1)} · Cohesión ${w(n.coh)}</p>${notes.length ? `<p class="mut fine">${notes.map(esc).join(' · ')}</p>` : ''}` + x0(iso); }; }
 
 
 /* ---------- ui/90-boot.js ---------- */
