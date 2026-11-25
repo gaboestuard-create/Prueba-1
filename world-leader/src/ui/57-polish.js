@@ -27,7 +27,9 @@ H.cabinet = () => act('cabinet');
     if (!on && l.build) b.push(`<span class="chip gold">Obra de ${l.build} trimestres: paga desde el inicio, rinde al terminar</span>`);
     if (!on && l.grp && (g.lock[l.grp] || 0) > t) b.push(`<span class="chip bad">Tema bloqueado ${g.lock[l.grp] - t} t: el congreso acaba de legislar sobre esto</span>`);
     if (g.dem.some(d => d.law === l.id)) b.push('<span class="chip gold">Te la están exigiendo</span>');
-    const sun = !on && !l.build && (pol.cool[l.id] || 0) <= t ? `<button class="btn sm" data-a="lawSun" data-id="${l.id}" title="+10% de apoyo; caduca en ${D.GOV.sunset} trimestres salvo prórroga">Con caducidad · 2 CP</button>` : '';
+    let sun = '';
+    if (!on && !l.build && (pol.cool[l.id] || 0) <= t) { const f0 = Q.lawForecast(l), f1 = Q.lawForecast(l, .1), saves = f0.yes <= f0.need && f1.yes > f1.need; /* solo se destaca si es lo que la hace pasar */
+      sun = `<button class="btn sm ${saves ? 'gold' : ''}" data-a="lawSun" data-id="${l.id}" title="Dura ${D.GOV.sunset} trimestres. Al vencer pides la prórroga (1 CP y otra votación) o caduca sola, sin coste político.">Piloto de ${D.GOV.sunset / 4} años · +10% de apoyo · 2 CP</button>${saves ? '<small class="gold">Con el piloto sí pasaría</small>' : ''}`; }
     return (b.length || sun ? `<div class="row wrap">${b.join('')}${sun}</div>` : '') + le0(l, on);
   };
 }
