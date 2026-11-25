@@ -151,7 +151,7 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   G.newGame({ name: '', seed: 9, setup: { mode: 'camp', camp: 'mediador' } }); G.S.camp.s0 = -30; G.S.pend = []; G.act('endTurn'); assert.strictEqual(G.S.over.r, 'camp_time', 'el plazo vence');
   // mediar por iniciativa propia
   G.newGame({ iso: 'NO', name: 'M', seed: 3, setup: { scen: 'tension' } }); G.S.pend = []; const w = G.S.wars.find(x => !x.att.includes('NO') && !x.def.includes('NO') && q.rel('NO', x.att[0]) >= -25 && q.rel('NO', x.def[0]) >= -25);
-  if (w) { G.S.pol.cp = 12; let n = 0; while (q.warById(w.id) && n++ < 12) { w.medT = 0; G.act('mediate', { w: w.id }); G.S.pol.cp = 12; } assert(!q.warById(w.id) && G.S.p5.med === 1, 'la mediación cuenta'); }
+  if (w) { G.S.pol.cp = 12; G.S.rep.paz = G.S.rep.conf = 100; /* éxito casi seguro: la prueba no depende del azar */ let n = 0; while (q.warById(w.id) && n++ < 12) { w.medT = 0; G.act('mediate', { w: w.id }); G.S.pol.cp = 12; } assert(!q.warById(w.id) && G.S.p5.med === 1, 'la mediación cuenta'); }
   // escenario propio: operaciones, objetivo y evento programado
   const ev = Object.keys(q.EV())[0]; G.newGame({ iso: 'MX', name: 'P', seed: 3, setup: { custom: { n: 'Mío', ops: [['rel', 'MX', 'US', -30, 'Prueba'], ['stab', 'P', 10], ['war', 'CO', 'VE']], goals: [['laws', 1]], events: [{ at: 1, id: ev }] } } });
   assert(G.S.wars.some(x => x.att[0] === 'CO' && x.def[0] === 'VE'), 'la guerra del escenario propio existe'); G.S.pend = []; G.S.stats.laws = 1; G.act('endTurn'); assert.strictEqual(G.S.over.r, 'vic_obj', 'el objetivo propio da la victoria');
@@ -241,6 +241,14 @@ assert(!G.load('{"x":1}').ok && !G.load('no json').ok, 'load debe rechazar basur
   G.S.c.NG.ni.coh = 10; assert(!G.act('askAid', { iso: 'NG', kind: 'eco' }).ok, 'un país en crisis no presta');
   const ev = q.treatyEval('com', 'NG'); G.S.c.NG.ni.cor = 90; assert(q.treatyEval('com', 'NG').score > ev.score, 'la corrupción facilita tratados');
   const sv = G.save(); assert(G.load(sv).ok && G.save() === sv); const old = JSON.parse(sv); delete old.sint; delete old.mb; for (const z in old.c) delete old.c[z].ni; assert(G.load(JSON.stringify(old)).ok && G.q.secInfo().br.tierra && G.q.aiNi('US'), 'partida vieja migra'); }
+// sociedad: debates, movimientos, promesas, educación a largo plazo, informe
+{ G.newGame({ iso: 'ES', name: 'O', seed: 9 }); const S = G.S, q = G.q; S.pend = []; S.pol.cp = 20; S.pol.nextElec = 999; const I = q.socInfo();
+  assert(I.deb.length === 6 && I.mov.length === 2 && I.eco.trade && I.eco.gdp > 0, 'debates, movimientos e informe');
+  const o0 = S.soc.op.matrimonio; assert(G.act('socLead', { k: 'matrimonio', dir: 1 }).ok && S.soc.op.matrimonio > o0 && !G.act('socLead', { k: 'matrimonio', dir: 1 }).ok);
+  S.pol.laws.pena_muerte = 0; S.soc.op.pena = -80; assert(q.socInfo().deb.find(d => d.k === 'pena').pos === 1 && q.socInfo().deb.find(d => d.k === 'pena').gap >= 80, 'ley contra la mayoría');
+  S.soc.mv.pena = 90; let seen = false; for (let i = 0; i < 12 && !seen; i++) { S.pend = []; G.act('endTurn'); const p = G.S.pend.find(x => x.id === 'protest'); if (p) { seen = true; G.S.pend = [p]; assert(G.act('decide', { i: 1 }).ok && G.S.soc.prom.pena > G.S.turn, 'prometer'); } }
+  assert(seen, 'hay protestas'); const r0 = q.mod('rp'); G.S.soc.eduL = 90; assert(q.mod('rp') > r0, 'educación acumulada → investigación');
+  const sv = G.save(); assert(G.load(sv).ok && G.save() === sv); const old = JSON.parse(sv); delete old.soc; assert(G.load(JSON.stringify(old)).ok && G.q.socInfo().deb.length === 6, 'partida vieja migra'); }
 // tiempo de un turno
 G.newGame({ iso: 'MX', name: 'A', traits: [], seed: 5 }); const t1 = Date.now(); for (let i = 0; i < 10; i++) { while (G.S.pend.length) G.act('decide', { i: 0 }); G.act('endTurn'); }
 console.log(`OK · ${(Date.now() - t0) / 1000}s en total · ${((Date.now() - t1) / 10) | 0} ms por turno`);

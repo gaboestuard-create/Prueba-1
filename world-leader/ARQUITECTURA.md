@@ -9,7 +9,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 | Orden | Capa | Archivos | Regla |
 |---|---|---|---|
 | 1 | Datos | `src/data.js` y luego `src/data-*.js` en **orden alfabético** | Solo datos. Un archivo que use `D.fx` (el lenguaje de efectos de eventos) debe ordenarse **después** de `data-events2.js`. |
-| 2 | Motor | `src/engine/NN-*.js` en orden alfabético, dentro de **una sola función** | Todo el estado vive en `S` y es JSON puro. Los archivos que exportan algo en `WL.Game.q` deben ordenarse antes de `80-turn.js` (por eso existen `7a…7s`, que van detrás de `79-*` y antes de `80-turn`). |
+| 2 | Motor | `src/engine/NN-*.js` en orden alfabético, dentro de **una sola función** | Todo el estado vive en `S` y es JSON puro. Los archivos que exportan algo en `WL.Game.q` deben ordenarse antes de `80-turn.js` (por eso existen `7a…7t`, que van detrás de `79-*` y antes de `80-turn`). |
 | 3 | Globo | `src/globe.js` | Three.js. Su API pública es `WL.Globe` (`paint`, `focus`, `trip`, `setTheatre`, `fx`, `setQuality`…). |
 | 4 | Interfaz | `src/ui/NN-*.js` en orden alfabético, dentro de **una sola función** | Solo lee el estado (`G.S`, `G.q`) y actúa con `act('nombre', args)`. Nunca modifica `S` directamente, salvo el editor. |
 
@@ -36,6 +36,7 @@ Para cambiar jugabilidad o ampliar fases sin romper el resto del juego.
 - **Personajes, cumbres y crisis**: `7q-people` (4 personajes con actitud y memoria, cumbre anual de grandes economías, sala de crisis en 3 fases), `data-people.js`, `ui/5p-people.js` (Política → Personajes).
 - **Estado de la nación**: `7r-nation` (9 indicadores internos que persiguen un objetivo con desglose, gasto por partidas vía `hook("finance")`, policía, ejército en las calles con abusos, cárteles con nombre por región, pactos, legalización; pesa en `mod("growth")`, `mod("elect")`, estabilidad, sectores y el malestar regional vía `rlWhy`), `data-nation.js`, `ui/5q-nation.js` (botón Nación del dock: Estado, Gasto, Seguridad, Narcotráfico).
 - **Seguridad nacional**: `7s-security` (inteligencia interna en `S.sint`: vigilancia 0-2, director con lealtad y chantaje, operaciones contra cárteles, espías y corrupción; ramas `S.mb` con jefe, lealtad, moral y modernización que multiplican `power()` del jugador; ruido de sables; interior resumido de la IA en `c.ni` {seg, cor, coh} que pesa en `growthOf`, `considerWar`, `treatyEval`, `giveAid` y `askAid`), `data-security.js`, `ui/5r-security.js` (Nación → Inteligencia, Ejército → Mandos, ficha → Situación interna). Ojo: `S.intel` ya es de la IA (68-brain).
+- **Sociedad**: `7t-society` (6 debates con opinión −100..100 que empuja la educación y puedes liderar; postura según tus leyes, incluida la nueva ley `aborto`; movimientos que crecen si chocas con la mayoría o por desigualdad/recortes; protestas con dialogar, prometer —con plazo— o reprimir; la educación acumulada `S.soc.eduL` suma a `mod("rp")`; `socInfo` incluye el informe económico y de comercio exterior), `data-society.js`, `ui/5s-society.js` (Nación → Sociedad, Informe).
 - **Aspecto**: `ui/5f-look.js` (modo de mapa «Regiones», nombres de estados al acercarte, cámara orbital o táctica, fondos) y en `globe.js` `setBg`, `setCam`, `setReg`, `setProvLabels`. La paleta de países está en `ATLAS` (`ui/30-hud.js`) y el estilo de botones al final de `styles.css`.
 
 ## Cómo extender sin romper

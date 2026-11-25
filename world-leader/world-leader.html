@@ -457,6 +457,7 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
 .nat5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; } .nat-c { display: flex; flex-direction: column; gap: 4px; margin: 0; } .nat-c .arow { gap: 8px; } .nat-c .bar { flex: 1; }
 .nat-b input[type=range], .card input[data-c=natPay] { width: 100%; } .nar5 { display: flex; flex-direction: column; gap: 6px; } .nar5 .grow small { display: block; }
 @media (max-width: 600px) { .dock button { font-size: 7.5px; } .dock button .ic { width: 18px; height: 18px; } }
+.soc5 { display: flex; flex-direction: column; gap: 6px; } .opbar { position: relative; height: 8px; border-radius: 2px; background: linear-gradient(90deg, var(--red), var(--line) 50%, var(--green)); opacity: .85; } .opbar i { position: absolute; top: -3px; width: 3px; height: 14px; background: var(--ink); transform: translateX(-50%); }
 
 </style>
 
@@ -2286,6 +2287,42 @@ KM|0.87|1.5|0.5|Azali Assoumani|CRC|0|aut|UA,LA|`;
     weakCoh: 35, weakSeg: 30, warSkip: .6,
     treaty: { cor: [60, 6, 'Gobierno corrupto: se deja agasajar'], coh: [35, -10, 'Su opinión pública está dividida'], seg: [35, 8, 'Buscan apoyo para su seguridad'] },
     aidBonus: 6, askCoh: 35 };
+})();
+
+/* =====================================================================
+   WORLD LEADER · DATOS · SOCIEDAD (Fase 3 del interior)
+   Debates sociales con opinión pública que se mueve (-100 en contra …
+   +100 a favor de la reforma), movimientos que protestan si los ignoras,
+   y la educación como inversión a largo plazo. Motor: 7t-society.js.
+   pro/con: leyes que te colocan a favor o en contra. prog: +1 si la
+   gente más educada tiende a apoyarla, -1 si tiende a rechazarla.
+   ===================================================================== */
+(function () {
+  const D = globalThis.WL.DATA, fx = D.fx;
+  D.LAWS.push({ id: 'aborto', cat: 'sal', n: 'Aborto legal', d: 'Interrupción voluntaria del embarazo en la sanidad pública.', eco: 0, auth: -.5, sec: { jov: 6, med: 2, rel: -12, jub: -3 }, rep: { dem: 3 } });
+  D.DEBATES = {
+    aborto: { n: 'Aborto', q: 'el aborto legal', prog: 1, pro: ['aborto'], con: [] },
+    pena: { n: 'Pena de muerte', q: 'la pena de muerte', prog: -1, pro: ['pena_muerte'], con: [] },
+    drogas: { n: 'Drogas', q: 'legalizar las drogas', prog: .6, pro: ['cannabis'], con: [], natLegal: 1 },
+    matrimonio: { n: 'Matrimonio igualitario', q: 'el matrimonio igualitario', prog: 1, pro: ['matrimonio'], con: [] },
+    migracion: { n: 'Migración', q: 'abrir las fronteras', prog: .4, pro: ['fronteras_abiertas'], con: ['fronteras_cerradas'] },
+    laicidad: { n: 'Laicidad', q: 'separar Iglesia y Estado', prog: .8, pro: ['lib_culto', 'edu_laica'], con: ['rel_oficial'] }
+  };
+  /* movimientos que no son un debate: nacen de cómo va el país */
+  D.MOVES = {
+    huelga: { n: 'Sindicatos', why: 'Desigualdad alta y recortes sociales', t: 'Huelga general', x: 'Los sindicatos paralizan fábricas, puertos y transporte. Exigen salarios dignos y que se acaben los recortes.' },
+    estud: { n: 'Estudiantes', why: 'Recortes en educación', t: 'Las universidades, tomadas', x: 'Miles de estudiantes ocupan los campus y marchan hacia el palacio de gobierno contra los recortes educativos.' }
+  };
+  D.SOC = {
+    opDrift: .012, opNoise: 1.5, gapAt: 25, mvK: .08, mvDecay: 2, protestAt: 55, protestP: .18, stabAt: 40, stabK: .012,
+    lead: { cp: 1, op: 10, cd: 4 }, eduK: .04, eduRp: .05,
+    opts: [
+      ['Dialogar con los líderes', 'cp-1', { mv: -35 }],
+      ['Prometer cambios', 'sec.all+2;party.opp-1', { mv: -50, promise: 1 }],
+      ['Reprimir las protestas', 'rep.dem-3;sec.jov-4', { mv: -60, ix: { ins: -6, coh: -5 }, back: 1 }]
+    ],
+    promiseTurns: 8, backP: .35
+  };
 })();
 
 /* =====================================================================
@@ -6721,6 +6758,53 @@ function secInfo() { const I = S.sint; if (!I) return null; return { surv: I.sur
   br: Object.fromEntries(BRK.map(k => { const b = S.mb[k]; return [k, Object.assign({}, b, { pow: catPow(S.player, k), f: brFactor(k), t: brTarget(k), modIn: b.modT > S.turn ? b.modT - S.turn : 0 })]; })) }; }
 
 
+/* ---------- engine/7t-society.js ---------- */
+/* =====================================================================
+   SISTEMA · SOCIEDAD
+   Debates: la opinión pública (-100..100) se mueve sola (la educación la
+   empuja) y puedes liderarla. Si tus leyes van contra una mayoría clara,
+   o la mayoría pide una reforma que no haces, crece un movimiento que
+   acaba en protestas: dialogar, prometer (y cumplir) o reprimir.
+   Educación a largo plazo: su media de muchos años sube tu investigación.
+   Datos en src/data-society.js.
+   ===================================================================== */
+const SO = D.SOC, DBK = Object.keys(D.DEBATES), MVK = Object.keys(D.MOVES);
+function socInit() { const c = P(), gpc = c.gdp / Math.max(.001, c.pop), k = clamp((Math.log10(Math.max(1, gpc)) - .3) / 1.5, 0, 1) + (c.reg === 'dem' ? .15 : -.15), op = {}, mv = {};
+  for (const d of DBK) { op[d] = Math.round(clamp(D.DEBATES[d].prog * (k * 100 - 50) * .9 + rr(-20, 20), -95, 95)); mv[d] = 0; } for (const m of MVK) mv[m] = 0;
+  S.soc = { op, mv, cd: {}, prom: {}, eduL: S.nat ? S.nat.ix.edu : 50 }; }
+hook('new', socInit); hook('load', () => { if (!S.soc) socInit(); for (const d of DBK) if (S.soc.op[d] == null) { S.soc.op[d] = 0; S.soc.mv[d] = 0; } for (const m of MVK) S.soc.mv[m] = S.soc.mv[m] || 0; });
+/* tu postura: +1 a favor, -1 en contra, 0 sin ley */
+const debPos = d => { const B = D.DEBATES[d], L = S.pol.laws; if (B.pro.some(id => L[id] != null) || (B.natLegal && S.nat && S.nat.legal)) return 1; if (B.con.some(id => L[id] != null)) return -1; return 0; };
+/* cuánto choca tu postura con la opinión: lo que alimenta el movimiento */
+const debGap = d => { const o = S.soc.op[d], p = debPos(d); return p ? (p * o < 0 ? Math.abs(o) : 0) : Math.max(0, o - 30) * 1.2; }; /* sin ley, solo protesta la mayoría que pide la reforma */
+const moveCause = m => { const N = S.nat; if (!N) return 0; if (m === 'huelga') return Math.max(0, N.ix.des - 55) * 1.5 + Math.max(0, 1 - N.bud.soc) * 40; return Math.max(0, 1 - N.bud.edu) * 70; };
+OPS.socMod = a => { const s = S.soc; s.mv[a.k] = clamp(s.mv[a.k] + (a.mv || 0), 0, 100); if (a.promise) s.prom[a.k] = S.turn + SO.promiseTurns; if (S.nat && a.ix) natMod({ ix: a.ix });
+  if (a.back && chance(SO.backP)) { s.mv[a.k] = clamp(s.mv[a.k] + 40, 0, 100); news('La represión enciende todavía más las calles', 'pol', S.player, 2); } };
+const promiseKept = k => D.DEBATES[k] ? debGap(k) < SO.gapAt : moveCause(k) < 10;
+hook('player', () => { const s = S.soc, c = P(); if (!s) return; const edu = S.nat ? S.nat.ix.edu : 50;
+  s.eduL += (edu - s.eduL) * SO.eduK;
+  for (const d of DBK) s.op[d] = clamp(s.op[d] + D.DEBATES[d].prog * (edu - 50) * SO.opDrift + rr(-SO.opNoise, SO.opNoise), -100, 100);
+  let fired = false;
+  for (const k of DBK.concat(MVK)) { const gap = D.DEBATES[k] ? debGap(k) : moveCause(k);
+    s.mv[k] = clamp(s.mv[k] + (gap - SO.gapAt) * SO.mvK - SO.mvDecay * (gap < SO.gapAt ? 1 : 0), 0, 100);
+    if (s.prom[k] && s.prom[k] <= S.turn) { delete s.prom[k]; if (!promiseKept(k)) { s.mv[k] = clamp(s.mv[k] + 40, 0, 100); if (S.nat) natMod({ ix: { ins: -4 } }); news(`Promesa incumplida: ${(D.DEBATES[k] || D.MOVES[k]).n.toLowerCase()} vuelve a la calle`, 'pol', S.player, 2); } }
+    if (s.mv[k] > SO.stabAt) c.stab = clamp(c.stab - (s.mv[k] - SO.stabAt) * SO.stabK, 0, 100);
+    if (!fired && s.mv[k] > SO.protestAt && !(s.prom[k] > S.turn) && S.pend.length < 2 && chance(SO.protestP)) { fired = true; socPend(k); } } });
+function socPend(k) { const B = D.DEBATES[k], M = D.MOVES[k], o = B ? S.soc.op[k] : 0, side = o > 0 ? 'a favor de' : 'en contra de';
+  const t = B ? `Marchas ${side} ${B.q}` : M.t, x = B ? `Cientos de miles salen a la calle ${side} ${B.q}. La opinión pública está ${Math.abs(Math.round(o))} puntos inclinada de su lado y te acusan de no escuchar.` : M.x;
+  pushPend({ k: 'event', id: 'protest', t: t.replace(/ de el /g, ' del '), x: x.replace(/ de el /g, ' del '), iso: S.player, opts: SO.opts.map(([n, f, a]) => ({ t: n, fx: D.fx(f).concat([['do', 'socMod', Object.assign({ k }, a)]]) })) }); }
+ACT.socLead = a => { const s = S.soc, d = a.k, dir = Math.sign(+a.dir); if (!D.DEBATES[d] || !dir) return fail('Debate inválido'); if ((s.cd[d] || 0) > S.turn) return fail(`Ya hiciste campaña sobre esto: espera ${s.cd[d] - S.turn} turnos`);
+  if (!useCP(SO.lead.cp)) return fail(`Necesitas ${SO.lead.cp} de capital político`); s.op[d] = clamp(s.op[d] + dir * SO.lead.op, -100, 100); s.cd[d] = S.turn + SO.lead.cd;
+  if (dir > 0 === D.DEBATES[d].prog > 0) secAdd('jov', 1); else secAdd('rel', 1); return { msg: `Campaña ${dir > 0 ? 'a favor de' : 'en contra de'} ${D.DEBATES[d].q}: la opinión se mueve`.replace(/ de el /g, ' del ') }; };
+/* la educación de muchos años es la que hace ciencia */
+{ const m0 = mod; mod = k => { const v = m0(k); return k === 'rp' && S && S.soc ? v + (S.soc.eduL - 50) * SO.eduRp : v; }; }
+function socInfo() { const s = S.soc; if (!s) return null; const c = P(), e = S.eco || {};
+  return { eduL: s.eduL, rp: (s.eduL - 50) * SO.eduRp,
+    deb: DBK.map(d => ({ k: d, op: s.op[d], pos: debPos(d), gap: debGap(d), mv: s.mv[d], cd: Math.max(0, (s.cd[d] || 0) - S.turn), prom: Math.max(0, (s.prom[d] || 0) - S.turn) })),
+    mov: MVK.map(m => ({ k: m, mv: s.mv[m], cause: moveCause(m), prom: Math.max(0, (s.prom[m] || 0) - S.turn) })),
+    eco: { grow: growthOf(S.player), unemp: e.unemp, inf: e.inf, debt: debtRatio(), trade: tradeIncome(), tar: e.tar, sancOn: S.sanc.filter(x => x.on === S.player).length, strClosed: Object.keys(S.str || {}).filter(id => !strOpen(id)).length, gdp: c.gdp } }; }
+
+
 /* ---------- engine/80-turn.js ---------- */
 /* =====================================================================
    CICLO DE TURNO: jugador → IA → resolución → eventos
@@ -6809,7 +6893,7 @@ WL.Game = {
     finance: () => finance(true), resFlow, tradeIncome, portValue, growthOf, fee,
     raceInfo, sciRank, rdPts, discCost, discOpen, hasD, progOf, fdem: () => S.fdem, DS,
     thFront, thRegs, thSide, thOther, ctlSide, terOf, wxOf, rSt, rGeo, rk, rpk, grpOf, gsize, freeU, validTargets, airSup, navSup, warNeeds, uRoles, coastal, knows, fogK, docOf, garrison, militia, homeReg, fortCost, thContact,
-    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo, natInfo, secInfo, aiNi,
+    justInfo, talkOpen, rlInfo, rlList, sepOf, pyGoalOk, parley: () => S.parley, archetype, hist5, cabInfo, strInfo, pplInfo, crisisInfo, natInfo, secInfo, aiNi, socInfo,
     p5: { SC, CA, goalOk, goalText, campInfo, shareCode, readCode, gameCode, weekly, metrics, score, epilogue, victCheck, firstsOf, mode, opt },
     legacy, synergies,
     worldFeed, occCells, facLvl, facOut, facCost, facUp,
@@ -9943,6 +10027,34 @@ SHT[0][3].unshift('Situación interna');
 { const x0 = sheetExtra; sheetExtra = iso => { const n = Q.aiNi(iso); if (!n) return x0(iso); const w = (v, bad) => { const g = bad ? 100 - v : v; return `<b class="${g >= 60 ? 'green' : g < 35 ? 'red' : ''}">${v}</b>`; }, A = D.AINT;
   const notes = [n.coh < A.weakCoh || n.seg < A.weakSeg ? 'Su crisis interna le quita ganas de guerras' : '', n.coh < A.askCoh ? 'No puede prestarte ayuda' : '', n.cor > A.treaty.cor[0] ? 'Gobierno corrupto: más fácil de convencer' : '', n.seg < A.treaty.seg[0] ? 'Busca socios para su seguridad' : ''].filter(Boolean);
   return `<h4>Situación interna</h4><p>Seguridad ${w(n.seg)} · Corrupción ${w(n.cor, 1)} · Cohesión ${w(n.coh)}</p>${notes.length ? `<p class="mut fine">${notes.map(esc).join(' · ')}</p>` : ''}` + x0(iso); }; }
+
+
+/* ---------- ui/5s-society.js ---------- */
+/* =====================================================================
+   INTERFAZ · SOCIEDAD E INFORME DEL PAÍS (Nación → Sociedad, Informe)
+   ===================================================================== */
+PTABS.nac.push(['soc', 'Sociedad'], ['inf', 'Informe']);
+{ const n0 = PANELS.nac; PANELS.nac = t => t === 'soc' ? socHTML() : t === 'inf' ? reportHTML() : n0(t); }
+const ofCase = s => s.replace(/ de el /g, ' del ');
+function socHTML() { const I = Q.socInfo(), SO = D.SOC, col = v => v > SO.protestAt ? 'red' : v > SO.stabAt ? 'gold' : '';
+  const posTxt = p => p > 0 ? '<span class="chip good">Tu gobierno: a favor</span>' : p < 0 ? '<span class="chip bad">Tu gobierno: en contra</span>' : '<span class="chip">Sin ley</span>';
+  return `<p class="mut fine">La opinión pública se mueve sola (la educación la empuja) y puedes liderarla con campañas. Tu postura la marcan tus leyes. Si chocas con una mayoría clara, o la mayoría pide una reforma que no haces, crece un movimiento que acaba en la calle.</p>
+  <h4>${gi('acuerdo')} Debates</h4>${I.deb.map(d => { const B = D.DEBATES[d.k], o = Math.round(d.op);
+    return `<div class="card soc5"><div class="row wrap"><b class="grow">${esc(B.n)}</b>${posTxt(d.pos)}</div>
+      <div class="opbar"><i style="left:${(o + 100) / 2}%"></i></div><div class="row"><small class="mut grow">En contra</small><small><b>${o > 0 ? o + ' a favor' : o < 0 ? -o + ' en contra' : 'empate'}</b></small><small class="mut grow" style="text-align:right">A favor</small></div>
+      ${d.mv > 5 ? `<div class="arow"><span class="grow">Movimiento en la calle${d.prom ? ` <small class="gold">promesa: ${d.prom} t</small>` : ''}</span>${bar(d.mv, 100, col(d.mv))}<b class="num">${Math.round(d.mv)}</b></div>` : ''}
+      <div class="row wrap"><button class="btn sm" data-a="socLead" data-k="${d.k}" data-dir="1" ${d.cd ? 'disabled' : ''}>${esc(ofCase('Campaña a favor de ' + B.q))} · ${SO.lead.cp} CP</button><button class="btn sm ghost" data-a="socLead" data-k="${d.k}" data-dir="-1" ${d.cd ? 'disabled' : ''}>En contra · ${SO.lead.cp} CP</button>${d.cd ? `<small class="mut">otra campaña en ${d.cd} t</small>` : ''}</div></div>`; }).join('')}
+  <h4>${gi('obr')} Movimientos sociales</h4>${I.mov.map(m => { const M = D.MOVES[m.k]; return `<div class="arow"><div class="grow"><b>${esc(M.n)}</b><small class="mut">${m.cause > 0 ? esc(M.why) : 'Tranquilos por ahora'}${m.prom ? ` · promesa: ${m.prom} t` : ''}</small></div>${bar(m.mv, 100, col(m.mv))}<b class="num">${Math.round(m.mv)}</b></div>`; }).join('')}
+  <h4>${gi('edu')} Educación a largo plazo</h4><div class="card"><div class="arow"><span class="grow">Nivel educativo acumulado</span>${bar(I.eduL, 100, I.eduL >= 60 ? 'green' : I.eduL < 40 ? 'red' : '')}<b class="num">${Math.round(I.eduL)}</b></div>
+    <small class="mut">Es la media de muchos años de educación: lo que inviertes hoy se nota dentro de unos 20 turnos. Ahora da ${sgn(Math.round(I.rp * 10) / 10)} puntos de investigación por turno.</small></div>`; }
+function reportHTML() { const I = Q.socInfo(), E = I.eco, N = Q.natInfo(), kv = (k, v, cls) => `<div class="arow"><span class="grow">${k}</span><b class="${cls || ''}">${v}</b></div>`;
+  const ix = Object.entries(N.ix).map(([k, x]) => [k, x.v, D.NAT_IX[k].bad ? 100 - x.v : x.v]).sort((a, b) => a[2] - b[2]);
+  return `<p class="mut fine">Resumen del país para tomar decisiones de un vistazo.</p>
+  <h4>${gi('eco')} Economía</h4><div class="card">${kv('PIB', money(E.gdp))}${kv('Crecimiento', sgn(E.grow, 2) + ' pp/turno', E.grow >= 0 ? 'green' : 'red')}${kv('Desempleo', (E.unemp || 0).toFixed(1) + '%', E.unemp > 10 ? 'red' : '')}${kv('Inflación', (E.inf || 0).toFixed(1) + '%', E.inf > 8 ? 'red' : '')}${kv('Deuda', Math.round(E.debt * 100) + '% del PIB', E.debt > 1 ? 'red' : '')}</div>
+  <h4>${gi('ext')} Comercio exterior</h4><div class="card">${kv('Tratados comerciales', E.trade.n)}${kv('Ingresos por comercio', money(E.trade.v) + ' / turno', 'green')}${kv('Aranceles', Math.round((E.tar || 1) * 100) + '% de lo normal')}${kv('Sanciones contra ti', E.sancOn, E.sancOn ? 'red' : '')}${kv('Estrechos cerrados', E.strClosed, E.strClosed ? 'red' : '')}</div>
+  <h4>${gi('pin')} Lo mejor y lo peor del país</h4><div class="card">${kv('Peor: ' + esc(D.NAT_IX[ix[0][0]].n), Math.round(ix[0][1]), 'red')}${kv('Segundo peor: ' + esc(D.NAT_IX[ix[1][0]].n), Math.round(ix[1][1]), 'red')}${kv('Mejor: ' + esc(D.NAT_IX[ix[ix.length - 1][0]].n), Math.round(ix[ix.length - 1][1]), 'green')}
+    ${kv('Cárteles activos', N.cart.length, N.cart.length ? 'red' : '')}${kv('Movimiento social más fuerte', (() => { const all = I.deb.concat(I.mov).sort((a, b) => b.mv - a.mv)[0]; return all.mv > 5 ? esc((D.DEBATES[all.k] || D.MOVES[all.k]).n) + ' · ' + Math.round(all.mv) : 'ninguno'; })())}</div>`; }
+H.socLead = d => act('socLead', { k: d.k, dir: +d.dir });
 
 
 /* ---------- ui/90-boot.js ---------- */
