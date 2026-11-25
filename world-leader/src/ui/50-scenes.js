@@ -56,7 +56,7 @@ Bus.on('vote', v => {
   scene(modalScene(`<p class="eyebrow">Votación en el congreso</p><h2>${esc(v.title)}</h2>${hemi(cols.slice(0, 100), 'voting')}
     <div class="vote-res"><b class="up">${v.yes} a favor</b><span class="stamp ${v.pass ? 'ok' : 'no'}">${v.pass ? 'Aprobada' : 'Rechazada'}</span><b class="down">${100 - v.yes} en contra</b></div>
     <div class="vote-by">${v.by.map(p => `<div class="line"><span><i class="dot" style="background:${IDC(p.ideo)}"></i> ${esc(p.n)}${p.g ? ' <small class="gold">gob.</small>' : ''}</span><span class="bar green"><i style="width:${p.s ? p.yes / p.s * 100 : 0}%"></i></span><b class="num">${p.yes}/${p.s}</b></div>`).join('')}</div>
-    <small class="mut">Hacían falta más de ${Math.round(v.need)} votos.</small>`, 'vote'));
+    <small class="mut">Hacían falta más de ${Math.round(v.need)} votos.</small>${v.law && v.law.id ? lawSummaryHTML(v.law, v.pass) : ''}`, 'vote'));
 });
 /* ---- resultado de la ONU ---- */
 Bus.on('un', u => {

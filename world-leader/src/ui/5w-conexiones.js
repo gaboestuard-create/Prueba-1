@@ -71,3 +71,10 @@ H.lawFx = d => { const l = D.LAWS.find(x => x.id === d.id); if (!l) return; cons
     ${sect('Al momento', 'check', l.once ? `<div class="chips">${fxChips(Q.describeFx(l.once))}</div>` : '')}
     <div class="row end"><button class="btn" data-a="closeModal">Cerrar</button></div>`, true); };
 H.cxGoClose = d => { closeModal(); UI.cx = d.id; H.hubGo({ p: 'nac', t: 'con' }); };
+
+/* resumen corto que acompaña al cuadro de votación: lo que provoca (o habría provocado) la ley */
+function lawSummaryHTML(l, pass) { const nl = NTD.law[l.id] || {}, s = S(), sec = Object.keys(l.sec || {}).sort((a, b) => Math.abs(l.sec[b]) - Math.abs(l.sec[a])).slice(0, 4), per = Object.keys(l.per || {});
+  const chips = sec.map(k => [D.SECTORS[k].n + ' ' + sgn(l.sec[k]), l.sec[k]]).concat(per.map(k => PERN[k](l.per[k]))).concat(Object.keys(nl).map(x => [D.NAT_IX[x].n + ' ' + sgn(nl[x]), (nl[x] > 0) !== !!D.NAT_IX[x].bad ? 1 : -1]));
+  const clash = Object.entries(D.DEBATES).filter(([k, b]) => (b.pro.includes(l.id) || b.con.includes(l.id)) && s.soc && (b.pro.includes(l.id) ? 1 : -1) * s.soc.op[k] < -25).map(([, b]) => b.q);
+  if (!chips.length && !clash.length) return '';
+  return `<div class="vote-fx"><small class="eyebrow">${pass ? 'Lo que provoca' : 'Lo que habría provocado'}</small><div class="chips">${fxChips(chips)}</div>${clash.length ? `<small class="bad">⚠ Choca con la opinión mayoritaria sobre ${esc(clash.join(' y '))}: puede haber protestas.</small>` : ''}</div>`; }

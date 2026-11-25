@@ -483,3 +483,4 @@ label.check:has([data-c="paperT"]) { color: #5a4a30; }
   #toasts { top: calc(150px + var(--st)); left: 8px; right: 8px; gap: 5px; } #toasts .toast:not(:nth-last-child(-n+2)) { display: none; } .toast { padding: 7px 10px; font-size: 12.5px; }
   #achbox { top: calc(112px + var(--st)); } #achbox .achpop:not(:last-child) { display: none; } .achpop { padding: 7px 10px; }
 }
+.vote-fx { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; } .vote-fx .eyebrow { margin: 0; }
